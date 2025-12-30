@@ -1,0 +1,36 @@
+{
+  "name": "vio-backend",
+  "version": "0.1.0",
+  "description": "Vio Backend - Bun + Elysia API Server with Git-like Version Control",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts",
+    "build": "bun build src/index.ts --outdir ./dist --target bun",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "proto:generate": "buf generate",
+    "test": "bun test",
+    "lint": "bunx @biomejs/biome lint ./src",
+    "format": "bunx @biomejs/biome format --write ./src"
+  },
+  "dependencies": {
+    "elysia": "^1.2.0",
+    "@elysiajs/cors": "^1.1.0",
+    "@elysiajs/swagger": "^1.1.0",
+    "@elysiajs/jwt": "^1.1.0",
+    "drizzle-orm": "^0.37.0",
+    "postgres": "^3.4.5",
+    "zod": "^3.24.0",
+    "nanoid": "^5.0.9"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.0",
+    "drizzle-kit": "^0.30.0",
+    "@biomejs/biome": "^1.9.0",
+    "typescript": "^5.7.0"
+  },
+  "license": "MPL-2.0"
+}

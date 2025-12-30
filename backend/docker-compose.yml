@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: vio-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vio
+      POSTGRES_PASSWORD: vio
+      POSTGRES_DB: vio
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U vio']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Optional: PostgreSQL admin interface
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: vio-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@vio.dev
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - '5050:80'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+  pgadmin_data:

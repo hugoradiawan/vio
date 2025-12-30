@@ -1,0 +1,91 @@
+name: vio
+repository: https://github.com/user/vio
+
+packages:
+  - apps/*
+  - packages/*
+  - features/*
+
+ide:
+  intellij:
+    enabled: true
+
+command:
+  version:
+    linkToCommits: true
+    workspaceChangelog: true
+
+  bootstrap:
+    usePubspecOverrides: true
+    runPubGetInParallel: true
+
+scripts:
+  # Analysis & Formatting
+  analyze:
+    run: melos exec -- "dart analyze ."
+    description: Run static analysis on all packages
+
+  format:
+    run: melos exec -- "dart format ."
+    description: Format all Dart files
+
+  format:check:
+    run: melos exec -- "dart format --set-exit-if-changed ."
+    description: Check formatting without changes
+
+  # Testing
+  test:
+    run: melos exec -- "flutter test"
+    packageFilters:
+      dirExists: test
+    description: Run tests in all packages
+
+  test:coverage:
+    run: melos exec -- "flutter test --coverage"
+    packageFilters:
+      dirExists: test
+    description: Run tests with coverage
+
+  # Code Generation
+  build:runner:
+    run: melos exec -- "dart run build_runner build --delete-conflicting-outputs"
+    packageFilters:
+      dependsOn: build_runner
+    description: Run build_runner in packages that need it
+
+  build:runner:watch:
+    run: melos exec -- "dart run build_runner watch --delete-conflicting-outputs"
+    packageFilters:
+      dependsOn: build_runner
+    description: Watch mode for build_runner
+
+  # Protobuf Generation
+  proto:generate:
+    run: |
+      cd packages/protos && dart run build_runner build --delete-conflicting-outputs
+    description: Generate Dart code from proto files
+
+  # Clean
+  clean:
+    run: melos exec -- "flutter clean"
+    description: Clean all packages
+
+  clean:deep:
+    run: |
+      melos clean
+      melos exec -- "rm -rf .dart_tool build pubspec.lock"
+    description: Deep clean including lock files
+
+  # Run apps
+  run:client:web:
+    run: cd apps/client && flutter run -d chrome
+    description: Run client app on web
+
+  run:client:windows:
+    run: cd apps/client && flutter run -d windows
+    description: Run client app on Windows
+
+  run:client:macos:
+    run: cd apps/client && flutter run -d macos
+    description: Run client app on macOS
+sdkPath: .fvm/flutter_sdk

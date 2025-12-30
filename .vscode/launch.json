@@ -1,0 +1,81 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Vio Client (Web - Chrome)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/apps/client",
+      "deviceId": "chrome"
+    },
+    {
+      "name": "Vio Client (Web - Edge)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/apps/client",
+      "deviceId": "edge"
+    },
+    {
+      "name": "Vio Client (Windows Desktop)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/apps/client",
+      "deviceId": "windows"
+    },
+    {
+      "name": "Vio Client (macOS Desktop)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/apps/client",
+      "deviceId": "macos"
+    },
+    {
+      "name": "Vio Client (Linux Desktop)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/apps/client",
+      "deviceId": "linux"
+    },
+    {
+      "name": "Vio Client (Web - Chrome) - Profile Mode",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/apps/client",
+      "deviceId": "chrome",
+      "flutterMode": "profile"
+    },
+    {
+      "name": "Vio Client (Windows) - Profile Mode",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/apps/client",
+      "deviceId": "windows",
+      "flutterMode": "profile"
+    },
+    {
+      "name": "Vio Client (Windows) - Release Mode",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/apps/client",
+      "deviceId": "windows",
+      "flutterMode": "release"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Full Stack (Backend + Web Client)",
+      "configurations": [
+        "Vio Client (Web - Chrome)"
+      ],
+      "preLaunchTask": "Start Backend Server"
+    }
+  ]
+}

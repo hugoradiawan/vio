@@ -282,8 +282,16 @@ class _CanvasViewState extends State<CanvasView> {
 
   void _handlePointerSignal(BuildContext context, PointerSignalEvent event) {
     if (event is PointerScrollEvent) {
-      // Ctrl+scroll = zoom
-      if (HardwareKeyboard.instance.isControlPressed) {
+      // Check if this is a trackpad pinch gesture or Ctrl+scroll
+      // On web, trackpad pinch zoom comes as scroll events
+      // We detect it by checking if Ctrl is pressed OR if it's a trackpad with specific behavior
+      final isTrackpadPinch = event.kind == PointerDeviceKind.trackpad &&
+          HardwareKeyboard.instance.isControlPressed;
+      final isMouseWheelZoom = event.kind == PointerDeviceKind.mouse &&
+          HardwareKeyboard.instance.isControlPressed;
+
+      if (isTrackpadPinch || isMouseWheelZoom) {
+        // Zoom - use scroll delta to determine direction
         final scaleFactor = event.scrollDelta.dy > 0 ? 0.9 : 1.1;
         context.read<CanvasBloc>().add(
               ViewportZoomed(
@@ -293,7 +301,7 @@ class _CanvasViewState extends State<CanvasView> {
               ),
             );
       } else {
-        // Regular scroll = pan
+        // Regular scroll/pan - trackpad two-finger scroll or mouse wheel
         context.read<CanvasBloc>().add(
               ViewportPanned(
                 deltaX: -event.scrollDelta.dx,
@@ -301,6 +309,15 @@ class _CanvasViewState extends State<CanvasView> {
               ),
             );
       }
+    } else if (event is PointerScaleEvent) {
+      // Direct scale event (some platforms send this for pinch)
+      context.read<CanvasBloc>().add(
+            ViewportZoomed(
+              scaleFactor: event.scale,
+              focalX: event.localPosition.dx,
+              focalY: event.localPosition.dy,
+            ),
+          );
     }
   }
 }

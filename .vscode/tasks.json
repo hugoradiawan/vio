@@ -1,0 +1,82 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Backend Server",
+      "type": "shell",
+      "command": "bun",
+      "args": ["run", "dev"],
+      "options": {
+        "cwd": "${workspaceFolder}/backend"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*Starting.*$",
+          "endsPattern": "^.*listening.*$"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "group": "backend"
+      }
+    },
+    {
+      "label": "Build Client (Web)",
+      "type": "shell",
+      "command": "flutter",
+      "args": ["build", "web"],
+      "options": {
+        "cwd": "${workspaceFolder}/apps/client"
+      },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Build Client (Windows)",
+      "type": "shell",
+      "command": "flutter",
+      "args": ["build", "windows"],
+      "options": {
+        "cwd": "${workspaceFolder}/apps/client"
+      },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Build Runner",
+      "type": "shell",
+      "command": "melos",
+      "args": ["run", "build_runner"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": ["$dart-build_runner"]
+    },
+    {
+      "label": "Database Push",
+      "type": "shell",
+      "command": "bun",
+      "args": ["run", "db:push"],
+      "options": {
+        "cwd": "${workspaceFolder}/backend"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Melos Bootstrap",
+      "type": "shell",
+      "command": "melos",
+      "args": ["bootstrap"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

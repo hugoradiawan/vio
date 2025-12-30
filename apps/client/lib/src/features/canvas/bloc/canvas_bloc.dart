@@ -53,17 +53,25 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     ViewportZoomed event,
     Emitter<CanvasState> emit,
   ) {
-    // Zoom towards the focal point
-    final focalPoint = Point2D(event.focalX, event.focalY);
-
     // Calculate new zoom level
     final newZoom = (state.zoom * event.scaleFactor).clamp(0.01, 64.0);
 
-    // Adjust offset to zoom towards focal point
-    final zoomDelta = newZoom / state.zoom;
+    // Zoom towards the focal point (mouse position in screen coordinates)
+    // The point under the mouse should stay in the same position after zoom
+    //
+    // Before zoom: canvasPoint = (screenPoint - offset) / oldZoom
+    // After zoom:  canvasPoint = (screenPoint - newOffset) / newZoom
+    //
+    // We want the same canvas point under the mouse, so:
+    // (focalPoint - offset) / oldZoom = (focalPoint - newOffset) / newZoom
+    //
+    // Solving for newOffset:
+    // newOffset = focalPoint - (focalPoint - offset) * (newZoom / oldZoom)
+
+    final zoomRatio = newZoom / state.zoom;
     final newOffset = Point2D(
-      focalPoint.x - (focalPoint.x - state.viewportOffset.x) * zoomDelta,
-      focalPoint.y - (focalPoint.y - state.viewportOffset.y) * zoomDelta,
+      event.focalX - (event.focalX - state.viewportOffset.x) * zoomRatio,
+      event.focalY - (event.focalY - state.viewportOffset.y) * zoomRatio,
     );
 
     emit(

@@ -68,6 +68,9 @@ class _CanvasViewState extends State<CanvasView> {
                         // Handle trackpad pan and zoom
                         if (event.scale != 1.0) {
                           // Pinch zoom on trackpad
+                          // When zooming, do NOT apply panDelta separately
+                          // The focal point zoom already handles keeping the
+                          // focal point stationary
                           final scaleChange = event.scale / _lastScale;
                           _lastScale = event.scale;
                           context.read<CanvasBloc>().add(
@@ -77,9 +80,10 @@ class _CanvasViewState extends State<CanvasView> {
                                   focalY: event.localPosition.dy,
                                 ),
                               );
-                        }
-                        // Pan from trackpad
-                        if (event.panDelta != Offset.zero) {
+                        } else if (event.panDelta != Offset.zero) {
+                          // Only pan when NOT zooming
+                          // This prevents the pan from interfering with
+                          // zoom focal point calculations
                           context.read<CanvasBloc>().add(
                                 ViewportPanned(
                                   deltaX: event.panDelta.dx,

@@ -94,9 +94,11 @@ class CanvasState extends Equatable {
 
   /// Get the transformation matrix for rendering
   Matrix2D get viewMatrix {
+    // Scale the canvas, then translate in screen space (x' = x*zoom + offset)
+    // Use T * S (translate then scale) so translation is not scaled.
     return Matrix2D.identity
-        .translated(viewportOffset.x, viewportOffset.y)
-        .scaled(zoom, zoom);
+      .translated(viewportOffset.x, viewportOffset.y)
+      .scaled(zoom, zoom);
   }
 
   /// Whether there is an active selection

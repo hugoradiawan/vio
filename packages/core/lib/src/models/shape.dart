@@ -85,6 +85,15 @@ abstract class Shape extends Equatable {
   /// Get the bounds of this shape in local coordinates
   Rect2D get bounds;
 
+  /// X position (abstract - implemented by concrete shape types)
+  double get x;
+
+  /// Y position (abstract - implemented by concrete shape types)
+  double get y;
+
+  /// Create a copy of this shape moved by the given delta
+  Shape moveBy(double dx, double dy);
+
   /// Get the center point in local coordinates
   Point2D get center => bounds.center;
 

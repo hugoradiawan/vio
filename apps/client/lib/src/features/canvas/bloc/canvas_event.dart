@@ -68,6 +68,7 @@ class PointerDown extends CanvasEvent {
     required this.x,
     required this.y,
     this.button = 0,
+    this.shiftPressed = false,
   });
 
   /// X position in screen coordinates
@@ -79,8 +80,11 @@ class PointerDown extends CanvasEvent {
   /// Mouse button (0 = left, 1 = middle, 2 = right)
   final int button;
 
+  /// Whether shift key is pressed (for multi-select)
+  final bool shiftPressed;
+
   @override
-  List<Object?> get props => [x, y, button];
+  List<Object?> get props => [x, y, button, shiftPressed];
 }
 
 /// Fired when pointer/mouse moves on canvas

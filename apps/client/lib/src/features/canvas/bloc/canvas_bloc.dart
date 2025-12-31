@@ -254,9 +254,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
 
     if (hitShape != null) {
       // Check if shift is held for multi-select
-      // event.button contains button flags, not shift state
-      // For now, always do single selection (shift support TODO)
-      const addToSelection = false; // TODO: Pass actual shift key state
+      final addToSelection = event.shiftPressed;
 
       if (addToSelection) {
         // Toggle selection
@@ -275,20 +273,23 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
           emit(
             state.copyWith(
               selectedShapeIds: [...state.selectedShapeIds, hitShape.id],
-              interactionMode: InteractionMode.idle,
-              clearDragStart: true,
-              clearCurrentPointer: true,
+              interactionMode: InteractionMode.movingShapes,
+              dragStart: canvasPoint,
+              currentPointer: canvasPoint,
             ),
           );
         }
       } else {
-        // Single selection - shape clicked
+        // Single selection - shape clicked, start moving
+        final isAlreadySelected = state.selectedShapeIds.contains(hitShape.id);
         emit(
           state.copyWith(
-            selectedShapeIds: [hitShape.id],
-            interactionMode: InteractionMode.idle,
-            clearDragStart: true,
-            clearCurrentPointer: true,
+            selectedShapeIds: isAlreadySelected
+                ? state.selectedShapeIds
+                : [hitShape.id],
+            interactionMode: InteractionMode.movingShapes,
+            dragStart: canvasPoint,
+            currentPointer: canvasPoint,
           ),
         );
       }
@@ -311,7 +312,31 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
   ) {
     final canvasPoint = _screenToCanvas(Point2D(event.x, event.y));
 
-    emit(state.copyWith(currentPointer: canvasPoint));
+    // Handle shape movement
+    if (state.interactionMode == InteractionMode.movingShapes &&
+        state.currentPointer != null &&
+        state.selectedShapeIds.isNotEmpty) {
+      final delta = Point2D(
+        canvasPoint.x - state.currentPointer!.x,
+        canvasPoint.y - state.currentPointer!.y,
+      );
+
+      // Move all selected shapes
+      final newShapes = Map<String, Shape>.from(state.shapes);
+      for (final shapeId in state.selectedShapeIds) {
+        final shape = newShapes[shapeId];
+        if (shape != null) {
+          newShapes[shapeId] = shape.moveBy(delta.x, delta.y);
+        }
+      }
+
+      emit(state.copyWith(
+        shapes: newShapes,
+        currentPointer: canvasPoint,
+      ),);
+    } else {
+      emit(state.copyWith(currentPointer: canvasPoint));
+    }
   }
 
   void _onPointerUp(
@@ -332,6 +357,15 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         state.copyWith(
           interactionMode: InteractionMode.idle,
           selectedShapeIds: selectedIds,
+          clearDragStart: true,
+          clearCurrentPointer: true,
+        ),
+      );
+    } else if (state.interactionMode == InteractionMode.movingShapes) {
+      // Finished moving shapes - keep selection, just end the mode
+      emit(
+        state.copyWith(
+          interactionMode: InteractionMode.idle,
           clearDragStart: true,
           clearCurrentPointer: true,
         ),

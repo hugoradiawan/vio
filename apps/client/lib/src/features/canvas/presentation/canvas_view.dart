@@ -257,6 +257,7 @@ class _CanvasViewState extends State<CanvasView> {
             x: event.localPosition.dx,
             y: event.localPosition.dy,
             button: event.buttons,
+            shiftPressed: HardwareKeyboard.instance.isShiftPressed,
           ),
         );
   }

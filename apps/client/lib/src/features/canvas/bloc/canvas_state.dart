@@ -11,6 +11,9 @@ enum InteractionMode {
   /// User is dragging to select or create
   dragging,
 
+  /// User is moving selected shapes
+  movingShapes,
+
   /// User is drawing a new shape
   drawing,
 
@@ -107,8 +110,10 @@ class CanvasState extends Equatable {
   /// Whether the canvas is in a dragging state
   bool get isDragging => interactionMode == InteractionMode.dragging;
 
-  /// Get drag rectangle if currently dragging
+  /// Get drag rectangle if currently doing marquee selection
   Rect2D? get dragRect {
+    // Only show drag rect during marquee selection, not during shape movement
+    if (interactionMode != InteractionMode.dragging) return null;
     if (dragStart == null || currentPointer == null) return null;
     return Rect2D.fromPoints(dragStart!, currentPointer!);
   }

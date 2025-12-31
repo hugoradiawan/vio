@@ -107,6 +107,11 @@ class EllipseShape extends Shape {
   }
 
   @override
+  EllipseShape moveBy(double dx, double dy) {
+    return copyWith(x: x + dx, y: y + dy);
+  }
+
+  @override
   List<Object?> get props => [
     ...super.props,
     x,

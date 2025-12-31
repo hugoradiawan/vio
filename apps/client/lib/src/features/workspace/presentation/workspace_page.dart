@@ -28,6 +28,17 @@ class _WorkspacePageState extends State<WorkspacePage> {
   final FocusNode _workspaceFocusNode = FocusNode();
 
   @override
+  void initState() {
+    super.initState();
+    // Ensure workspace has focus for keyboard shortcuts/logging after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_workspaceFocusNode.hasFocus) {
+        _workspaceFocusNode.requestFocus();
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _workspaceFocusNode.dispose();
     super.dispose();
@@ -49,6 +60,14 @@ class _WorkspacePageState extends State<WorkspacePage> {
               },
               child: Focus(
                 focusNode: _workspaceFocusNode,
+                onKeyEvent: (node, event) {
+                  // Debug log pressed keys
+                  final pressed = HardwareKeyboard.instance.logicalKeysPressed
+                      .map((k) => k.debugName)
+                      .join(', ');
+                  debugPrint('Key event: logical=${event.logicalKey.debugName}, physical=${event.physicalKey.debugName}, type=${event.runtimeType}, pressed=[$pressed]');
+                  return KeyEventResult.ignored;
+                },
                 child: Scaffold(
                   backgroundColor: VioColors.background,
                   body: Column(
@@ -65,7 +84,22 @@ class _WorkspacePageState extends State<WorkspacePage> {
                             Expanded(
                               child: Container(
                                 color: VioColors.canvasBackground,
-                                child: const CanvasView(),
+                                child: Stack(
+                                  children: [
+                                    const CanvasView(),
+                                    Positioned(
+                                      top: VioSpacing.xxxl,
+                                      left: 0,
+                                      right: 0,
+                                      child: Center(
+                                        child: ConstrainedBox(
+                                          constraints: const BoxConstraints(maxWidth: 640),
+                                          child: _buildToolsSection(context),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                             // Right panel (properties)
@@ -84,6 +118,94 @@ class _WorkspacePageState extends State<WorkspacePage> {
         );
       },
     );
+  }
+
+  Widget _buildToolsSection(BuildContext context) {
+    return BlocBuilder<WorkspaceBloc, WorkspaceState>(
+      buildWhen: (prev, curr) => prev.activeTool != curr.activeTool,
+      builder: (context, state) {
+        return VioCanvasToolbar(
+          selectedToolId: _mapToolToToolItem(state.activeTool),
+          onToolSelected: (tool) {
+            final canvasTool = _mapToolItemToTool(tool);
+            if (canvasTool != null) {
+              context.read<WorkspaceBloc>().add(ToolSelected(canvasTool));
+            }
+          },
+          tools: const [
+            ToolbarToolItem(
+              id: 'select',
+              icon: Icons.near_me_outlined,
+              tooltip: 'Select (V)',
+            ),
+            ToolbarToolItem(
+              id: 'direct',
+              icon: Icons.touch_app_outlined,
+              tooltip: 'Direct Select (A)',
+            ),
+            ToolbarToolItem(
+              id: 'rectangle',
+              icon: Icons.rectangle_outlined,
+              tooltip: 'Rectangle (R)',
+            ),
+            ToolbarToolItem(
+              id: 'ellipse',
+              icon: Icons.circle_outlined,
+              tooltip: 'Ellipse (O)',
+            ),
+            ToolbarToolItem(
+              id: 'path',
+              icon: Icons.timeline,
+              tooltip: 'Path (P)',
+            ),
+            ToolbarToolItem(
+              id: 'text',
+              icon: Icons.text_fields,
+              tooltip: 'Text (T)',
+            ),
+            ToolbarToolItem(
+              id: 'frame',
+              icon: Icons.crop_free,
+              tooltip: 'Frame (F)',
+            ),
+            ToolbarToolItem(
+              id: 'hand',
+              icon: Icons.pan_tool_outlined,
+              tooltip: 'Hand (H)',
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  String? _mapToolToToolItem(CanvasTool tool) {
+    return switch (tool) {
+      CanvasTool.select => 'select',
+      CanvasTool.directSelect => 'direct',
+      CanvasTool.rectangle => 'rectangle',
+      CanvasTool.ellipse => 'ellipse',
+      CanvasTool.path => 'path',
+      CanvasTool.text => 'text',
+      CanvasTool.frame => 'frame',
+      CanvasTool.hand => 'hand',
+      CanvasTool.zoom => null,
+      CanvasTool.comment => null,
+    };
+  }
+
+  CanvasTool? _mapToolItemToTool(String id) {
+    return switch (id) {
+      'select' => CanvasTool.select,
+      'direct' => CanvasTool.directSelect,
+      'rectangle' => CanvasTool.rectangle,
+      'ellipse' => CanvasTool.ellipse,
+      'path' => CanvasTool.path,
+      'text' => CanvasTool.text,
+      'frame' => CanvasTool.frame,
+      'hand' => CanvasTool.hand,
+      _ => null,
+    };
   }
 
   /// Build shortcut to intent mappings
@@ -110,6 +232,11 @@ class _WorkspacePageState extends State<WorkspacePage> {
       // Panel shortcuts
       const SingleActivator(LogicalKeyboardKey.backslash, control: true): const _LeftPanelToggleIntent(),
       const SingleActivator(LogicalKeyboardKey.backslash, control: true, shift: true): const _RightPanelToggleIntent(),
+      // Some platforms report Shift+\\ as LogicalKeyboardKey.bar instead of backslash
+      const SingleActivator(LogicalKeyboardKey.bar, control: true, shift: true): const _RightPanelToggleIntent(),
+      // Some keyboards send intlBackslash scancode
+      const SingleActivator(LogicalKeyboardKey.intlBackslash, control: true): const _LeftPanelToggleIntent(),
+      const SingleActivator(LogicalKeyboardKey.intlBackslash, control: true, shift: true): const _RightPanelToggleIntent(),
 
       // Zoom shortcuts
       const SingleActivator(LogicalKeyboardKey.equal, control: true): const _ZoomInIntent(),

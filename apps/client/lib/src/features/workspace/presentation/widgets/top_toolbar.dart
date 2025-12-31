@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
-
-import '../../bloc/workspace_bloc.dart';
 
 /// Top toolbar containing tool selection and workspace actions
 class TopToolbar extends StatelessWidget {
@@ -21,12 +18,10 @@ class TopToolbar extends StatelessWidget {
         ),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Logo / Menu
           _buildMenuSection(),
-          const SizedBox(width: VioSpacing.md),
-          // Tools
-          _buildToolsSection(context),
           const Spacer(),
           // Actions
           _buildActionsSection(context),
@@ -77,65 +72,6 @@ class TopToolbar extends StatelessWidget {
     );
   }
 
-  Widget _buildToolsSection(BuildContext context) {
-    return BlocBuilder<WorkspaceBloc, WorkspaceState>(
-      buildWhen: (prev, curr) => prev.activeTool != curr.activeTool,
-      builder: (context, state) {
-        return VioCanvasToolbar(
-          selectedToolId: _mapToolToToolItem(state.activeTool),
-          onToolSelected: (tool) {
-            final canvasTool = _mapToolItemToTool(tool);
-            if (canvasTool != null) {
-              context.read<WorkspaceBloc>().add(ToolSelected(canvasTool));
-            }
-          },
-          tools: const [
-            ToolbarToolItem(
-              id: 'select',
-              icon: Icons.near_me_outlined,
-              tooltip: 'Select (V)',
-            ),
-            ToolbarToolItem(
-              id: 'direct',
-              icon: Icons.touch_app_outlined,
-              tooltip: 'Direct Select (A)',
-            ),
-            ToolbarToolItem(
-              id: 'rectangle',
-              icon: Icons.rectangle_outlined,
-              tooltip: 'Rectangle (R)',
-            ),
-            ToolbarToolItem(
-              id: 'ellipse',
-              icon: Icons.circle_outlined,
-              tooltip: 'Ellipse (O)',
-            ),
-            ToolbarToolItem(
-              id: 'path',
-              icon: Icons.timeline,
-              tooltip: 'Path (P)',
-            ),
-            ToolbarToolItem(
-              id: 'text',
-              icon: Icons.text_fields,
-              tooltip: 'Text (T)',
-            ),
-            ToolbarToolItem(
-              id: 'frame',
-              icon: Icons.crop_free,
-              tooltip: 'Frame (F)',
-            ),
-            ToolbarToolItem(
-              id: 'hand',
-              icon: Icons.pan_tool_outlined,
-              tooltip: 'Hand (H)',
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   Widget _buildActionsSection(BuildContext context) {
     return Row(
       children: [
@@ -157,35 +93,6 @@ class TopToolbar extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  String? _mapToolToToolItem(CanvasTool tool) {
-    return switch (tool) {
-      CanvasTool.select => 'select',
-      CanvasTool.directSelect => 'direct',
-      CanvasTool.rectangle => 'rectangle',
-      CanvasTool.ellipse => 'ellipse',
-      CanvasTool.path => 'path',
-      CanvasTool.text => 'text',
-      CanvasTool.frame => 'frame',
-      CanvasTool.hand => 'hand',
-      CanvasTool.zoom => null,
-      CanvasTool.comment => null,
-    };
-  }
-
-  CanvasTool? _mapToolItemToTool(String id) {
-    return switch (id) {
-      'select' => CanvasTool.select,
-      'direct' => CanvasTool.directSelect,
-      'rectangle' => CanvasTool.rectangle,
-      'ellipse' => CanvasTool.ellipse,
-      'path' => CanvasTool.path,
-      'text' => CanvasTool.text,
-      'frame' => CanvasTool.frame,
-      'hand' => CanvasTool.hand,
-      _ => null,
-    };
   }
 }
 

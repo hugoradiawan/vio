@@ -184,7 +184,11 @@ class VioButton extends StatelessWidget {
     final children = <Widget>[];
 
     if (leadingIcon != null) {
-      children.add(Icon(leadingIcon, size: _getIconSize()));
+      children.add(Icon(leadingIcon,
+          size: _getIconSize(),
+          color: variant == VioButtonVariant.primary
+              ? VioColors.background
+              : null));
       children.add(const SizedBox(width: VioSpacing.xs));
     }
 

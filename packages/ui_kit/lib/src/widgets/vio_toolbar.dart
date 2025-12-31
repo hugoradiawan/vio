@@ -68,10 +68,7 @@ class VioToolbarGroup extends StatelessWidget {
     if (children.isEmpty) return const SizedBox.shrink();
 
     if (!showSeparators) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: children,
-      );
+      return Row(mainAxisSize: MainAxisSize.min, children: children);
     }
 
     return Row(

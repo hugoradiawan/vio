@@ -107,6 +107,11 @@ class EllipseShape extends Shape {
   }
 
   @override
-  List<Object?> get props =>
-      [...super.props, x, y, ellipseWidth, ellipseHeight];
+  List<Object?> get props => [
+    ...super.props,
+    x,
+    y,
+    ellipseWidth,
+    ellipseHeight,
+  ];
 }

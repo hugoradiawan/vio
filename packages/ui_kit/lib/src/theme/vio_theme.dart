@@ -55,7 +55,7 @@ class VioTheme {
       ),
 
       // Card
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: VioColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -194,9 +194,7 @@ class VioTheme {
           borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
           border: Border.all(color: VioColors.border),
         ),
-        textStyle: VioTypography.caption.copyWith(
-          color: VioColors.textPrimary,
-        ),
+        textStyle: VioTypography.caption.copyWith(color: VioColors.textPrimary),
         padding: const EdgeInsets.symmetric(
           horizontal: VioSpacing.sm,
           vertical: VioSpacing.xs,
@@ -266,7 +264,7 @@ class VioTheme {
       ),
 
       // Dialog
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: VioColors.surface,
         elevation: 16,
         shape: RoundedRectangleBorder(

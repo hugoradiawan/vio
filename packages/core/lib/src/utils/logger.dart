@@ -1,12 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 /// Log level enumeration
-enum LogLevel {
-  debug,
-  info,
-  warning,
-  error,
-}
+enum LogLevel { debug, info, warning, error }
 
 /// Static logger for global application logging
 class VioLogger {

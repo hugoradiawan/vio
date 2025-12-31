@@ -23,20 +23,16 @@ extension RectExtensions on Rect {
   Rect scaleFromCenter(double factor) {
     final newWidth = width * factor;
     final newHeight = height * factor;
-    return Rect.fromCenter(
-      center: center,
-      width: newWidth,
-      height: newHeight,
-    );
+    return Rect.fromCenter(center: center, width: newWidth, height: newHeight);
   }
 
   /// Get all four corners as list of Offsets
   List<Offset> get corners => [
-        topLeft,
-        topRight,
-        Offset(right, bottom),
-        Offset(left, bottom),
-      ];
+    topLeft,
+    topRight,
+    Offset(right, bottom),
+    Offset(left, bottom),
+  ];
 
   /// Check if this rect fully contains another rect
   bool fullyContains(Rect other) {
@@ -96,10 +92,7 @@ extension RectExtensions on Rect {
 
   /// Constrain a point to be within this rect
   Offset constrainPoint(Offset point) {
-    return Offset(
-      point.dx.clamp(left, right),
-      point.dy.clamp(top, bottom),
-    );
+    return Offset(point.dx.clamp(left, right), point.dy.clamp(top, bottom));
   }
 
   /// Create rect with a margin around it
@@ -114,10 +107,7 @@ extension RectExtensions on Rect {
 
   /// Create rect fitted inside another rect maintaining aspect ratio
   Rect fitInside(Rect container) {
-    final scale = math.min(
-      container.width / width,
-      container.height / height,
-    );
+    final scale = math.min(container.width / width, container.height / height);
     final newWidth = width * scale;
     final newHeight = height * scale;
     return Rect.fromCenter(
@@ -129,10 +119,7 @@ extension RectExtensions on Rect {
 
   /// Create rect that covers another rect maintaining aspect ratio
   Rect coverRect(Rect target) {
-    final scale = math.max(
-      target.width / width,
-      target.height / height,
-    );
+    final scale = math.max(target.width / width, target.height / height);
     final newWidth = width * scale;
     final newHeight = height * scale;
     return Rect.fromCenter(

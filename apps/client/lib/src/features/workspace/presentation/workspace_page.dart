@@ -65,7 +65,9 @@ class _WorkspacePageState extends State<WorkspacePage> {
                   final pressed = HardwareKeyboard.instance.logicalKeysPressed
                       .map((k) => k.debugName)
                       .join(', ');
-                  debugPrint('Key event: logical=${event.logicalKey.debugName}, physical=${event.physicalKey.debugName}, type=${event.runtimeType}, pressed=[$pressed]');
+                  debugPrint(
+                    'Key event: logical=${event.logicalKey.debugName}, physical=${event.physicalKey.debugName}, type=${event.runtimeType}, pressed=[$pressed]',
+                  );
                   return KeyEventResult.ignored;
                 },
                 child: Scaffold(
@@ -93,7 +95,9 @@ class _WorkspacePageState extends State<WorkspacePage> {
                                       right: 0,
                                       child: Center(
                                         child: ConstrainedBox(
-                                          constraints: const BoxConstraints(maxWidth: 640),
+                                          constraints: const BoxConstraints(
+                                            maxWidth: 640,
+                                          ),
                                           child: _buildToolsSection(context),
                                         ),
                                       ),
@@ -213,36 +217,67 @@ class _WorkspacePageState extends State<WorkspacePage> {
     return {
       // Tool shortcuts - only single key, no modifiers
       // These will be skipped when focus is on text fields
-      const SingleActivator(LogicalKeyboardKey.keyV): const _ToolIntent(CanvasTool.select),
-      const SingleActivator(LogicalKeyboardKey.keyA): const _ToolIntent(CanvasTool.directSelect),
-      const SingleActivator(LogicalKeyboardKey.keyR): const _ToolIntent(CanvasTool.rectangle),
-      const SingleActivator(LogicalKeyboardKey.keyO): const _ToolIntent(CanvasTool.ellipse),
-      const SingleActivator(LogicalKeyboardKey.keyP): const _ToolIntent(CanvasTool.path),
-      const SingleActivator(LogicalKeyboardKey.keyT): const _ToolIntent(CanvasTool.text),
-      const SingleActivator(LogicalKeyboardKey.keyF): const _ToolIntent(CanvasTool.frame),
-      const SingleActivator(LogicalKeyboardKey.keyH): const _ToolIntent(CanvasTool.hand),
-      const SingleActivator(LogicalKeyboardKey.keyZ): const _ToolIntent(CanvasTool.zoom),
-      const SingleActivator(LogicalKeyboardKey.keyC): const _ToolIntent(CanvasTool.comment),
+      const SingleActivator(LogicalKeyboardKey.keyV):
+          const _ToolIntent(CanvasTool.select),
+      const SingleActivator(LogicalKeyboardKey.keyA):
+          const _ToolIntent(CanvasTool.directSelect),
+      const SingleActivator(LogicalKeyboardKey.keyR):
+          const _ToolIntent(CanvasTool.rectangle),
+      const SingleActivator(LogicalKeyboardKey.keyO):
+          const _ToolIntent(CanvasTool.ellipse),
+      const SingleActivator(LogicalKeyboardKey.keyP):
+          const _ToolIntent(CanvasTool.path),
+      const SingleActivator(LogicalKeyboardKey.keyT):
+          const _ToolIntent(CanvasTool.text),
+      const SingleActivator(LogicalKeyboardKey.keyF):
+          const _ToolIntent(CanvasTool.frame),
+      const SingleActivator(LogicalKeyboardKey.keyH):
+          const _ToolIntent(CanvasTool.hand),
+      const SingleActivator(LogicalKeyboardKey.keyZ):
+          const _ToolIntent(CanvasTool.zoom),
+      const SingleActivator(LogicalKeyboardKey.keyC):
+          const _ToolIntent(CanvasTool.comment),
 
       // View shortcuts - with modifiers, safe to use
-      const SingleActivator(LogicalKeyboardKey.backquote, control: true): const _GridToggleIntent(),
-      const SingleActivator(LogicalKeyboardKey.quote, control: true): const _SnapToggleIntent(),
-      const SingleActivator(LogicalKeyboardKey.keyR, control: true, shift: true): const _RulersToggleIntent(),
+      const SingleActivator(LogicalKeyboardKey.backquote, control: true):
+          const _GridToggleIntent(),
+      const SingleActivator(LogicalKeyboardKey.quote, control: true):
+          const _SnapToggleIntent(),
+      const SingleActivator(
+        LogicalKeyboardKey.keyR,
+        control: true,
+        shift: true,
+      ): const _RulersToggleIntent(),
 
       // Panel shortcuts
-      const SingleActivator(LogicalKeyboardKey.backslash, control: true): const _LeftPanelToggleIntent(),
-      const SingleActivator(LogicalKeyboardKey.backslash, control: true, shift: true): const _RightPanelToggleIntent(),
+      const SingleActivator(LogicalKeyboardKey.backslash, control: true):
+          const _LeftPanelToggleIntent(),
+      const SingleActivator(
+        LogicalKeyboardKey.backslash,
+        control: true,
+        shift: true,
+      ): const _RightPanelToggleIntent(),
       // Some platforms report Shift+\\ as LogicalKeyboardKey.bar instead of backslash
-      const SingleActivator(LogicalKeyboardKey.bar, control: true, shift: true): const _RightPanelToggleIntent(),
+      const SingleActivator(LogicalKeyboardKey.bar, control: true, shift: true):
+          const _RightPanelToggleIntent(),
       // Some keyboards send intlBackslash scancode
-      const SingleActivator(LogicalKeyboardKey.intlBackslash, control: true): const _LeftPanelToggleIntent(),
-      const SingleActivator(LogicalKeyboardKey.intlBackslash, control: true, shift: true): const _RightPanelToggleIntent(),
+      const SingleActivator(LogicalKeyboardKey.intlBackslash, control: true):
+          const _LeftPanelToggleIntent(),
+      const SingleActivator(
+        LogicalKeyboardKey.intlBackslash,
+        control: true,
+        shift: true,
+      ): const _RightPanelToggleIntent(),
 
       // Zoom shortcuts
-      const SingleActivator(LogicalKeyboardKey.equal, control: true): const _ZoomInIntent(),
-      const SingleActivator(LogicalKeyboardKey.minus, control: true): const _ZoomOutIntent(),
-      const SingleActivator(LogicalKeyboardKey.digit0, control: true): const _ZoomResetIntent(),
-      const SingleActivator(LogicalKeyboardKey.digit1, control: true): const _ZoomResetIntent(),
+      const SingleActivator(LogicalKeyboardKey.equal, control: true):
+          const _ZoomInIntent(),
+      const SingleActivator(LogicalKeyboardKey.minus, control: true):
+          const _ZoomOutIntent(),
+      const SingleActivator(LogicalKeyboardKey.digit0, control: true):
+          const _ZoomResetIntent(),
+      const SingleActivator(LogicalKeyboardKey.digit1, control: true):
+          const _ZoomResetIntent(),
     };
   }
 

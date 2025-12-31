@@ -10,10 +10,7 @@ extension OffsetExtensions on Offset {
   Offset rotate(double angle) {
     final cos = angle.cos();
     final sin = angle.sin();
-    return Offset(
-      dx * cos - dy * sin,
-      dx * sin + dy * cos,
-    );
+    return Offset(dx * cos - dy * sin, dx * sin + dy * cos);
   }
 
   /// Rotate around a center point by angle (radians)
@@ -23,10 +20,7 @@ extension OffsetExtensions on Offset {
 
   /// Linear interpolation to another offset
   Offset lerpTo(Offset other, double t) {
-    return Offset(
-      dx + (other.dx - dx) * t,
-      dy + (other.dy - dy) * t,
-    );
+    return Offset(dx + (other.dx - dx) * t, dy + (other.dy - dy) * t);
   }
 
   /// Snap to grid
@@ -45,10 +39,7 @@ extension OffsetExtensions on Offset {
 
   /// Clamp both components
   Offset clampTo(double minX, double maxX, double minY, double maxY) {
-    return Offset(
-      dx.clamp(minX, maxX),
-      dy.clamp(minY, maxY),
-    );
+    return Offset(dx.clamp(minX, maxX), dy.clamp(minY, maxY));
   }
 
   /// Normalize to unit vector

@@ -19,39 +19,39 @@ sealed class Result<T, E> {
 
   /// Get the success value or null
   T? get valueOrNull => switch (this) {
-        Success(:final value) => value,
-        Failure() => null,
-      };
+    Success(:final value) => value,
+    Failure() => null,
+  };
 
   /// Get the error or null
   E? get errorOrNull => switch (this) {
-        Success() => null,
-        Failure(:final error) => error,
-      };
+    Success() => null,
+    Failure(:final error) => error,
+  };
 
   /// Get the value or throw the error
   T get valueOrThrow => switch (this) {
-        Success(:final value) => value,
-        Failure(:final error) => throw error as Object,
-      };
+    Success(:final value) => value,
+    Failure(:final error) => throw error as Object,
+  };
 
   /// Get the value or a default
   T valueOr(T defaultValue) => switch (this) {
-        Success(:final value) => value,
-        Failure() => defaultValue,
-      };
+    Success(:final value) => value,
+    Failure() => defaultValue,
+  };
 
   /// Map the success value
   Result<U, E> map<U>(U Function(T value) transform) => switch (this) {
-        Success(:final value) => Result.success(transform(value)),
-        Failure(:final error) => Result.failure(error),
-      };
+    Success(:final value) => Result.success(transform(value)),
+    Failure(:final error) => Result.failure(error),
+  };
 
   /// Map the error value
   Result<T, F> mapError<F>(F Function(E error) transform) => switch (this) {
-        Success(:final value) => Result.success(value),
-        Failure(:final error) => Result.failure(transform(error)),
-      };
+    Success(:final value) => Result.success(value),
+    Failure(:final error) => Result.failure(transform(error)),
+  };
 
   /// FlatMap the success value
   Result<U, E> flatMap<U>(Result<U, E> Function(T value) transform) =>
@@ -80,11 +80,10 @@ sealed class Result<T, E> {
   R fold<R>({
     required R Function(T value) onSuccess,
     required R Function(E error) onFailure,
-  }) =>
-      switch (this) {
-        Success(:final value) => onSuccess(value),
-        Failure(:final error) => onFailure(error),
-      };
+  }) => switch (this) {
+    Success(:final value) => onSuccess(value),
+    Failure(:final error) => onFailure(error),
+  };
 }
 
 /// Successful result containing a value

@@ -20,11 +20,7 @@ enum VioButtonVariant {
 }
 
 /// Button sizes
-enum VioButtonSize {
-  small,
-  medium,
-  large,
-}
+enum VioButtonSize { small, medium, large }
 
 /// Vio Design System Button
 class VioButton extends StatelessWidget {
@@ -184,17 +180,19 @@ class VioButton extends StatelessWidget {
     final children = <Widget>[];
 
     if (leadingIcon != null) {
-      children.add(Icon(leadingIcon,
+      children.add(
+        Icon(
+          leadingIcon,
           size: _getIconSize(),
           color: variant == VioButtonVariant.primary
               ? VioColors.background
-              : null));
+              : null,
+        ),
+      );
       children.add(const SizedBox(width: VioSpacing.xs));
     }
 
-    children.add(
-      Text(label, style: _getTextStyle().copyWith(color: color)),
-    );
+    children.add(Text(label, style: _getTextStyle().copyWith(color: color)));
 
     if (trailingIcon != null) {
       children.add(const SizedBox(width: VioSpacing.xs));

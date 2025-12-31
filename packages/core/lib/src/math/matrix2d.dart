@@ -39,14 +39,7 @@ class Matrix2D {
   });
 
   /// Identity matrix - no transformation
-  static const Matrix2D identity = Matrix2D(
-    a: 1,
-    b: 0,
-    c: 0,
-    d: 1,
-    e: 0,
-    f: 0,
-  );
+  static const Matrix2D identity = Matrix2D(a: 1, b: 0, c: 0, d: 1, e: 0, f: 0);
 
   /// Creates a translation matrix
   factory Matrix2D.translation(double tx, double ty) {
@@ -60,14 +53,7 @@ class Matrix2D {
 
   /// Creates a scale matrix around a center point
   factory Matrix2D.scaleAt(double sx, double sy, double cx, double cy) {
-    return Matrix2D(
-      a: sx,
-      b: 0,
-      c: 0,
-      d: sy,
-      e: cx - cx * sx,
-      f: cy - cy * sy,
-    );
+    return Matrix2D(a: sx, b: 0, c: 0, d: sy, e: cx - cx * sx, f: cy - cy * sy);
   }
 
   /// Creates a rotation matrix around origin (angle in radians)
@@ -109,10 +95,7 @@ class Matrix2D {
 
   /// Transform a point using this matrix
   ({double x, double y}) transformPoint(double x, double y) {
-    return (
-      x: a * x + c * y + e,
-      y: b * x + d * y + f,
-    );
+    return (x: a * x + c * y + e, y: b * x + d * y + f);
   }
 
   /// Calculate the inverse of this matrix
@@ -162,10 +145,7 @@ class Matrix2D {
 
   /// Extract scale factors from the matrix
   ({double x, double y}) get scale {
-    return (
-      x: math.sqrt(a * a + b * b),
-      y: math.sqrt(c * c + d * d),
-    );
+    return (x: math.sqrt(a * a + b * b), y: math.sqrt(c * c + d * d));
   }
 
   /// Extract rotation angle from the matrix (in radians)

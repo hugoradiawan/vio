@@ -1,10 +1,11 @@
 name: vio
 repository: https://github.com/user/vio
+sdkPath: .fvm/flutter_sdk
 
 packages:
-  - apps/*
-  - packages/*
-  - features/*
+  - apps/**
+  - packages/**
+  - features/**
 
 ide:
   intellij:
@@ -78,14 +79,13 @@ scripts:
 
   # Run apps
   run:client:web:
-    run: cd apps/client && flutter run -d chrome
+    run: cd apps/client && fvm flutter run -d chrome
     description: Run client app on web
 
   run:client:windows:
-    run: cd apps/client && flutter run -d windows
+    run: cd apps/client && fvm flutter run -d windows
     description: Run client app on Windows
 
   run:client:macos:
-    run: cd apps/client && flutter run -d macos
+    run: cd apps/client && fvm flutter run -d macos
     description: Run client app on macOS
-sdkPath: .fvm/flutter_sdk

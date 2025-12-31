@@ -60,20 +60,14 @@ class Point2D {
 
   /// Linear interpolation
   Point2D lerp(Point2D other, double t) {
-    return Point2D(
-      x + (other.x - x) * t,
-      y + (other.y - y) * t,
-    );
+    return Point2D(x + (other.x - x) * t, y + (other.y - y) * t);
   }
 
   /// Rotate around origin by angle (radians)
   Point2D rotate(double angle) {
     final cos = math.cos(angle);
     final sin = math.sin(angle);
-    return Point2D(
-      x * cos - y * sin,
-      y * cos + x * sin,
-    );
+    return Point2D(x * cos - y * sin, y * cos + x * sin);
   }
 
   /// Rotate around a center point by angle (radians)
@@ -88,10 +82,7 @@ class Point2D {
 
   /// Clamp both coordinates
   Point2D clamp(double minX, double maxX, double minY, double maxY) {
-    return Point2D(
-      x.clamp(minX, maxX),
-      y.clamp(minY, maxY),
-    );
+    return Point2D(x.clamp(minX, maxX), y.clamp(minY, maxY));
   }
 
   /// Round to nearest integer

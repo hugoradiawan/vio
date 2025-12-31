@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:injectable/injectable.dart';
 import 'package:vio_core/vio_core.dart';
 
 part 'canvas_event.dart';
@@ -11,7 +10,6 @@ part 'canvas_state.dart';
 /// - Shapes on canvas
 /// - Selection state
 /// - Interaction mode
-@injectable
 class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
   CanvasBloc() : super(const CanvasState()) {
     on<CanvasInitialized>(_onInitialized);

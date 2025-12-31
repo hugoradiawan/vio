@@ -127,17 +127,17 @@ class FrameShape extends Shape {
 
   @override
   List<Object?> get props => [
-        ...super.props,
-        x,
-        y,
-        frameWidth,
-        frameHeight,
-        clipContent,
-        showContent,
-        children,
-        gridLayout,
-        flexLayout,
-      ];
+    ...super.props,
+    x,
+    y,
+    frameWidth,
+    frameHeight,
+    clipContent,
+    showContent,
+    children,
+    gridLayout,
+    flexLayout,
+  ];
 }
 
 /// Grid layout configuration for frames
@@ -192,26 +192,10 @@ class FrameFlexLayout {
 }
 
 /// Flex layout direction
-enum FlexDirection {
-  horizontal,
-  vertical,
-}
+enum FlexDirection { horizontal, vertical }
 
 /// Flex cross-axis alignment
-enum FlexAlign {
-  start,
-  center,
-  end,
-  stretch,
-  baseline,
-}
+enum FlexAlign { start, center, end, stretch, baseline }
 
 /// Flex main-axis distribution
-enum FlexJustify {
-  start,
-  center,
-  end,
-  spaceBetween,
-  spaceAround,
-  spaceEvenly,
-}
+enum FlexJustify { start, center, end, spaceBetween, spaceAround, spaceEvenly }

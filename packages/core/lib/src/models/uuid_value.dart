@@ -30,8 +30,9 @@ class UuidValue {
   }
 
   /// Zero UUID (nil UUID)
-  static const UuidValue zero =
-      UuidValue._('00000000-0000-0000-0000-000000000000');
+  static const UuidValue zero = UuidValue._(
+    '00000000-0000-0000-0000-000000000000',
+  );
 
   /// Check if this is the zero/nil UUID
   bool get isZero => value == zero.value;

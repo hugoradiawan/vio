@@ -51,10 +51,7 @@ class VioIconButton extends StatelessWidget {
     );
 
     if (tooltip != null) {
-      button = Tooltip(
-        message: tooltip!,
-        child: button,
-      );
+      button = Tooltip(message: tooltip!, child: button);
     }
 
     return button;
@@ -64,8 +61,10 @@ class VioIconButton extends StatelessWidget {
     return switch (variant) {
       VioIconButtonVariant.ghost => _buildGhostButton(iconSize, isDisabled),
       VioIconButtonVariant.filled => _buildFilledButton(iconSize, isDisabled),
-      VioIconButtonVariant.outlined =>
-        _buildOutlinedButton(iconSize, isDisabled),
+      VioIconButtonVariant.outlined => _buildOutlinedButton(
+        iconSize,
+        isDisabled,
+      ),
     };
   }
 
@@ -82,19 +81,16 @@ class VioIconButton extends StatelessWidget {
         hoverColor: VioColors.hoverOverlay,
         splashColor: VioColors.pressedOverlay,
         child: Center(
-          child: Icon(
-            icon,
-            size: iconSize,
-            color: iconColor,
-          ),
+          child: Icon(icon, size: iconSize, color: iconColor),
         ),
       ),
     );
   }
 
   Widget _buildFilledButton(double iconSize, bool isDisabled) {
-    final iconColor =
-        isDisabled ? VioColors.textDisabled : VioColors.background;
+    final iconColor = isDisabled
+        ? VioColors.textDisabled
+        : VioColors.background;
     final bgColor = isSelected
         ? VioColors.primary
         : (isDisabled ? VioColors.surfaceElevated : VioColors.primary);
@@ -108,11 +104,7 @@ class VioIconButton extends StatelessWidget {
         hoverColor: VioColors.hoverOverlay,
         splashColor: VioColors.pressedOverlay,
         child: Center(
-          child: Icon(
-            icon,
-            size: iconSize,
-            color: iconColor,
-          ),
+          child: Icon(icon, size: iconSize, color: iconColor),
         ),
       ),
     );
@@ -136,11 +128,7 @@ class VioIconButton extends StatelessWidget {
           hoverColor: VioColors.hoverOverlay,
           splashColor: VioColors.pressedOverlay,
           child: Center(
-            child: Icon(
-              icon,
-              size: iconSize,
-              color: iconColor,
-            ),
+            child: Icon(icon, size: iconSize, color: iconColor),
           ),
         ),
       ),

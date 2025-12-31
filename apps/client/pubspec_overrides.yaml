@@ -1,6 +1,0 @@
-# melos_managed_dependency_overrides: vio_core,vio_ui_kit
-dependency_overrides:
-  vio_core:
-    path: ..\\..\\packages\\core
-  vio_ui_kit:
-    path: ..\\..\\packages\\ui_kit

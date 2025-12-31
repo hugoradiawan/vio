@@ -118,6 +118,15 @@ class RectangleShape extends Shape {
   }
 
   @override
-  List<Object?> get props =>
-      [...super.props, x, y, rectWidth, rectHeight, r1, r2, r3, r4];
+  List<Object?> get props => [
+    ...super.props,
+    x,
+    y,
+    rectWidth,
+    rectHeight,
+    r1,
+    r2,
+    r3,
+    r4,
+  ];
 }

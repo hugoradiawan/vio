@@ -42,23 +42,17 @@ class Rect2D {
     final minY = math.min(p1.y, p2.y);
     final maxX = math.max(p1.x, p2.x);
     final maxY = math.max(p1.y, p2.y);
-    return Rect2D(
-      x: minX,
-      y: minY,
-      width: maxX - minX,
-      height: maxY - minY,
-    );
+    return Rect2D(x: minX, y: minY, width: maxX - minX, height: maxY - minY);
   }
 
   /// Create from left, top, right, bottom
   factory Rect2D.fromLTRB(
-      double left, double top, double right, double bottom) {
-    return Rect2D(
-      x: left,
-      y: top,
-      width: right - left,
-      height: bottom - top,
-    );
+    double left,
+    double top,
+    double right,
+    double bottom,
+  ) {
+    return Rect2D(x: left, y: top, width: right - left, height: bottom - top);
   }
 
   // Getters for edges
@@ -183,12 +177,7 @@ class Rect2D {
   int get hashCode => Object.hash(x, y, width, height);
 
   /// Copy with modifications
-  Rect2D copyWith({
-    double? x,
-    double? y,
-    double? width,
-    double? height,
-  }) {
+  Rect2D copyWith({double? x, double? y, double? width, double? height}) {
     return Rect2D(
       x: x ?? this.x,
       y: y ?? this.y,

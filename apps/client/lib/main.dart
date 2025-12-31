@@ -5,7 +5,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:vio_core/vio_core.dart';
 
 import 'src/app.dart';
-import 'src/di/injection.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,12 +16,9 @@ void main() async {
   // Use web storage for web platform, otherwise use application documents directory
   HydratedBloc.storage = await HydratedStorage.build(
     storageDirectory: kIsWeb
-        ? HydratedStorage.webStorageDirectory
-        : await getApplicationDocumentsDirectory(),
+        ? HydratedStorageDirectory.web
+        : HydratedStorageDirectory((await getTemporaryDirectory()).path),
   );
-
-  // Initialize dependency injection
-  await configureDependencies();
 
   // Set up Bloc observer for debugging
   Bloc.observer = const VioBlocObserver();

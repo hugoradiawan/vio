@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:injectable/injectable.dart';
 
 part 'workspace_event.dart';
 part 'workspace_state.dart';
@@ -10,7 +9,6 @@ part 'workspace_state.dart';
 /// - Tool selection
 /// - Panel visibility
 /// - Zoom level
-@injectable
 class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
   WorkspaceBloc() : super(const WorkspaceState()) {
     on<WorkspaceInitialized>(_onInitialized);

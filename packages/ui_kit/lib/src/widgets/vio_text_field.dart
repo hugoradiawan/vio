@@ -208,9 +208,7 @@ class _VioNumericFieldState extends State<VioNumericField> {
           signed: true,
         ),
         textAlign: TextAlign.center,
-        style: VioTypography.bodyMedium.copyWith(
-          color: VioColors.textPrimary,
-        ),
+        style: VioTypography.bodyMedium.copyWith(color: VioColors.textPrimary),
         onSubmitted: (_) => _commitValue(),
         decoration: InputDecoration(
           contentPadding: const EdgeInsets.symmetric(

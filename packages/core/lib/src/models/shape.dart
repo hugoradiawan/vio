@@ -133,23 +133,23 @@ abstract class Shape extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        type,
-        parentId,
-        frameId,
-        transform,
-        selrect,
-        fills,
-        strokes,
-        opacity,
-        hidden,
-        blocked,
-        rotation,
-        constraints,
-        shadow,
-        blur,
-      ];
+    id,
+    name,
+    type,
+    parentId,
+    frameId,
+    transform,
+    selrect,
+    fills,
+    strokes,
+    opacity,
+    hidden,
+    blocked,
+    rotation,
+    constraints,
+    shadow,
+    blur,
+  ];
 }
 
 /// Shape type discriminator
@@ -224,25 +224,13 @@ class ShapeStroke extends Equatable {
 }
 
 /// Stroke alignment options
-enum StrokeAlignment {
-  inside,
-  center,
-  outside,
-}
+enum StrokeAlignment { inside, center, outside }
 
 /// Stroke cap styles
-enum StrokeCap {
-  butt,
-  round,
-  square,
-}
+enum StrokeCap { butt, round, square }
 
 /// Stroke join styles
-enum StrokeJoin {
-  miter,
-  round,
-  bevel,
-}
+enum StrokeJoin { miter, round, bevel }
 
 /// Gradient definition
 class ShapeGradient extends Equatable {
@@ -267,10 +255,7 @@ class ShapeGradient extends Equatable {
 }
 
 /// Gradient types
-enum GradientType {
-  linear,
-  radial,
-}
+enum GradientType { linear, radial }
 
 /// Gradient color stop
 class GradientStop extends Equatable {
@@ -290,12 +275,7 @@ class GradientStop extends Equatable {
 
 /// Image fill definition
 class ShapeFillImage extends Equatable {
-  const ShapeFillImage({
-    required this.id,
-    this.width,
-    this.height,
-    this.mtype,
-  });
+  const ShapeFillImage({required this.id, this.width, this.height, this.mtype});
 
   final String id;
   final double? width;
@@ -358,23 +338,20 @@ class ShapeShadow extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        style,
-        color,
-        opacity,
-        offsetX,
-        offsetY,
-        blur,
-        spread,
-        hidden,
-      ];
+    id,
+    style,
+    color,
+    opacity,
+    offsetX,
+    offsetY,
+    blur,
+    spread,
+    hidden,
+  ];
 }
 
 /// Shadow styles
-enum ShadowStyle {
-  dropShadow,
-  innerShadow,
-}
+enum ShadowStyle { dropShadow, innerShadow }
 
 /// Blur effect
 class ShapeBlur extends Equatable {
@@ -395,7 +372,4 @@ class ShapeBlur extends Equatable {
 }
 
 /// Blur types
-enum BlurType {
-  layer,
-  background,
-}
+enum BlurType { layer, background }

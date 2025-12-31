@@ -8,6 +8,7 @@ import '../../workspace/bloc/workspace_bloc.dart';
 import '../bloc/canvas_bloc.dart';
 import 'painters/canvas_painter.dart';
 import 'painters/grid_painter.dart';
+import 'painters/selection_box_painter.dart';
 
 /// Main canvas view with infinite pan/zoom capability
 class CanvasView extends StatefulWidget {
@@ -51,120 +52,139 @@ class _CanvasViewState extends State<CanvasView> {
                 builder: (context, workspaceState) {
                   return MouseRegion(
                     cursor: _getCursor(workspaceState.activeTool),
-                    child: GestureDetector(
-                      // Trackpad pinch-to-zoom
-                      onScaleStart: (details) {
+                    child: Listener(
+                      onPointerDown: (event) =>
+                          _handlePointerDown(context, event, workspaceState),
+                      onPointerMove: (event) =>
+                          _handlePointerMove(context, event, workspaceState),
+                      onPointerUp: (event) => _handlePointerUp(context, event),
+                      onPointerSignal: (event) =>
+                          _handlePointerSignal(context, event),
+                      onPointerPanZoomStart: (event) {
+                        // Trackpad pan/zoom gesture started
                         _lastScale = 1.0;
                       },
-                      onScaleUpdate: (details) {
-                        if (details.pointerCount >= 2) {
-                          // Pinch zoom
-                          final scaleChange = details.scale / _lastScale;
-                          _lastScale = details.scale;
+                      onPointerPanZoomUpdate: (event) {
+                        // Handle trackpad pan and zoom
+                        if (event.scale != 1.0) {
+                          // Pinch zoom on trackpad
+                          final scaleChange = event.scale / _lastScale;
+                          _lastScale = event.scale;
                           context.read<CanvasBloc>().add(
                                 ViewportZoomed(
                                   scaleFactor: scaleChange,
-                                  focalX: details.localFocalPoint.dx,
-                                  focalY: details.localFocalPoint.dy,
+                                  focalX: event.localPosition.dx,
+                                  focalY: event.localPosition.dy,
+                                ),
+                              );
+                        }
+                        // Pan from trackpad
+                        if (event.panDelta != Offset.zero) {
+                          context.read<CanvasBloc>().add(
+                                ViewportPanned(
+                                  deltaX: event.panDelta.dx,
+                                  deltaY: event.panDelta.dy,
                                 ),
                               );
                         }
                       },
-                      onScaleEnd: (details) {
+                      onPointerPanZoomEnd: (event) {
                         _lastScale = 1.0;
                       },
-                      child: Listener(
-                        onPointerDown: (event) =>
-                            _handlePointerDown(context, event, workspaceState),
-                        onPointerMove: (event) =>
-                            _handlePointerMove(context, event, workspaceState),
-                        onPointerUp: (event) =>
-                            _handlePointerUp(context, event),
-                        onPointerSignal: (event) =>
-                            _handlePointerSignal(context, event),
-                        child: ClipRect(
-                          child: Stack(
-                            children: [
-                              // Background
-                              Positioned.fill(
-                                child: Container(
-                                  color: VioColors.canvasBackground,
-                                ),
+                      child: ClipRect(
+                        child: Stack(
+                          children: [
+                            // Background
+                            Positioned.fill(
+                              child: Container(
+                                color: VioColors.canvasBackground,
                               ),
+                            ),
 
-                              // Grid layer
-                              if (workspaceState.showGrid)
-                                Positioned.fill(
-                                  child: CustomPaint(
-                                    painter: GridPainter(
-                                      gridSize: workspaceState.gridSize,
-                                      zoom: canvasState.zoom,
-                                      offset: Offset(
-                                        canvasState.viewportOffset.x,
-                                        canvasState.viewportOffset.y,
-                                      ),
+                            // Grid layer
+                            if (workspaceState.showGrid)
+                              Positioned.fill(
+                                child: CustomPaint(
+                                  painter: GridPainter(
+                                    gridSize: workspaceState.gridSize,
+                                    zoom: canvasState.zoom,
+                                    offset: Offset(
+                                      canvasState.viewportOffset.x,
+                                      canvasState.viewportOffset.y,
                                     ),
                                   ),
                                 ),
+                              ),
 
-                              // Canvas content layer
+                            // Canvas content layer
+                            Positioned.fill(
+                              child: CustomPaint(
+                                painter: CanvasPainter(
+                                  viewMatrix: canvasState.viewMatrix,
+                                  shapes: canvasState.shapeList,
+                                  dragRect: canvasState.dragRect,
+                                  selectedShapeIds:
+                                      canvasState.selectedShapeIds,
+                                ),
+                              ),
+                            ),
+
+                            // Selection box layer
+                            if (canvasState.hasSelection)
                               Positioned.fill(
                                 child: CustomPaint(
-                                  painter: CanvasPainter(
+                                  painter: SelectionBoxPainter(
+                                    selectedShapes: canvasState.selectedShapes,
                                     viewMatrix: canvasState.viewMatrix,
-                                    dragRect: canvasState.dragRect,
-                                    selectedShapeIds:
-                                        canvasState.selectedShapeIds,
                                   ),
                                 ),
                               ),
 
-                              // Rulers
-                              if (workspaceState.showRulers) ...[
-                                // Horizontal ruler
-                                Positioned(
-                                  top: 0,
-                                  left: 20,
-                                  right: 0,
-                                  height: 20,
-                                  child: _HorizontalRuler(
-                                    offset: canvasState.viewportOffset.x,
-                                    zoom: canvasState.zoom,
-                                  ),
-                                ),
-                                // Vertical ruler
-                                Positioned(
-                                  top: 20,
-                                  left: 0,
-                                  bottom: 0,
-                                  width: 20,
-                                  child: _VerticalRuler(
-                                    offset: canvasState.viewportOffset.y,
-                                    zoom: canvasState.zoom,
-                                  ),
-                                ),
-                                // Corner
-                                Positioned(
-                                  top: 0,
-                                  left: 0,
-                                  width: 20,
-                                  height: 20,
-                                  child: Container(
-                                    color: VioColors.surface2,
-                                  ),
-                                ),
-                              ],
-
-                              // Coordinates display
+                            // Rulers
+                            if (workspaceState.showRulers) ...[
+                              // Horizontal ruler
                               Positioned(
-                                bottom: VioSpacing.sm,
-                                left: VioSpacing.sm,
-                                child: _CoordinatesDisplay(
-                                  pointer: canvasState.currentPointer,
+                                top: 0,
+                                left: 20,
+                                right: 0,
+                                height: 20,
+                                child: _HorizontalRuler(
+                                  offset: canvasState.viewportOffset.x,
+                                  zoom: canvasState.zoom,
+                                ),
+                              ),
+                              // Vertical ruler
+                              Positioned(
+                                top: 20,
+                                left: 0,
+                                bottom: 0,
+                                width: 20,
+                                child: _VerticalRuler(
+                                  offset: canvasState.viewportOffset.y,
+                                  zoom: canvasState.zoom,
+                                ),
+                              ),
+                              // Corner
+                              Positioned(
+                                top: 0,
+                                left: 0,
+                                width: 20,
+                                height: 20,
+                                child: Container(
+                                  color: VioColors.surface2,
                                 ),
                               ),
                             ],
-                          ),
+
+                            // Coordinates display
+                            Positioned(
+                              bottom: VioSpacing.sm,
+                              left: VioSpacing.sm,
+                              child: _CoordinatesDisplay(
+                                pointer: canvasState.currentPointer,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),

@@ -1,19 +1,24 @@
-import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:vio_core/vio_core.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
+
+import 'shape_painter.dart';
 
 /// Main canvas painter for rendering shapes and selection
 class CanvasPainter extends CustomPainter {
   CanvasPainter({
     required this.viewMatrix,
+    required this.shapes,
     this.dragRect,
     this.selectedShapeIds = const [],
   });
 
   /// Transformation matrix for viewport
   final Matrix2D viewMatrix;
+
+  /// All shapes to render
+  final List<Shape> shapes;
 
   /// Current drag selection rectangle (in canvas coordinates)
   final Rect2D? dragRect;
@@ -46,9 +51,18 @@ class CanvasPainter extends CustomPainter {
       ]),
     );
 
-    // TODO: Draw shapes here
-    // For now, draw a sample rectangle to show canvas is working
-    _drawSampleContent(canvas);
+    // Draw all shapes
+    for (final shape in shapes) {
+      ShapePainter.paintShape(canvas, shape);
+
+      // Draw frame name labels
+      if (shape.type == ShapeType.frame) {
+        _drawFrameLabel(canvas, shape as FrameShape);
+      }
+    }
+
+    // Draw selection outlines for selected shapes
+    _drawSelectionOutlines(canvas);
 
     canvas.restore();
 
@@ -58,51 +72,50 @@ class CanvasPainter extends CustomPainter {
     }
   }
 
-  void _drawSampleContent(Canvas canvas) {
-    // Draw a sample frame to show the canvas is working
-    final framePaint = Paint()
-      ..color = VioColors.surface2
-      ..style = PaintingStyle.fill;
+  void _drawSelectionOutlines(Canvas canvas) {
+    if (selectedShapeIds.isEmpty) return;
 
-    final frameBorderPaint = Paint()
-      ..color = VioColors.border
+    final outlinePaint = Paint()
+      ..color = VioColors.canvasSelection
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
+      ..strokeWidth = 1.5;
 
-    // Sample artboard/frame at origin
-    const frameRect = Rect.fromLTWH(0, 0, 800, 600);
-    canvas.drawRect(frameRect, framePaint);
-    canvas.drawRect(frameRect, frameBorderPaint);
+    for (final shape in shapes) {
+      if (!selectedShapeIds.contains(shape.id)) continue;
 
-    // Frame label
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: 'Frame 1',
-        style: VioTypography.caption.copyWith(
-          color: VioColors.textSecondary,
-          fontSize: 11,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout();
-    textPainter.paint(canvas, const Offset(0, -18));
+      final bounds = shape.bounds;
+      final rect = Rect.fromLTWH(
+        bounds.left,
+        bounds.top,
+        bounds.width,
+        bounds.height,
+      );
 
-    // Draw origin marker
-    final originPaint = Paint()
-      ..color = VioColors.primary.withValues(alpha: 0.5)
-      ..strokeWidth = 2;
-
-    canvas.drawLine(
-      const Offset(-10, 0),
-      const Offset(10, 0),
-      originPaint,
-    );
-    canvas.drawLine(
-      const Offset(0, -10),
-      const Offset(0, 10),
-      originPaint,
-    );
+      canvas.save();
+      // Apply shape transform for outline
+      canvas.transform(
+        Float64List.fromList([
+          shape.transform.a,
+          shape.transform.b,
+          0,
+          0,
+          shape.transform.c,
+          shape.transform.d,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          shape.transform.e,
+          shape.transform.f,
+          0,
+          1,
+        ]),
+      );
+      canvas.drawRect(rect, outlinePaint);
+      canvas.restore();
+    }
   }
 
   void _drawSelectionRect(Canvas canvas, Size size) {
@@ -137,10 +150,63 @@ class CanvasPainter extends CustomPainter {
     return Point2D(result.x, result.y);
   }
 
+  void _drawFrameLabel(Canvas canvas, FrameShape frame) {
+    final bounds = frame.bounds;
+    final isSelected = selectedShapeIds.contains(frame.id);
+
+    // Position label above the frame
+    const labelHeight = 20.0;
+    const labelPadding = 8.0;
+    final labelY = bounds.top - labelHeight - 4; // 4px gap
+
+    // Draw label text
+    final textStyle = TextStyle(
+      color: isSelected ? VioColors.canvasSelection : VioColors.textSecondary,
+      fontSize: 12,
+      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+    );
+
+    final textSpan = TextSpan(
+      text: frame.name,
+      style: textStyle,
+    );
+
+    final textPainter = TextPainter(
+      text: textSpan,
+      textDirection: TextDirection.ltr,
+    );
+
+    textPainter.layout();
+
+    // Draw background if selected
+    if (isSelected) {
+      final bgRect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          bounds.left - 4,
+          labelY,
+          textPainter.width + labelPadding * 2,
+          labelHeight,
+        ),
+        const Radius.circular(4),
+      );
+      final bgPaint = Paint()
+        ..color = VioColors.canvasSelection.withValues(alpha: 0.15);
+      canvas.drawRRect(bgRect, bgPaint);
+    }
+
+    // Draw text
+    textPainter.paint(
+      canvas,
+      Offset(bounds.left, labelY + (labelHeight - textPainter.height) / 2),
+    );
+  }
+
   @override
   bool shouldRepaint(CanvasPainter oldDelegate) {
+    // Use listEquals for proper deep comparison of lists
     return viewMatrix != oldDelegate.viewMatrix ||
+        !listEquals(shapes, oldDelegate.shapes) ||
         dragRect != oldDelegate.dragRect ||
-        selectedShapeIds != oldDelegate.selectedShapeIds;
+        !listEquals(selectedShapeIds, oldDelegate.selectedShapeIds);
   }
 }

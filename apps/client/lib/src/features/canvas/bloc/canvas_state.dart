@@ -30,6 +30,7 @@ class CanvasState extends Equatable {
     this.interactionMode = InteractionMode.idle,
     this.dragStart,
     this.currentPointer,
+    this.shapes = const {},
     this.selectedShapeIds = const [],
     this.hoveredShapeId,
   });
@@ -52,11 +53,21 @@ class CanvasState extends Equatable {
   /// Current pointer position (canvas coordinates)
   final Point2D? currentPointer;
 
+  /// All shapes on the canvas, keyed by ID
+  final Map<String, Shape> shapes;
+
   /// IDs of currently selected shapes
   final List<String> selectedShapeIds;
 
   /// ID of shape currently under the pointer
   final String? hoveredShapeId;
+
+  /// Get shapes as an ordered list (for rendering)
+  List<Shape> get shapeList => shapes.values.toList();
+
+  /// Get currently selected shapes
+  List<Shape> get selectedShapes =>
+      selectedShapeIds.map((id) => shapes[id]).whereType<Shape>().toList();
 
   /// Get the visible rectangle in canvas coordinates
   Rect2D get visibleRect {
@@ -107,16 +118,21 @@ class CanvasState extends Equatable {
     InteractionMode? interactionMode,
     Point2D? dragStart,
     Point2D? currentPointer,
+    Map<String, Shape>? shapes,
     List<String>? selectedShapeIds,
     String? hoveredShapeId,
+    bool clearDragStart = false,
+    bool clearCurrentPointer = false,
   }) {
     return CanvasState(
       zoom: zoom ?? this.zoom,
       viewportOffset: viewportOffset ?? this.viewportOffset,
       viewportSize: viewportSize ?? this.viewportSize,
       interactionMode: interactionMode ?? this.interactionMode,
-      dragStart: dragStart ?? this.dragStart,
-      currentPointer: currentPointer ?? this.currentPointer,
+      dragStart: clearDragStart ? null : (dragStart ?? this.dragStart),
+      currentPointer:
+          clearCurrentPointer ? null : (currentPointer ?? this.currentPointer),
+      shapes: shapes ?? this.shapes,
       selectedShapeIds: selectedShapeIds ?? this.selectedShapeIds,
       hoveredShapeId: hoveredShapeId ?? this.hoveredShapeId,
     );
@@ -130,6 +146,7 @@ class CanvasState extends Equatable {
         interactionMode,
         dragStart,
         currentPointer,
+        shapes,
         selectedShapeIds,
         hoveredShapeId,
       ];

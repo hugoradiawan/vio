@@ -141,3 +141,66 @@ class ZoomSet extends CanvasEvent {
   @override
   List<Object?> get props => [zoom];
 }
+
+/// Fired to add a shape to the canvas
+class ShapeAdded extends CanvasEvent {
+  const ShapeAdded(this.shape);
+
+  final Shape shape;
+
+  @override
+  List<Object?> get props => [shape];
+}
+
+/// Fired to add multiple shapes to the canvas
+class ShapesAdded extends CanvasEvent {
+  const ShapesAdded(this.shapes);
+
+  final List<Shape> shapes;
+
+  @override
+  List<Object?> get props => [shapes];
+}
+
+/// Fired to remove a shape from the canvas
+class ShapeRemoved extends CanvasEvent {
+  const ShapeRemoved(this.shapeId);
+
+  final String shapeId;
+
+  @override
+  List<Object?> get props => [shapeId];
+}
+
+/// Fired to update a shape's properties
+class ShapeUpdated extends CanvasEvent {
+  const ShapeUpdated(this.shape);
+
+  final Shape shape;
+
+  @override
+  List<Object?> get props => [shape];
+}
+
+/// Fired to select a single shape
+class ShapeSelected extends CanvasEvent {
+  const ShapeSelected(this.shapeId, {this.addToSelection = false});
+
+  final String shapeId;
+
+  /// If true, add to existing selection (Shift+click)
+  final bool addToSelection;
+
+  @override
+  List<Object?> get props => [shapeId, addToSelection];
+}
+
+/// Fired to select multiple shapes (e.g., from marquee selection)
+class ShapesSelected extends CanvasEvent {
+  const ShapesSelected(this.shapeIds);
+
+  final List<String> shapeIds;
+
+  @override
+  List<Object?> get props => [shapeIds];
+}

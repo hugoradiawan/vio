@@ -23,6 +23,12 @@ class _CanvasViewState extends State<CanvasView> {
   bool _isPanning = false;
   Offset? _lastPanPosition;
   double _lastScale = 1.0;
+  
+  /// Timestamp of last pointer move event (for throttling during drag)
+  int _lastMoveTimestamp = 0;
+  
+  /// Throttle interval in milliseconds (~60fps)
+  static const int _throttleMs = 16;
 
   @override
   Widget build(BuildContext context) {
@@ -130,6 +136,7 @@ class _CanvasViewState extends State<CanvasView> {
                                   viewMatrix: canvasState.viewMatrix,
                                   shapes: canvasState.shapeList,
                                   dragRect: canvasState.dragRect,
+                                  dragOffset: canvasState.dragOffset,
                                   selectedShapeIds:
                                       canvasState.selectedShapeIds,
                                   hoveredShapeId: canvasState.hoveredShapeId,
@@ -145,6 +152,7 @@ class _CanvasViewState extends State<CanvasView> {
                                   painter: SelectionBoxPainter(
                                     selectedShapes: canvasState.selectedShapes,
                                     viewMatrix: canvasState.viewMatrix,
+                                    dragOffset: canvasState.dragOffset,
                                   ),
                                 ),
                               ),
@@ -284,6 +292,13 @@ class _CanvasViewState extends State<CanvasView> {
       _lastPanPosition = event.localPosition;
       return;
     }
+
+    // Throttle pointer move events during shape dragging for better performance
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (now - _lastMoveTimestamp < _throttleMs) {
+      return; // Skip this event
+    }
+    _lastMoveTimestamp = now;
 
     context.read<CanvasBloc>().add(
           PointerMove(

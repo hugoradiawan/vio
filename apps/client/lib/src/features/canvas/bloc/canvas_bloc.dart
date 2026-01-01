@@ -323,27 +323,19 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
   ) {
     final canvasPoint = _screenToCanvas(Point2D(event.x, event.y));
 
-    // Handle shape movement
+    // Handle shape movement - only update dragOffset, not shapes
     if (state.interactionMode == InteractionMode.movingShapes &&
-        state.currentPointer != null &&
+        state.dragStart != null &&
         state.selectedShapeIds.isNotEmpty) {
-      final delta = Point2D(
-        canvasPoint.x - state.currentPointer!.x,
-        canvasPoint.y - state.currentPointer!.y,
+      // Calculate total offset from drag start
+      final newDragOffset = Point2D(
+        canvasPoint.x - state.dragStart!.x,
+        canvasPoint.y - state.dragStart!.y,
       );
-
-      // Move all selected shapes
-      final newShapes = Map<String, Shape>.from(state.shapes);
-      for (final shapeId in state.selectedShapeIds) {
-        final shape = newShapes[shapeId];
-        if (shape != null) {
-          newShapes[shapeId] = shape.moveBy(delta.x, delta.y);
-        }
-      }
 
       emit(
         state.copyWith(
-          shapes: newShapes,
+          dragOffset: newDragOffset,
           currentPointer: canvasPoint,
         ),
       );
@@ -396,14 +388,37 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         ),
       );
     } else if (state.interactionMode == InteractionMode.movingShapes) {
-      // Finished moving shapes - keep selection, just end the mode
-      emit(
-        state.copyWith(
-          interactionMode: InteractionMode.idle,
-          clearDragStart: true,
-          clearCurrentPointer: true,
-        ),
-      );
+      // Finished moving shapes - commit the drag offset to shape positions
+      if (state.dragOffset != null && state.selectedShapeIds.isNotEmpty) {
+        final newShapes = Map<String, Shape>.from(state.shapes);
+        for (final shapeId in state.selectedShapeIds) {
+          final shape = newShapes[shapeId];
+          if (shape != null) {
+            newShapes[shapeId] = shape.moveBy(
+              state.dragOffset!.x,
+              state.dragOffset!.y,
+            );
+          }
+        }
+        emit(
+          state.copyWith(
+            shapes: newShapes,
+            interactionMode: InteractionMode.idle,
+            clearDragStart: true,
+            clearCurrentPointer: true,
+            clearDragOffset: true,
+          ),
+        );
+      } else {
+        emit(
+          state.copyWith(
+            interactionMode: InteractionMode.idle,
+            clearDragStart: true,
+            clearCurrentPointer: true,
+            clearDragOffset: true,
+          ),
+        );
+      }
     } else {
       emit(
         state.copyWith(

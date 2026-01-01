@@ -11,6 +11,7 @@ class CanvasPainter extends CustomPainter {
     required this.viewMatrix,
     required this.shapes,
     this.dragRect,
+    this.dragOffset,
     this.selectedShapeIds = const [],
     this.hoveredShapeId,
     this.hoveredLayerId,
@@ -24,6 +25,9 @@ class CanvasPainter extends CustomPainter {
 
   /// Current drag selection rectangle (in canvas coordinates)
   final Rect2D? dragRect;
+
+  /// Current drag offset for moving shapes (applied at render time)
+  final Point2D? dragOffset;
 
   /// IDs of selected shapes
   final List<String> selectedShapeIds;
@@ -61,11 +65,29 @@ class CanvasPainter extends CustomPainter {
 
     // Draw all shapes
     for (final shape in shapes) {
-      ShapePainter.paintShape(canvas, shape);
+      final isSelected = selectedShapeIds.contains(shape.id);
+      final isDragging = isSelected && dragOffset != null;
+
+      if (isDragging) {
+        // Apply drag offset translation for selected shapes during drag
+        canvas.save();
+        canvas.translate(dragOffset!.x, dragOffset!.y);
+        ShapePainter.paintShape(canvas, shape);
+        canvas.restore();
+      } else {
+        ShapePainter.paintShape(canvas, shape);
+      }
 
       // Draw frame name labels
       if (shape.type == ShapeType.frame) {
-        _drawFrameLabel(canvas, shape as FrameShape);
+        if (isDragging) {
+          canvas.save();
+          canvas.translate(dragOffset!.x, dragOffset!.y);
+          _drawFrameLabel(canvas, shape as FrameShape);
+          canvas.restore();
+        } else {
+          _drawFrameLabel(canvas, shape as FrameShape);
+        }
       }
     }
 
@@ -103,6 +125,10 @@ class CanvasPainter extends CustomPainter {
       );
 
       canvas.save();
+      // Apply drag offset if dragging
+      if (dragOffset != null) {
+        canvas.translate(dragOffset!.x, dragOffset!.y);
+      }
       // Apply shape transform for outline
       canvas.transform(
         Float64List.fromList([
@@ -263,9 +289,14 @@ class CanvasPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(CanvasPainter oldDelegate) {
-    // Use listEquals for proper deep comparison of lists
+    // Fast path: if only dragOffset changed, repaint
+    // This is the most frequent change during dragging
+    if (dragOffset != oldDelegate.dragOffset) return true;
+    
+    // Use identity comparison for shapes (they don't change during drag)
+    if (!identical(shapes, oldDelegate.shapes)) return true;
+    
     return viewMatrix != oldDelegate.viewMatrix ||
-        !listEquals(shapes, oldDelegate.shapes) ||
         dragRect != oldDelegate.dragRect ||
         !listEquals(selectedShapeIds, oldDelegate.selectedShapeIds) ||
         hoveredShapeId != oldDelegate.hoveredShapeId ||

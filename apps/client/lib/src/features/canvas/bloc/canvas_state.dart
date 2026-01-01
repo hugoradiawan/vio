@@ -33,6 +33,7 @@ class CanvasState extends Equatable {
     this.interactionMode = InteractionMode.idle,
     this.dragStart,
     this.currentPointer,
+    this.dragOffset,
     this.shapes = const {},
     this.selectedShapeIds = const [],
     this.hoveredShapeId,
@@ -57,6 +58,10 @@ class CanvasState extends Equatable {
 
   /// Current pointer position (canvas coordinates)
   final Point2D? currentPointer;
+
+  /// Current drag offset for moving shapes (performance optimization)
+  /// Applied at render time instead of mutating shapes during drag
+  final Point2D? dragOffset;
 
   /// All shapes on the canvas, keyed by ID
   final Map<String, Shape> shapes;
@@ -133,6 +138,7 @@ class CanvasState extends Equatable {
     InteractionMode? interactionMode,
     Point2D? dragStart,
     Point2D? currentPointer,
+    Point2D? dragOffset,
     Map<String, Shape>? shapes,
     List<String>? selectedShapeIds,
     String? hoveredShapeId,
@@ -140,6 +146,7 @@ class CanvasState extends Equatable {
     String? hoveredLayerId,
     bool clearDragStart = false,
     bool clearCurrentPointer = false,
+    bool clearDragOffset = false,
     bool clearHoveredShapeId = false,
     bool clearHoveredLayerId = false,
   }) {
@@ -151,6 +158,8 @@ class CanvasState extends Equatable {
       dragStart: clearDragStart ? null : (dragStart ?? this.dragStart),
       currentPointer:
           clearCurrentPointer ? null : (currentPointer ?? this.currentPointer),
+      dragOffset:
+          clearDragOffset ? null : (dragOffset ?? this.dragOffset),
       shapes: shapes ?? this.shapes,
       selectedShapeIds: selectedShapeIds ?? this.selectedShapeIds,
       hoveredShapeId:
@@ -169,6 +178,7 @@ class CanvasState extends Equatable {
         interactionMode,
         dragStart,
         currentPointer,
+        dragOffset,
         shapes,
         selectedShapeIds,
         hoveredShapeId,

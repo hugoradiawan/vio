@@ -43,6 +43,7 @@ class SelectionBoxPainter extends CustomPainter {
   SelectionBoxPainter({
     required this.selectedShapes,
     required this.viewMatrix,
+    this.dragOffset,
     this.handleSize = 8.0,
     this.rotationHandleOffset = 24.0,
   });
@@ -52,6 +53,9 @@ class SelectionBoxPainter extends CustomPainter {
 
   /// View transformation matrix
   final Matrix2D viewMatrix;
+
+  /// Current drag offset (applied at render time)
+  final Point2D? dragOffset;
 
   /// Size of resize handles
   final double handleSize;
@@ -92,6 +96,11 @@ class SelectionBoxPainter extends CustomPainter {
         1,
       ]),
     );
+
+    // Apply drag offset if dragging
+    if (dragOffset != null) {
+      canvas.translate(dragOffset!.x, dragOffset!.y);
+    }
 
     // Draw bounding box
     _drawBoundingBox(canvas, bounds);
@@ -283,8 +292,10 @@ class SelectionBoxPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(SelectionBoxPainter oldDelegate) {
-    // Use listEquals for proper deep comparison of shape lists
-    return !listEquals(selectedShapes, oldDelegate.selectedShapes) ||
+    // Fast path for drag offset changes
+    if (dragOffset != oldDelegate.dragOffset) return true;
+    
+    return !identical(selectedShapes, oldDelegate.selectedShapes) ||
         viewMatrix != oldDelegate.viewMatrix;
   }
 }

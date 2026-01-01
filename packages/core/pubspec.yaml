@@ -3,6 +3,8 @@ description: Core utilities, extensions, and base abstractions for Vio
 version: 0.1.0
 publish_to: none
 
+resolution: workspace
+
 environment:
   sdk: ">=3.5.0 <4.0.0"
   flutter: ">=3.38.5"

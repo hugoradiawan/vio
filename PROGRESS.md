@@ -7,6 +7,58 @@
 
 ## 2025-01-01
 
+### Session 4: Clipboard & Undo/Redo Implementation
+
+| Date | Task | Status | Notes/Blockers |
+|------|------|--------|----------------|
+| 2025-01-01 | Add Shape.duplicate() method | ✅ Completed | Returns copy with new ID and optional offset |
+| 2025-01-01 | Add clipboardShapes to CanvasState | ✅ Completed | Stores copied shapes for paste |
+| 2025-01-01 | Implement Copy (Ctrl+C) | ✅ Completed | Copies selected shapes to state clipboard |
+| 2025-01-01 | Implement Cut (Ctrl+X) | ✅ Completed | Copies then removes selected shapes |
+| 2025-01-01 | Implement Paste (Ctrl+V) | ✅ Completed | Duplicates clipboard shapes with 10px offset |
+| 2025-01-01 | Implement Duplicate (Ctrl+D) | ✅ Completed | In-place duplication with offset |
+| 2025-01-01 | Implement Delete (Del/Backspace) | ✅ Completed | Removes selected shapes |
+| 2025-01-01 | Implement manual Undo/Redo stack | ✅ Completed | Replaced ReplayBloc with custom stack |
+| 2025-01-01 | Add global keyboard handler | ✅ Completed | HardwareKeyboard.instance for focus-independent shortcuts |
+
+### Changes Made
+
+#### packages/core/lib/src/models/
+- `Shape` - Added `duplicate()` method with newId, offsetX, offsetY parameters
+
+#### apps/client/lib/src/features/canvas/
+- `canvas_state.dart` - Added `clipboardShapes` field for copy/paste storage
+- `canvas_event.dart` - Added `CopySelected`, `CutSelected`, `PasteShapes`, `DuplicateSelected`, `DeleteSelected`, `Undo`, `Redo` events
+- `canvas_bloc.dart` - Switched from ReplayBloc to Bloc with manual undo stack:
+  - `_undoStack` / `_redoStack` for shape snapshots
+  - `_pushUndoState()` called after each shape-modifying operation
+  - `canUndo` / `canRedo` getters
+  - Handlers for all clipboard and undo/redo events
+- `canvas_view.dart` - Added `HardwareKeyboard.instance.addHandler()` for global shortcuts
+
+### Key Implementation Details
+1. **Manual Undo Stack**: Replaced ReplayBloc with custom implementation because ReplayBloc's `shouldReplay` wasn't suitable for filtering shape-only changes from interaction state changes.
+2. **Global Keyboard Handler**: Used `HardwareKeyboard.instance.addHandler()` instead of `KeyboardListener` widget to ensure shortcuts work regardless of focus state.
+3. **Clipboard Storage**: Shapes stored in state (not system clipboard) for simplicity. Future: integrate with system clipboard for cross-app paste.
+4. **Undo State Tracking**: Each shape-modifying operation (move, add, remove, update, paste, duplicate, cut, delete) pushes to undo stack.
+
+### Keyboard Shortcuts
+| Shortcut | Action |
+|----------|--------|
+| Ctrl+C | Copy selected shapes |
+| Ctrl+X | Cut selected shapes |
+| Ctrl+V | Paste shapes |
+| Ctrl+D | Duplicate selected shapes |
+| Ctrl+Z | Undo |
+| Ctrl+Y | Redo |
+| Ctrl+Shift+Z | Redo (alternative) |
+| Delete/Backspace | Delete selected shapes |
+| Escape | Clear selection |
+
+---
+
+## 2025-01-01
+
 ### Session 3: Selection & Interaction Improvements
 
 | Date | Task | Status | Notes/Blockers |

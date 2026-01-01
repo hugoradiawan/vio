@@ -86,7 +86,16 @@ Recreate the core functionality of Penpot (Open Source Design & Prototyping Tool
 - [x] Implement selection bounding box with handles
 - [x] Implement shape dragging/movement
 
-### 1.5 Blue Dark Mode Theme
+### 1.5 Clipboard & Undo/Redo
+- [x] Implement copy (Ctrl+C) - copies selected shapes to clipboard
+- [x] Implement cut (Ctrl+X) - copies then deletes selected shapes
+- [x] Implement paste (Ctrl+V) - pastes with offset
+- [x] Implement duplicate (Ctrl+D) - in-place duplication
+- [x] Implement delete (Delete/Backspace)
+- [x] Implement manual undo/redo stack (Ctrl+Z / Ctrl+Y)
+- [x] Global keyboard shortcuts via HardwareKeyboard
+
+### 1.6 Blue Dark Mode Theme
 - [x] Define color palette (primary, surface, background)
 - [x] Create themed widget components
 - [x] Implement theme provider with bloc

@@ -19,4 +19,5 @@ export 'src/models/shape.dart';
 export 'src/models/uuid_value.dart';
 // Utils
 export 'src/utils/hit_test.dart';
+export 'src/utils/layer_tree.dart';
 export 'src/utils/logger.dart';

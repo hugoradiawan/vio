@@ -36,6 +36,8 @@ class CanvasState extends Equatable {
     this.shapes = const {},
     this.selectedShapeIds = const [],
     this.hoveredShapeId,
+    this.expandedLayerIds = const {},
+    this.hoveredLayerId,
   });
 
   /// Current zoom level (1.0 = 100%)
@@ -62,8 +64,14 @@ class CanvasState extends Equatable {
   /// IDs of currently selected shapes
   final List<String> selectedShapeIds;
 
-  /// ID of shape currently under the pointer
+  /// ID of shape currently under the pointer (canvas)
   final String? hoveredShapeId;
+
+  /// IDs of expanded layers in the layers panel (frames/groups)
+  final Set<String> expandedLayerIds;
+
+  /// ID of layer currently hovered in the layers panel
+  final String? hoveredLayerId;
 
   /// Get shapes as an ordered list (for rendering)
   List<Shape> get shapeList => shapes.values.toList();
@@ -128,8 +136,11 @@ class CanvasState extends Equatable {
     Map<String, Shape>? shapes,
     List<String>? selectedShapeIds,
     String? hoveredShapeId,
+    Set<String>? expandedLayerIds,
+    String? hoveredLayerId,
     bool clearDragStart = false,
     bool clearCurrentPointer = false,
+    bool clearHoveredLayerId = false,
   }) {
     return CanvasState(
       zoom: zoom ?? this.zoom,
@@ -142,6 +153,9 @@ class CanvasState extends Equatable {
       shapes: shapes ?? this.shapes,
       selectedShapeIds: selectedShapeIds ?? this.selectedShapeIds,
       hoveredShapeId: hoveredShapeId ?? this.hoveredShapeId,
+      expandedLayerIds: expandedLayerIds ?? this.expandedLayerIds,
+      hoveredLayerId:
+          clearHoveredLayerId ? null : (hoveredLayerId ?? this.hoveredLayerId),
     );
   }
 
@@ -156,5 +170,7 @@ class CanvasState extends Equatable {
         shapes,
         selectedShapeIds,
         hoveredShapeId,
+        expandedLayerIds,
+        hoveredLayerId,
       ];
 }

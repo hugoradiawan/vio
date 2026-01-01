@@ -29,6 +29,13 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     on<ShapeUpdated>(_onShapeUpdated);
     on<ShapeSelected>(_onShapeSelected);
     on<ShapesSelected>(_onShapesSelected);
+    // Layer panel events
+    on<LayerExpanded>(_onLayerExpanded);
+    on<LayerCollapsed>(_onLayerCollapsed);
+    on<LayerHovered>(_onLayerHovered);
+    on<ShapeVisibilityToggled>(_onShapeVisibilityToggled);
+    on<ShapeLockToggled>(_onShapeLockToggled);
+    on<ShapeRenamed>(_onShapeRenamed);
   }
 
   /// Create test shapes for development
@@ -465,6 +472,78 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     Emitter<CanvasState> emit,
   ) {
     emit(state.copyWith(selectedShapeIds: event.shapeIds));
+  }
+
+  // ============================================================================
+  // Layer Panel Event Handlers
+  // ============================================================================
+
+  void _onLayerExpanded(
+    LayerExpanded event,
+    Emitter<CanvasState> emit,
+  ) {
+    final newExpanded = Set<String>.from(state.expandedLayerIds)
+      ..add(event.layerId);
+    emit(state.copyWith(expandedLayerIds: newExpanded));
+  }
+
+  void _onLayerCollapsed(
+    LayerCollapsed event,
+    Emitter<CanvasState> emit,
+  ) {
+    final newExpanded = Set<String>.from(state.expandedLayerIds)
+      ..remove(event.layerId);
+    emit(state.copyWith(expandedLayerIds: newExpanded));
+  }
+
+  void _onLayerHovered(
+    LayerHovered event,
+    Emitter<CanvasState> emit,
+  ) {
+    if (event.layerId == null) {
+      emit(state.copyWith(clearHoveredLayerId: true));
+    } else {
+      emit(state.copyWith(hoveredLayerId: event.layerId));
+    }
+  }
+
+  void _onShapeVisibilityToggled(
+    ShapeVisibilityToggled event,
+    Emitter<CanvasState> emit,
+  ) {
+    final shape = state.shapes[event.shapeId];
+    if (shape == null) return;
+
+    final updatedShape = shape.copyWith(hidden: !shape.hidden);
+    final newShapes = Map<String, Shape>.from(state.shapes);
+    newShapes[event.shapeId] = updatedShape;
+    emit(state.copyWith(shapes: newShapes));
+  }
+
+  void _onShapeLockToggled(
+    ShapeLockToggled event,
+    Emitter<CanvasState> emit,
+  ) {
+    final shape = state.shapes[event.shapeId];
+    if (shape == null) return;
+
+    final updatedShape = shape.copyWith(blocked: !shape.blocked);
+    final newShapes = Map<String, Shape>.from(state.shapes);
+    newShapes[event.shapeId] = updatedShape;
+    emit(state.copyWith(shapes: newShapes));
+  }
+
+  void _onShapeRenamed(
+    ShapeRenamed event,
+    Emitter<CanvasState> emit,
+  ) {
+    final shape = state.shapes[event.shapeId];
+    if (shape == null) return;
+
+    final updatedShape = shape.copyWith(name: event.newName);
+    final newShapes = Map<String, Shape>.from(state.shapes);
+    newShapes[event.shapeId] = updatedShape;
+    emit(state.copyWith(shapes: newShapes));
   }
 
   /// Convert screen coordinates to canvas coordinates

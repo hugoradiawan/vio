@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
+import '../../../canvas/presentation/widgets/layer_tree.dart';
+
 /// Left panel containing layers tree and assets browser
 class LeftPanel extends StatefulWidget {
   const LeftPanel({super.key});
@@ -122,34 +124,9 @@ class _LayersTab extends StatelessWidget {
           ),
         ),
 
-        // Layers list (placeholder for now)
-        Expanded(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.layers_outlined,
-                  size: 48,
-                  color: VioColors.textTertiary,
-                ),
-                const SizedBox(height: VioSpacing.sm),
-                Text(
-                  'No layers yet',
-                  style: VioTypography.body2.copyWith(
-                    color: VioColors.textTertiary,
-                  ),
-                ),
-                const SizedBox(height: VioSpacing.xs),
-                Text(
-                  'Draw a shape to get started',
-                  style: VioTypography.caption.copyWith(
-                    color: VioColors.textTertiary,
-                  ),
-                ),
-              ],
-            ),
-          ),
+        // Layers list
+        const Expanded(
+          child: LayerTree(),
         ),
       ],
     );

@@ -208,3 +208,69 @@ class ShapesSelected extends CanvasEvent {
   @override
   List<Object?> get props => [shapeIds];
 }
+
+// ============================================================================
+// Layer Panel Events
+// ============================================================================
+
+/// Fired to expand a layer (frame/group) in the layers panel
+class LayerExpanded extends CanvasEvent {
+  const LayerExpanded(this.layerId);
+
+  final String layerId;
+
+  @override
+  List<Object?> get props => [layerId];
+}
+
+/// Fired to collapse a layer (frame/group) in the layers panel
+class LayerCollapsed extends CanvasEvent {
+  const LayerCollapsed(this.layerId);
+
+  final String layerId;
+
+  @override
+  List<Object?> get props => [layerId];
+}
+
+/// Fired when hovering over a layer in the layers panel
+class LayerHovered extends CanvasEvent {
+  const LayerHovered(this.layerId);
+
+  /// The layer ID being hovered, or null to clear hover
+  final String? layerId;
+
+  @override
+  List<Object?> get props => [layerId];
+}
+
+/// Fired to toggle shape visibility (hidden flag)
+class ShapeVisibilityToggled extends CanvasEvent {
+  const ShapeVisibilityToggled(this.shapeId);
+
+  final String shapeId;
+
+  @override
+  List<Object?> get props => [shapeId];
+}
+
+/// Fired to toggle shape lock (blocked flag)
+class ShapeLockToggled extends CanvasEvent {
+  const ShapeLockToggled(this.shapeId);
+
+  final String shapeId;
+
+  @override
+  List<Object?> get props => [shapeId];
+}
+
+/// Fired to rename a shape
+class ShapeRenamed extends CanvasEvent {
+  const ShapeRenamed(this.shapeId, this.newName);
+
+  final String shapeId;
+  final String newName;
+
+  @override
+  List<Object?> get props => [shapeId, newName];
+}

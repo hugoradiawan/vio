@@ -1,18 +1,29 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:uuid/uuid.dart';
 import 'package:vio_core/vio_core.dart';
 
 part 'canvas_event.dart';
 part 'canvas_state.dart';
+
+/// UUID generator for new shapes
+const _uuid = Uuid();
+
+/// Maximum number of undo states to keep
+const _maxUndoHistory = 50;
 
 /// Manages the infinite canvas state including:
 /// - Viewport (pan/zoom transforms)
 /// - Shapes on canvas
 /// - Selection state
 /// - Interaction mode
+/// - Manual undo/redo stack for shape changes
 class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
   CanvasBloc() : super(CanvasState(shapes: _createTestShapes())) {
+    // Initialize undo stack with initial shapes
+    _undoStack.add(Map.from(state.shapes));
+
     on<CanvasInitialized>(_onInitialized);
     on<ViewportPanned>(_onViewportPanned);
     on<ViewportZoomed>(_onViewportZoomed);
@@ -28,6 +39,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     on<ShapeAdded>(_onShapeAdded);
     on<ShapesAdded>(_onShapesAdded);
     on<ShapeRemoved>(_onShapeRemoved);
+    on<ShapesRemoved>(_onShapesRemoved);
     on<ShapeUpdated>(_onShapeUpdated);
     on<ShapeSelected>(_onShapeSelected);
     on<ShapesSelected>(_onShapesSelected);
@@ -38,6 +50,97 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     on<ShapeVisibilityToggled>(_onShapeVisibilityToggled);
     on<ShapeLockToggled>(_onShapeLockToggled);
     on<ShapeRenamed>(_onShapeRenamed);
+    // Clipboard events
+    on<CopySelected>(_onCopySelected);
+    on<CutSelected>(_onCutSelected);
+    on<PasteShapes>(_onPasteShapes);
+    on<DuplicateSelected>(_onDuplicateSelected);
+    on<DeleteSelected>(_onDeleteSelected);
+    // Undo/redo events
+    on<Undo>(_onUndo);
+    on<Redo>(_onRedo);
+  }
+
+  /// Manual undo stack - stores snapshots of shapes map
+  final List<Map<String, Shape>> _undoStack = [];
+
+  /// Manual redo stack - stores snapshots for redo
+  final List<Map<String, Shape>> _redoStack = [];
+
+  /// Whether undo is available
+  bool get canUndo => _undoStack.length > 1;
+
+  /// Whether redo is available
+  bool get canRedo => _redoStack.isNotEmpty;
+
+  /// Push current shapes to undo stack (call after shape-changing operations)
+  void _pushUndoState(Map<String, Shape> shapes) {
+    // Clear redo stack when new action is performed
+    _redoStack.clear();
+
+    // Add to undo stack
+    _undoStack.add(Map.from(shapes));
+
+    // Limit stack size
+    while (_undoStack.length > _maxUndoHistory) {
+      _undoStack.removeAt(0);
+    }
+
+    VioLogger.debug('Pushed undo state. Stack size: ${_undoStack.length}');
+  }
+
+  /// Handle undo event
+  void _onUndo(Undo event, Emitter<CanvasState> emit) {
+    if (!canUndo) {
+      VioLogger.debug('Undo called but canUndo is false');
+      return;
+    }
+
+    // Current state goes to redo stack
+    _redoStack.add(_undoStack.removeLast());
+
+    // Restore previous state
+    final previousShapes = _undoStack.last;
+
+    VioLogger.debug(
+      'Undo: restored state. Undo stack: ${_undoStack.length}, Redo stack: ${_redoStack.length}',
+    );
+
+    emit(
+      state.copyWith(
+        shapes: Map.from(previousShapes),
+        interactionMode: InteractionMode.idle,
+        clearDragStart: true,
+        clearDragOffset: true,
+        clearSnap: true,
+      ),
+    );
+  }
+
+  /// Handle redo event
+  void _onRedo(Redo event, Emitter<CanvasState> emit) {
+    if (!canRedo) {
+      VioLogger.debug('Redo called but canRedo is false');
+      return;
+    }
+
+    // Move from redo to undo stack
+    final nextShapes = _redoStack.removeLast();
+    _undoStack.add(nextShapes);
+
+    VioLogger.debug(
+      'Redo: restored state. Undo stack: ${_undoStack.length}, Redo stack: ${_redoStack.length}',
+    );
+
+    emit(
+      state.copyWith(
+        shapes: Map.from(nextShapes),
+        interactionMode: InteractionMode.idle,
+        clearDragStart: true,
+        clearDragOffset: true,
+        clearSnap: true,
+      ),
+    );
   }
 
   /// Create test shapes for development
@@ -362,15 +465,19 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       // Only emit if hovered shape changed
       if (newHoveredId != state.hoveredShapeId) {
         if (newHoveredId == null) {
-          emit(state.copyWith(
-            currentPointer: canvasPoint,
-            clearHoveredShapeId: true,
-          ),);
+          emit(
+            state.copyWith(
+              currentPointer: canvasPoint,
+              clearHoveredShapeId: true,
+            ),
+          );
         } else {
-          emit(state.copyWith(
-            currentPointer: canvasPoint,
-            hoveredShapeId: newHoveredId,
-          ),);
+          emit(
+            state.copyWith(
+              currentPointer: canvasPoint,
+              hoveredShapeId: newHoveredId,
+            ),
+          );
         }
       } else {
         emit(state.copyWith(currentPointer: canvasPoint));
@@ -424,6 +531,8 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
             clearSnap: true,
           ),
         );
+        // Push to undo stack after shapes are moved
+        _pushUndoState(newShapes);
       } else {
         emit(
           state.copyWith(
@@ -460,6 +569,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     final newShapes = Map<String, Shape>.from(state.shapes);
     newShapes[event.shape.id] = event.shape;
     emit(state.copyWith(shapes: newShapes));
+    _pushUndoState(newShapes);
   }
 
   void _onShapesAdded(
@@ -471,6 +581,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       newShapes[shape.id] = shape;
     }
     emit(state.copyWith(shapes: newShapes));
+    _pushUndoState(newShapes);
   }
 
   void _onShapeRemoved(
@@ -490,6 +601,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         selectedShapeIds: newSelection,
       ),
     );
+    _pushUndoState(newShapes);
   }
 
   void _onShapeUpdated(
@@ -501,6 +613,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     final newShapes = Map<String, Shape>.from(state.shapes);
     newShapes[event.shape.id] = event.shape;
     emit(state.copyWith(shapes: newShapes));
+    _pushUndoState(newShapes);
   }
 
   void _onShapeSelected(
@@ -526,10 +639,12 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     // Auto-expand parent layers to reveal the selected shape
     final expandedIds = _expandAncestorsForShapes(newSelection);
 
-    emit(state.copyWith(
-      selectedShapeIds: newSelection,
-      expandedLayerIds: expandedIds,
-    ),);
+    emit(
+      state.copyWith(
+        selectedShapeIds: newSelection,
+        expandedLayerIds: expandedIds,
+      ),
+    );
   }
 
   void _onShapesSelected(
@@ -539,10 +654,12 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     // Auto-expand parent layers to reveal the selected shapes
     final expandedIds = _expandAncestorsForShapes(event.shapeIds);
 
-    emit(state.copyWith(
-      selectedShapeIds: event.shapeIds,
-      expandedLayerIds: expandedIds,
-    ),);
+    emit(
+      state.copyWith(
+        selectedShapeIds: event.shapeIds,
+        expandedLayerIds: expandedIds,
+      ),
+    );
   }
 
   // ============================================================================
@@ -721,5 +838,154 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       (screenPoint.dx - state.viewportOffset.dx) / state.zoom,
       (screenPoint.dy - state.viewportOffset.dy) / state.zoom,
     );
+  }
+
+  // ============================================================================
+  // Clipboard Handlers
+  // ============================================================================
+
+  void _onShapesRemoved(
+    ShapesRemoved event,
+    Emitter<CanvasState> emit,
+  ) {
+    if (event.shapeIds.isEmpty) return;
+
+    final newShapes = Map<String, Shape>.from(state.shapes);
+    for (final id in event.shapeIds) {
+      newShapes.remove(id);
+    }
+
+    // Also remove from selection
+    final removedSet = event.shapeIds.toSet();
+    final newSelection =
+        state.selectedShapeIds.where((id) => !removedSet.contains(id)).toList();
+
+    emit(
+      state.copyWith(
+        shapes: newShapes,
+        selectedShapeIds: newSelection,
+      ),
+    );
+    _pushUndoState(newShapes);
+  }
+
+  void _onCopySelected(
+    CopySelected event,
+    Emitter<CanvasState> emit,
+  ) {
+    if (state.selectedShapeIds.isEmpty) return;
+
+    // Copy selected shapes to clipboard
+    final shapesToCopy = state.selectedShapes;
+    emit(state.copyWith(clipboardShapes: shapesToCopy));
+  }
+
+  void _onCutSelected(
+    CutSelected event,
+    Emitter<CanvasState> emit,
+  ) {
+    if (state.selectedShapeIds.isEmpty) return;
+
+    // Copy to clipboard first
+    final shapesToCopy = state.selectedShapes;
+
+    // Then remove from canvas
+    final newShapes = Map<String, Shape>.from(state.shapes);
+    for (final id in state.selectedShapeIds) {
+      newShapes.remove(id);
+    }
+
+    emit(
+      state.copyWith(
+        clipboardShapes: shapesToCopy,
+        shapes: newShapes,
+        selectedShapeIds: const [],
+      ),
+    );
+    _pushUndoState(newShapes);
+  }
+
+  void _onPasteShapes(
+    PasteShapes event,
+    Emitter<CanvasState> emit,
+  ) {
+    if (state.clipboardShapes.isEmpty) return;
+
+    // Duplicate shapes with new IDs and offset position
+    const pasteOffset = 10.0; // Offset like Penpot
+    final newShapes = Map<String, Shape>.from(state.shapes);
+    final newIds = <String>[];
+
+    for (final shape in state.clipboardShapes) {
+      final newId = _uuid.v4();
+      final duplicated = shape.duplicate(
+        newId: newId,
+        offsetX: pasteOffset,
+        offsetY: pasteOffset,
+      );
+      newShapes[newId] = duplicated;
+      newIds.add(newId);
+    }
+
+    // Select the pasted shapes
+    emit(
+      state.copyWith(
+        shapes: newShapes,
+        selectedShapeIds: newIds,
+      ),
+    );
+    _pushUndoState(newShapes);
+  }
+
+  void _onDuplicateSelected(
+    DuplicateSelected event,
+    Emitter<CanvasState> emit,
+  ) {
+    if (state.selectedShapeIds.isEmpty) return;
+
+    // Duplicate selected shapes with offset
+    const duplicateOffset = 10.0;
+    final newShapes = Map<String, Shape>.from(state.shapes);
+    final newIds = <String>[];
+
+    for (final shape in state.selectedShapes) {
+      final newId = _uuid.v4();
+      final duplicated = shape.duplicate(
+        newId: newId,
+        offsetX: duplicateOffset,
+        offsetY: duplicateOffset,
+      );
+      newShapes[newId] = duplicated;
+      newIds.add(newId);
+    }
+
+    // Select the duplicated shapes
+    emit(
+      state.copyWith(
+        shapes: newShapes,
+        selectedShapeIds: newIds,
+      ),
+    );
+    _pushUndoState(newShapes);
+  }
+
+  void _onDeleteSelected(
+    DeleteSelected event,
+    Emitter<CanvasState> emit,
+  ) {
+    if (state.selectedShapeIds.isEmpty) return;
+
+    final newShapes = Map<String, Shape>.from(state.shapes);
+    for (final id in state.selectedShapeIds) {
+      newShapes.remove(id);
+    }
+
+    emit(
+      state.copyWith(
+        shapes: newShapes,
+        selectedShapeIds: const [],
+      ),
+    );
+    _pushUndoState(newShapes);
   }
 }

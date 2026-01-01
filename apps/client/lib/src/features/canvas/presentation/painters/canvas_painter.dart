@@ -292,10 +292,10 @@ class CanvasPainter extends CustomPainter {
     // Fast path: if only dragOffset changed, repaint
     // This is the most frequent change during dragging
     if (dragOffset != oldDelegate.dragOffset) return true;
-    
+
     // Use identity comparison for shapes (they don't change during drag)
     if (!identical(shapes, oldDelegate.shapes)) return true;
-    
+
     return viewMatrix != oldDelegate.viewMatrix ||
         dragRect != oldDelegate.dragRect ||
         !listEquals(selectedShapeIds, oldDelegate.selectedShapeIds) ||

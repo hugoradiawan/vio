@@ -1,7 +1,7 @@
 part of 'canvas_bloc.dart';
 
 /// Base class for canvas events
-sealed class CanvasEvent extends Equatable {
+sealed class CanvasEvent with EquatableMixin {
   const CanvasEvent();
 
   @override
@@ -278,4 +278,57 @@ class ShapeRenamed extends CanvasEvent {
 
   @override
   List<Object?> get props => [shapeId, newName];
+}
+
+// ============================================================================
+// Clipboard Events
+// ============================================================================
+
+/// Fired to copy selected shapes to clipboard (Ctrl+C)
+class CopySelected extends CanvasEvent {
+  const CopySelected();
+}
+
+/// Fired to cut selected shapes (Ctrl+X) - copies then deletes
+class CutSelected extends CanvasEvent {
+  const CutSelected();
+}
+
+/// Fired to paste shapes from clipboard (Ctrl+V)
+class PasteShapes extends CanvasEvent {
+  const PasteShapes();
+}
+
+/// Fired to duplicate selected shapes in place (Ctrl+D)
+class DuplicateSelected extends CanvasEvent {
+  const DuplicateSelected();
+}
+
+/// Fired to delete selected shapes (Delete/Backspace)
+class DeleteSelected extends CanvasEvent {
+  const DeleteSelected();
+}
+
+/// Fired to remove multiple shapes from the canvas
+class ShapesRemoved extends CanvasEvent {
+  const ShapesRemoved(this.shapeIds);
+
+  final List<String> shapeIds;
+
+  @override
+  List<Object?> get props => [shapeIds];
+}
+
+// ============================================================================
+// Undo/Redo Events
+// ============================================================================
+
+/// Fired to undo the last shape change (Ctrl+Z)
+class Undo extends CanvasEvent {
+  const Undo();
+}
+
+/// Fired to redo a previously undone change (Ctrl+Y or Ctrl+Shift+Z)
+class Redo extends CanvasEvent {
+  const Redo();
 }

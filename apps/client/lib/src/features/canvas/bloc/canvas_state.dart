@@ -41,6 +41,7 @@ class CanvasState extends Equatable {
     this.hoveredLayerId,
     this.snapLines = const [],
     this.snapPoints = const [],
+    this.clipboardShapes = const [],
   });
 
   /// Current zoom level (1.0 = 100%)
@@ -64,6 +65,7 @@ class CanvasState extends Equatable {
   /// Current drag offset for moving shapes (performance optimization)
   /// Applied at render time instead of mutating shapes during drag
   final Offset? dragOffset;
+
   /// All shapes on the canvas, keyed by ID
   final Map<String, Shape> shapes;
 
@@ -84,6 +86,9 @@ class CanvasState extends Equatable {
 
   /// Active snap points to render (during drag)
   final List<SnapPoint> snapPoints;
+
+  /// Shapes stored in clipboard for copy/paste operations
+  final List<Shape> clipboardShapes;
 
   /// Get shapes as an ordered list (for rendering)
   List<Shape> get shapeList => shapes.values.toList();
@@ -196,6 +201,7 @@ class CanvasState extends Equatable {
     String? hoveredLayerId,
     List<SnapLine>? snapLines,
     List<SnapPoint>? snapPoints,
+    List<Shape>? clipboardShapes,
     bool clearDragStart = false,
     bool clearCurrentPointer = false,
     bool clearDragOffset = false,
@@ -221,6 +227,7 @@ class CanvasState extends Equatable {
           clearHoveredLayerId ? null : (hoveredLayerId ?? this.hoveredLayerId),
       snapLines: clearSnap ? const [] : (snapLines ?? this.snapLines),
       snapPoints: clearSnap ? const [] : (snapPoints ?? this.snapPoints),
+      clipboardShapes: clipboardShapes ?? this.clipboardShapes,
     );
   }
 
@@ -240,5 +247,6 @@ class CanvasState extends Equatable {
         hoveredLayerId,
         snapLines,
         snapPoints,
+        clipboardShapes,
       ];
 }

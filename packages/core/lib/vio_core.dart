@@ -8,8 +8,6 @@ export 'src/extensions/rect_extensions.dart';
 export 'src/math/math_utils.dart';
 // Math & Geometry
 export 'src/math/matrix2d.dart';
-export 'src/math/point2d.dart';
-export 'src/math/rect2d.dart';
 export 'src/models/ellipse_shape.dart';
 export 'src/models/frame_shape.dart';
 export 'src/models/rectangle_shape.dart';

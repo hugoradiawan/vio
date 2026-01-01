@@ -95,6 +95,24 @@ abstract class Shape extends Equatable {
   /// Create a copy of this shape moved by the given delta
   Shape moveBy(double dx, double dy);
 
+  /// Create a duplicate of this shape with a new ID and optional position offset
+  /// Used for copy/paste and duplicate operations
+  Shape duplicate({
+    required String newId,
+    double offsetX = 0,
+    double offsetY = 0,
+    String? newName,
+  }) {
+    final baseDuplicate = copyWith(
+      id: newId,
+      name: newName ?? '$name Copy',
+    );
+    if (offsetX != 0 || offsetY != 0) {
+      return baseDuplicate.moveBy(offsetX, offsetY);
+    }
+    return baseDuplicate;
+  }
+
   /// Get the center point in local coordinates
   Offset get center => bounds.center;
 
@@ -143,23 +161,23 @@ abstract class Shape extends Equatable {
 
   @override
   List<Object?> get props => [
-    id,
-    name,
-    type,
-    parentId,
-    frameId,
-    transform,
-    selrect,
-    fills,
-    strokes,
-    opacity,
-    hidden,
-    blocked,
-    rotation,
-    constraints,
-    shadow,
-    blur,
-  ];
+        id,
+        name,
+        type,
+        parentId,
+        frameId,
+        transform,
+        selrect,
+        fills,
+        strokes,
+        opacity,
+        hidden,
+        blocked,
+        rotation,
+        constraints,
+        shadow,
+        blur,
+      ];
 }
 
 /// Shape type discriminator
@@ -348,16 +366,16 @@ class ShapeShadow extends Equatable {
 
   @override
   List<Object?> get props => [
-    id,
-    style,
-    color,
-    opacity,
-    offsetX,
-    offsetY,
-    blur,
-    spread,
-    hidden,
-  ];
+        id,
+        style,
+        color,
+        opacity,
+        offsetX,
+        offsetY,
+        blur,
+        spread,
+        hidden,
+      ];
 }
 
 /// Shadow styles

@@ -1,3 +1,4 @@
+import 'package:flutter/rendering.dart';
 import 'package:vio_core/vio_core.dart';
 
 /// Ellipse shape (circles are ellipses with equal width/height)
@@ -53,12 +54,11 @@ class EllipseShape extends Shape {
   double get centerY => y + radiusY;
 
   @override
-  Rect2D get bounds =>
-      Rect2D(x: x, y: y, width: ellipseWidth, height: ellipseHeight);
+  Rect get bounds =>
+      Rect.fromLTWH(x, y, ellipseWidth, ellipseHeight);
 
   @override
-  Point2D get center => Point2D(centerX, centerY);
-
+  Offset get center => Offset(centerX, centerY);
   @override
   EllipseShape copyWith({
     String? id,
@@ -67,7 +67,7 @@ class EllipseShape extends Shape {
     String? frameId,
     Matrix2D? transform,
     Matrix2D? transformInverse,
-    Rect2D? selrect,
+    Rect? selrect,
     List<ShapeFill>? fills,
     List<ShapeStroke>? strokes,
     double? opacity,

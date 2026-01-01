@@ -1,3 +1,4 @@
+import 'package:flutter/rendering.dart';
 import 'package:vio_core/vio_core.dart';
 
 /// Frame shape - container for other shapes (like an artboard)
@@ -59,8 +60,8 @@ class FrameShape extends Shape {
   final FrameFlexLayout? flexLayout;
 
   @override
-  Rect2D get bounds =>
-      Rect2D(x: x, y: y, width: frameWidth, height: frameHeight);
+  Rect get bounds =>
+      Rect.fromLTWH(x, y, frameWidth, frameHeight);
 
   /// Whether this frame has auto-layout enabled
   bool get hasAutoLayout => flexLayout != null;
@@ -76,7 +77,7 @@ class FrameShape extends Shape {
     String? frameId,
     Matrix2D? transform,
     Matrix2D? transformInverse,
-    Rect2D? selrect,
+    Rect? selrect,
     List<ShapeFill>? fills,
     List<ShapeStroke>? strokes,
     double? opacity,

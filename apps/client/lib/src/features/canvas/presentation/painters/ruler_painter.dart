@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:vio_core/vio_core.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 /// Ruler constants
@@ -20,7 +19,7 @@ class HorizontalRulerPainter extends CustomPainter {
 
   final double offset;
   final double zoom;
-  final Rect2D? selectionRect;
+  final Rect? selectionRect;
 
   /// Offset to account for ruler positioning (horizontal ruler starts after vertical ruler)
   final double rulerOffset;
@@ -222,7 +221,7 @@ class VerticalRulerPainter extends CustomPainter {
 
   final double offset;
   final double zoom;
-  final Rect2D? selectionRect;
+  final Rect? selectionRect;
 
   /// Offset to account for ruler positioning (vertical ruler starts after horizontal ruler)
   final double rulerOffset;

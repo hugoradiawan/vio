@@ -125,8 +125,8 @@ class _CanvasViewState extends State<CanvasView> {
                                     gridSize: workspaceState.gridSize,
                                     zoom: canvasState.zoom,
                                     offset: Offset(
-                                      canvasState.viewportOffset.x,
-                                      canvasState.viewportOffset.y,
+                                      canvasState.viewportOffset.dx,
+                                      canvasState.viewportOffset.dy,
                                     ),
                                   ),
                                 ),
@@ -197,7 +197,7 @@ class _CanvasViewState extends State<CanvasView> {
                                 height: 20,
                                 child: CustomPaint(
                                   painter: HorizontalRulerPainter(
-                                    offset: canvasState.viewportOffset.x,
+                                    offset: canvasState.viewportOffset.dx,
                                     zoom: canvasState.zoom,
                                     selectionRect: canvasState.selectionRect,
                                   ),
@@ -211,7 +211,7 @@ class _CanvasViewState extends State<CanvasView> {
                                 width: 20,
                                 child: CustomPaint(
                                   painter: VerticalRulerPainter(
-                                    offset: canvasState.viewportOffset.y,
+                                    offset: canvasState.viewportOffset.dy,
                                     zoom: canvasState.zoom,
                                     selectionRect: canvasState.selectionRect,
                                   ),
@@ -431,7 +431,7 @@ class _CoordinatesDisplay extends StatelessWidget {
     required this.pointer,
   });
 
-  final dynamic pointer;
+  final Offset? pointer;
 
   @override
   Widget build(BuildContext context) {
@@ -447,7 +447,7 @@ class _CoordinatesDisplay extends StatelessWidget {
         borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
       ),
       child: Text(
-        'X: ${pointer.x.toStringAsFixed(0)}  Y: ${pointer.y.toStringAsFixed(0)}',
+        'X: ${pointer!.dx.toStringAsFixed(0)}  Y: ${pointer!.dy.toStringAsFixed(0)}',
         style: VioTypography.caption.copyWith(
           color: VioColors.textSecondary,
           fontFamily: 'monospace',

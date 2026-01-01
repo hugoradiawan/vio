@@ -24,10 +24,10 @@ class CanvasPainter extends CustomPainter {
   final List<Shape> shapes;
 
   /// Current drag selection rectangle (in canvas coordinates)
-  final Rect2D? dragRect;
+  final Rect? dragRect;
 
   /// Current drag offset for moving shapes (applied at render time)
-  final Point2D? dragOffset;
+  final Offset? dragOffset;
 
   /// IDs of selected shapes
   final List<String> selectedShapeIds;
@@ -71,7 +71,7 @@ class CanvasPainter extends CustomPainter {
       if (isDragging) {
         // Apply drag offset translation for selected shapes during drag
         canvas.save();
-        canvas.translate(dragOffset!.x, dragOffset!.y);
+        canvas.translate(dragOffset!.dx, dragOffset!.dy);
         ShapePainter.paintShape(canvas, shape);
         canvas.restore();
       } else {
@@ -82,7 +82,7 @@ class CanvasPainter extends CustomPainter {
       if (shape.type == ShapeType.frame) {
         if (isDragging) {
           canvas.save();
-          canvas.translate(dragOffset!.x, dragOffset!.y);
+          canvas.translate(dragOffset!.dx, dragOffset!.dy);
           _drawFrameLabel(canvas, shape as FrameShape);
           canvas.restore();
         } else {
@@ -127,7 +127,7 @@ class CanvasPainter extends CustomPainter {
       canvas.save();
       // Apply drag offset if dragging
       if (dragOffset != null) {
-        canvas.translate(dragOffset!.x, dragOffset!.y);
+        canvas.translate(dragOffset!.dx, dragOffset!.dy);
       }
       // Apply shape transform for outline
       canvas.transform(
@@ -208,13 +208,13 @@ class CanvasPainter extends CustomPainter {
     if (dragRect == null) return;
 
     // Convert drag rect from canvas to screen coordinates
-    final topLeft = _canvasToScreen(Point2D(dragRect!.left, dragRect!.top));
+    final topLeft = _canvasToScreen(Offset(dragRect!.left, dragRect!.top));
     final bottomRight =
-        _canvasToScreen(Point2D(dragRect!.right, dragRect!.bottom));
+        _canvasToScreen(Offset(dragRect!.right, dragRect!.bottom));
 
     final rect = Rect.fromPoints(
-      Offset(topLeft.x, topLeft.y),
-      Offset(bottomRight.x, bottomRight.y),
+      Offset(topLeft.dx, topLeft.dy),
+      Offset(bottomRight.dx, bottomRight.dy),
     );
 
     // Fill
@@ -231,9 +231,9 @@ class CanvasPainter extends CustomPainter {
     canvas.drawRect(rect, strokePaint);
   }
 
-  Point2D _canvasToScreen(Point2D canvasPoint) {
-    final result = viewMatrix.transformPoint(canvasPoint.x, canvasPoint.y);
-    return Point2D(result.x, result.y);
+  Offset _canvasToScreen(Offset canvasPoint) {
+    final result = viewMatrix.transformPoint(canvasPoint.dx, canvasPoint.dy);
+    return Offset(result.x, result.y);
   }
 
   void _drawFrameLabel(Canvas canvas, FrameShape frame) {

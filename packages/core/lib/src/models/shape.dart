@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/rendering.dart';
 import 'package:vio_core/vio_core.dart';
 
 /// Base class for all shape types on the canvas
@@ -53,7 +54,7 @@ abstract class Shape extends Equatable {
   final Matrix2D? transformInverse;
 
   /// Selection rectangle in parent coordinates
-  final Rect2D? selrect;
+  final Rect? selrect;
 
   /// Fill styles
   final List<ShapeFill> fills;
@@ -83,7 +84,7 @@ abstract class Shape extends Equatable {
   final ShapeBlur? blur;
 
   /// Get the bounds of this shape in local coordinates
-  Rect2D get bounds;
+  Rect get bounds;
 
   /// X position (abstract - implemented by concrete shape types)
   double get x;
@@ -95,7 +96,7 @@ abstract class Shape extends Equatable {
   Shape moveBy(double dx, double dy);
 
   /// Get the center point in local coordinates
-  Point2D get center => bounds.center;
+  Offset get center => bounds.center;
 
   /// Get the width
   double get width => bounds.width;
@@ -104,20 +105,20 @@ abstract class Shape extends Equatable {
   double get height => bounds.height;
 
   /// Get position (top-left)
-  Point2D get position => Point2D(bounds.left, bounds.top);
+  Offset get position => bounds.topLeft;
 
   /// Transform a point from local to parent coordinates
-  Point2D transformPoint(Point2D local) {
-    final result = transform.transformPoint(local.x, local.y);
-    return Point2D(result.x, result.y);
+  Offset transformPoint(Offset local) {
+    final result = transform.transformPoint(local.dx, local.dy);
+    return Offset(result.x, result.y);
   }
 
   /// Transform a point from parent to local coordinates
-  Point2D inverseTransformPoint(Point2D parent) {
+  Offset inverseTransformPoint(Offset parent) {
     final inverse = transformInverse ?? transform.inverse;
     if (inverse == null) return parent;
-    final result = inverse.transformPoint(parent.x, parent.y);
-    return Point2D(result.x, result.y);
+    final result = inverse.transformPoint(parent.dx, parent.dy);
+    return Offset(result.x, result.y);
   }
 
   /// Create a copy with updated properties
@@ -128,7 +129,7 @@ abstract class Shape extends Equatable {
     String? frameId,
     Matrix2D? transform,
     Matrix2D? transformInverse,
-    Rect2D? selrect,
+    Rect? selrect,
     List<ShapeFill>? fills,
     List<ShapeStroke>? strokes,
     double? opacity,

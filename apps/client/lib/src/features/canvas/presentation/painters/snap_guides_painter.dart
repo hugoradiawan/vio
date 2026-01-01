@@ -78,8 +78,8 @@ class SnapGuidesPainter extends CustomPainter {
 
     // Draw dashed line
     final path = ui.Path();
-    path.moveTo(line.start.x, line.start.y);
-    path.lineTo(line.end.x, line.end.y);
+    path.moveTo(line.start.dx, line.start.dy);
+    path.lineTo(line.end.dx, line.end.dy);
 
     // Calculate dash pattern scaled by zoom
     final scaledDashLength = dashLength / zoom;

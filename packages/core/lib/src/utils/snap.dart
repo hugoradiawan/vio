@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/rendering.dart';
 import 'package:vio_core/vio_core.dart';
 
 /// Configuration for snap behavior
@@ -110,7 +111,7 @@ class SnapPoint {
     return forAxis == SnapAxis.horizontal ? x : y;
   }
 
-  Point2D get point => Point2D(x, y);
+  Offset get point => Offset(x, y);
 
   @override
   String toString() =>
@@ -127,10 +128,10 @@ class SnapLine {
   });
 
   /// Start point of the line
-  final Point2D start;
+  final Offset start;
 
   /// End point of the line
-  final Point2D end;
+  final Offset end;
 
   /// Axis of the snap line
   final SnapAxis axis;
@@ -172,7 +173,7 @@ class SnapResult {
   bool get hasSnap => snapX != null || snapY != null;
 
   /// Combined snap offset to apply
-  Point2D get snapOffset => Point2D(deltaX, deltaY);
+  Offset get snapOffset => Offset(deltaX, deltaY);
 
   /// Create empty result
   static const empty = SnapResult();
@@ -188,41 +189,40 @@ class SnapPointGenerator {
     final points = <SnapPoint>[];
 
     // Transform bounds corners through shape transform
-    final topLeft = shape.transformPoint(Point2D(bounds.left, bounds.top));
-    final topRight = shape.transformPoint(Point2D(bounds.right, bounds.top));
-    final bottomLeft = shape.transformPoint(Point2D(bounds.left, bounds.bottom));
+    final topLeft = shape.transformPoint(Offset(bounds.left, bounds.top));
+    final topRight = shape.transformPoint(Offset(bounds.right, bounds.top));
+    final bottomLeft = shape.transformPoint(Offset(bounds.left, bounds.bottom));
     final bottomRight =
-        shape.transformPoint(Point2D(bounds.right, bounds.bottom));
-
+        shape.transformPoint(Offset(bounds.right, bounds.bottom));
     // Corner points (snap on both axes)
     points.addAll([
       SnapPoint(
-        x: topLeft.x,
-        y: topLeft.y,
+        x: topLeft.dx,
+        y: topLeft.dy,
         type: SnapPointType.corner,
         axis: SnapAxis.both,
         sourceId: shape.id,
         sourceName: shape.name,
       ),
       SnapPoint(
-        x: topRight.x,
-        y: topRight.y,
+        x: topRight.dx,
+        y: topRight.dy,
         type: SnapPointType.corner,
         axis: SnapAxis.both,
         sourceId: shape.id,
         sourceName: shape.name,
       ),
       SnapPoint(
-        x: bottomLeft.x,
-        y: bottomLeft.y,
+        x: bottomLeft.dx,
+        y: bottomLeft.dy,
         type: SnapPointType.corner,
         axis: SnapAxis.both,
         sourceId: shape.id,
         sourceName: shape.name,
       ),
       SnapPoint(
-        x: bottomRight.x,
-        y: bottomRight.y,
+        x: bottomRight.dx,
+        y: bottomRight.dy,
         type: SnapPointType.corner,
         axis: SnapAxis.both,
         sourceId: shape.id,
@@ -231,51 +231,51 @@ class SnapPointGenerator {
     ]);
 
     // Edge midpoints
-    final topCenter = Point2D(
-      (topLeft.x + topRight.x) / 2,
-      (topLeft.y + topRight.y) / 2,
+    final topCenter = Offset(
+      (topLeft.dx + topRight.dx) / 2,
+      (topLeft.dy + topRight.dy) / 2,
     );
-    final bottomCenter = Point2D(
-      (bottomLeft.x + bottomRight.x) / 2,
-      (bottomLeft.y + bottomRight.y) / 2,
+    final bottomCenter = Offset(
+      (bottomLeft.dx + bottomRight.dx) / 2,
+      (bottomLeft.dy + bottomRight.dy) / 2,
     );
-    final leftCenter = Point2D(
-      (topLeft.x + bottomLeft.x) / 2,
-      (topLeft.y + bottomLeft.y) / 2,
+    final leftCenter = Offset(
+      (topLeft.dx + bottomLeft.dx) / 2,
+      (topLeft.dy + bottomLeft.dy) / 2,
     );
-    final rightCenter = Point2D(
-      (topRight.x + bottomRight.x) / 2,
-      (topRight.y + bottomRight.y) / 2,
+    final rightCenter = Offset(
+      (topRight.dx + bottomRight.dx) / 2,
+      (topRight.dy + bottomRight.dy) / 2,
     );
 
     points.addAll([
       SnapPoint(
-        x: topCenter.x,
-        y: topCenter.y,
+        x: topCenter.dx,
+        y: topCenter.dy,
         type: SnapPointType.edgeMidpoint,
         axis: SnapAxis.horizontal, // Primarily for X alignment
         sourceId: shape.id,
         sourceName: shape.name,
       ),
       SnapPoint(
-        x: bottomCenter.x,
-        y: bottomCenter.y,
+        x: bottomCenter.dx,
+        y: bottomCenter.dy,
         type: SnapPointType.edgeMidpoint,
         axis: SnapAxis.horizontal,
         sourceId: shape.id,
         sourceName: shape.name,
       ),
       SnapPoint(
-        x: leftCenter.x,
-        y: leftCenter.y,
+        x: leftCenter.dx,
+        y: leftCenter.dy,
         type: SnapPointType.edgeMidpoint,
         axis: SnapAxis.vertical, // Primarily for Y alignment
         sourceId: shape.id,
         sourceName: shape.name,
       ),
       SnapPoint(
-        x: rightCenter.x,
-        y: rightCenter.y,
+        x: rightCenter.dx,
+        y: rightCenter.dy,
         type: SnapPointType.edgeMidpoint,
         axis: SnapAxis.vertical,
         sourceId: shape.id,
@@ -285,14 +285,14 @@ class SnapPointGenerator {
 
     // Center point
     if (includeCenter) {
-      final center = Point2D(
-        (topLeft.x + bottomRight.x) / 2,
-        (topLeft.y + bottomRight.y) / 2,
+      final center = Offset(
+        (topLeft.dx + bottomRight.dx) / 2,
+        (topLeft.dy + bottomRight.dy) / 2,
       );
       points.add(
         SnapPoint(
-          x: center.x,
-          y: center.y,
+          x: center.dx,
+          y: center.dy,
           type: SnapPointType.center,
           axis: SnapAxis.both,
           sourceId: shape.id,
@@ -366,7 +366,7 @@ class SnapPointGenerator {
   }
 
   /// Generate snap points from a selection rect
-  static List<SnapPoint> fromRect(Rect2D rect, {String? label}) {
+  static List<SnapPoint> fromRect(Rect rect, {String? label}) {
     final points = <SnapPoint>[];
 
     // Corners
@@ -404,14 +404,14 @@ class SnapPointGenerator {
     // Edge midpoints
     points.addAll([
       SnapPoint(
-        x: rect.centerX,
+        x: rect.center.dx,
         y: rect.top,
         type: SnapPointType.edgeMidpoint,
         axis: SnapAxis.horizontal,
         sourceName: label,
       ),
       SnapPoint(
-        x: rect.centerX,
+        x: rect.center.dx,
         y: rect.bottom,
         type: SnapPointType.edgeMidpoint,
         axis: SnapAxis.horizontal,
@@ -419,14 +419,14 @@ class SnapPointGenerator {
       ),
       SnapPoint(
         x: rect.left,
-        y: rect.centerY,
+        y: rect.center.dy,
         type: SnapPointType.edgeMidpoint,
         axis: SnapAxis.vertical,
         sourceName: label,
       ),
       SnapPoint(
         x: rect.right,
-        y: rect.centerY,
+        y: rect.center.dy,
         type: SnapPointType.edgeMidpoint,
         axis: SnapAxis.vertical,
         sourceName: label,
@@ -436,8 +436,8 @@ class SnapPointGenerator {
     // Center
     points.add(
       SnapPoint(
-        x: rect.centerX,
-        y: rect.centerY,
+        x: rect.center.dx,
+        y: rect.center.dy,
         type: SnapPointType.center,
         axis: SnapAxis.both,
         sourceName: label,
@@ -553,7 +553,7 @@ class SnapDetector {
 
   /// Detect snaps for a selection rect being moved
   SnapResult detectSnap({
-    required Rect2D selectionRect,
+    required Rect selectionRect,
     required double zoom,
     Set<String> excludeIds = const {},
   }) {
@@ -624,8 +624,8 @@ class SnapDetector {
 
       snapLines.add(
         SnapLine(
-          start: Point2D(bestSnapX.x, minY - 20),
-          end: Point2D(bestSnapX.x, maxY + 20),
+          start: Offset(bestSnapX.x, minY - 20),
+          end: Offset(bestSnapX.x, maxY + 20),
           axis: SnapAxis.horizontal,
           isCenter: bestSnapX.type == SnapPointType.center,
         ),
@@ -649,8 +649,8 @@ class SnapDetector {
 
       snapLines.add(
         SnapLine(
-          start: Point2D(minX - 20, bestSnapY.y),
-          end: Point2D(maxX + 20, bestSnapY.y),
+          start: Offset(minX - 20, bestSnapY.y),
+          end: Offset(maxX + 20, bestSnapY.y),
           axis: SnapAxis.vertical,
           isCenter: bestSnapY.type == SnapPointType.center,
         ),

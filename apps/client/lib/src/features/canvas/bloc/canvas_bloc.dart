@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vio_core/vio_core.dart';
 
@@ -144,7 +145,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
   ) {
     emit(
       state.copyWith(
-        viewportSize: Point2D(event.width, event.height),
+        viewportSize: Size(event.width, event.height),
       ),
     );
   }
@@ -153,9 +154,9 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     ViewportPanned event,
     Emitter<CanvasState> emit,
   ) {
-    final newOffset = Point2D(
-      state.viewportOffset.x + event.deltaX,
-      state.viewportOffset.y + event.deltaY,
+    final newOffset = Offset(
+      state.viewportOffset.dx + event.deltaX,
+      state.viewportOffset.dy + event.deltaY,
     );
     emit(state.copyWith(viewportOffset: newOffset));
   }
@@ -180,9 +181,9 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     // newOffset = focalPoint - (focalPoint - offset) * (newZoom / oldZoom)
 
     final zoomRatio = newZoom / state.zoom;
-    final newOffset = Point2D(
-      event.focalX - (event.focalX - state.viewportOffset.x) * zoomRatio,
-      event.focalY - (event.focalY - state.viewportOffset.y) * zoomRatio,
+    final newOffset = Offset(
+      event.focalX - (event.focalX - state.viewportOffset.dx) * zoomRatio,
+      event.focalY - (event.focalY - state.viewportOffset.dy) * zoomRatio,
     );
 
     emit(
@@ -200,7 +201,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     emit(
       state.copyWith(
         zoom: 1.0,
-        viewportOffset: const Point2D(0, 0),
+        viewportOffset: const Offset(0, 0),
       ),
     );
   }
@@ -230,17 +231,17 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
 
   void _zoomAtCenter(double scaleFactor, Emitter<CanvasState> emit) {
     // Use viewport center as focal point
-    final centerX = state.viewportSize.x / 2;
-    final centerY = state.viewportSize.y / 2;
+    final centerX = state.viewportSize.width / 2;
+    final centerY = state.viewportSize.height / 2;
 
     // Calculate new zoom level
     final newZoom = (state.zoom * scaleFactor).clamp(0.01, 64.0);
 
     // Adjust offset to zoom towards center
     final zoomDelta = newZoom / state.zoom;
-    final newOffset = Point2D(
-      centerX - (centerX - state.viewportOffset.x) * zoomDelta,
-      centerY - (centerY - state.viewportOffset.y) * zoomDelta,
+    final newOffset = Offset(
+      centerX - (centerX - state.viewportOffset.dx) * zoomDelta,
+      centerY - (centerY - state.viewportOffset.dy) * zoomDelta,
     );
 
     emit(
@@ -255,7 +256,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     PointerDown event,
     Emitter<CanvasState> emit,
   ) {
-    final canvasPoint = _screenToCanvas(Point2D(event.x, event.y));
+    final canvasPoint = _screenToCanvas(Offset(event.x, event.y));
 
     // Hit test to find shape under pointer
     final hitShape = HitTest.findTopShapeAtPoint(canvasPoint, state.shapeList);
@@ -321,16 +322,16 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     PointerMove event,
     Emitter<CanvasState> emit,
   ) {
-    final canvasPoint = _screenToCanvas(Point2D(event.x, event.y));
+    final canvasPoint = _screenToCanvas(Offset(event.x, event.y));
 
     // Handle shape movement - only update dragOffset, not shapes
     if (state.interactionMode == InteractionMode.movingShapes &&
         state.dragStart != null &&
         state.selectedShapeIds.isNotEmpty) {
       // Calculate total offset from drag start
-      var newDragOffset = Point2D(
-        canvasPoint.x - state.dragStart!.x,
-        canvasPoint.y - state.dragStart!.y,
+      var newDragOffset = Offset(
+        canvasPoint.dx - state.dragStart!.dx,
+        canvasPoint.dy - state.dragStart!.dy,
       );
 
       // Perform snap detection
@@ -338,9 +339,9 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
 
       // Apply snap offset if snapping occurred
       if (snapResult.hasSnap) {
-        newDragOffset = Point2D(
-          newDragOffset.x + snapResult.deltaX,
-          newDragOffset.y + snapResult.deltaY,
+        newDragOffset = Offset(
+          newDragOffset.dx + snapResult.deltaX,
+          newDragOffset.dy + snapResult.deltaY,
         );
       }
 
@@ -408,8 +409,8 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
           final shape = newShapes[shapeId];
           if (shape != null) {
             newShapes[shapeId] = shape.moveBy(
-              state.dragOffset!.x,
-              state.dragOffset!.y,
+              state.dragOffset!.dx,
+              state.dragOffset!.dy,
             );
           }
         }
@@ -645,7 +646,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
   }
 
   /// Detect snap points for current drag operation
-  SnapResult _detectSnap(Point2D dragOffset) {
+  SnapResult _detectSnap(Offset dragOffset) {
     // Build snap index from non-selected shapes
     final snapIndex = SnapIndex();
     final selectedIds = state.selectedShapeIds.toSet();
@@ -680,7 +681,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
   }
 
   /// Get combined selection rect with drag offset applied
-  Rect2D? _getSelectionRectWithOffset(Point2D offset) {
+  Rect? _getSelectionRectWithOffset(Offset offset) {
     if (state.selectedShapeIds.isEmpty) return null;
 
     double? minX, minY, maxX, maxY;
@@ -691,15 +692,15 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
 
       final bounds = shape.bounds;
       final corners = [
-        shape.transformPoint(Point2D(bounds.left, bounds.top)),
-        shape.transformPoint(Point2D(bounds.right, bounds.top)),
-        shape.transformPoint(Point2D(bounds.right, bounds.bottom)),
-        shape.transformPoint(Point2D(bounds.left, bounds.bottom)),
+        shape.transformPoint(Offset(bounds.left, bounds.top)),
+        shape.transformPoint(Offset(bounds.right, bounds.top)),
+        shape.transformPoint(Offset(bounds.right, bounds.bottom)),
+        shape.transformPoint(Offset(bounds.left, bounds.bottom)),
       ];
 
       for (final corner in corners) {
-        final x = corner.x + offset.x;
-        final y = corner.y + offset.y;
+        final x = corner.dx + offset.dx;
+        final y = corner.dy + offset.dy;
         minX = minX == null ? x : (x < minX ? x : minX);
         minY = minY == null ? y : (y < minY ? y : minY);
         maxX = maxX == null ? x : (x > maxX ? x : maxX);
@@ -711,14 +712,14 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       return null;
     }
 
-    return Rect2D(x: minX, y: minY, width: maxX - minX, height: maxY - minY);
+    return Rect.fromLTWH(minX, minY, maxX - minX, maxY - minY);
   }
 
   /// Convert screen coordinates to canvas coordinates
-  Point2D _screenToCanvas(Point2D screenPoint) {
-    return Point2D(
-      (screenPoint.x - state.viewportOffset.x) / state.zoom,
-      (screenPoint.y - state.viewportOffset.y) / state.zoom,
+  Offset _screenToCanvas(Offset screenPoint) {
+    return Offset(
+      (screenPoint.dx - state.viewportOffset.dx) / state.zoom,
+      (screenPoint.dy - state.viewportOffset.dy) / state.zoom,
     );
   }
 }

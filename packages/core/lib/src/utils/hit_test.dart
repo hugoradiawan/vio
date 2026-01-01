@@ -1,3 +1,4 @@
+import 'package:flutter/rendering.dart';
 import 'package:vio_core/vio_core.dart';
 
 /// Utility class for hit-testing shapes on the canvas
@@ -6,7 +7,7 @@ class HitTest {
 
   /// Test if a point hits a shape, accounting for transforms
   /// Returns true if the point is inside the shape
-  static bool hitTestShape(Point2D point, Shape shape) {
+  static bool hitTestShape(Offset point, Shape shape) {
     if (shape.hidden) return false;
 
     // Transform the point into the shape's local coordinate system
@@ -30,17 +31,17 @@ class HitTest {
   }
 
   /// Hit test against a rectangle shape
-  static bool _hitTestRectangle(Point2D point, RectangleShape shape) {
+  static bool _hitTestRectangle(Offset point, RectangleShape shape) {
     final bounds = shape.bounds;
 
     // Simple bounds check for rectangles without rounded corners
     if (shape.r1 <= 0 && shape.r2 <= 0 && shape.r3 <= 0 && shape.r4 <= 0) {
-      return bounds.containsPoint(point);
+      return bounds.contains(point);
     }
 
     // For rounded rectangles, we need more sophisticated hit testing
     // First, check if we're in the bounding box at all
-    if (!bounds.containsPoint(point)) return false;
+    if (!bounds.contains(point)) return false;
 
     // Check each corner region
     final corners = [
@@ -60,16 +61,15 @@ class HitTest {
 
       // Check if point is in the corner region
       final inCornerX = i == 0 || i == 3
-          ? point.x < bounds.left + r
-          : point.x > bounds.right - r;
+          ? point.dx < bounds.left + r
+          : point.dx > bounds.right - r;
       final inCornerY = i == 0 || i == 1
-          ? point.y < bounds.top + r
-          : point.y > bounds.bottom - r;
-
+          ? point.dy < bounds.top + r
+          : point.dy > bounds.bottom - r;
       if (inCornerX && inCornerY) {
         // Point is in corner region - check distance from arc center
-        final dx = point.x - centerX;
-        final dy = point.y - centerY;
+        final dx = point.dx - centerX;
+        final dy = point.dy - centerY;
         if (dx * dx + dy * dy > r * r) {
           return false; // Outside the corner arc
         }
@@ -80,18 +80,18 @@ class HitTest {
   }
 
   /// Hit test against an ellipse shape
-  static bool _hitTestEllipse(Point2D point, EllipseShape shape) {
+  static bool _hitTestEllipse(Offset point, EllipseShape shape) {
     final bounds = shape.bounds;
-    final centerX = bounds.centerX;
-    final centerY = bounds.centerY;
+    final centerX = bounds.center.dx;
+    final centerY = bounds.center.dy;
     final radiusX = bounds.width / 2;
     final radiusY = bounds.height / 2;
 
     if (radiusX <= 0 || radiusY <= 0) return false;
 
     // Ellipse equation: (x-cx)²/rx² + (y-cy)²/ry² <= 1
-    final dx = point.x - centerX;
-    final dy = point.y - centerY;
+    final dx = point.dx - centerX;
+    final dy = point.dy - centerY;
     final normalized =
         (dx * dx) / (radiusX * radiusX) + (dy * dy) / (radiusY * radiusY);
 
@@ -100,28 +100,28 @@ class HitTest {
 
   /// Hit test against a frame shape
   /// Frames are only selectable by clicking on their name label area
-  static bool _hitTestFrame(Point2D point, FrameShape shape) {
+  static bool _hitTestFrame(Offset point, FrameShape shape) {
     final bounds = shape.bounds;
     // Frame name label is positioned above the frame, to the left
     // Label area: x = bounds.left, y = bounds.top - labelHeight, width = ~150, height = labelHeight
     const labelHeight = 20.0;
     const labelWidth = 150.0;
-    final labelBounds = Rect2D(
-      x: bounds.left,
-      y: bounds.top - labelHeight - 4, // 4px gap above frame
-      width: labelWidth,
-      height: labelHeight,
+    final labelBounds = Rect.fromLTWH(
+      bounds.left,
+      bounds.top - labelHeight - 4, // 4px gap above frame
+      labelWidth,
+      labelHeight,
     );
-    return labelBounds.containsPoint(point);
+    return labelBounds.contains(point);
   }
 
   /// Simple bounds hit test for unsupported shape types
-  static bool _hitTestBounds(Point2D point, Rect2D bounds) {
-    return bounds.containsPoint(point);
+  static bool _hitTestBounds(Offset point, Rect bounds) {
+    return bounds.contains(point);
   }
 
   /// Find all shapes at a given point, in reverse order (top-most first)
-  static List<Shape> findShapesAtPoint(Point2D point, List<Shape> shapes) {
+  static List<Shape> findShapesAtPoint(Offset point, List<Shape> shapes) {
     final hits = <Shape>[];
     // Iterate in reverse to get top-most shapes first
     for (var i = shapes.length - 1; i >= 0; i--) {
@@ -133,7 +133,7 @@ class HitTest {
   }
 
   /// Find the top-most shape at a given point
-  static Shape? findTopShapeAtPoint(Point2D point, List<Shape> shapes) {
+  static Shape? findTopShapeAtPoint(Offset point, List<Shape> shapes) {
     // Iterate in reverse to get top-most shape first
     for (var i = shapes.length - 1; i >= 0; i--) {
       if (hitTestShape(point, shapes[i])) {
@@ -145,7 +145,7 @@ class HitTest {
 
   /// Find all shapes that intersect with a rectangle (for marquee selection)
   /// Note: Frames are excluded from marquee selection (they can only be selected via their label)
-  static List<Shape> findShapesInRect(Rect2D rect, List<Shape> shapes) {
+  static List<Shape> findShapesInRect(Rect rect, List<Shape> shapes) {
     final hits = <Shape>[];
     for (final shape in shapes) {
       if (shape.hidden) continue;
@@ -154,7 +154,7 @@ class HitTest {
 
       // Get the shape's bounding box in world coordinates
       final shapeBounds = _getTransformedBounds(shape);
-      if (rect.intersects(shapeBounds)) {
+      if (rect.overlaps(shapeBounds)) {
         hits.add(shape);
       }
     }
@@ -162,30 +162,30 @@ class HitTest {
   }
 
   /// Get the axis-aligned bounding box of a shape after transform
-  static Rect2D _getTransformedBounds(Shape shape) {
+  static Rect _getTransformedBounds(Shape shape) {
     final bounds = shape.bounds;
 
     // Get the four corners of the local bounds
     final corners = [
-      shape.transformPoint(Point2D(bounds.left, bounds.top)),
-      shape.transformPoint(Point2D(bounds.right, bounds.top)),
-      shape.transformPoint(Point2D(bounds.right, bounds.bottom)),
-      shape.transformPoint(Point2D(bounds.left, bounds.bottom)),
+      shape.transformPoint(Offset(bounds.left, bounds.top)),
+      shape.transformPoint(Offset(bounds.right, bounds.top)),
+      shape.transformPoint(Offset(bounds.right, bounds.bottom)),
+      shape.transformPoint(Offset(bounds.left, bounds.bottom)),
     ];
 
     // Find the axis-aligned bounding box
-    var minX = corners[0].x;
-    var maxX = corners[0].x;
-    var minY = corners[0].y;
-    var maxY = corners[0].y;
+    var minX = corners[0].dx;
+    var maxX = corners[0].dx;
+    var minY = corners[0].dy;
+    var maxY = corners[0].dy;
 
     for (final corner in corners) {
-      if (corner.x < minX) minX = corner.x;
-      if (corner.x > maxX) maxX = corner.x;
-      if (corner.y < minY) minY = corner.y;
-      if (corner.y > maxY) maxY = corner.y;
+      if (corner.dx < minX) minX = corner.dx;
+      if (corner.dx > maxX) maxX = corner.dx;
+      if (corner.dy < minY) minY = corner.dy;
+      if (corner.dy > maxY) maxY = corner.dy;
     }
 
-    return Rect2D(x: minX, y: minY, width: maxX - minX, height: maxY - minY);
+    return Rect.fromLTWH(minX, minY, maxX - minX, maxY - minY);
   }
 }

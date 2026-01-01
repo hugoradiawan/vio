@@ -28,8 +28,8 @@ enum InteractionMode {
 class CanvasState extends Equatable {
   const CanvasState({
     this.zoom = 1.0,
-    this.viewportOffset = const Point2D(0, 0),
-    this.viewportSize = const Point2D(800, 600),
+    this.viewportOffset = const Offset(0, 0),
+    this.viewportSize = const Size(800, 600),
     this.interactionMode = InteractionMode.idle,
     this.dragStart,
     this.currentPointer,
@@ -47,24 +47,23 @@ class CanvasState extends Equatable {
   final double zoom;
 
   /// Viewport offset (pan position) in screen coordinates
-  final Point2D viewportOffset;
+  final Offset viewportOffset;
 
   /// Viewport size in screen coordinates
-  final Point2D viewportSize;
+  final Size viewportSize;
 
   /// Current interaction mode
   final InteractionMode interactionMode;
 
   /// Starting point of current drag operation (canvas coordinates)
-  final Point2D? dragStart;
+  final Offset? dragStart;
 
   /// Current pointer position (canvas coordinates)
-  final Point2D? currentPointer;
+  final Offset? currentPointer;
 
   /// Current drag offset for moving shapes (performance optimization)
   /// Applied at render time instead of mutating shapes during drag
-  final Point2D? dragOffset;
-
+  final Offset? dragOffset;
   /// All shapes on the canvas, keyed by ID
   final Map<String, Shape> shapes;
 
@@ -94,7 +93,7 @@ class CanvasState extends Equatable {
       selectedShapeIds.map((id) => shapes[id]).whereType<Shape>().toList();
 
   /// Get the combined bounding rect of selected shapes (with drag offset applied)
-  Rect2D? get selectionRect {
+  Rect? get selectionRect {
     if (selectedShapeIds.isEmpty) return null;
 
     double? minX, minY, maxX, maxY;
@@ -106,17 +105,17 @@ class CanvasState extends Equatable {
       final bounds = shape.bounds;
       // Get transformed corners
       final corners = [
-        shape.transformPoint(Point2D(bounds.left, bounds.top)),
-        shape.transformPoint(Point2D(bounds.right, bounds.top)),
-        shape.transformPoint(Point2D(bounds.right, bounds.bottom)),
-        shape.transformPoint(Point2D(bounds.left, bounds.bottom)),
+        shape.transformPoint(Offset(bounds.left, bounds.top)),
+        shape.transformPoint(Offset(bounds.right, bounds.top)),
+        shape.transformPoint(Offset(bounds.right, bounds.bottom)),
+        shape.transformPoint(Offset(bounds.left, bounds.bottom)),
       ];
 
       for (final corner in corners) {
-        minX = minX == null ? corner.x : (corner.x < minX ? corner.x : minX);
-        minY = minY == null ? corner.y : (corner.y < minY ? corner.y : minY);
-        maxX = maxX == null ? corner.x : (corner.x > maxX ? corner.x : maxX);
-        maxY = maxY == null ? corner.y : (corner.y > maxY ? corner.y : maxY);
+        minX = minX == null ? corner.dx : (corner.dx < minX ? corner.dx : minX);
+        minY = minY == null ? corner.dy : (corner.dy < minY ? corner.dy : minY);
+        maxX = maxX == null ? corner.dx : (corner.dx > maxX ? corner.dx : maxX);
+        maxY = maxY == null ? corner.dy : (corner.dy > maxY ? corner.dy : maxY);
       }
     }
 
@@ -125,37 +124,37 @@ class CanvasState extends Equatable {
     }
 
     // Apply drag offset if dragging
-    final offsetX = dragOffset?.x ?? 0;
-    final offsetY = dragOffset?.y ?? 0;
+    final offsetX = dragOffset?.dx ?? 0;
+    final offsetY = dragOffset?.dy ?? 0;
 
-    return Rect2D(
-      x: minX + offsetX,
-      y: minY + offsetY,
-      width: maxX - minX,
-      height: maxY - minY,
+    return Rect.fromLTWH(
+      minX + offsetX,
+      minY + offsetY,
+      maxX - minX,
+      maxY - minY,
     );
   }
 
   /// Get the visible rectangle in canvas coordinates
-  Rect2D get visibleRect {
-    final topLeft = screenToCanvas(const Point2D(0, 0));
+  Rect get visibleRect {
+    final topLeft = screenToCanvas(const Size(0, 0));
     final bottomRight = screenToCanvas(viewportSize);
-    return Rect2D.fromPoints(topLeft, bottomRight);
+    return Rect.fromPoints(topLeft, bottomRight);
   }
 
   /// Convert screen coordinates to canvas coordinates
-  Point2D screenToCanvas(Point2D screenPoint) {
-    return Point2D(
-      (screenPoint.x - viewportOffset.x) / zoom,
-      (screenPoint.y - viewportOffset.y) / zoom,
+  Offset screenToCanvas(Size screenPoint) {
+    return Offset(
+      (screenPoint.width - viewportOffset.dx) / zoom,
+      (screenPoint.height - viewportOffset.dy) / zoom,
     );
   }
 
   /// Convert canvas coordinates to screen coordinates
-  Point2D canvasToScreen(Point2D canvasPoint) {
-    return Point2D(
-      canvasPoint.x * zoom + viewportOffset.x,
-      canvasPoint.y * zoom + viewportOffset.y,
+  Offset canvasToScreen(Offset canvasPoint) {
+    return Offset(
+      canvasPoint.dx * zoom + viewportOffset.dx,
+      canvasPoint.dy * zoom + viewportOffset.dy,
     );
   }
 
@@ -164,7 +163,7 @@ class CanvasState extends Equatable {
     // Scale the canvas, then translate in screen space (x' = x*zoom + offset)
     // Use T * S (translate then scale) so translation is not scaled.
     return Matrix2D.identity
-        .translated(viewportOffset.x, viewportOffset.y)
+        .translated(viewportOffset.dx, viewportOffset.dy)
         .scaled(zoom, zoom);
   }
 
@@ -175,21 +174,21 @@ class CanvasState extends Equatable {
   bool get isDragging => interactionMode == InteractionMode.dragging;
 
   /// Get drag rectangle if currently doing marquee selection
-  Rect2D? get dragRect {
+  Rect? get dragRect {
     // Only show drag rect during marquee selection, not during shape movement
     if (interactionMode != InteractionMode.dragging) return null;
     if (dragStart == null || currentPointer == null) return null;
-    return Rect2D.fromPoints(dragStart!, currentPointer!);
+    return Rect.fromPoints(dragStart!, currentPointer!);
   }
 
   CanvasState copyWith({
     double? zoom,
-    Point2D? viewportOffset,
-    Point2D? viewportSize,
+    Offset? viewportOffset,
+    Size? viewportSize,
     InteractionMode? interactionMode,
-    Point2D? dragStart,
-    Point2D? currentPointer,
-    Point2D? dragOffset,
+    Offset? dragStart,
+    Offset? currentPointer,
+    Offset? dragOffset,
     Map<String, Shape>? shapes,
     List<String>? selectedShapeIds,
     String? hoveredShapeId,

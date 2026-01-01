@@ -202,7 +202,7 @@ class ShapePainter {
   /// Create a gradient shader from a ShapeGradient
   static ui.Shader _createGradientShader(
     ShapeGradient gradient,
-    Rect2D bounds,
+    Rect bounds,
   ) {
     final rect = Rect.fromLTWH(
       bounds.left,

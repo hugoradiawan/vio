@@ -12,7 +12,7 @@ class SizeIndicatorPainter extends CustomPainter {
   });
 
   final Matrix2D viewMatrix;
-  final Rect2D? selectionRect;
+  final Rect? selectionRect;
   final double zoom;
 
   // Size indicator constants
@@ -53,7 +53,7 @@ class SizeIndicatorPainter extends CustomPainter {
     const scaledPillHeight = pillHeight;
 
     // Position at bottom center of selection (in screen coordinates)
-    final centerX = selectionRect!.centerX * zoom + viewMatrix.e;
+    final centerX = selectionRect!.center.dx * zoom + viewMatrix.e;
     final bottomY = selectionRect!.bottom * zoom + viewMatrix.f;
 
     final pillX = centerX - pillWidth / 2;
@@ -107,9 +107,9 @@ class DistanceIndicatorPainter extends CustomPainter {
   });
 
   final Matrix2D viewMatrix;
-  final Rect2D? selectionRect;
+  final Rect? selectionRect;
   final double zoom;
-  final Rect2D? frameRect;
+  final Rect? frameRect;
 
   // Distance indicator constants
   static const Color lineColor = Color(0xFFE53935); // Red
@@ -168,7 +168,7 @@ class DistanceIndicatorPainter extends CustomPainter {
         linePaint,
         frameRect!.left,
         selectionRect!.left,
-        selectionRect!.centerY,
+        selectionRect!.center.dy,
         leftDistance,
       );
     }
@@ -179,7 +179,7 @@ class DistanceIndicatorPainter extends CustomPainter {
         linePaint,
         selectionRect!.right,
         frameRect!.right,
-        selectionRect!.centerY,
+        selectionRect!.center.dy,
         rightDistance,
       );
     }
@@ -191,7 +191,7 @@ class DistanceIndicatorPainter extends CustomPainter {
         linePaint,
         frameRect!.top,
         selectionRect!.top,
-        selectionRect!.centerX,
+        selectionRect!.center.dx,
         topDistance,
       );
     }
@@ -202,7 +202,7 @@ class DistanceIndicatorPainter extends CustomPainter {
         linePaint,
         selectionRect!.bottom,
         frameRect!.bottom,
-        selectionRect!.centerX,
+        selectionRect!.center.dx,
         bottomDistance,
       );
     }

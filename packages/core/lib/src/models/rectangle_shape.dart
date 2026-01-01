@@ -1,3 +1,4 @@
+import 'package:flutter/rendering.dart';
 import 'package:vio_core/vio_core.dart';
 
 /// Rectangle shape with optional corner radii
@@ -60,7 +61,7 @@ class RectangleShape extends Shape {
   double get cornerRadius => hasUniformCorners ? r1 : 0;
 
   @override
-  Rect2D get bounds => Rect2D(x: x, y: y, width: rectWidth, height: rectHeight);
+  Rect get bounds => Rect.fromLTWH(x, y, rectWidth, rectHeight);
 
   @override
   RectangleShape copyWith({
@@ -70,7 +71,7 @@ class RectangleShape extends Shape {
     String? frameId,
     Matrix2D? transform,
     Matrix2D? transformInverse,
-    Rect2D? selrect,
+    Rect? selrect,
     List<ShapeFill>? fills,
     List<ShapeStroke>? strokes,
     double? opacity,

@@ -25,16 +25,16 @@ class HandleInfo {
   });
 
   final HandlePosition position;
-  final Point2D center;
+  final Offset center;
   final double size;
 
   /// Check if a point hits this handle
-  bool containsPoint(Point2D point) {
+  bool containsPoint(Offset point) {
     final halfSize = size / 2;
-    return point.x >= center.x - halfSize &&
-        point.x <= center.x + halfSize &&
-        point.y >= center.y - halfSize &&
-        point.y <= center.y + halfSize;
+    return point.dx >= center.dx - halfSize &&
+        point.dx <= center.dx + halfSize &&
+        point.dy >= center.dy - halfSize &&
+        point.dy <= center.dy + halfSize;
   }
 }
 
@@ -55,7 +55,7 @@ class SelectionBoxPainter extends CustomPainter {
   final Matrix2D viewMatrix;
 
   /// Current drag offset (applied at render time)
-  final Point2D? dragOffset;
+  final Offset? dragOffset;
 
   /// Size of resize handles
   final double handleSize;
@@ -99,7 +99,7 @@ class SelectionBoxPainter extends CustomPainter {
 
     // Apply drag offset if dragging
     if (dragOffset != null) {
-      canvas.translate(dragOffset!.x, dragOffset!.y);
+      canvas.translate(dragOffset!.dx, dragOffset!.dy);
     }
 
     // Draw bounding box
@@ -112,7 +112,7 @@ class SelectionBoxPainter extends CustomPainter {
   }
 
   /// Get the combined bounding box of all selected shapes
-  Rect2D? _getCombinedBounds() {
+  Rect? _getCombinedBounds() {
     if (selectedShapes.isEmpty) return null;
 
     double? minX, minY, maxX, maxY;
@@ -146,38 +146,38 @@ class SelectionBoxPainter extends CustomPainter {
       return null;
     }
 
-    return Rect2D(x: minX, y: minY, width: maxX - minX, height: maxY - minY);
+    return Rect.fromLTWH(minX, minY, maxX - minX, maxY - minY);
   }
 
   /// Get the axis-aligned bounding box of a shape after transform
-  Rect2D _getTransformedBounds(Shape shape) {
+  Rect _getTransformedBounds(Shape shape) {
     final bounds = shape.bounds;
 
     // Get the four corners of the local bounds
     final corners = [
-      shape.transformPoint(Point2D(bounds.left, bounds.top)),
-      shape.transformPoint(Point2D(bounds.right, bounds.top)),
-      shape.transformPoint(Point2D(bounds.right, bounds.bottom)),
-      shape.transformPoint(Point2D(bounds.left, bounds.bottom)),
+      shape.transformPoint(Offset(bounds.left, bounds.top)),
+      shape.transformPoint(Offset(bounds.right, bounds.top)),
+      shape.transformPoint(Offset(bounds.right, bounds.bottom)),
+      shape.transformPoint(Offset(bounds.left, bounds.bottom)),
     ];
 
     // Find the axis-aligned bounding box
-    var minX = corners[0].x;
-    var maxX = corners[0].x;
-    var minY = corners[0].y;
-    var maxY = corners[0].y;
+    var minX = corners[0].dx;
+    var maxX = corners[0].dx;
+    var minY = corners[0].dy;
+    var maxY = corners[0].dy;
 
     for (final corner in corners) {
-      if (corner.x < minX) minX = corner.x;
-      if (corner.x > maxX) maxX = corner.x;
-      if (corner.y < minY) minY = corner.y;
-      if (corner.y > maxY) maxY = corner.y;
+      if (corner.dx < minX) minX = corner.dx;
+      if (corner.dx > maxX) maxX = corner.dx;
+      if (corner.dy < minY) minY = corner.dy;
+      if (corner.dy > maxY) maxY = corner.dy;
     }
 
-    return Rect2D(x: minX, y: minY, width: maxX - minX, height: maxY - minY);
+    return Rect.fromLTWH(minX, minY, maxX - minX, maxY - minY);
   }
 
-  void _drawBoundingBox(Canvas canvas, Rect2D bounds) {
+  void _drawBoundingBox(Canvas canvas, Rect bounds) {
     final rect = Rect.fromLTWH(
       bounds.left,
       bounds.top,
@@ -194,7 +194,7 @@ class SelectionBoxPainter extends CustomPainter {
     canvas.drawRect(rect, outlinePaint);
 
     // Draw rotation handle line
-    final centerX = bounds.centerX;
+    final centerX = bounds.center.dx;
     final handleY = bounds.top - rotationHandleOffset;
 
     final linePaint = Paint()
@@ -209,7 +209,7 @@ class SelectionBoxPainter extends CustomPainter {
     );
   }
 
-  void _drawHandles(Canvas canvas, Rect2D bounds) {
+  void _drawHandles(Canvas canvas, Rect bounds) {
     final handlePositions = _getHandlePositions(bounds);
 
     for (final entry in handlePositions.entries) {
@@ -217,28 +217,28 @@ class SelectionBoxPainter extends CustomPainter {
     }
   }
 
-  Map<HandlePosition, Point2D> _getHandlePositions(Rect2D bounds) {
-    final centerX = bounds.centerX;
-    final centerY = bounds.centerY;
+  Map<HandlePosition, Offset> _getHandlePositions(Rect bounds) {
+    final centerX = bounds.center.dx;
+    final centerY = bounds.center.dy;
 
     return {
-      HandlePosition.topLeft: Point2D(bounds.left, bounds.top),
-      HandlePosition.topCenter: Point2D(centerX, bounds.top),
-      HandlePosition.topRight: Point2D(bounds.right, bounds.top),
-      HandlePosition.middleLeft: Point2D(bounds.left, centerY),
-      HandlePosition.middleRight: Point2D(bounds.right, centerY),
-      HandlePosition.bottomLeft: Point2D(bounds.left, bounds.bottom),
-      HandlePosition.bottomCenter: Point2D(centerX, bounds.bottom),
-      HandlePosition.bottomRight: Point2D(bounds.right, bounds.bottom),
+      HandlePosition.topLeft: Offset(bounds.left, bounds.top),
+      HandlePosition.topCenter: Offset(centerX, bounds.top),
+      HandlePosition.topRight: Offset(bounds.right, bounds.top),
+      HandlePosition.middleLeft: Offset(bounds.left, centerY),
+      HandlePosition.middleRight: Offset(bounds.right, centerY),
+      HandlePosition.bottomLeft: Offset(bounds.left, bounds.bottom),
+      HandlePosition.bottomCenter: Offset(centerX, bounds.bottom),
+      HandlePosition.bottomRight: Offset(bounds.right, bounds.bottom),
       HandlePosition.rotation:
-          Point2D(centerX, bounds.top - rotationHandleOffset),
+          Offset(centerX, bounds.top - rotationHandleOffset),
     };
   }
 
-  void _drawHandle(Canvas canvas, Point2D center, bool isRotationHandle) {
+  void _drawHandle(Canvas canvas, Offset center, bool isRotationHandle) {
     final halfSize = handleSize / 2;
     final rect = Rect.fromCenter(
-      center: Offset(center.x, center.y),
+      center: Offset(center.dx, center.dy),
       width: handleSize,
       height: handleSize,
     );
@@ -257,12 +257,12 @@ class SelectionBoxPainter extends CustomPainter {
     if (isRotationHandle) {
       // Draw rotation handle as a circle
       canvas.drawCircle(
-        Offset(center.x, center.y),
+        Offset(center.dx, center.dy),
         halfSize,
         fillPaint,
       );
       canvas.drawCircle(
-        Offset(center.x, center.y),
+        Offset(center.dx, center.dy),
         halfSize,
         strokePaint,
       );
@@ -281,10 +281,10 @@ class SelectionBoxPainter extends CustomPainter {
     return positions.entries.map((entry) {
       // Transform handle position to screen coordinates
       final screenPoint =
-          viewMatrix.transformPoint(entry.value.x, entry.value.y);
+          viewMatrix.transformPoint(entry.value.dx, entry.value.dy);
       return HandleInfo(
         position: entry.key,
-        center: Point2D(screenPoint.x, screenPoint.y),
+        center: Offset(screenPoint.x, screenPoint.y),
         size: handleSize,
       );
     }).toList();
@@ -294,7 +294,7 @@ class SelectionBoxPainter extends CustomPainter {
   bool shouldRepaint(SelectionBoxPainter oldDelegate) {
     // Fast path for drag offset changes
     if (dragOffset != oldDelegate.dragOffset) return true;
-    
+
     return !identical(selectedShapes, oldDelegate.selectedShapes) ||
         viewMatrix != oldDelegate.viewMatrix;
   }

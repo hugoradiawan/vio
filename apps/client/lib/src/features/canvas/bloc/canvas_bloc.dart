@@ -278,9 +278,11 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
             ),
           );
         } else {
+          final newSelection = [...state.selectedShapeIds, hitShape.id];
           emit(
             state.copyWith(
-              selectedShapeIds: [...state.selectedShapeIds, hitShape.id],
+              selectedShapeIds: newSelection,
+              expandedLayerIds: _expandAncestorsForShapes(newSelection),
               interactionMode: InteractionMode.movingShapes,
               dragStart: canvasPoint,
               currentPointer: canvasPoint,
@@ -290,10 +292,12 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       } else {
         // Single selection - shape clicked, start moving
         final isAlreadySelected = state.selectedShapeIds.contains(hitShape.id);
+        final newSelection =
+            isAlreadySelected ? state.selectedShapeIds : [hitShape.id];
         emit(
           state.copyWith(
-            selectedShapeIds:
-                isAlreadySelected ? state.selectedShapeIds : [hitShape.id],
+            selectedShapeIds: newSelection,
+            expandedLayerIds: _expandAncestorsForShapes(newSelection),
             interactionMode: InteractionMode.movingShapes,
             dragStart: canvasPoint,
             currentPointer: canvasPoint,
@@ -386,6 +390,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         state.copyWith(
           interactionMode: InteractionMode.idle,
           selectedShapeIds: selectedIds,
+          expandedLayerIds: _expandAncestorsForShapes(selectedIds),
           clearDragStart: true,
           clearCurrentPointer: true,
         ),
@@ -486,14 +491,27 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       // Replace selection
       newSelection = [event.shapeId];
     }
-    emit(state.copyWith(selectedShapeIds: newSelection));
+
+    // Auto-expand parent layers to reveal the selected shape
+    final expandedIds = _expandAncestorsForShapes(newSelection);
+
+    emit(state.copyWith(
+      selectedShapeIds: newSelection,
+      expandedLayerIds: expandedIds,
+    ),);
   }
 
   void _onShapesSelected(
     ShapesSelected event,
     Emitter<CanvasState> emit,
   ) {
-    emit(state.copyWith(selectedShapeIds: event.shapeIds));
+    // Auto-expand parent layers to reveal the selected shapes
+    final expandedIds = _expandAncestorsForShapes(event.shapeIds);
+
+    emit(state.copyWith(
+      selectedShapeIds: event.shapeIds,
+      expandedLayerIds: expandedIds,
+    ),);
   }
 
   // ============================================================================
@@ -573,6 +591,27 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     Emitter<CanvasState> emit,
   ) {
     emit(state.copyWith(clearHoveredShapeId: true));
+  }
+
+  /// Expands all ancestor layers for the given shape IDs
+  /// Returns the updated set of expanded layer IDs
+  Set<String> _expandAncestorsForShapes(List<String> shapeIds) {
+    final expanded = Set<String>.from(state.expandedLayerIds);
+
+    for (final shapeId in shapeIds) {
+      final shape = state.shapes[shapeId];
+      if (shape == null) continue;
+
+      // Walk up the parent chain and expand all ancestors
+      String? parentId = shape.frameId;
+      while (parentId != null) {
+        expanded.add(parentId);
+        final parent = state.shapes[parentId];
+        parentId = parent?.frameId;
+      }
+    }
+
+    return expanded;
   }
 
   /// Convert screen coordinates to canvas coordinates

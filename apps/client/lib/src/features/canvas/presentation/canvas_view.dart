@@ -8,7 +8,10 @@ import '../../workspace/bloc/workspace_bloc.dart';
 import '../bloc/canvas_bloc.dart';
 import 'painters/canvas_painter.dart';
 import 'painters/grid_painter.dart';
+import 'painters/ruler_painter.dart';
 import 'painters/selection_box_painter.dart';
+import 'painters/size_indicator_painter.dart';
+import 'painters/snap_guides_painter.dart';
 
 /// Main canvas view with infinite pan/zoom capability
 class CanvasView extends StatefulWidget {
@@ -23,10 +26,10 @@ class _CanvasViewState extends State<CanvasView> {
   bool _isPanning = false;
   Offset? _lastPanPosition;
   double _lastScale = 1.0;
-  
+
   /// Timestamp of last pointer move event (for throttling during drag)
   int _lastMoveTimestamp = 0;
-  
+
   /// Throttle interval in milliseconds (~60fps)
   static const int _throttleMs = 16;
 
@@ -157,6 +160,33 @@ class _CanvasViewState extends State<CanvasView> {
                                 ),
                               ),
 
+                            // Snap guides layer
+                            if (canvasState.snapLines.isNotEmpty ||
+                                canvasState.snapPoints.isNotEmpty)
+                              Positioned.fill(
+                                child: CustomPaint(
+                                  painter: SnapGuidesPainter(
+                                    snapLines: canvasState.snapLines,
+                                    snapPoints: canvasState.snapPoints,
+                                    viewMatrix: canvasState.viewMatrix,
+                                    zoom: canvasState.zoom,
+                                  ),
+                                ),
+                              ),
+
+                            // Size indicator layer
+                            if (canvasState.hasSelection &&
+                                canvasState.selectionRect != null)
+                              Positioned.fill(
+                                child: CustomPaint(
+                                  painter: SizeIndicatorPainter(
+                                    selectionRect: canvasState.selectionRect,
+                                    viewMatrix: canvasState.viewMatrix,
+                                    zoom: canvasState.zoom,
+                                  ),
+                                ),
+                              ),
+
                             // Rulers
                             if (workspaceState.showRulers) ...[
                               // Horizontal ruler
@@ -165,9 +195,12 @@ class _CanvasViewState extends State<CanvasView> {
                                 left: 20,
                                 right: 0,
                                 height: 20,
-                                child: _HorizontalRuler(
-                                  offset: canvasState.viewportOffset.x,
-                                  zoom: canvasState.zoom,
+                                child: CustomPaint(
+                                  painter: HorizontalRulerPainter(
+                                    offset: canvasState.viewportOffset.x,
+                                    zoom: canvasState.zoom,
+                                    selectionRect: canvasState.selectionRect,
+                                  ),
                                 ),
                               ),
                               // Vertical ruler
@@ -176,9 +209,12 @@ class _CanvasViewState extends State<CanvasView> {
                                 left: 0,
                                 bottom: 0,
                                 width: 20,
-                                child: _VerticalRuler(
-                                  offset: canvasState.viewportOffset.y,
-                                  zoom: canvasState.zoom,
+                                child: CustomPaint(
+                                  painter: VerticalRulerPainter(
+                                    offset: canvasState.viewportOffset.y,
+                                    zoom: canvasState.zoom,
+                                    selectionRect: canvasState.selectionRect,
+                                  ),
                                 ),
                               ),
                               // Corner
@@ -386,220 +422,6 @@ class _CanvasViewState extends State<CanvasView> {
             ),
           );
     }
-  }
-}
-
-/// Horizontal ruler widget
-class _HorizontalRuler extends StatelessWidget {
-  const _HorizontalRuler({
-    required this.offset,
-    required this.zoom,
-  });
-
-  final double offset;
-  final double zoom;
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _HorizontalRulerPainter(
-        offset: offset,
-        zoom: zoom,
-      ),
-    );
-  }
-}
-
-class _HorizontalRulerPainter extends CustomPainter {
-  _HorizontalRulerPainter({
-    required this.offset,
-    required this.zoom,
-  });
-
-  final double offset;
-  final double zoom;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = VioColors.surface2
-      ..style = PaintingStyle.fill;
-
-    // Background
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
-
-    // Tick marks
-    final tickPaint = Paint()
-      ..color = VioColors.textTertiary
-      ..strokeWidth = 1;
-
-    final textPainter = TextPainter(
-      textDirection: TextDirection.ltr,
-    );
-
-    // Calculate tick interval based on zoom
-    double interval = 100;
-    if (zoom < 0.25) {
-      interval = 400;
-    } else if (zoom < 0.5) {
-      interval = 200;
-    } else if (zoom > 2) {
-      interval = 50;
-    } else if (zoom > 4) {
-      interval = 25;
-    }
-
-    final scaledInterval = interval * zoom;
-    final startValue = (-offset / zoom / interval).floor() * interval;
-    final startX = startValue * zoom + offset;
-
-    for (double x = startX; x < size.width; x += scaledInterval) {
-      final value = ((x - offset) / zoom).round();
-
-      // Major tick
-      canvas.drawLine(
-        Offset(x, size.height - 8),
-        Offset(x, size.height),
-        tickPaint,
-      );
-
-      // Label
-      textPainter.text = TextSpan(
-        text: value.toString(),
-        style: VioTypography.caption.copyWith(
-          color: VioColors.textTertiary,
-          fontSize: 9,
-        ),
-      );
-      textPainter.layout();
-      textPainter.paint(canvas, Offset(x + 2, 2));
-
-      // Minor ticks
-      for (int i = 1; i < 10; i++) {
-        final minorX = x + (scaledInterval / 10) * i;
-        if (minorX < size.width) {
-          canvas.drawLine(
-            Offset(minorX, size.height - (i == 5 ? 5 : 3)),
-            Offset(minorX, size.height),
-            tickPaint,
-          );
-        }
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(_HorizontalRulerPainter oldDelegate) {
-    return offset != oldDelegate.offset || zoom != oldDelegate.zoom;
-  }
-}
-
-/// Vertical ruler widget
-class _VerticalRuler extends StatelessWidget {
-  const _VerticalRuler({
-    required this.offset,
-    required this.zoom,
-  });
-
-  final double offset;
-  final double zoom;
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _VerticalRulerPainter(
-        offset: offset,
-        zoom: zoom,
-      ),
-    );
-  }
-}
-
-class _VerticalRulerPainter extends CustomPainter {
-  _VerticalRulerPainter({
-    required this.offset,
-    required this.zoom,
-  });
-
-  final double offset;
-  final double zoom;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = VioColors.surface2
-      ..style = PaintingStyle.fill;
-
-    // Background
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
-
-    // Tick marks
-    final tickPaint = Paint()
-      ..color = VioColors.textTertiary
-      ..strokeWidth = 1;
-
-    // Calculate tick interval based on zoom
-    double interval = 100;
-    if (zoom < 0.25) {
-      interval = 400;
-    } else if (zoom < 0.5) {
-      interval = 200;
-    } else if (zoom > 2) {
-      interval = 50;
-    } else if (zoom > 4) {
-      interval = 25;
-    }
-
-    final scaledInterval = interval * zoom;
-    final startValue = (-offset / zoom / interval).floor() * interval;
-    final startY = startValue * zoom + offset;
-
-    for (double y = startY; y < size.height; y += scaledInterval) {
-      final value = ((y - offset) / zoom).round();
-
-      // Major tick
-      canvas.drawLine(
-        Offset(size.width - 8, y),
-        Offset(size.width, y),
-        tickPaint,
-      );
-
-      // Label (rotated)
-      canvas.save();
-      canvas.translate(3, y + 2);
-      canvas.rotate(-1.5708); // -90 degrees
-
-      final textPainter = TextPainter(
-        text: TextSpan(
-          text: value.toString(),
-          style: VioTypography.caption.copyWith(
-            color: VioColors.textTertiary,
-            fontSize: 9,
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      );
-      textPainter.layout();
-      textPainter.paint(canvas, Offset.zero);
-      canvas.restore();
-
-      // Minor ticks
-      for (int i = 1; i < 10; i++) {
-        final minorY = y + (scaledInterval / 10) * i;
-        if (minorY < size.height) {
-          canvas.drawLine(
-            Offset(size.width - (i == 5 ? 5 : 3), minorY),
-            Offset(size.width, minorY),
-            tickPaint,
-          );
-        }
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(_VerticalRulerPainter oldDelegate) {
-    return offset != oldDelegate.offset || zoom != oldDelegate.zoom;
   }
 }
 

@@ -328,15 +328,28 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         state.dragStart != null &&
         state.selectedShapeIds.isNotEmpty) {
       // Calculate total offset from drag start
-      final newDragOffset = Point2D(
+      var newDragOffset = Point2D(
         canvasPoint.x - state.dragStart!.x,
         canvasPoint.y - state.dragStart!.y,
       );
+
+      // Perform snap detection
+      final snapResult = _detectSnap(newDragOffset);
+
+      // Apply snap offset if snapping occurred
+      if (snapResult.hasSnap) {
+        newDragOffset = Point2D(
+          newDragOffset.x + snapResult.deltaX,
+          newDragOffset.y + snapResult.deltaY,
+        );
+      }
 
       emit(
         state.copyWith(
           dragOffset: newDragOffset,
           currentPointer: canvasPoint,
+          snapLines: snapResult.snapLines,
+          snapPoints: snapResult.snapPoints,
         ),
       );
     } else {
@@ -407,6 +420,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
             clearDragStart: true,
             clearCurrentPointer: true,
             clearDragOffset: true,
+            clearSnap: true,
           ),
         );
       } else {
@@ -416,6 +430,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
             clearDragStart: true,
             clearCurrentPointer: true,
             clearDragOffset: true,
+            clearSnap: true,
           ),
         );
       }
@@ -627,6 +642,76 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     }
 
     return expanded;
+  }
+
+  /// Detect snap points for current drag operation
+  SnapResult _detectSnap(Point2D dragOffset) {
+    // Build snap index from non-selected shapes
+    final snapIndex = SnapIndex();
+    final selectedIds = state.selectedShapeIds.toSet();
+
+    for (final shape in state.shapes.values) {
+      // Skip selected shapes
+      if (selectedIds.contains(shape.id)) continue;
+
+      // Add snap points from frames
+      if (shape is FrameShape) {
+        snapIndex.addPoints(SnapPointGenerator.fromFrame(shape));
+      } else {
+        snapIndex.addPoints(SnapPointGenerator.fromShape(shape));
+      }
+    }
+
+    snapIndex.build();
+
+    // Calculate selection rect with current drag offset
+    final selectionRect = _getSelectionRectWithOffset(dragOffset);
+    if (selectionRect == null) return SnapResult.empty;
+
+    // Detect snaps
+    const config = SnapConfig();
+    final detector = SnapDetector(config: config, index: snapIndex);
+
+    return detector.detectSnap(
+      selectionRect: selectionRect,
+      zoom: state.zoom,
+      excludeIds: selectedIds,
+    );
+  }
+
+  /// Get combined selection rect with drag offset applied
+  Rect2D? _getSelectionRectWithOffset(Point2D offset) {
+    if (state.selectedShapeIds.isEmpty) return null;
+
+    double? minX, minY, maxX, maxY;
+
+    for (final shapeId in state.selectedShapeIds) {
+      final shape = state.shapes[shapeId];
+      if (shape == null) continue;
+
+      final bounds = shape.bounds;
+      final corners = [
+        shape.transformPoint(Point2D(bounds.left, bounds.top)),
+        shape.transformPoint(Point2D(bounds.right, bounds.top)),
+        shape.transformPoint(Point2D(bounds.right, bounds.bottom)),
+        shape.transformPoint(Point2D(bounds.left, bounds.bottom)),
+      ];
+
+      for (final corner in corners) {
+        final x = corner.x + offset.x;
+        final y = corner.y + offset.y;
+        minX = minX == null ? x : (x < minX ? x : minX);
+        minY = minY == null ? y : (y < minY ? y : minY);
+        maxX = maxX == null ? x : (x > maxX ? x : maxX);
+        maxY = maxY == null ? y : (y > maxY ? y : maxY);
+      }
+    }
+
+    if (minX == null || minY == null || maxX == null || maxY == null) {
+      return null;
+    }
+
+    return Rect2D(x: minX, y: minY, width: maxX - minX, height: maxY - minY);
   }
 
   /// Convert screen coordinates to canvas coordinates

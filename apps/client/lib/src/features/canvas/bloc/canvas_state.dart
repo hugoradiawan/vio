@@ -39,6 +39,8 @@ class CanvasState extends Equatable {
     this.hoveredShapeId,
     this.expandedLayerIds = const {},
     this.hoveredLayerId,
+    this.snapLines = const [],
+    this.snapPoints = const [],
   });
 
   /// Current zoom level (1.0 = 100%)
@@ -78,12 +80,61 @@ class CanvasState extends Equatable {
   /// ID of layer currently hovered in the layers panel
   final String? hoveredLayerId;
 
+  /// Active snap lines to render (during drag)
+  final List<SnapLine> snapLines;
+
+  /// Active snap points to render (during drag)
+  final List<SnapPoint> snapPoints;
+
   /// Get shapes as an ordered list (for rendering)
   List<Shape> get shapeList => shapes.values.toList();
 
   /// Get currently selected shapes
   List<Shape> get selectedShapes =>
       selectedShapeIds.map((id) => shapes[id]).whereType<Shape>().toList();
+
+  /// Get the combined bounding rect of selected shapes (with drag offset applied)
+  Rect2D? get selectionRect {
+    if (selectedShapeIds.isEmpty) return null;
+
+    double? minX, minY, maxX, maxY;
+
+    for (final shapeId in selectedShapeIds) {
+      final shape = shapes[shapeId];
+      if (shape == null) continue;
+
+      final bounds = shape.bounds;
+      // Get transformed corners
+      final corners = [
+        shape.transformPoint(Point2D(bounds.left, bounds.top)),
+        shape.transformPoint(Point2D(bounds.right, bounds.top)),
+        shape.transformPoint(Point2D(bounds.right, bounds.bottom)),
+        shape.transformPoint(Point2D(bounds.left, bounds.bottom)),
+      ];
+
+      for (final corner in corners) {
+        minX = minX == null ? corner.x : (corner.x < minX ? corner.x : minX);
+        minY = minY == null ? corner.y : (corner.y < minY ? corner.y : minY);
+        maxX = maxX == null ? corner.x : (corner.x > maxX ? corner.x : maxX);
+        maxY = maxY == null ? corner.y : (corner.y > maxY ? corner.y : maxY);
+      }
+    }
+
+    if (minX == null || minY == null || maxX == null || maxY == null) {
+      return null;
+    }
+
+    // Apply drag offset if dragging
+    final offsetX = dragOffset?.x ?? 0;
+    final offsetY = dragOffset?.y ?? 0;
+
+    return Rect2D(
+      x: minX + offsetX,
+      y: minY + offsetY,
+      width: maxX - minX,
+      height: maxY - minY,
+    );
+  }
 
   /// Get the visible rectangle in canvas coordinates
   Rect2D get visibleRect {
@@ -144,11 +195,14 @@ class CanvasState extends Equatable {
     String? hoveredShapeId,
     Set<String>? expandedLayerIds,
     String? hoveredLayerId,
+    List<SnapLine>? snapLines,
+    List<SnapPoint>? snapPoints,
     bool clearDragStart = false,
     bool clearCurrentPointer = false,
     bool clearDragOffset = false,
     bool clearHoveredShapeId = false,
     bool clearHoveredLayerId = false,
+    bool clearSnap = false,
   }) {
     return CanvasState(
       zoom: zoom ?? this.zoom,
@@ -158,8 +212,7 @@ class CanvasState extends Equatable {
       dragStart: clearDragStart ? null : (dragStart ?? this.dragStart),
       currentPointer:
           clearCurrentPointer ? null : (currentPointer ?? this.currentPointer),
-      dragOffset:
-          clearDragOffset ? null : (dragOffset ?? this.dragOffset),
+      dragOffset: clearDragOffset ? null : (dragOffset ?? this.dragOffset),
       shapes: shapes ?? this.shapes,
       selectedShapeIds: selectedShapeIds ?? this.selectedShapeIds,
       hoveredShapeId:
@@ -167,6 +220,8 @@ class CanvasState extends Equatable {
       expandedLayerIds: expandedLayerIds ?? this.expandedLayerIds,
       hoveredLayerId:
           clearHoveredLayerId ? null : (hoveredLayerId ?? this.hoveredLayerId),
+      snapLines: clearSnap ? const [] : (snapLines ?? this.snapLines),
+      snapPoints: clearSnap ? const [] : (snapPoints ?? this.snapPoints),
     );
   }
 
@@ -184,5 +239,7 @@ class CanvasState extends Equatable {
         hoveredShapeId,
         expandedLayerIds,
         hoveredLayerId,
+        snapLines,
+        snapPoints,
       ];
 }

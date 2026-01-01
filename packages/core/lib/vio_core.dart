@@ -21,3 +21,4 @@ export 'src/models/uuid_value.dart';
 export 'src/utils/hit_test.dart';
 export 'src/utils/layer_tree.dart';
 export 'src/utils/logger.dart';
+export 'src/utils/snap.dart';

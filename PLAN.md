@@ -80,10 +80,11 @@ Recreate the core functionality of Penpot (Open Source Design & Prototyping Tool
 - [ ] Implement shape transform matrix (rotation, scale, skew) - rendering
 
 ### 1.4 Selection System
-- [ ] Implement hit-testing for shapes
-- [ ] Create selection rectangle (marquee) tool
-- [ ] Add multi-selection support
-- [ ] Implement selection bounding box with handles
+- [x] Implement hit-testing for shapes
+- [x] Create selection rectangle (marquee) tool
+- [x] Add multi-selection support (shift+click)
+- [x] Implement selection bounding box with handles
+- [x] Implement shape dragging/movement
 
 ### 1.5 Blue Dark Mode Theme
 - [x] Define color palette (primary, surface, background)

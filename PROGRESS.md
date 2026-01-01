@@ -5,6 +5,40 @@
 
 ---
 
+## 2025-01-01
+
+### Session 3: Selection & Interaction Improvements
+
+| Date | Task | Status | Notes/Blockers |
+|------|------|--------|----------------|
+| 2025-01-01 | Fix desktop zoom focal point | ✅ Completed | Zoom now follows cursor position |
+| 2025-01-01 | Fix trackpad pan/zoom interference | ✅ Completed | Pan only when scale == 1.0 |
+| 2025-01-01 | Implement shape dragging | ✅ Completed | Added moveBy() to Shape hierarchy |
+| 2025-01-01 | Add InteractionMode.movingShapes | ✅ Completed | Separate mode for shape movement |
+| 2025-01-01 | Fix marquee during drag | ✅ Completed | Only show dragRect in dragging mode |
+| 2025-01-01 | Add shift+click multi-select | ✅ Completed | Toggle selection with shift key |
+
+### Changes Made
+
+#### packages/core/lib/src/models/
+- `Shape` - Added abstract `x`, `y` getters and `moveBy(dx, dy)` method
+- `RectangleShape` - Implemented `moveBy()` using `copyWith()`
+- `EllipseShape` - Implemented `moveBy()` using `copyWith()`
+- `FrameShape` - Implemented `moveBy()` using `copyWith()`
+
+#### apps/client/lib/src/features/canvas/
+- `canvas_state.dart` - Added `InteractionMode.movingShapes`, fixed `dragRect` getter
+- `canvas_bloc.dart` - Updated pointer handlers for shape dragging
+- `canvas_event.dart` - Added `shiftPressed` to `PointerDown` event
+- `canvas_view.dart` - Fixed zoom/pan interference, pass shift key state
+
+### Key Fixes
+1. **Desktop Zoom**: Trackpad was sending both scale and panDelta during zoom, causing zoom to fight against pan. Fixed by only applying pan when NOT zooming.
+2. **Shape Dragging**: Base `Shape` class didn't have position accessors. Added abstract `x`/`y` getters and `moveBy()` method to all shape types.
+3. **Marquee During Drag**: `dragRect` was computed whenever `dragStart`/`currentPointer` were set. Fixed by checking `interactionMode == dragging`.
+
+---
+
 ## 2024-12-31
 
 ### Session 2: Phase 1.3 & 1.4 Implementation

@@ -12,6 +12,8 @@ class CanvasPainter extends CustomPainter {
     required this.shapes,
     this.dragRect,
     this.selectedShapeIds = const [],
+    this.hoveredShapeId,
+    this.hoveredLayerId,
   });
 
   /// Transformation matrix for viewport
@@ -25,6 +27,12 @@ class CanvasPainter extends CustomPainter {
 
   /// IDs of selected shapes
   final List<String> selectedShapeIds;
+
+  /// ID of shape hovered on canvas
+  final String? hoveredShapeId;
+
+  /// ID of layer hovered in layers panel
+  final String? hoveredLayerId;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -60,6 +68,9 @@ class CanvasPainter extends CustomPainter {
         _drawFrameLabel(canvas, shape as FrameShape);
       }
     }
+
+    // Draw hover outline (from canvas or layer panel)
+    _drawHoverOutline(canvas);
 
     // Draw selection outlines for selected shapes
     _drawSelectionOutlines(canvas);
@@ -116,6 +127,55 @@ class CanvasPainter extends CustomPainter {
       canvas.drawRect(rect, outlinePaint);
       canvas.restore();
     }
+  }
+
+  void _drawHoverOutline(Canvas canvas) {
+    // Get the hovered shape ID (prefer layer hover over canvas hover)
+    final hoveredId = hoveredLayerId ?? hoveredShapeId;
+    if (hoveredId == null) return;
+
+    // Don't draw hover if already selected
+    if (selectedShapeIds.contains(hoveredId)) return;
+
+    final shape = shapes.where((s) => s.id == hoveredId).firstOrNull;
+    if (shape == null) return;
+
+    final hoverPaint = Paint()
+      ..color = VioColors.primary.withValues(alpha: 0.6)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
+
+    final bounds = shape.bounds;
+    final rect = Rect.fromLTWH(
+      bounds.left,
+      bounds.top,
+      bounds.width,
+      bounds.height,
+    );
+
+    canvas.save();
+    canvas.transform(
+      Float64List.fromList([
+        shape.transform.a,
+        shape.transform.b,
+        0,
+        0,
+        shape.transform.c,
+        shape.transform.d,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        shape.transform.e,
+        shape.transform.f,
+        0,
+        1,
+      ]),
+    );
+    canvas.drawRect(rect, hoverPaint);
+    canvas.restore();
   }
 
   void _drawSelectionRect(Canvas canvas, Size size) {
@@ -207,6 +267,8 @@ class CanvasPainter extends CustomPainter {
     return viewMatrix != oldDelegate.viewMatrix ||
         !listEquals(shapes, oldDelegate.shapes) ||
         dragRect != oldDelegate.dragRect ||
-        !listEquals(selectedShapeIds, oldDelegate.selectedShapeIds);
+        !listEquals(selectedShapeIds, oldDelegate.selectedShapeIds) ||
+        hoveredShapeId != oldDelegate.hoveredShapeId ||
+        hoveredLayerId != oldDelegate.hoveredLayerId;
   }
 }

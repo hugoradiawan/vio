@@ -121,6 +121,11 @@ class PointerUp extends CanvasEvent {
   List<Object?> get props => [x, y];
 }
 
+/// Fired when pointer leaves the canvas area
+class CanvasPointerExited extends CanvasEvent {
+  const CanvasPointerExited();
+}
+
 /// Fired to clear all selections
 class SelectionCleared extends CanvasEvent {
   const SelectionCleared();

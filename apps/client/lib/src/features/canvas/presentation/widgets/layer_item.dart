@@ -113,7 +113,8 @@ class _LayerItemState extends State<LayerItem> {
             color: _getBackgroundColor(),
             border: widget.isHovered && !widget.isSelected
                 ? Border.all(
-                    color: VioColors.primary.withValues(alpha: 0.5),)
+                    color: VioColors.primary.withValues(alpha: 0.5),
+                  )
                 : null,
           ),
           child: Row(
@@ -177,7 +178,9 @@ class _LayerItemState extends State<LayerItem> {
     return Icon(
       _getShapeIcon(),
       size: 16,
-      color: widget.shape.hidden ? VioColors.textDisabled : VioColors.textSecondary,
+      color: widget.shape.hidden
+          ? VioColors.textDisabled
+          : VioColors.textSecondary,
     );
   }
 
@@ -239,7 +242,9 @@ class _LayerItemState extends State<LayerItem> {
       widget.shape.name,
       style: TextStyle(
         fontSize: 12,
-        color: widget.shape.hidden ? VioColors.textDisabled : VioColors.textPrimary,
+        color: widget.shape.hidden
+            ? VioColors.textDisabled
+            : VioColors.textPrimary,
         fontStyle: widget.shape.hidden ? FontStyle.italic : FontStyle.normal,
       ),
       overflow: TextOverflow.ellipsis,
@@ -255,10 +260,14 @@ class _LayerItemState extends State<LayerItem> {
         iconSize: 14,
         icon: Icon(
           widget.shape.hidden ? Icons.visibility_off : Icons.visibility,
-          color: widget.shape.hidden ? VioColors.textDisabled : VioColors.textSecondary,
+          color: widget.shape.hidden
+              ? VioColors.textDisabled
+              : VioColors.textSecondary,
         ),
         onPressed: () {
-          context.read<CanvasBloc>().add(ShapeVisibilityToggled(widget.shape.id));
+          context
+              .read<CanvasBloc>()
+              .add(ShapeVisibilityToggled(widget.shape.id));
         },
       ),
     );
@@ -273,7 +282,9 @@ class _LayerItemState extends State<LayerItem> {
         iconSize: 14,
         icon: Icon(
           widget.shape.blocked ? Icons.lock : Icons.lock_open,
-          color: widget.shape.blocked ? VioColors.warning : VioColors.textSecondary,
+          color: widget.shape.blocked
+              ? VioColors.warning
+              : VioColors.textSecondary,
         ),
         onPressed: () {
           context.read<CanvasBloc>().add(ShapeLockToggled(widget.shape.id));

@@ -23,7 +23,8 @@ class LayerTree extends StatelessWidget {
         return ListView.builder(
           itemCount: _countVisibleNodes(tree, state.expandedLayerIds),
           itemBuilder: (context, index) {
-            final (node, _) = _getNodeAtIndex(tree, index, state.expandedLayerIds);
+            final (node, _) =
+                _getNodeAtIndex(tree, index, state.expandedLayerIds);
             if (node == null) return const SizedBox.shrink();
 
             return LayerItem(
@@ -33,7 +34,8 @@ class LayerTree extends StatelessWidget {
               isExpanded: state.expandedLayerIds.contains(node.shape.id),
               hasChildren: node.hasChildren,
               isSelected: state.selectedShapeIds.contains(node.shape.id),
-              isHovered: state.hoveredLayerId == node.shape.id,
+              isHovered: state.hoveredLayerId == node.shape.id ||
+                  state.hoveredShapeId == node.shape.id,
             );
           },
         );

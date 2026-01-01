@@ -108,8 +108,8 @@ class CanvasState extends Equatable {
     // Scale the canvas, then translate in screen space (x' = x*zoom + offset)
     // Use T * S (translate then scale) so translation is not scaled.
     return Matrix2D.identity
-      .translated(viewportOffset.x, viewportOffset.y)
-      .scaled(zoom, zoom);
+        .translated(viewportOffset.x, viewportOffset.y)
+        .scaled(zoom, zoom);
   }
 
   /// Whether there is an active selection
@@ -140,6 +140,7 @@ class CanvasState extends Equatable {
     String? hoveredLayerId,
     bool clearDragStart = false,
     bool clearCurrentPointer = false,
+    bool clearHoveredShapeId = false,
     bool clearHoveredLayerId = false,
   }) {
     return CanvasState(
@@ -152,7 +153,8 @@ class CanvasState extends Equatable {
           clearCurrentPointer ? null : (currentPointer ?? this.currentPointer),
       shapes: shapes ?? this.shapes,
       selectedShapeIds: selectedShapeIds ?? this.selectedShapeIds,
-      hoveredShapeId: hoveredShapeId ?? this.hoveredShapeId,
+      hoveredShapeId:
+          clearHoveredShapeId ? null : (hoveredShapeId ?? this.hoveredShapeId),
       expandedLayerIds: expandedLayerIds ?? this.expandedLayerIds,
       hoveredLayerId:
           clearHoveredLayerId ? null : (hoveredLayerId ?? this.hoveredLayerId),

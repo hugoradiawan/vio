@@ -52,6 +52,9 @@ class _CanvasViewState extends State<CanvasView> {
                 builder: (context, workspaceState) {
                   return MouseRegion(
                     cursor: _getCursor(workspaceState.activeTool),
+                    onHover: (event) =>
+                        _handlePointerHover(context, event, workspaceState),
+                    onExit: (_) => _handlePointerExit(context),
                     child: Listener(
                       onPointerDown: (event) =>
                           _handlePointerDown(context, event, workspaceState),
@@ -129,6 +132,8 @@ class _CanvasViewState extends State<CanvasView> {
                                   dragRect: canvasState.dragRect,
                                   selectedShapeIds:
                                       canvasState.selectedShapeIds,
+                                  hoveredShapeId: canvasState.hoveredShapeId,
+                                  hoveredLayerId: canvasState.hoveredLayerId,
                                 ),
                               ),
                             ),
@@ -303,6 +308,25 @@ class _CanvasViewState extends State<CanvasView> {
             y: event.localPosition.dy,
           ),
         );
+  }
+
+  void _handlePointerHover(
+    BuildContext context,
+    PointerHoverEvent event,
+    WorkspaceState workspaceState,
+  ) {
+    // Send hover event for hit testing (shape hover detection)
+    context.read<CanvasBloc>().add(
+          PointerMove(
+            x: event.localPosition.dx,
+            y: event.localPosition.dy,
+          ),
+        );
+  }
+
+  void _handlePointerExit(BuildContext context) {
+    // Clear hovered shape when mouse leaves canvas
+    context.read<CanvasBloc>().add(const CanvasPointerExited());
   }
 
   void _handlePointerSignal(BuildContext context, PointerSignalEvent event) {

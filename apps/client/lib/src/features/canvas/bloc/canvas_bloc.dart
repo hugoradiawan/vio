@@ -22,6 +22,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     on<PointerDown>(_onPointerDown);
     on<PointerMove>(_onPointerMove);
     on<PointerUp>(_onPointerUp);
+    on<CanvasPointerExited>(_onCanvasPointerExited);
     on<SelectionCleared>(_onSelectionCleared);
     on<ShapeAdded>(_onShapeAdded);
     on<ShapesAdded>(_onShapesAdded);
@@ -291,9 +292,8 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         final isAlreadySelected = state.selectedShapeIds.contains(hitShape.id);
         emit(
           state.copyWith(
-            selectedShapeIds: isAlreadySelected
-                ? state.selectedShapeIds
-                : [hitShape.id],
+            selectedShapeIds:
+                isAlreadySelected ? state.selectedShapeIds : [hitShape.id],
             interactionMode: InteractionMode.movingShapes,
             dragStart: canvasPoint,
             currentPointer: canvasPoint,
@@ -337,12 +337,34 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         }
       }
 
-      emit(state.copyWith(
-        shapes: newShapes,
-        currentPointer: canvasPoint,
-      ),);
+      emit(
+        state.copyWith(
+          shapes: newShapes,
+          currentPointer: canvasPoint,
+        ),
+      );
     } else {
-      emit(state.copyWith(currentPointer: canvasPoint));
+      // Hit test to find shape under pointer for hover highlight
+      final hoveredShape =
+          HitTest.findTopShapeAtPoint(canvasPoint, state.shapeList);
+      final newHoveredId = hoveredShape?.id;
+
+      // Only emit if hovered shape changed
+      if (newHoveredId != state.hoveredShapeId) {
+        if (newHoveredId == null) {
+          emit(state.copyWith(
+            currentPointer: canvasPoint,
+            clearHoveredShapeId: true,
+          ),);
+        } else {
+          emit(state.copyWith(
+            currentPointer: canvasPoint,
+            hoveredShapeId: newHoveredId,
+          ),);
+        }
+      } else {
+        emit(state.copyWith(currentPointer: canvasPoint));
+      }
     }
   }
 
@@ -544,6 +566,13 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     final newShapes = Map<String, Shape>.from(state.shapes);
     newShapes[event.shapeId] = updatedShape;
     emit(state.copyWith(shapes: newShapes));
+  }
+
+  void _onCanvasPointerExited(
+    CanvasPointerExited event,
+    Emitter<CanvasState> emit,
+  ) {
+    emit(state.copyWith(clearHoveredShapeId: true));
   }
 
   /// Convert screen coordinates to canvas coordinates

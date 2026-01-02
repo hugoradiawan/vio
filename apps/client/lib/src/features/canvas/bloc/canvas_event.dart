@@ -332,3 +332,70 @@ class Undo extends CanvasEvent {
 class Redo extends CanvasEvent {
   const Redo();
 }
+
+// ============================================================================
+// Sync Events
+// ============================================================================
+
+/// Fired to load canvas state from the server
+class CanvasLoadRequested extends CanvasEvent {
+  const CanvasLoadRequested({
+    required this.projectId,
+    required this.branchId,
+  });
+
+  final String projectId;
+  final String branchId;
+
+  @override
+  List<Object?> get props => [projectId, branchId];
+}
+
+/// Fired when canvas state is successfully loaded from server
+class CanvasLoadSucceeded extends CanvasEvent {
+  const CanvasLoadSucceeded({
+    required this.shapes,
+    required this.serverVersion,
+  });
+
+  final Map<String, Shape> shapes;
+  final int serverVersion;
+
+  @override
+  List<Object?> get props => [shapes, serverVersion];
+}
+
+/// Fired when canvas loading fails
+class CanvasLoadFailed extends CanvasEvent {
+  const CanvasLoadFailed(this.error);
+
+  final String error;
+
+  @override
+  List<Object?> get props => [error];
+}
+
+/// Fired to sync local changes to the server
+class CanvasSyncRequested extends CanvasEvent {
+  const CanvasSyncRequested();
+}
+
+/// Fired when canvas sync succeeds
+class CanvasSyncSucceeded extends CanvasEvent {
+  const CanvasSyncSucceeded({required this.serverVersion});
+
+  final int serverVersion;
+
+  @override
+  List<Object?> get props => [serverVersion];
+}
+
+/// Fired when canvas sync fails
+class CanvasSyncFailed extends CanvasEvent {
+  const CanvasSyncFailed(this.error);
+
+  final String error;
+
+  @override
+  List<Object?> get props => [error];
+}

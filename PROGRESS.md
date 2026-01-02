@@ -7,6 +7,77 @@
 
 ## 2025-01-01
 
+### Session 5: API Infrastructure & Backend Migration
+
+| Date | Task | Status | Notes/Blockers |
+|------|------|--------|----------------|
+| 2025-01-01 | Migrate backend to Bun SQL | ✅ Completed | Replaced postgres.js with Bun's native SQL |
+| 2025-01-01 | Update drizzle-orm to bun-sql adapter | ✅ Completed | drizzle-orm/bun-sql |
+| 2025-01-01 | Remove unused packages | ✅ Completed | Removed postgres, zod (TypeBox already in use) |
+| 2025-01-01 | Add Flutter HTTP client (dio) | ✅ Completed | dio: ^5.8.0 |
+| 2025-01-01 | Create ApiClient base class | ✅ Completed | Dio wrapper with interceptors |
+| 2025-01-01 | Create API configuration | ✅ Completed | ApiConfig, ApiEndpoints |
+| 2025-01-01 | Create Shape DTOs | ✅ Completed | ShapeDto extension, ShapeFactory |
+| 2025-01-01 | Create API services | ✅ Completed | Project, Branch, Canvas services |
+| 2025-01-01 | Create CanvasRepository | ✅ Completed | Auto-sync with last-write-wins |
+
+### Changes Made
+
+#### backend/
+- `package.json` - Removed `postgres` and `zod` packages (Elysia uses TypeBox)
+- `src/db/index.ts` - Migrated to Bun native SQL:
+  ```typescript
+  import { SQL } from 'bun';
+  import { drizzle } from 'drizzle-orm/bun-sql';
+  const client = new SQL(connectionString);
+  export const db = drizzle({ client, schema });
+  ```
+- `drizzle.config.ts` - Removed incorrect driver config
+
+#### apps/client/lib/src/core/api/
+- `api_client.dart` - Dio wrapper with logging/error interceptors, ApiException
+- `api_config.dart` - ApiConfig (baseUrl), ApiEndpoints (all REST paths)
+- `dto.dart` - Data transfer objects:
+  - `ShapeDto` extension on Shape (toJson)
+  - `ShapeFactory` (fromJson)
+  - `ProjectDto`, `BranchDto`
+  - `CanvasStateDto`, `SyncRequestDto`, `SyncResponseDto`
+  - `SyncOperation`, `SyncOperationType`
+
+#### apps/client/lib/src/core/api/services/
+- `project_api_service.dart` - CRUD for projects
+- `branch_api_service.dart` - CRUD for branches
+- `canvas_api_service.dart` - Canvas state, sync, shape CRUD
+
+#### apps/client/lib/src/core/repositories/
+- `canvas_repository.dart` - Local state management with auto-sync:
+  - 5-second sync interval
+  - Pending operations queue
+  - Last-write-wins conflict resolution
+  - SyncStatus stream for UI feedback
+
+### Key Design Decisions
+1. **Bun SQL**: Using Bun's native SQL client for better performance and simpler setup
+2. **No Zod**: Elysia already provides TypeBox (t.*) for validation - Zod was unused
+3. **Auto-sync**: Changes sync every 5 seconds, with immediate local application
+4. **Last-write-wins**: Simple conflict resolution - server version always wins
+5. **Operation Queuing**: Shape operations tracked for efficient batch sync
+
+### API Endpoint Structure
+```
+/projects
+/projects/:id
+/projects/:id/branches
+/projects/:id/branches/:branchId
+/projects/:id/branches/:branchId/canvas
+/projects/:id/branches/:branchId/sync
+/projects/:id/branches/:branchId/commits/:commitId/shapes
+```
+
+---
+
+## 2025-01-01
+
 ### Session 4: Clipboard & Undo/Redo Implementation
 
 | Date | Task | Status | Notes/Blockers |

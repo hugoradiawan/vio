@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
 import 'package:vio_core/vio_core.dart';
+
+import '../../../core/core.dart';
 
 part 'canvas_event.dart';
 part 'canvas_state.dart';
@@ -19,8 +23,11 @@ const _maxUndoHistory = 50;
 /// - Selection state
 /// - Interaction mode
 /// - Manual undo/redo stack for shape changes
+/// - Server sync for persistence
 class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
-  CanvasBloc() : super(CanvasState(shapes: _createTestShapes())) {
+  CanvasBloc({CanvasRepository? repository})
+      : _repository = repository,
+        super(CanvasState(shapes: _createTestShapes())) {
     // Initialize undo stack with initial shapes
     _undoStack.add(Map.from(state.shapes));
 
@@ -59,7 +66,17 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     // Undo/redo events
     on<Undo>(_onUndo);
     on<Redo>(_onRedo);
+    // Sync events
+    on<CanvasLoadRequested>(_onCanvasLoadRequested);
+    on<CanvasLoadSucceeded>(_onCanvasLoadSucceeded);
+    on<CanvasLoadFailed>(_onCanvasLoadFailed);
+    on<CanvasSyncRequested>(_onCanvasSyncRequested);
+    on<CanvasSyncSucceeded>(_onCanvasSyncSucceeded);
+    on<CanvasSyncFailed>(_onCanvasSyncFailed);
   }
+
+  /// Repository for server communication (optional for offline mode)
+  final CanvasRepository? _repository;
 
   /// Manual undo stack - stores snapshots of shapes map
   final List<Map<String, Shape>> _undoStack = [];
@@ -568,6 +585,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
   ) {
     final newShapes = Map<String, Shape>.from(state.shapes);
     newShapes[event.shape.id] = event.shape;
+    _notifyRepositoryShapeAdded(event.shape);
     emit(state.copyWith(shapes: newShapes));
     _pushUndoState(newShapes);
   }
@@ -579,6 +597,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     final newShapes = Map<String, Shape>.from(state.shapes);
     for (final shape in event.shapes) {
       newShapes[shape.id] = shape;
+      _notifyRepositoryShapeAdded(shape);
     }
     emit(state.copyWith(shapes: newShapes));
     _pushUndoState(newShapes);
@@ -590,6 +609,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
   ) {
     final newShapes = Map<String, Shape>.from(state.shapes);
     newShapes.remove(event.shapeId);
+    _notifyRepositoryShapeDeleted(event.shapeId);
 
     // Also remove from selection
     final newSelection =
@@ -609,9 +629,11 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     Emitter<CanvasState> emit,
   ) {
     if (!state.shapes.containsKey(event.shape.id)) return;
+    VioLogger.debug('Updating shape: ${event.shape.id}');
 
     final newShapes = Map<String, Shape>.from(state.shapes);
     newShapes[event.shape.id] = event.shape;
+    _notifyRepositoryShapeUpdated(event.shape);
     emit(state.copyWith(shapes: newShapes));
     _pushUndoState(newShapes);
   }
@@ -978,14 +1000,173 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     final newShapes = Map<String, Shape>.from(state.shapes);
     for (final id in state.selectedShapeIds) {
       newShapes.remove(id);
+      _notifyRepositoryShapeDeleted(id);
     }
 
     emit(
       state.copyWith(
         shapes: newShapes,
         selectedShapeIds: const [],
+        syncStatus: state.isConnected ? SyncStatus.pending : state.syncStatus,
       ),
     );
     _pushUndoState(newShapes);
+  }
+
+  // ============================================================================
+  // Sync Event Handlers
+  // ============================================================================
+
+  /// Subscription for repository sync status changes
+  StreamSubscription<SyncStatus>? _syncStatusSubscription;
+
+  /// Track a shape operation for syncing to repository
+  void _notifyRepositoryShapeAdded(Shape shape) {
+    _repository?.addShape(shape);
+  }
+
+  void _notifyRepositoryShapeUpdated(Shape shape) {
+    _repository?.updateShape(shape);
+  }
+
+  void _notifyRepositoryShapeDeleted(String shapeId) {
+    _repository?.deleteShape(shapeId);
+  }
+
+  Future<void> _onCanvasLoadRequested(
+    CanvasLoadRequested event,
+    Emitter<CanvasState> emit,
+  ) async {
+    if (_repository == null) {
+      VioLogger.warning('CanvasRepository not available for sync');
+      return;
+    }
+
+    emit(state.copyWith(
+      syncStatus: SyncStatus.loading,
+      projectId: event.projectId,
+      branchId: event.branchId,
+      clearSyncError: true,
+    ),);
+
+    try {
+      // Initialize the repository which loads from server
+      await _repository.initialize(
+        projectId: event.projectId,
+        branchId: event.branchId,
+      );
+
+      // Convert repository shapes to map
+      final shapes = <String, Shape>{};
+      for (final shape in _repository.shapes) {
+        shapes[shape.id] = shape;
+      }
+
+      add(CanvasLoadSucceeded(
+        shapes: shapes,
+        serverVersion: 0, // Repository tracks version internally
+      ),);
+
+      // Subscribe to sync status changes
+      _syncStatusSubscription?.cancel();
+      _syncStatusSubscription = _repository.syncStatusStream.listen((status) {
+        // Map repository SyncStatus to bloc SyncStatus
+        final blocStatus = _mapSyncStatus(status);
+        if (state.syncStatus != blocStatus) {
+          // Emit state change through event to stay reactive
+          if (status == SyncStatus.synced) {
+            add(const CanvasSyncSucceeded(serverVersion: 0));
+          } else if (status == SyncStatus.error) {
+            add(const CanvasSyncFailed('Sync error'));
+          }
+        }
+      });
+    } catch (e) {
+      add(CanvasLoadFailed(e.toString()));
+    }
+  }
+
+  /// Map repository SyncStatus to canvas state SyncStatus
+  SyncStatus _mapSyncStatus(SyncStatus repoStatus) {
+    // They use the same enum now, but this allows for future differences
+    return repoStatus;
+  }
+
+  void _onCanvasLoadSucceeded(
+    CanvasLoadSucceeded event,
+    Emitter<CanvasState> emit,
+  ) {
+    // Clear undo stack and start fresh with server state
+    _undoStack.clear();
+    _redoStack.clear();
+    _undoStack.add(Map.from(event.shapes));
+
+    emit(state.copyWith(
+      shapes: event.shapes,
+      serverVersion: event.serverVersion,
+      syncStatus: SyncStatus.synced,
+      selectedShapeIds: const [],
+      clearSyncError: true,
+    ),);
+
+    VioLogger.info('Canvas loaded with ${event.shapes.length} shapes');
+  }
+
+  void _onCanvasLoadFailed(
+    CanvasLoadFailed event,
+    Emitter<CanvasState> emit,
+  ) {
+    emit(state.copyWith(
+      syncStatus: SyncStatus.error,
+      syncError: event.error,
+    ),);
+    VioLogger.error('Canvas load failed: ${event.error}');
+  }
+
+  Future<void> _onCanvasSyncRequested(
+    CanvasSyncRequested event,
+    Emitter<CanvasState> emit,
+  ) async {
+    if (_repository == null || !state.isConnected) {
+      return;
+    }
+
+    emit(state.copyWith(syncStatus: SyncStatus.syncing));
+
+    try {
+      await _repository.sync();
+      // Sync status will be updated via stream subscription
+    } catch (e) {
+      add(CanvasSyncFailed(e.toString()));
+    }
+  }
+
+  void _onCanvasSyncSucceeded(
+    CanvasSyncSucceeded event,
+    Emitter<CanvasState> emit,
+  ) {
+    emit(state.copyWith(
+      serverVersion: event.serverVersion,
+      syncStatus: SyncStatus.synced,
+      clearSyncError: true,
+    ),);
+    VioLogger.debug('Canvas synced');
+  }
+
+  void _onCanvasSyncFailed(
+    CanvasSyncFailed event,
+    Emitter<CanvasState> emit,
+  ) {
+    emit(state.copyWith(
+      syncStatus: SyncStatus.error,
+      syncError: event.error,
+    ),);
+    VioLogger.error('Canvas sync failed: ${event.error}');
+  }
+
+  @override
+  Future<void> close() {
+    _syncStatusSubscription?.cancel();
+    return super.close();
   }
 }

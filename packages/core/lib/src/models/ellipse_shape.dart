@@ -112,6 +112,53 @@ class EllipseShape extends Shape {
   }
 
   @override
+  Map<String, dynamic> toJson() => {
+        ...baseToJson(),
+        'x': x,
+        'y': y,
+        'ellipseWidth': ellipseWidth,
+        'ellipseHeight': ellipseHeight,
+      };
+
+  factory EllipseShape.fromJson(Map<String, dynamic> json) => EllipseShape(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        x: (json['x'] as num).toDouble(),
+        y: (json['y'] as num).toDouble(),
+        ellipseWidth: (json['ellipseWidth'] as num).toDouble(),
+        ellipseHeight: (json['ellipseHeight'] as num).toDouble(),
+        parentId: json['parentId'] as String?,
+        frameId: json['frameId'] as String?,
+        transform: json['transform'] != null
+            ? Matrix2D.fromJson(json['transform'] as Map<String, dynamic>)
+            : Matrix2D.identity,
+        transformInverse: json['transformInverse'] != null
+            ? Matrix2D.fromJson(json['transformInverse'] as Map<String, dynamic>)
+            : null,
+        fills: (json['fills'] as List?)
+                ?.map((f) => ShapeFill.fromJson(f as Map<String, dynamic>))
+                .toList() ??
+            const [],
+        strokes: (json['strokes'] as List?)
+                ?.map((s) => ShapeStroke.fromJson(s as Map<String, dynamic>))
+                .toList() ??
+            const [],
+        opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
+        hidden: json['hidden'] as bool? ?? false,
+        blocked: json['blocked'] as bool? ?? false,
+        rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
+        constraints: json['constraints'] != null
+            ? ShapeConstraints.fromJson(json['constraints'] as Map<String, dynamic>)
+            : null,
+        shadow: json['shadow'] != null
+            ? ShapeShadow.fromJson(json['shadow'] as Map<String, dynamic>)
+            : null,
+        blur: json['blur'] != null
+            ? ShapeBlur.fromJson(json['blur'] as Map<String, dynamic>)
+            : null,
+      );
+
+  @override
   List<Object?> get props => [
     ...super.props,
     x,

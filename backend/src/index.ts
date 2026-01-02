@@ -2,6 +2,7 @@ import { cors } from '@elysiajs/cors';
 import { swagger } from '@elysiajs/swagger';
 import { Elysia } from 'elysia';
 import { branchRoutes } from './routes/branches';
+import { canvasRoutes } from './routes/canvas';
 import { commitRoutes } from './routes/commits';
 import { projectRoutes } from './routes/projects';
 import { shapeRoutes } from './routes/shapes';
@@ -9,9 +10,10 @@ import { shapeRoutes } from './routes/shapes';
 const app = new Elysia()
   .use(
     cors({
-      origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+      origin: true, // Allow all origins in development // process.env.CORS_ORIGIN || 'http://localhost:3000',
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization'],
+      credentials: true,
     }),
   )
   .use(
@@ -27,6 +29,7 @@ const app = new Elysia()
           { name: 'Branches', description: 'Branch management (Git-like)' },
           { name: 'Commits', description: 'Commit history' },
           { name: 'Shapes', description: 'Shape operations' },
+          { name: 'Canvas', description: 'Canvas state and sync' },
         ],
       },
     }),
@@ -44,6 +47,7 @@ const app = new Elysia()
   .use(branchRoutes)
   .use(commitRoutes)
   .use(shapeRoutes)
+  .use(canvasRoutes)
   .listen(process.env.PORT || 4000);
 
 console.log(`

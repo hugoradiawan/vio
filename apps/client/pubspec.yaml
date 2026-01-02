@@ -35,6 +35,9 @@ dependencies:
   # Storage
   shared_preferences: ^2.5.4
 
+  # HTTP Client
+  dio: ^5.8.0
+
   # Platform
   window_manager: ^0.5.1
   path_provider: ^2.1.5

@@ -11,19 +11,18 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
+    "db:seed": "bun run src/db/seed.ts",
     "proto:generate": "buf generate",
     "test": "bun test",
     "lint": "bunx @biomejs/biome lint ./src",
     "format": "bunx @biomejs/biome format --write ./src"
   },
   "dependencies": {
-    "elysia": "^1.2.0",
     "@elysiajs/cors": "^1.1.0",
-    "@elysiajs/swagger": "^1.1.0",
     "@elysiajs/jwt": "^1.1.0",
-    "drizzle-orm": "^0.37.0",
-    "postgres": "^3.4.5",
-    "zod": "^3.24.0",
+    "@elysiajs/swagger": "^1.1.0",
+    "drizzle-orm": "^0.45.1",
+    "elysia": "^1.2.0",
     "nanoid": "^5.0.9"
   },
   "devDependencies": {

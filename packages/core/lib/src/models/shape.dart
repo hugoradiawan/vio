@@ -159,6 +159,61 @@ abstract class Shape extends Equatable {
     ShapeBlur? blur,
   });
 
+  /// Convert shape to JSON for serialization
+  Map<String, dynamic> toJson();
+
+  /// Create a shape from JSON data
+  static Shape fromJson(Map<String, dynamic> json) {
+    final type = ShapeType.values.firstWhere(
+      (t) => t.name == json['type'],
+      orElse: () => ShapeType.rectangle,
+    );
+
+    switch (type) {
+      case ShapeType.rectangle:
+        return RectangleShape.fromJson(json);
+      case ShapeType.ellipse:
+        return EllipseShape.fromJson(json);
+      case ShapeType.frame:
+        return FrameShape.fromJson(json);
+      case ShapeType.path:
+      case ShapeType.text:
+      case ShapeType.group:
+      case ShapeType.image:
+      case ShapeType.svg:
+      case ShapeType.bool:
+        // TODO: Implement these shape types
+        throw UnimplementedError('Shape type $type not yet implemented');
+    }
+  }
+
+  /// Helper to serialize base shape properties
+  Map<String, dynamic> baseToJson() => {
+        'id': id,
+        'name': name,
+        'type': type.name,
+        if (parentId != null) 'parentId': parentId,
+        if (frameId != null) 'frameId': frameId,
+        'transform': transform.toJson(),
+        if (transformInverse != null) 'transformInverse': transformInverse!.toJson(),
+        if (selrect != null)
+          'selrect': {
+            'left': selrect!.left,
+            'top': selrect!.top,
+            'right': selrect!.right,
+            'bottom': selrect!.bottom,
+          },
+        'fills': fills.map((f) => f.toJson()).toList(),
+        'strokes': strokes.map((s) => s.toJson()).toList(),
+        'opacity': opacity,
+        'hidden': hidden,
+        'blocked': blocked,
+        'rotation': rotation,
+        if (constraints != null) 'constraints': constraints!.toJson(),
+        if (shadow != null) 'shadow': shadow!.toJson(),
+        if (blur != null) 'blur': blur!.toJson(),
+      };
+
   @override
   List<Object?> get props => [
         id,
@@ -214,6 +269,24 @@ class ShapeFill extends Equatable {
   /// Image fill (optional)
   final ShapeFillImage? fillImage;
 
+  Map<String, dynamic> toJson() => {
+        'color': color,
+        'opacity': opacity,
+        if (gradient != null) 'gradient': gradient!.toJson(),
+        if (fillImage != null) 'fillImage': fillImage!.toJson(),
+      };
+
+  factory ShapeFill.fromJson(Map<String, dynamic> json) => ShapeFill(
+        color: json['color'] as int,
+        opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
+        gradient: json['gradient'] != null
+            ? ShapeGradient.fromJson(json['gradient'] as Map<String, dynamic>)
+            : null,
+        fillImage: json['fillImage'] != null
+            ? ShapeFillImage.fromJson(json['fillImage'] as Map<String, dynamic>)
+            : null,
+      );
+
   @override
   List<Object?> get props => [color, opacity, gradient, fillImage];
 }
@@ -247,6 +320,33 @@ class ShapeStroke extends Equatable {
   /// Line join style
   final StrokeJoin join;
 
+  Map<String, dynamic> toJson() => {
+        'color': color,
+        'width': width,
+        'opacity': opacity,
+        'alignment': alignment.name,
+        'cap': cap.name,
+        'join': join.name,
+      };
+
+  factory ShapeStroke.fromJson(Map<String, dynamic> json) => ShapeStroke(
+        color: json['color'] as int,
+        width: (json['width'] as num?)?.toDouble() ?? 1.0,
+        opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
+        alignment: StrokeAlignment.values.firstWhere(
+          (e) => e.name == json['alignment'],
+          orElse: () => StrokeAlignment.center,
+        ),
+        cap: StrokeCap.values.firstWhere(
+          (e) => e.name == json['cap'],
+          orElse: () => StrokeCap.round,
+        ),
+        join: StrokeJoin.values.firstWhere(
+          (e) => e.name == json['join'],
+          orElse: () => StrokeJoin.round,
+        ),
+      );
+
   @override
   List<Object?> get props => [color, width, opacity, alignment, cap, join];
 }
@@ -278,6 +378,29 @@ class ShapeGradient extends Equatable {
   final double endX;
   final double endY;
 
+  Map<String, dynamic> toJson() => {
+        'type': type.name,
+        'stops': stops.map((s) => s.toJson()).toList(),
+        'startX': startX,
+        'startY': startY,
+        'endX': endX,
+        'endY': endY,
+      };
+
+  factory ShapeGradient.fromJson(Map<String, dynamic> json) => ShapeGradient(
+        type: GradientType.values.firstWhere(
+          (e) => e.name == json['type'],
+          orElse: () => GradientType.linear,
+        ),
+        stops: (json['stops'] as List)
+            .map((s) => GradientStop.fromJson(s as Map<String, dynamic>))
+            .toList(),
+        startX: (json['startX'] as num?)?.toDouble() ?? 0.0,
+        startY: (json['startY'] as num?)?.toDouble() ?? 0.0,
+        endX: (json['endX'] as num?)?.toDouble() ?? 1.0,
+        endY: (json['endY'] as num?)?.toDouble() ?? 1.0,
+      );
+
   @override
   List<Object?> get props => [type, stops, startX, startY, endX, endY];
 }
@@ -297,6 +420,18 @@ class GradientStop extends Equatable {
   final double offset;
   final double opacity;
 
+  Map<String, dynamic> toJson() => {
+        'color': color,
+        'offset': offset,
+        'opacity': opacity,
+      };
+
+  factory GradientStop.fromJson(Map<String, dynamic> json) => GradientStop(
+        color: json['color'] as int,
+        offset: (json['offset'] as num).toDouble(),
+        opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
+      );
+
   @override
   List<Object?> get props => [color, offset, opacity];
 }
@@ -309,6 +444,20 @@ class ShapeFillImage extends Equatable {
   final double? width;
   final double? height;
   final String? mtype;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        if (width != null) 'width': width,
+        if (height != null) 'height': height,
+        if (mtype != null) 'mtype': mtype,
+      };
+
+  factory ShapeFillImage.fromJson(Map<String, dynamic> json) => ShapeFillImage(
+        id: json['id'] as String,
+        width: (json['width'] as num?)?.toDouble(),
+        height: (json['height'] as num?)?.toDouble(),
+        mtype: json['mtype'] as String?,
+      );
 
   @override
   List<Object?> get props => [id, width, height, mtype];
@@ -323,6 +472,23 @@ class ShapeConstraints extends Equatable {
 
   final ConstraintType horizontal;
   final ConstraintType vertical;
+
+  Map<String, dynamic> toJson() => {
+        'horizontal': horizontal.name,
+        'vertical': vertical.name,
+      };
+
+  factory ShapeConstraints.fromJson(Map<String, dynamic> json) =>
+      ShapeConstraints(
+        horizontal: ConstraintType.values.firstWhere(
+          (e) => e.name == json['horizontal'],
+          orElse: () => ConstraintType.left,
+        ),
+        vertical: ConstraintType.values.firstWhere(
+          (e) => e.name == json['vertical'],
+          orElse: () => ConstraintType.top,
+        ),
+      );
 
   @override
   List<Object?> get props => [horizontal, vertical];
@@ -364,6 +530,33 @@ class ShapeShadow extends Equatable {
   final double spread;
   final bool hidden;
 
+  Map<String, dynamic> toJson() => {
+        if (id != null) 'id': id,
+        'style': style.name,
+        'color': color,
+        'opacity': opacity,
+        'offsetX': offsetX,
+        'offsetY': offsetY,
+        'blur': blur,
+        'spread': spread,
+        'hidden': hidden,
+      };
+
+  factory ShapeShadow.fromJson(Map<String, dynamic> json) => ShapeShadow(
+        id: json['id'] as String?,
+        style: ShadowStyle.values.firstWhere(
+          (e) => e.name == json['style'],
+          orElse: () => ShadowStyle.dropShadow,
+        ),
+        color: json['color'] as int? ?? 0x000000,
+        opacity: (json['opacity'] as num?)?.toDouble() ?? 0.25,
+        offsetX: (json['offsetX'] as num?)?.toDouble() ?? 0.0,
+        offsetY: (json['offsetY'] as num?)?.toDouble() ?? 4.0,
+        blur: (json['blur'] as num?)?.toDouble() ?? 8.0,
+        spread: (json['spread'] as num?)?.toDouble() ?? 0.0,
+        hidden: json['hidden'] as bool? ?? false,
+      );
+
   @override
   List<Object?> get props => [
         id,
@@ -394,6 +587,23 @@ class ShapeBlur extends Equatable {
   final BlurType type;
   final double value;
   final bool hidden;
+
+  Map<String, dynamic> toJson() => {
+        if (id != null) 'id': id,
+        'type': type.name,
+        'value': value,
+        'hidden': hidden,
+      };
+
+  factory ShapeBlur.fromJson(Map<String, dynamic> json) => ShapeBlur(
+        id: json['id'] as String?,
+        type: BlurType.values.firstWhere(
+          (e) => e.name == json['type'],
+          orElse: () => BlurType.layer,
+        ),
+        value: (json['value'] as num?)?.toDouble() ?? 0.0,
+        hidden: json['hidden'] as bool? ?? false,
+      );
 
   @override
   List<Object?> get props => [id, type, value, hidden];

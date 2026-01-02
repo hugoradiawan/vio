@@ -124,6 +124,61 @@ class RectangleShape extends Shape {
   }
 
   @override
+  Map<String, dynamic> toJson() => {
+        ...baseToJson(),
+        'x': x,
+        'y': y,
+        'rectWidth': rectWidth,
+        'rectHeight': rectHeight,
+        'r1': r1,
+        'r2': r2,
+        'r3': r3,
+        'r4': r4,
+      };
+
+  factory RectangleShape.fromJson(Map<String, dynamic> json) => RectangleShape(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        x: (json['x'] as num).toDouble(),
+        y: (json['y'] as num).toDouble(),
+        rectWidth: (json['rectWidth'] as num).toDouble(),
+        rectHeight: (json['rectHeight'] as num).toDouble(),
+        parentId: json['parentId'] as String?,
+        frameId: json['frameId'] as String?,
+        transform: json['transform'] != null
+            ? Matrix2D.fromJson(json['transform'] as Map<String, dynamic>)
+            : Matrix2D.identity,
+        transformInverse: json['transformInverse'] != null
+            ? Matrix2D.fromJson(json['transformInverse'] as Map<String, dynamic>)
+            : null,
+        fills: (json['fills'] as List?)
+                ?.map((f) => ShapeFill.fromJson(f as Map<String, dynamic>))
+                .toList() ??
+            const [],
+        strokes: (json['strokes'] as List?)
+                ?.map((s) => ShapeStroke.fromJson(s as Map<String, dynamic>))
+                .toList() ??
+            const [],
+        opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
+        hidden: json['hidden'] as bool? ?? false,
+        blocked: json['blocked'] as bool? ?? false,
+        rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
+        constraints: json['constraints'] != null
+            ? ShapeConstraints.fromJson(json['constraints'] as Map<String, dynamic>)
+            : null,
+        shadow: json['shadow'] != null
+            ? ShapeShadow.fromJson(json['shadow'] as Map<String, dynamic>)
+            : null,
+        blur: json['blur'] != null
+            ? ShapeBlur.fromJson(json['blur'] as Map<String, dynamic>)
+            : null,
+        r1: (json['r1'] as num?)?.toDouble() ?? 0.0,
+        r2: (json['r2'] as num?)?.toDouble() ?? 0.0,
+        r3: (json['r3'] as num?)?.toDouble() ?? 0.0,
+        r4: (json['r4'] as num?)?.toDouble() ?? 0.0,
+      );
+
+  @override
   List<Object?> get props => [
     ...super.props,
     x,

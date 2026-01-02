@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
+import '../../../core/core.dart';
 import '../../workspace/bloc/workspace_bloc.dart';
 import '../bloc/canvas_bloc.dart';
 import 'painters/canvas_painter.dart';
@@ -322,6 +323,16 @@ class _CanvasViewState extends State<CanvasView> {
                               pointer: canvasState.currentPointer,
                             ),
                           ),
+
+                          // Sync status indicator
+                          Positioned(
+                            bottom: VioSpacing.sm,
+                            right: VioSpacing.sm,
+                            child: _SyncStatusIndicator(
+                              syncStatus: canvasState.syncStatus,
+                              syncError: canvasState.syncError,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -524,5 +535,81 @@ class _CoordinatesDisplay extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Sync status indicator widget
+class _SyncStatusIndicator extends StatelessWidget {
+  const _SyncStatusIndicator({
+    required this.syncStatus,
+    this.syncError,
+  });
+
+  final SyncStatus syncStatus;
+  final String? syncError;
+
+  @override
+  Widget build(BuildContext context) {
+    // Don't show indicator when idle (not connected to server)
+    if (syncStatus == SyncStatus.idle) {
+      return const SizedBox.shrink();
+    }
+
+    final (icon, color, label) = _getStatusInfo();
+
+    return Tooltip(
+      message: syncError ?? label,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: VioSpacing.xs,
+          vertical: 2,
+        ),
+        decoration: BoxDecoration(
+          color: VioColors.surface2.withValues(alpha: 0.8),
+          borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (syncStatus == SyncStatus.syncing)
+              SizedBox(
+                width: 10,
+                height: 10,
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.5,
+                  valueColor: AlwaysStoppedAnimation<Color>(color),
+                ),
+              )
+            else
+              Icon(icon, size: 12, color: color),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: VioTypography.caption.copyWith(
+                color: color,
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  (IconData, Color, String) _getStatusInfo() {
+    switch (syncStatus) {
+      case SyncStatus.idle:
+        return (Icons.cloud_off_outlined, VioColors.textSecondary, 'Offline');
+      case SyncStatus.loading:
+        return (Icons.cloud_download_outlined, VioColors.primary, 'Loading...');
+      case SyncStatus.pending:
+        return (Icons.cloud_upload_outlined, VioColors.warning, 'Pending');
+      case SyncStatus.syncing:
+        return (Icons.cloud_sync_outlined, VioColors.primary, 'Syncing...');
+      case SyncStatus.synced:
+        return (Icons.cloud_done_outlined, VioColors.success, 'Synced');
+      case SyncStatus.error:
+        return (Icons.cloud_off_outlined, VioColors.error, 'Sync Error');
+    }
   }
 }

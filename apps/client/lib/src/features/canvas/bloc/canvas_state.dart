@@ -24,6 +24,9 @@ enum InteractionMode {
   rotating,
 }
 
+// Note: SyncStatus is imported from '../../../core/repositories/canvas_repository.dart'
+// via the core.dart barrel file
+
 /// Represents the complete state of the canvas
 class CanvasState extends Equatable {
   const CanvasState({
@@ -42,6 +45,11 @@ class CanvasState extends Equatable {
     this.snapLines = const [],
     this.snapPoints = const [],
     this.clipboardShapes = const [],
+    this.syncStatus = SyncStatus.idle,
+    this.serverVersion = 0,
+    this.syncError,
+    this.projectId,
+    this.branchId,
   });
 
   /// Current zoom level (1.0 = 100%)
@@ -89,6 +97,27 @@ class CanvasState extends Equatable {
 
   /// Shapes stored in clipboard for copy/paste operations
   final List<Shape> clipboardShapes;
+
+  /// Current sync status with the server
+  final SyncStatus syncStatus;
+
+  /// Server version for conflict resolution
+  final int serverVersion;
+
+  /// Error message if sync failed
+  final String? syncError;
+
+  /// Current project ID (null if not connected)
+  final String? projectId;
+
+  /// Current branch ID (null if not connected)
+  final String? branchId;
+
+  /// Whether canvas is connected to a project/branch
+  bool get isConnected => projectId != null && branchId != null;
+
+  /// Whether there are pending changes to sync
+  bool get hasPendingChanges => syncStatus == SyncStatus.pending;
 
   /// Get shapes as an ordered list (for rendering)
   List<Shape> get shapeList => shapes.values.toList();
@@ -202,12 +231,18 @@ class CanvasState extends Equatable {
     List<SnapLine>? snapLines,
     List<SnapPoint>? snapPoints,
     List<Shape>? clipboardShapes,
+    SyncStatus? syncStatus,
+    int? serverVersion,
+    String? syncError,
+    String? projectId,
+    String? branchId,
     bool clearDragStart = false,
     bool clearCurrentPointer = false,
     bool clearDragOffset = false,
     bool clearHoveredShapeId = false,
     bool clearHoveredLayerId = false,
     bool clearSnap = false,
+    bool clearSyncError = false,
   }) {
     return CanvasState(
       zoom: zoom ?? this.zoom,
@@ -228,6 +263,11 @@ class CanvasState extends Equatable {
       snapLines: clearSnap ? const [] : (snapLines ?? this.snapLines),
       snapPoints: clearSnap ? const [] : (snapPoints ?? this.snapPoints),
       clipboardShapes: clipboardShapes ?? this.clipboardShapes,
+      syncStatus: syncStatus ?? this.syncStatus,
+      serverVersion: serverVersion ?? this.serverVersion,
+      syncError: clearSyncError ? null : (syncError ?? this.syncError),
+      projectId: projectId ?? this.projectId,
+      branchId: branchId ?? this.branchId,
     );
   }
 
@@ -248,5 +288,10 @@ class CanvasState extends Equatable {
         snapLines,
         snapPoints,
         clipboardShapes,
+        syncStatus,
+        serverVersion,
+        syncError,
+        projectId,
+        branchId,
       ];
 }

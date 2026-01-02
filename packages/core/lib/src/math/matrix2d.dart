@@ -233,4 +233,24 @@ class Matrix2D {
   Matrix2D rotatedAt(double angle, double cx, double cy) {
     return multiply(Matrix2D.rotationAt(angle, cx, cy));
   }
+
+  /// Convert to JSON
+  Map<String, dynamic> toJson() => {
+        'a': a,
+        'b': b,
+        'c': c,
+        'd': d,
+        'e': e,
+        'f': f,
+      };
+
+  /// Create from JSON
+  factory Matrix2D.fromJson(Map<String, dynamic> json) => Matrix2D(
+        a: (json['a'] as num).toDouble(),
+        b: (json['b'] as num).toDouble(),
+        c: (json['c'] as num).toDouble(),
+        d: (json['d'] as num).toDouble(),
+        e: (json['e'] as num).toDouble(),
+        f: (json['f'] as num).toDouble(),
+      );
 }

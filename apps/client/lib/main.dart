@@ -5,12 +5,16 @@ import 'package:path_provider/path_provider.dart';
 import 'package:vio_core/vio_core.dart';
 
 import 'src/app.dart';
+import 'src/core/core.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize logger
   VioLogger.initialize();
+
+  // Initialize service locator (API services, repositories)
+  ServiceLocator.instance.initialize();
 
   // Initialize HydratedBloc storage
   // Use web storage for web platform, otherwise use application documents directory

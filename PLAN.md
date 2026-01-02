@@ -38,7 +38,6 @@ Recreate the core functionality of Penpot (Open Source Design & Prototyping Tool
   - `flutter_bloc` for business logic
   - `bloc_concurrency` for sequential drawing events
   - `hydrated_bloc` for persistence
-  - `replay_bloc` for localized Undo/Redo
 - **Rendering**: `CustomPainter` + Flow delegates for infinite canvas
 
 ### Backend (Bun + Elysia)
@@ -107,8 +106,10 @@ Recreate the core functionality of Penpot (Open Source Design & Prototyping Tool
 ### 2.1 Backend Setup
 - [x] Initialize Bun project with Elysia
 - [x] Configure Drizzle ORM with PostgreSQL
+- [x] Migrate to Bun native SQL (`bun:sql` + `drizzle-orm/bun-sql`)
 - [x] Set up database migrations
 - [x] Create base API structure with decorators
+- [x] Use Elysia TypeBox (t.*) for validation (no Zod)
 
 ### 2.2 Database Schema
 - [x] Create `users` table (via ownerId/authorId references)
@@ -116,18 +117,30 @@ Recreate the core functionality of Penpot (Open Source Design & Prototyping Tool
 - [x] Create `projects` table (single board per project)
 - [x] Create `frames` table (artboards)
 - [x] Create `shapes` table (all shape types with transforms)
+- [x] Create `snapshots` table (serialized canvas state)
 
-### 2.3 Protobuf Definitions
-- [ ] Define Shape message types
-- [ ] Define Matrix/Transform messages
-- [ ] Define File/Project messages
-- [ ] Set up code generation scripts
+### 2.3 Flutter API Infrastructure
+- [x] Add dio HTTP client package
+- [x] Create ApiClient base class with interceptors
+- [x] Create ApiConfig and ApiEndpoints
+- [x] Create Shape DTOs (ShapeDto, ShapeFactory)
+- [x] Create ProjectApiService, BranchApiService
+- [x] Create CanvasApiService (state, sync, shapes)
+- [x] Create CanvasRepository with auto-sync
 
 ### 2.4 REST API Endpoints
 - [ ] Authentication endpoints (register, login, refresh)
 - [x] Project CRUD endpoints
 - [x] Shape CRUD endpoints
 - [x] Shape batch operations endpoints
+- [x] Canvas state endpoint
+- [x] Sync endpoint (for auto-sync operations)
+
+### 2.5 Protobuf Definitions (Future)
+- [ ] Define Shape message types
+- [ ] Define Matrix/Transform messages
+- [ ] Define File/Project messages
+- [ ] Set up code generation scripts
 
 ---
 

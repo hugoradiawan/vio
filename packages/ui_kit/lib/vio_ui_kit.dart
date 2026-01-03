@@ -10,6 +10,7 @@ export 'src/theme/vio_theme.dart';
 export 'src/theme/vio_typography.dart';
 // Widgets
 export 'src/widgets/vio_button.dart';
+export 'src/widgets/vio_color_picker_dialog.dart';
 export 'src/widgets/vio_icon_button.dart';
 export 'src/widgets/vio_panel.dart';
 export 'src/widgets/vio_property_widgets.dart';

@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vio_core/vio_core.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../../core/core.dart';
@@ -53,8 +54,7 @@ class _CanvasViewState extends State<CanvasView> {
     // delete/backspace keys as they're needed for text editing
     final primaryFocus = FocusManager.instance.primaryFocus;
     final isTextFieldFocused = primaryFocus?.context?.widget is EditableText ||
-        primaryFocus?.context
-                ?.findAncestorWidgetOfExactType<EditableText>() !=
+        primaryFocus?.context?.findAncestorWidgetOfExactType<EditableText>() !=
             null;
 
     if (event is KeyDownEvent) {
@@ -253,6 +253,10 @@ class _CanvasViewState extends State<CanvasView> {
                                   selectedShapes: canvasState.selectedShapes,
                                   viewMatrix: canvasState.viewMatrix,
                                   dragOffset: canvasState.dragOffset,
+                                  showCornerRadiusHandles:
+                                      canvasState.selectedShapes.length == 1 &&
+                                          canvasState.selectedShapes.first
+                                              is RectangleShape,
                                 ),
                               ),
                             ),

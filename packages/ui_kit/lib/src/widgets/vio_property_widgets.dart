@@ -149,8 +149,19 @@ class _VioColorPickerState extends State<VioColorPicker> {
     );
   }
 
-  void _showColorPicker() {
-    // TODO: Implement full color picker dialog
+  void _showColorPicker() async {
+    final result = await VioColorPickerDialog.show(
+      context,
+      initialColor: widget.color,
+      initialOpacity: widget.opacity,
+      showOpacity: widget.showOpacity,
+    );
+    if (result != null) {
+      widget.onColorChanged(result.color);
+      if (widget.showOpacity) {
+        widget.onOpacityChanged?.call(result.opacity);
+      }
+    }
   }
 }
 

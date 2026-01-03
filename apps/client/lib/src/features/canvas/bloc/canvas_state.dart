@@ -22,6 +22,9 @@ enum InteractionMode {
 
   /// User is rotating a shape
   rotating,
+
+  /// User is adjusting corner radius
+  adjustingCornerRadius,
 }
 
 // Note: SyncStatus is imported from '../../../core/repositories/canvas_repository.dart'
@@ -50,6 +53,11 @@ class CanvasState extends Equatable {
     this.syncError,
     this.projectId,
     this.branchId,
+    this.activeHandle,
+    this.resizeOrigin,
+    this.originalShapeBounds,
+    this.originalShapes,
+    this.activeCornerIndex,
   });
 
   /// Current zoom level (1.0 = 100%)
@@ -88,6 +96,21 @@ class CanvasState extends Equatable {
 
   /// ID of layer currently hovered in the layers panel
   final String? hoveredLayerId;
+
+  /// Active handle being dragged for resize/rotate (from SelectionBoxPainter)
+  final String? activeHandle;
+
+  /// Origin point for resize operation (the opposite corner anchor)
+  final Offset? resizeOrigin;
+
+  /// Original shape bounds when starting resize/rotate
+  final Rect? originalShapeBounds;
+
+  /// Original shapes map when starting resize (to calculate relative positions)
+  final Map<String, Shape>? originalShapes;
+
+  /// Active corner index for corner radius adjustment (0-3)
+  final int? activeCornerIndex;
 
   /// Active snap lines to render (during drag)
   final List<SnapLine> snapLines;
@@ -236,6 +259,11 @@ class CanvasState extends Equatable {
     String? syncError,
     String? projectId,
     String? branchId,
+    String? activeHandle,
+    Offset? resizeOrigin,
+    Rect? originalShapeBounds,
+    Map<String, Shape>? originalShapes,
+    int? activeCornerIndex,
     bool clearDragStart = false,
     bool clearCurrentPointer = false,
     bool clearDragOffset = false,
@@ -243,6 +271,11 @@ class CanvasState extends Equatable {
     bool clearHoveredLayerId = false,
     bool clearSnap = false,
     bool clearSyncError = false,
+    bool clearActiveHandle = false,
+    bool clearResizeOrigin = false,
+    bool clearOriginalShapeBounds = false,
+    bool clearOriginalShapes = false,
+    bool clearActiveCornerIndex = false,
   }) {
     return CanvasState(
       zoom: zoom ?? this.zoom,
@@ -268,6 +301,18 @@ class CanvasState extends Equatable {
       syncError: clearSyncError ? null : (syncError ?? this.syncError),
       projectId: projectId ?? this.projectId,
       branchId: branchId ?? this.branchId,
+      activeHandle:
+          clearActiveHandle ? null : (activeHandle ?? this.activeHandle),
+      resizeOrigin:
+          clearResizeOrigin ? null : (resizeOrigin ?? this.resizeOrigin),
+      originalShapeBounds: clearOriginalShapeBounds
+          ? null
+          : (originalShapeBounds ?? this.originalShapeBounds),
+      originalShapes:
+          clearOriginalShapes ? null : (originalShapes ?? this.originalShapes),
+      activeCornerIndex: clearActiveCornerIndex
+          ? null
+          : (activeCornerIndex ?? this.activeCornerIndex),
     );
   }
 
@@ -293,5 +338,10 @@ class CanvasState extends Equatable {
         syncError,
         projectId,
         branchId,
+        activeHandle,
+        resizeOrigin,
+        originalShapeBounds,
+        originalShapes,
+        activeCornerIndex,
       ];
 }

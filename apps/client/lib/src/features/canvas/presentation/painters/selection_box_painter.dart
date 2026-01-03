@@ -3,40 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:vio_core/vio_core.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
-/// Handle position on the selection box
-enum HandlePosition {
-  topLeft,
-  topCenter,
-  topRight,
-  middleLeft,
-  middleRight,
-  bottomLeft,
-  bottomCenter,
-  bottomRight,
-  rotation,
-}
+import '../../models/handle_types.dart';
 
-/// Information about a handle for hit-testing
-class HandleInfo {
-  const HandleInfo({
-    required this.position,
-    required this.center,
-    required this.size,
-  });
-
-  final HandlePosition position;
-  final Offset center;
-  final double size;
-
-  /// Check if a point hits this handle
-  bool containsPoint(Offset point) {
-    final halfSize = size / 2;
-    return point.dx >= center.dx - halfSize &&
-        point.dx <= center.dx + halfSize &&
-        point.dy >= center.dy - halfSize &&
-        point.dy <= center.dy + halfSize;
-  }
-}
+export '../../models/handle_types.dart';
 
 /// Paints the selection bounding box with resize and rotation handles
 class SelectionBoxPainter extends CustomPainter {
@@ -46,6 +15,8 @@ class SelectionBoxPainter extends CustomPainter {
     this.dragOffset,
     this.handleSize = 8.0,
     this.rotationHandleOffset = 24.0,
+    this.cornerRadiusHandleSize = 6.0,
+    this.showCornerRadiusHandles = false,
   });
 
   /// The shapes that are selected
@@ -63,8 +34,18 @@ class SelectionBoxPainter extends CustomPainter {
   /// Distance of rotation handle from top edge
   final double rotationHandleOffset;
 
+  /// Size of corner radius handles
+  final double cornerRadiusHandleSize;
+
+  /// Whether to show corner radius handles (only for single rectangle selection)
+  final bool showCornerRadiusHandles;
+
   /// Computed handles for hit-testing (in screen coordinates)
   List<HandleInfo> get handles => _computeHandles();
+
+  /// Computed corner radius handles for hit-testing (in screen coordinates)
+  List<CornerRadiusHandleInfo> get cornerRadiusHandles =>
+      _computeCornerRadiusHandles();
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -107,6 +88,14 @@ class SelectionBoxPainter extends CustomPainter {
 
     // Draw handles
     _drawHandles(canvas, bounds);
+
+    // Draw corner radius handles for single rectangle
+    if (showCornerRadiusHandles && selectedShapes.length == 1) {
+      final shape = selectedShapes.first;
+      if (shape is RectangleShape) {
+        _drawCornerRadiusHandles(canvas, shape);
+      }
+    }
 
     canvas.restore();
   }
@@ -290,12 +279,87 @@ class SelectionBoxPainter extends CustomPainter {
     }).toList();
   }
 
+  /// Draw corner radius handles inside the rectangle corners
+  void _drawCornerRadiusHandles(Canvas canvas, RectangleShape rect) {
+    final positions = _getCornerRadiusHandlePositions(rect);
+
+    // Fill
+    final fillPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+
+    // Stroke
+    final strokePaint = Paint()
+      ..color = VioColors.canvasSelection
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    for (final pos in positions) {
+      canvas.drawCircle(pos, cornerRadiusHandleSize / 2, fillPaint);
+      canvas.drawCircle(pos, cornerRadiusHandleSize / 2, strokePaint);
+    }
+  }
+
+  /// Get corner radius handle positions inside the rectangle
+  List<Offset> _getCornerRadiusHandlePositions(RectangleShape rect) {
+    // Handle offset from corner (diagonal distance inward)
+    const handleOffset = 16.0;
+    final bounds = rect.bounds;
+
+    // Calculate handle positions based on current corner radii
+    // Each handle is positioned diagonally inward from its corner
+    const diagonalOffset = handleOffset * 0.707; // cos(45°) ≈ 0.707
+
+    return [
+      // Top-left (r1)
+      rect.transformPoint(
+        Offset(bounds.left + diagonalOffset, bounds.top + diagonalOffset),
+      ),
+      // Top-right (r2)
+      rect.transformPoint(
+        Offset(bounds.right - diagonalOffset, bounds.top + diagonalOffset),
+      ),
+      // Bottom-right (r3)
+      rect.transformPoint(
+        Offset(bounds.right - diagonalOffset, bounds.bottom - diagonalOffset),
+      ),
+      // Bottom-left (r4)
+      rect.transformPoint(
+        Offset(bounds.left + diagonalOffset, bounds.bottom - diagonalOffset),
+      ),
+    ];
+  }
+
+  /// Compute corner radius handles for hit-testing
+  List<CornerRadiusHandleInfo> _computeCornerRadiusHandles() {
+    if (!showCornerRadiusHandles ||
+        selectedShapes.length != 1 ||
+        selectedShapes.first is! RectangleShape) {
+      return [];
+    }
+
+    final rect = selectedShapes.first as RectangleShape;
+    final positions = _getCornerRadiusHandlePositions(rect);
+    const cornerPositions = CornerPosition.values;
+
+    return List.generate(4, (i) {
+      final screenPoint =
+          viewMatrix.transformPoint(positions[i].dx, positions[i].dy);
+      return CornerRadiusHandleInfo(
+        cornerPosition: cornerPositions[i],
+        center: Offset(screenPoint.x, screenPoint.y),
+        size: cornerRadiusHandleSize,
+      );
+    });
+  }
+
   @override
   bool shouldRepaint(SelectionBoxPainter oldDelegate) {
     // Fast path for drag offset changes
     if (dragOffset != oldDelegate.dragOffset) return true;
 
     return !identical(selectedShapes, oldDelegate.selectedShapes) ||
-        viewMatrix != oldDelegate.viewMatrix;
+        viewMatrix != oldDelegate.viewMatrix ||
+        showCornerRadiusHandles != oldDelegate.showCornerRadiusHandles;
   }
 }

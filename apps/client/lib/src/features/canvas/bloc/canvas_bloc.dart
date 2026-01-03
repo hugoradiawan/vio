@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter/rendering.dart';
@@ -7,12 +8,20 @@ import 'package:uuid/uuid.dart';
 import 'package:vio_core/vio_core.dart';
 
 import '../../../core/core.dart';
+import '../models/handle_types.dart';
 
 part 'canvas_event.dart';
 part 'canvas_state.dart';
 
 /// UUID generator for new shapes
 const _uuid = Uuid();
+
+/// Helper class for corner radius hit test result
+class _CornerRadiusHit {
+  const _CornerRadiusHit({required this.index, required this.position});
+  final int index;
+  final Offset position;
+}
 
 /// Maximum number of undo states to keep
 const _maxUndoHistory = 50;
@@ -376,7 +385,59 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     PointerDown event,
     Emitter<CanvasState> emit,
   ) {
-    final canvasPoint = _screenToCanvas(Offset(event.x, event.y));
+    final screenPoint = Offset(event.x, event.y);
+    final canvasPoint = _screenToCanvas(screenPoint);
+
+    // First, check if we hit a handle when shapes are selected
+    if (state.hasSelection) {
+      // Check corner radius handles first (for single rectangle)
+      final cornerRadiusHandle = _hitTestCornerRadiusHandle(screenPoint);
+      if (cornerRadiusHandle != null) {
+        emit(
+          state.copyWith(
+            interactionMode: InteractionMode.adjustingCornerRadius,
+            activeCornerIndex: cornerRadiusHandle.index,
+            dragStart: canvasPoint,
+            currentPointer: canvasPoint,
+          ),
+        );
+        return;
+      }
+
+      // Check resize/rotate handles
+      final handle = _hitTestHandle(screenPoint);
+      if (handle != null) {
+        if (handle.position == HandlePosition.rotation) {
+          // Start rotation
+          emit(
+            state.copyWith(
+              interactionMode: InteractionMode.rotating,
+              activeHandle: handle.position.name,
+              dragStart: canvasPoint,
+              currentPointer: canvasPoint,
+              originalShapeBounds: state.selectionRect,
+              originalShapes: Map.from(state.shapes),
+            ),
+          );
+        } else {
+          // Start resize - store original shapes for relative position calculation
+          final bounds = state.selectionRect;
+          final resizeOrigin = _getResizeOrigin(handle.position, bounds);
+          emit(
+            state.copyWith(
+              interactionMode: InteractionMode.resizing,
+              activeHandle: handle.position.name,
+              resizeOrigin: resizeOrigin,
+              dragStart: canvasPoint,
+              currentPointer: canvasPoint,
+              originalShapeBounds: bounds,
+              originalShapes: Map.from(state.shapes),
+            ),
+          );
+        }
+        return;
+      }
+    }
 
     // Hit test to find shape under pointer
     final hitShape = HitTest.findTopShapeAtPoint(canvasPoint, state.shapeList);
@@ -444,6 +505,72 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
   ) {
     final canvasPoint = _screenToCanvas(Offset(event.x, event.y));
 
+    // Handle resizing
+    if (state.interactionMode == InteractionMode.resizing &&
+        state.activeHandle != null &&
+        state.resizeOrigin != null &&
+        state.originalShapeBounds != null) {
+      final handle = HandlePosition.values.firstWhere(
+        (h) => h.name == state.activeHandle,
+        orElse: () => HandlePosition.bottomRight,
+      );
+      final newShapes = _calculateResize(
+        canvasPoint,
+        handle,
+        state.resizeOrigin!,
+        state.originalShapeBounds!,
+      );
+      emit(
+        state.copyWith(
+          shapes: newShapes,
+          currentPointer: canvasPoint,
+        ),
+      );
+      return;
+    }
+
+    // Handle rotation
+    if (state.interactionMode == InteractionMode.rotating &&
+        state.originalShapeBounds != null) {
+      final center = state.originalShapeBounds!.center;
+      // Calculate angle (will be used for rotation transform)
+      final _ = _calculateRotationAngle(canvasPoint, center);
+      // For now, just update the pointer - rotation requires transform updates
+      emit(
+        state.copyWith(
+          currentPointer: canvasPoint,
+          // TODO: Apply rotation to shapes via transform matrix
+        ),
+      );
+      return;
+    }
+
+    // Handle corner radius adjustment
+    if (state.interactionMode == InteractionMode.adjustingCornerRadius &&
+        state.activeCornerIndex != null &&
+        state.selectedShapes.length == 1) {
+      final shape = state.selectedShapes.first;
+      if (shape is RectangleShape) {
+        final newRadius = _calculateCornerRadius(
+            canvasPoint, state.activeCornerIndex!, shape,);
+        final newShapes = Map<String, Shape>.from(state.shapes);
+        // Apply to all corners for uniform radius
+        newShapes[shape.id] = shape.copyWith(
+          r1: newRadius,
+          r2: newRadius,
+          r3: newRadius,
+          r4: newRadius,
+        );
+        emit(
+          state.copyWith(
+            shapes: newShapes,
+            currentPointer: canvasPoint,
+          ),
+        );
+      }
+      return;
+    }
+
     // Handle shape movement - only update dragOffset, not shapes
     if (state.interactionMode == InteractionMode.movingShapes &&
         state.dragStart != null &&
@@ -506,6 +633,55 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     PointerUp event,
     Emitter<CanvasState> emit,
   ) {
+    // Handle resize completion
+    if (state.interactionMode == InteractionMode.resizing) {
+      // Shapes were already updated in real-time, just push to undo stack
+      _pushUndoState(state.shapes);
+      emit(
+        state.copyWith(
+          interactionMode: InteractionMode.idle,
+          clearDragStart: true,
+          clearCurrentPointer: true,
+          clearActiveHandle: true,
+          clearResizeOrigin: true,
+          clearOriginalShapeBounds: true,
+          clearOriginalShapes: true,
+        ),
+      );
+      return;
+    }
+
+    // Handle rotation completion
+    if (state.interactionMode == InteractionMode.rotating) {
+      // TODO: Commit rotation transforms when fully implemented
+      emit(
+        state.copyWith(
+          interactionMode: InteractionMode.idle,
+          clearDragStart: true,
+          clearCurrentPointer: true,
+          clearActiveHandle: true,
+          clearOriginalShapeBounds: true,
+          clearOriginalShapes: true,
+        ),
+      );
+      return;
+    }
+
+    // Handle corner radius adjustment completion
+    if (state.interactionMode == InteractionMode.adjustingCornerRadius) {
+      // Shapes were already updated in real-time, just push to undo stack
+      _pushUndoState(state.shapes);
+      emit(
+        state.copyWith(
+          interactionMode: InteractionMode.idle,
+          clearDragStart: true,
+          clearCurrentPointer: true,
+          clearActiveCornerIndex: true,
+        ),
+      );
+      return;
+    }
+
     // Check if we were doing marquee selection
     if (state.interactionMode == InteractionMode.dragging &&
         state.dragRect != null) {
@@ -860,6 +1036,303 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       (screenPoint.dx - state.viewportOffset.dx) / state.zoom,
       (screenPoint.dy - state.viewportOffset.dy) / state.zoom,
     );
+  }
+
+  /// Convert canvas coordinates to screen coordinates
+  Offset _canvasToScreen(Offset canvasPoint) {
+    return Offset(
+      canvasPoint.dx * state.zoom + state.viewportOffset.dx,
+      canvasPoint.dy * state.zoom + state.viewportOffset.dy,
+    );
+  }
+
+  // ============================================================================
+  // Handle Hit Testing & Interaction Helpers
+  // ============================================================================
+
+  /// Handle size in screen pixels
+  static const double _handleSize = 8.0;
+
+  /// Rotation handle offset in canvas coordinates
+  static const double _rotationHandleOffset = 24.0;
+
+  /// Corner radius handle size in screen pixels
+  static const double _cornerRadiusHandleSize = 6.0;
+
+  /// Hit test for resize/rotate handles
+  HandleInfo? _hitTestHandle(Offset screenPoint) {
+    final bounds = state.selectionRect;
+    if (bounds == null) return null;
+
+    final handlePositions = _getHandlePositions(bounds);
+    for (final entry in handlePositions.entries) {
+      final screenHandlePos = _canvasToScreen(entry.value);
+      final handleInfo = HandleInfo(
+        position: entry.key,
+        center: screenHandlePos,
+        size: _handleSize,
+      );
+      // Use larger hit area for easier interaction
+      if (handleInfo.containsPoint(screenPoint)) {
+        return handleInfo;
+      }
+    }
+    return null;
+  }
+
+  /// Get handle positions in canvas coordinates
+  Map<HandlePosition, Offset> _getHandlePositions(Rect bounds) {
+    final centerX = bounds.center.dx;
+    final centerY = bounds.center.dy;
+
+    return {
+      HandlePosition.topLeft: Offset(bounds.left, bounds.top),
+      HandlePosition.topCenter: Offset(centerX, bounds.top),
+      HandlePosition.topRight: Offset(bounds.right, bounds.top),
+      HandlePosition.middleLeft: Offset(bounds.left, centerY),
+      HandlePosition.middleRight: Offset(bounds.right, centerY),
+      HandlePosition.bottomLeft: Offset(bounds.left, bounds.bottom),
+      HandlePosition.bottomCenter: Offset(centerX, bounds.bottom),
+      HandlePosition.bottomRight: Offset(bounds.right, bounds.bottom),
+      HandlePosition.rotation:
+          Offset(centerX, bounds.top - _rotationHandleOffset),
+    };
+  }
+
+  /// Hit test for corner radius handles
+  _CornerRadiusHit? _hitTestCornerRadiusHandle(Offset screenPoint) {
+    if (state.selectedShapes.length != 1) return null;
+
+    final shape = state.selectedShapes.first;
+    if (shape is! RectangleShape) return null;
+
+    final positions = _getCornerRadiusHandlePositions(shape);
+    for (var i = 0; i < positions.length; i++) {
+      final screenHandlePos = _canvasToScreen(positions[i]);
+      final distance = (screenPoint - screenHandlePos).distance;
+      if (distance <= _cornerRadiusHandleSize) {
+        return _CornerRadiusHit(index: i, position: positions[i]);
+      }
+    }
+    return null;
+  }
+
+  /// Get corner radius handle positions in canvas coordinates
+  List<Offset> _getCornerRadiusHandlePositions(RectangleShape rect) {
+    const handleOffset = 16.0;
+    final bounds = rect.bounds;
+    const diagonalOffset = handleOffset * 0.707;
+
+    return [
+      rect.transformPoint(
+        Offset(bounds.left + diagonalOffset, bounds.top + diagonalOffset),
+      ),
+      rect.transformPoint(
+        Offset(bounds.right - diagonalOffset, bounds.top + diagonalOffset),
+      ),
+      rect.transformPoint(
+        Offset(bounds.right - diagonalOffset, bounds.bottom - diagonalOffset),
+      ),
+      rect.transformPoint(
+        Offset(bounds.left + diagonalOffset, bounds.bottom - diagonalOffset),
+      ),
+    ];
+  }
+
+  /// Get the resize origin (anchor point) based on handle position
+  Offset? _getResizeOrigin(HandlePosition handle, Rect? bounds) {
+    if (bounds == null) return null;
+
+    switch (handle) {
+      case HandlePosition.topLeft:
+        return Offset(bounds.right, bounds.bottom);
+      case HandlePosition.topCenter:
+        return Offset(bounds.center.dx, bounds.bottom);
+      case HandlePosition.topRight:
+        return Offset(bounds.left, bounds.bottom);
+      case HandlePosition.middleLeft:
+        return Offset(bounds.right, bounds.center.dy);
+      case HandlePosition.middleRight:
+        return Offset(bounds.left, bounds.center.dy);
+      case HandlePosition.bottomLeft:
+        return Offset(bounds.right, bounds.top);
+      case HandlePosition.bottomCenter:
+        return Offset(bounds.center.dx, bounds.top);
+      case HandlePosition.bottomRight:
+        return Offset(bounds.left, bounds.top);
+      case HandlePosition.rotation:
+        return bounds.center;
+    }
+  }
+
+  /// Calculate new shape dimensions during resize
+  Map<String, Shape> _calculateResize(
+    Offset currentPointer,
+    HandlePosition handle,
+    Offset origin,
+    Rect originalBounds,
+  ) {
+    final newShapes = Map<String, Shape>.from(state.shapes);
+    final originalShapes = state.originalShapes;
+
+    final originalWidth = originalBounds.width;
+    final originalHeight = originalBounds.height;
+
+    // Calculate new bounds based on handle being dragged
+    double newLeft = originalBounds.left;
+    double newTop = originalBounds.top;
+    double newRight = originalBounds.right;
+    double newBottom = originalBounds.bottom;
+
+    // Update the appropriate edges based on handle position
+    switch (handle) {
+      case HandlePosition.topLeft:
+        newLeft = currentPointer.dx;
+        newTop = currentPointer.dy;
+        break;
+      case HandlePosition.topCenter:
+        newTop = currentPointer.dy;
+        break;
+      case HandlePosition.topRight:
+        newRight = currentPointer.dx;
+        newTop = currentPointer.dy;
+        break;
+      case HandlePosition.middleLeft:
+        newLeft = currentPointer.dx;
+        break;
+      case HandlePosition.middleRight:
+        newRight = currentPointer.dx;
+        break;
+      case HandlePosition.bottomLeft:
+        newLeft = currentPointer.dx;
+        newBottom = currentPointer.dy;
+        break;
+      case HandlePosition.bottomCenter:
+        newBottom = currentPointer.dy;
+        break;
+      case HandlePosition.bottomRight:
+        newRight = currentPointer.dx;
+        newBottom = currentPointer.dy;
+        break;
+      case HandlePosition.rotation:
+        return newShapes; // No resize for rotation handle
+    }
+
+    // Handle flipping (when user drags past the origin)
+    final flipX = newLeft > newRight;
+    final flipY = newTop > newBottom;
+    if (flipX) {
+      final temp = newLeft;
+      newLeft = newRight;
+      newRight = temp;
+    }
+    if (flipY) {
+      final temp = newTop;
+      newTop = newBottom;
+      newBottom = temp;
+    }
+
+    // Calculate new dimensions
+    final newWidth = (newRight - newLeft).clamp(1.0, double.infinity);
+    final newHeight = (newBottom - newTop).clamp(1.0, double.infinity);
+
+    // Apply resize to each selected shape
+    for (final shapeId in state.selectedShapeIds) {
+      // Use ORIGINAL shape bounds for calculating relative position
+      final originalShape = originalShapes?[shapeId];
+      final currentShape = newShapes[shapeId];
+      if (originalShape == null || currentShape == null) continue;
+
+      // Calculate shape's relative position within original selection bounds
+      // using the ORIGINAL shape bounds (not current)
+      final originalShapeBounds = originalShape.bounds;
+      final relLeft =
+          (originalShapeBounds.left - originalBounds.left) / originalWidth;
+      final relTop =
+          (originalShapeBounds.top - originalBounds.top) / originalHeight;
+      final relWidth = originalShapeBounds.width / originalWidth;
+      final relHeight = originalShapeBounds.height / originalHeight;
+
+      // Calculate new position and size maintaining relative proportions
+      final shapeNewWidth = (relWidth * newWidth).clamp(1.0, double.infinity);
+      final shapeNewHeight =
+          (relHeight * newHeight).clamp(1.0, double.infinity);
+      final shapeNewX = newLeft + relLeft * newWidth;
+      final shapeNewY = newTop + relTop * newHeight;
+
+      // Apply to shape based on type (use originalShape as base for copyWith)
+      if (originalShape is RectangleShape) {
+        newShapes[shapeId] = originalShape.copyWith(
+          x: shapeNewX,
+          y: shapeNewY,
+          rectWidth: shapeNewWidth,
+          rectHeight: shapeNewHeight,
+        );
+      } else if (originalShape is EllipseShape) {
+        newShapes[shapeId] = originalShape.copyWith(
+          x: shapeNewX,
+          y: shapeNewY,
+          ellipseWidth: shapeNewWidth,
+          ellipseHeight: shapeNewHeight,
+        );
+      } else if (originalShape is FrameShape) {
+        newShapes[shapeId] = originalShape.copyWith(
+          x: shapeNewX,
+          y: shapeNewY,
+          frameWidth: shapeNewWidth,
+          frameHeight: shapeNewHeight,
+        );
+      }
+    }
+
+    return newShapes;
+  }
+
+  /// Calculate rotation angle during rotation interaction
+  double _calculateRotationAngle(Offset currentPointer, Offset center) {
+    final dx = currentPointer.dx - center.dx;
+    final dy = currentPointer.dy - center.dy;
+    return math.atan2(dx, -dy) * 180 / math.pi;
+  }
+
+  /// Calculate corner radius based on handle drag
+  double _calculateCornerRadius(
+    Offset currentPointer,
+    int cornerIndex,
+    RectangleShape shape,
+  ) {
+    final bounds = shape.bounds;
+
+    // Calculate distance from corner to current pointer position
+    Offset corner;
+    switch (cornerIndex) {
+      case 0: // Top-left
+        corner = Offset(bounds.left, bounds.top);
+        break;
+      case 1: // Top-right
+        corner = Offset(bounds.right, bounds.top);
+        break;
+      case 2: // Bottom-right
+        corner = Offset(bounds.right, bounds.bottom);
+        break;
+      case 3: // Bottom-left
+        corner = Offset(bounds.left, bounds.bottom);
+        break;
+      default:
+        corner = bounds.topLeft;
+    }
+
+    // Calculate diagonal distance from corner to pointer
+    final dx = (currentPointer.dx - corner.dx).abs();
+    final dy = (currentPointer.dy - corner.dy).abs();
+    final diagonalDistance = math.sqrt(dx * dx + dy * dy);
+
+    // Convert to radius (handle is offset at 45 degrees, so divide by sqrt(2))
+    final radius = diagonalDistance / 1.414;
+
+    // Clamp to reasonable values (max is half the smaller dimension)
+    final maxRadius = math.min(bounds.width, bounds.height) / 2;
+    return radius.clamp(0.0, maxRadius);
   }
 
   // ============================================================================

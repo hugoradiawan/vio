@@ -92,6 +92,7 @@ class PointerMove extends CanvasEvent {
   const PointerMove({
     required this.x,
     required this.y,
+    this.shiftPressed = false,
   });
 
   /// X position in screen coordinates
@@ -100,8 +101,11 @@ class PointerMove extends CanvasEvent {
   /// Y position in screen coordinates
   final double y;
 
+  /// Whether shift key is pressed (for rotation snapping)
+  final bool shiftPressed;
+
   @override
-  List<Object?> get props => [x, y];
+  List<Object?> get props => [x, y, shiftPressed];
 }
 
 /// Fired when pointer/mouse is released

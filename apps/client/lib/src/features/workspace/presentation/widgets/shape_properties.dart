@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vio_core/vio_core.dart';
@@ -179,7 +181,30 @@ class PositionSizeSection extends StatelessWidget {
 
   void _updateRotation(BuildContext context, double rotation) {
     final bloc = context.read<CanvasBloc>();
-    bloc.add(ShapeUpdated(shape.copyWith(rotation: rotation)));
+
+    // Calculate the delta from current rotation
+    final deltaAngle = rotation - shape.rotation;
+    final deltaRadians = deltaAngle * math.pi / 180;
+
+    // Rotate around shape's center
+    final center = shape.bounds.center;
+    final rotationMatrix = Matrix2D.rotationAt(
+      deltaRadians,
+      center.dx,
+      center.dy,
+    );
+
+    // Apply rotation to existing transform
+    final newTransform = shape.transform * rotationMatrix;
+
+    bloc.add(
+      ShapeUpdated(
+        shape.copyWith(
+          rotation: rotation,
+          transform: newTransform,
+        ),
+      ),
+    );
   }
 
   void _updateOpacity(BuildContext context, double opacity) {

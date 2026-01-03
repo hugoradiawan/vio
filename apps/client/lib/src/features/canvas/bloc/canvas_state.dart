@@ -58,6 +58,7 @@ class CanvasState extends Equatable {
     this.originalShapeBounds,
     this.originalShapes,
     this.activeCornerIndex,
+    this.initialRotationAngle,
   });
 
   /// Current zoom level (1.0 = 100%)
@@ -111,6 +112,9 @@ class CanvasState extends Equatable {
 
   /// Active corner index for corner radius adjustment (0-3)
   final int? activeCornerIndex;
+
+  /// Initial rotation angle when rotation began (in degrees)
+  final double? initialRotationAngle;
 
   /// Active snap lines to render (during drag)
   final List<SnapLine> snapLines;
@@ -264,6 +268,7 @@ class CanvasState extends Equatable {
     Rect? originalShapeBounds,
     Map<String, Shape>? originalShapes,
     int? activeCornerIndex,
+    double? initialRotationAngle,
     bool clearDragStart = false,
     bool clearCurrentPointer = false,
     bool clearDragOffset = false,
@@ -276,6 +281,7 @@ class CanvasState extends Equatable {
     bool clearOriginalShapeBounds = false,
     bool clearOriginalShapes = false,
     bool clearActiveCornerIndex = false,
+    bool clearInitialRotationAngle = false,
   }) {
     return CanvasState(
       zoom: zoom ?? this.zoom,
@@ -313,6 +319,9 @@ class CanvasState extends Equatable {
       activeCornerIndex: clearActiveCornerIndex
           ? null
           : (activeCornerIndex ?? this.activeCornerIndex),
+      initialRotationAngle: clearInitialRotationAngle
+          ? null
+          : (initialRotationAngle ?? this.initialRotationAngle),
     );
   }
 
@@ -343,5 +352,6 @@ class CanvasState extends Equatable {
         originalShapeBounds,
         originalShapes,
         activeCornerIndex,
+        initialRotationAngle,
       ];
 }

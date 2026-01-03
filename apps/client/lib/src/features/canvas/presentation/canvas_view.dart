@@ -435,6 +435,7 @@ class _CanvasViewState extends State<CanvasView> {
           PointerMove(
             x: event.localPosition.dx,
             y: event.localPosition.dy,
+            shiftPressed: HardwareKeyboard.instance.isShiftPressed,
           ),
         );
   }

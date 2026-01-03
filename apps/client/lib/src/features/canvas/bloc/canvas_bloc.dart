@@ -408,15 +408,19 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       final handle = _hitTestHandle(screenPoint);
       if (handle != null) {
         if (handle.position == HandlePosition.rotation) {
-          // Start rotation
+          // Start rotation - calculate initial angle from selection center
+          final bounds = state.selectionRect;
+          final center = bounds?.center ?? canvasPoint;
+          final initialAngle = _calculateRotationAngle(canvasPoint, center);
           emit(
             state.copyWith(
               interactionMode: InteractionMode.rotating,
               activeHandle: handle.position.name,
               dragStart: canvasPoint,
               currentPointer: canvasPoint,
-              originalShapeBounds: state.selectionRect,
+              originalShapeBounds: bounds,
               originalShapes: Map.from(state.shapes),
+              initialRotationAngle: initialAngle,
             ),
           );
         } else {
@@ -531,15 +535,64 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
 
     // Handle rotation
     if (state.interactionMode == InteractionMode.rotating &&
-        state.originalShapeBounds != null) {
+        state.originalShapeBounds != null &&
+        state.originalShapes != null) {
       final center = state.originalShapeBounds!.center;
-      // Calculate angle (will be used for rotation transform)
-      final _ = _calculateRotationAngle(canvasPoint, center);
-      // For now, just update the pointer - rotation requires transform updates
+      // Calculate current angle and delta from initial
+      final currentAngle = _calculateRotationAngle(canvasPoint, center);
+      var deltaAngle = currentAngle - (state.initialRotationAngle ?? 0);
+
+      // If shift is pressed, snap to 15° increments
+      if (event.shiftPressed) {
+        deltaAngle = (deltaAngle / 15).round() * 15.0;
+      }
+
+      // Convert delta angle to radians for matrix
+      final deltaRadians = deltaAngle * math.pi / 180;
+
+      // Apply rotation to each selected shape
+      final newShapes = Map<String, Shape>.from(state.shapes);
+      final selectedIds = state.selectedShapeIds;
+      final originalShapes = state.originalShapes!;
+
+      for (final shapeId in selectedIds) {
+        final originalShape = originalShapes[shapeId];
+        if (originalShape == null) continue;
+
+        // Calculate rotation center
+        Offset rotationCenter;
+        if (selectedIds.length == 1) {
+          // Single shape: rotate around its own center
+          rotationCenter = originalShape.bounds.center;
+        } else {
+          // Multi-select: rotate around selection center
+          rotationCenter = center;
+        }
+
+        // Create rotation matrix around the center
+        final rotationMatrix = Matrix2D.rotationAt(
+          deltaRadians,
+          rotationCenter.dx,
+          rotationCenter.dy,
+        );
+
+        // Multiply original transform with rotation
+        final newTransform = originalShape.transform * rotationMatrix;
+
+        // Calculate new rotation value (original rotation + delta)
+        final newRotation = (originalShape.rotation + deltaAngle) % 360;
+
+        // Update shape with new transform and rotation field
+        newShapes[shapeId] = originalShape.copyWith(
+          transform: newTransform,
+          rotation: newRotation,
+        );
+      }
+
       emit(
         state.copyWith(
+          shapes: newShapes,
           currentPointer: canvasPoint,
-          // TODO: Apply rotation to shapes via transform matrix
         ),
       );
       return;
@@ -552,7 +605,10 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       final shape = state.selectedShapes.first;
       if (shape is RectangleShape) {
         final newRadius = _calculateCornerRadius(
-            canvasPoint, state.activeCornerIndex!, shape,);
+          canvasPoint,
+          state.activeCornerIndex!,
+          shape,
+        );
         final newShapes = Map<String, Shape>.from(state.shapes);
         // Apply to all corners for uniform radius
         newShapes[shape.id] = shape.copyWith(
@@ -653,7 +709,8 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
 
     // Handle rotation completion
     if (state.interactionMode == InteractionMode.rotating) {
-      // TODO: Commit rotation transforms when fully implemented
+      // Commit rotation transforms - shapes were already updated in real-time
+      _pushUndoState(state.shapes);
       emit(
         state.copyWith(
           interactionMode: InteractionMode.idle,
@@ -662,6 +719,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
           clearActiveHandle: true,
           clearOriginalShapeBounds: true,
           clearOriginalShapes: true,
+          clearInitialRotationAngle: true,
         ),
       );
       return;
@@ -708,10 +766,22 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         for (final shapeId in state.selectedShapeIds) {
           final shape = newShapes[shapeId];
           if (shape != null) {
-            newShapes[shapeId] = shape.moveBy(
-              state.dragOffset!.dx,
-              state.dragOffset!.dy,
-            );
+            // Check if shape has rotation (non-identity transform with rotation)
+            final hasRotation = shape.rotation != 0;
+            if (hasRotation) {
+              // For rotated shapes, update the transform's translation
+              final newTransform = shape.transform.copyWith(
+                e: shape.transform.e + state.dragOffset!.dx,
+                f: shape.transform.f + state.dragOffset!.dy,
+              );
+              newShapes[shapeId] = shape.copyWith(transform: newTransform);
+            } else {
+              // For non-rotated shapes, move x,y position normally
+              newShapes[shapeId] = shape.moveBy(
+                state.dragOffset!.dx,
+                state.dragOffset!.dy,
+              );
+            }
           }
         }
         emit(

@@ -76,7 +76,8 @@ Recreate the core functionality of Penpot (Open Source Design & Prototyping Tool
 - [x] Implement Rectangle shape with CustomPainter
 - [x] Implement Ellipse shape with CustomPainter
 - [ ] Add fill and stroke support (rendering)
-- [ ] Implement shape transform matrix (rotation, scale, skew) - rendering
+- [x] Implement shape rotation via transform matrix
+- [ ] Implement shape scale/skew via transform matrix
 
 ### 1.4 Selection System
 - [x] Implement hit-testing for shapes

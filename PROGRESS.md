@@ -5,6 +5,47 @@
 
 ---
 
+## 2025-01-03
+
+### Session 6: Shape Rotation Implementation
+
+| Date | Task | Status | Notes/Blockers |
+|------|------|--------|----------------|
+| 2025-01-03 | Add initialRotationAngle to CanvasState | ✅ Completed | Tracks starting angle for delta calculation |
+| 2025-01-03 | Add shiftPressed to PointerMove event | ✅ Completed | For 15° angle snapping |
+| 2025-01-03 | Implement rotation via handle drag | ✅ Completed | Single shape rotates around own center, multi-select around selection center |
+| 2025-01-03 | Update rotation field on rotate | ✅ Completed | Both transform matrix and rotation field updated |
+| 2025-01-03 | Fix move behavior for rotated shapes | ✅ Completed | Updates transform translation (e,f) instead of x,y |
+| 2025-01-03 | Fix rotation input in properties panel | ✅ Completed | Now applies rotation transform, not just field |
+
+### Changes Made
+
+#### apps/client/lib/src/features/canvas/bloc/
+- `canvas_state.dart` - Added `initialRotationAngle` field with `clearInitialRotationAngle` flag
+- `canvas_event.dart` - Added `shiftPressed` parameter to `PointerMove` event
+- `canvas_bloc.dart` - Implemented rotation logic:
+  - Store initial angle on rotation start
+  - Calculate delta angle during rotation
+  - Shift key snaps to 15° increments
+  - Apply `Matrix2D.rotationAt()` around appropriate center
+  - Update both `transform` and `rotation` fields
+  - Move rotated shapes by updating transform translation (e,f)
+
+#### apps/client/lib/src/features/canvas/presentation/
+- `canvas_view.dart` - Pass `HardwareKeyboard.instance.isShiftPressed` to `PointerMove`
+
+#### apps/client/lib/src/features/workspace/presentation/widgets/
+- `shape_properties.dart` - Fixed `_updateRotation()` to apply rotation transform matrix
+
+### Key Implementation Details
+1. **Single vs Multi Rotation**: Single shape rotates around its own center, multi-select rotates all shapes around the selection's center point
+2. **Shift Snapping**: Hold Shift while rotating to snap to 15° increments
+3. **Transform + Field Sync**: Both `shape.transform` matrix and `shape.rotation` field are kept in sync
+4. **Move After Rotate**: Rotated shapes update transform translation (e,f) instead of x,y to preserve rotation behavior
+5. **Properties Panel**: Rotation input now computes delta angle and applies rotation matrix
+
+---
+
 ## 2025-01-01
 
 ### Session 5: API Infrastructure & Backend Migration

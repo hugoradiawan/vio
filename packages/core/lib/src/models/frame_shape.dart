@@ -60,8 +60,7 @@ class FrameShape extends Shape {
   final FrameFlexLayout? flexLayout;
 
   @override
-  Rect get bounds =>
-      Rect.fromLTWH(x, y, frameWidth, frameHeight);
+  Rect get bounds => Rect.fromLTWH(x, y, frameWidth, frameHeight);
 
   /// Whether this frame has auto-layout enabled
   bool get hasAutoLayout => flexLayout != null;
@@ -158,7 +157,8 @@ class FrameShape extends Shape {
             ? Matrix2D.fromJson(json['transform'] as Map<String, dynamic>)
             : Matrix2D.identity,
         transformInverse: json['transformInverse'] != null
-            ? Matrix2D.fromJson(json['transformInverse'] as Map<String, dynamic>)
+            ? Matrix2D.fromJson(
+                json['transformInverse'] as Map<String, dynamic>)
             : null,
         fills: (json['fills'] as List?)
                 ?.map((f) => ShapeFill.fromJson(f as Map<String, dynamic>))
@@ -173,7 +173,8 @@ class FrameShape extends Shape {
         blocked: json['blocked'] as bool? ?? false,
         rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
         constraints: json['constraints'] != null
-            ? ShapeConstraints.fromJson(json['constraints'] as Map<String, dynamic>)
+            ? ShapeConstraints.fromJson(
+                json['constraints'] as Map<String, dynamic>)
             : null,
         shadow: json['shadow'] != null
             ? ShapeShadow.fromJson(json['shadow'] as Map<String, dynamic>)
@@ -185,26 +186,28 @@ class FrameShape extends Shape {
         showContent: json['showContent'] as bool? ?? true,
         children: (json['children'] as List?)?.cast<String>() ?? const [],
         gridLayout: json['gridLayout'] != null
-            ? FrameGridLayout.fromJson(json['gridLayout'] as Map<String, dynamic>)
+            ? FrameGridLayout.fromJson(
+                json['gridLayout'] as Map<String, dynamic>)
             : null,
         flexLayout: json['flexLayout'] != null
-            ? FrameFlexLayout.fromJson(json['flexLayout'] as Map<String, dynamic>)
+            ? FrameFlexLayout.fromJson(
+                json['flexLayout'] as Map<String, dynamic>)
             : null,
       );
 
   @override
   List<Object?> get props => [
-    ...super.props,
-    x,
-    y,
-    frameWidth,
-    frameHeight,
-    clipContent,
-    showContent,
-    children,
-    gridLayout,
-    flexLayout,
-  ];
+        ...super.props,
+        x,
+        y,
+        frameWidth,
+        frameHeight,
+        clipContent,
+        showContent,
+        children,
+        gridLayout,
+        flexLayout,
+      ];
 }
 
 /// Grid layout configuration for frames
@@ -228,7 +231,8 @@ class FrameGridLayout {
         'rowGap': rowGap,
       };
 
-  factory FrameGridLayout.fromJson(Map<String, dynamic> json) => FrameGridLayout(
+  factory FrameGridLayout.fromJson(Map<String, dynamic> json) =>
+      FrameGridLayout(
         columns: json['columns'] as int,
         rows: json['rows'] as int,
         columnGap: (json['columnGap'] as num?)?.toDouble() ?? 0,
@@ -283,7 +287,8 @@ class FrameFlexLayout {
         'wrap': wrap,
       };
 
-  factory FrameFlexLayout.fromJson(Map<String, dynamic> json) => FrameFlexLayout(
+  factory FrameFlexLayout.fromJson(Map<String, dynamic> json) =>
+      FrameFlexLayout(
         direction: FlexDirection.values.firstWhere(
           (e) => e.name == json['direction'],
           orElse: () => FlexDirection.horizontal,

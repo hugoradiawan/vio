@@ -1,6 +1,8 @@
 /// Vio UI Kit - Design system and themed components
 library vio_ui_kit;
 
+// Icons
+export 'src/icons/vio_icons.dart';
 export 'src/theme/vio_colors.dart';
 export 'src/theme/vio_spacing.dart';
 // Theme
@@ -10,5 +12,6 @@ export 'src/theme/vio_typography.dart';
 export 'src/widgets/vio_button.dart';
 export 'src/widgets/vio_icon_button.dart';
 export 'src/widgets/vio_panel.dart';
+export 'src/widgets/vio_property_widgets.dart';
 export 'src/widgets/vio_text_field.dart';
 export 'src/widgets/vio_toolbar.dart';

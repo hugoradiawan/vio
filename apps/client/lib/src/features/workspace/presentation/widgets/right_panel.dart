@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vio_core/vio_core.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
+
+import '../../../canvas/bloc/canvas_bloc.dart';
+import 'property_sections.dart';
+import 'shape_properties.dart';
 
 /// Right panel containing properties inspector for selected shapes
 class RightPanel extends StatelessWidget {
@@ -17,294 +23,543 @@ class RightPanel extends StatelessWidget {
           ),
         ),
       ),
-      child: Column(
-        children: [
-          // Header
-          Container(
-            height: 40,
-            padding: const EdgeInsets.symmetric(horizontal: VioSpacing.md),
-            decoration: const BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: VioColors.border,
-                ),
-              ),
-            ),
-            child: Row(
+      child: BlocBuilder<CanvasBloc, CanvasState>(
+        buildWhen: (previous, current) =>
+            previous.selectedShapeIds != current.selectedShapeIds ||
+            previous.shapes != current.shapes,
+        builder: (context, state) {
+          final selectedIds = state.selectedShapeIds;
+
+          if (selectedIds.isEmpty) {
+            return const _NoSelectionPanel();
+          }
+
+          if (selectedIds.length == 1) {
+            final shape = state.shapes[selectedIds.first];
+            if (shape == null) {
+              return const _NoSelectionPanel();
+            }
+            return _SingleShapePanel(shape: shape);
+          }
+
+          // Multiple selection
+          final selectedShapes = selectedIds
+              .map((id) => state.shapes[id])
+              .whereType<Shape>()
+              .toList();
+          return _MultipleSelectionPanel(shapes: selectedShapes);
+        },
+      ),
+    );
+  }
+}
+
+/// Panel shown when nothing is selected
+class _NoSelectionPanel extends StatelessWidget {
+  const _NoSelectionPanel();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _buildHeader('Design'),
+        Expanded(
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
+                Icon(
+                  Icons.touch_app_outlined,
+                  size: 48,
+                  color: VioColors.textTertiary.withValues(alpha: 0.5),
+                ),
+                const SizedBox(height: VioSpacing.md),
                 Text(
-                  'Design',
-                  style: VioTypography.subtitle2.copyWith(
-                    color: VioColors.textPrimary,
+                  'Select a shape',
+                  style: VioTypography.bodyMedium.copyWith(
+                    color: VioColors.textTertiary,
+                  ),
+                ),
+                const SizedBox(height: VioSpacing.xs),
+                Text(
+                  'to view and edit its properties',
+                  style: VioTypography.caption.copyWith(
+                    color: VioColors.textTertiary.withValues(alpha: 0.7),
                   ),
                 ),
               ],
             ),
           ),
+        ),
+      ],
+    );
+  }
+}
 
-          // Properties
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  // Position & Size
-                  const VioPanel(
-                    title: 'Position',
-                    child: _PositionSection(),
-                  ),
+/// Panel for single shape selection
+class _SingleShapePanel extends StatelessWidget {
+  const _SingleShapePanel({required this.shape});
 
-                  // Fill
+  final Shape shape;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _buildHeader(_getShapeTypeLabel(shape.type)),
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                // Shape name
+                _ShapeNameSection(shape: shape),
+
+                // Position & Size (common to all shapes)
+                VioPanel(
+                  title: 'Transform',
+                  child: PositionSizeSection(shape: shape),
+                ),
+
+                // Shape-specific properties
+                if (shape is RectangleShape)
                   VioPanel(
-                    title: 'Fill',
-                    trailing: VioIconButton(
-                      icon: Icons.add,
-                      size: 24,
-                      onPressed: () {},
-                    ),
-                    child: const _FillSection(),
+                    title: 'Rectangle',
+                    child: RectangleProperties(shape: shape as RectangleShape),
+                  ),
+                if (shape is EllipseShape)
+                  VioPanel(
+                    title: 'Ellipse',
+                    child: EllipseProperties(shape: shape as EllipseShape),
+                  ),
+                if (shape is FrameShape)
+                  VioPanel(
+                    title: 'Frame',
+                    child: FrameProperties(shape: shape as FrameShape),
                   ),
 
-                  // Stroke
-                  VioPanel(
-                    title: 'Stroke',
-                    trailing: VioIconButton(
-                      icon: Icons.add,
-                      size: 24,
-                      onPressed: () {},
-                    ),
-                    child: const _StrokeSection(),
+                // Fill
+                VioPanel(
+                  title: 'Fill',
+                  trailing: VioSvgIconButton(
+                    assetPath: VioIcons.add,
+                    size: 14,
+                    buttonSize: 24,
+                    onPressed: () => _addFill(context),
+                    tooltip: 'Add fill',
                   ),
+                  child: FillSection(shape: shape),
+                ),
 
-                  // Shadow
-                  VioPanel(
-                    title: 'Shadow',
-                    trailing: VioIconButton(
-                      icon: Icons.add,
-                      size: 24,
-                      onPressed: () {},
-                    ),
-                    child: const _ShadowSection(),
+                // Stroke
+                VioPanel(
+                  title: 'Stroke',
+                  trailing: VioSvgIconButton(
+                    assetPath: VioIcons.add,
+                    size: 14,
+                    buttonSize: 24,
+                    onPressed: () => _addStroke(context),
+                    tooltip: 'Add stroke',
                   ),
+                  child: StrokeSection(shape: shape),
+                ),
 
-                  // Blur
-                  VioPanel(
-                    title: 'Blur',
-                    trailing: VioIconButton(
-                      icon: Icons.add,
-                      size: 24,
-                      onPressed: () {},
-                    ),
-                    child: const _BlurSection(),
+                // Effects
+                VioPanel(
+                  title: 'Shadow',
+                  trailing: VioSvgIconButton(
+                    assetPath: VioIcons.add,
+                    size: 14,
+                    buttonSize: 24,
+                    onPressed: () => _addShadow(context),
+                    tooltip: 'Add shadow',
                   ),
-                ],
-              ),
+                  child: ShadowSection(shape: shape),
+                ),
+
+                VioPanel(
+                  title: 'Blur',
+                  trailing: VioSvgIconButton(
+                    assetPath: VioIcons.add,
+                    size: 14,
+                    buttonSize: 24,
+                    onPressed: () => _addBlur(context),
+                    tooltip: 'Add blur',
+                  ),
+                  child: BlurSection(shape: shape),
+                ),
+
+                // Opacity
+                VioPanel(
+                  title: 'Opacity',
+                  child: OpacitySection(shape: shape),
+                ),
+
+                const SizedBox(height: VioSpacing.lg),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
+  }
+
+  String _getShapeTypeLabel(ShapeType type) {
+    switch (type) {
+      case ShapeType.rectangle:
+        return 'Rectangle';
+      case ShapeType.ellipse:
+        return 'Ellipse';
+      case ShapeType.frame:
+        return 'Frame';
+      case ShapeType.path:
+        return 'Path';
+      case ShapeType.text:
+        return 'Text';
+      case ShapeType.group:
+        return 'Group';
+      case ShapeType.image:
+        return 'Image';
+      case ShapeType.svg:
+        return 'SVG';
+      case ShapeType.bool:
+        return 'Boolean';
+    }
+  }
+
+  void _addFill(BuildContext context) {
+    final bloc = context.read<CanvasBloc>();
+    final newFills = [
+      ...shape.fills,
+      const ShapeFill(color: 0xFF808080),
+    ];
+    bloc.add(ShapeUpdated(shape.copyWith(fills: newFills)));
+  }
+
+  void _addStroke(BuildContext context) {
+    final bloc = context.read<CanvasBloc>();
+    final newStrokes = [
+      ...shape.strokes,
+      const ShapeStroke(color: 0xFF000000),
+    ];
+    bloc.add(ShapeUpdated(shape.copyWith(strokes: newStrokes)));
+  }
+
+  void _addShadow(BuildContext context) {
+    if (shape.shadow != null) return; // Only one shadow for now
+
+    final bloc = context.read<CanvasBloc>();
+    const newShadow = ShapeShadow(
+      offsetX: 4,
+    );
+    bloc.add(ShapeUpdated(shape.copyWith(shadow: newShadow)));
+  }
+
+  void _addBlur(BuildContext context) {
+    if (shape.blur != null) return; // Only one blur for now
+
+    final bloc = context.read<CanvasBloc>();
+    const newBlur = ShapeBlur(
+      value: 4,
+    );
+    bloc.add(ShapeUpdated(shape.copyWith(blur: newBlur)));
   }
 }
 
-class _PositionSection extends StatelessWidget {
-  const _PositionSection();
+/// Section for editing shape name
+class _ShapeNameSection extends StatefulWidget {
+  const _ShapeNameSection({required this.shape});
+
+  final Shape shape;
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(VioSpacing.sm),
-      child: Column(
-        children: [
-          // X, Y
-          Row(
-            children: [
-              Expanded(
-                child: VioNumericField(
-                  label: 'X',
-                  value: 0,
-                  onChanged: (value) {},
-                ),
-              ),
-              const SizedBox(width: VioSpacing.sm),
-              Expanded(
-                child: VioNumericField(
-                  label: 'Y',
-                  value: 0,
-                  onChanged: (value) {},
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: VioSpacing.sm),
-          // W, H
-          Row(
-            children: [
-              Expanded(
-                child: VioNumericField(
-                  label: 'W',
-                  value: 100,
-                  onChanged: (value) {},
-                ),
-              ),
-              const SizedBox(width: VioSpacing.sm),
-              Expanded(
-                child: VioNumericField(
-                  label: 'H',
-                  value: 100,
-                  onChanged: (value) {},
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: VioSpacing.sm),
-          // Rotation, Corner radius
-          Row(
-            children: [
-              Expanded(
-                child: VioNumericField(
-                  label: '°',
-                  value: 0,
-                  onChanged: (value) {},
-                ),
-              ),
-              const SizedBox(width: VioSpacing.sm),
-              Expanded(
-                child: VioNumericField(
-                  label: 'R',
-                  value: 0,
-                  onChanged: (value) {},
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  State<_ShapeNameSection> createState() => _ShapeNameSectionState();
 }
 
-class _FillSection extends StatelessWidget {
-  const _FillSection();
+class _ShapeNameSectionState extends State<_ShapeNameSection> {
+  late TextEditingController _controller;
+  bool _isEditing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.shape.name);
+  }
+
+  @override
+  void didUpdateWidget(_ShapeNameSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.shape.name != widget.shape.name && !_isEditing) {
+      _controller.text = widget.shape.name;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Container(
       padding: const EdgeInsets.all(VioSpacing.sm),
+      decoration: const BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: VioColors.border),
+        ),
+      ),
       child: Row(
         children: [
-          // Color preview
+          // Shape type icon
           Container(
-            width: 36,
-            height: 36,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
-              color: VioColors.primary,
+              color: VioColors.surfaceElevated,
               borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-              border: Border.all(
-                color: VioColors.border,
-              ),
             ),
-          ),
-          const SizedBox(width: VioSpacing.md),
-          // Color value
-          Expanded(
-            child: Container(
-              height: 36,
-              padding: const EdgeInsets.symmetric(horizontal: VioSpacing.sm),
-              decoration: BoxDecoration(
-                color: VioColors.surfaceElevated,
-                borderRadius: BorderRadius.circular(VioSpacing.radiusMd),
-                border: Border.all(color: VioColors.border),
-              ),
-              child: Row(
-                children: [
-                  Text(
-                    '#',
-                    style: VioTypography.bodyMedium.copyWith(
-                      color: VioColors.textTertiary,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      '4C9AFF',
-                      style: VioTypography.bodyMedium.copyWith(
-                        color: VioColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            child: Icon(
+              _getShapeIcon(widget.shape.type),
+              size: 18,
+              color: VioColors.textSecondary,
             ),
           ),
           const SizedBox(width: VioSpacing.sm),
-          // Opacity
-          SizedBox(
-            width: 64,
-            child: VioNumericField(
-              label: '%',
-              value: 100,
-              onChanged: (value) {},
-            ),
+          // Editable name
+          Expanded(
+            child: _isEditing
+                ? TextField(
+                    controller: _controller,
+                    autofocus: true,
+                    style: VioTypography.bodyMedium.copyWith(
+                      color: VioColors.textPrimary,
+                    ),
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    onSubmitted: _saveName,
+                    onTapOutside: (_) => _saveName(_controller.text),
+                  )
+                : GestureDetector(
+                    onDoubleTap: () => setState(() => _isEditing = true),
+                    child: Text(
+                      widget.shape.name,
+                      style: VioTypography.bodyMedium.copyWith(
+                        color: VioColors.textPrimary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+          ),
+          // Visibility toggle
+          VioSvgIconButton(
+            assetPath: widget.shape.hidden ? VioIcons.eyeOff : VioIcons.eye,
+            size: 14,
+            onPressed: () => _toggleVisibility(context),
+            tooltip: widget.shape.hidden ? 'Show' : 'Hide',
+          ),
+          // Lock toggle
+          VioSvgIconButton(
+            assetPath: widget.shape.blocked ? VioIcons.lock : VioIcons.unlock,
+            size: 14,
+            onPressed: () => _toggleLock(context),
+            tooltip: widget.shape.blocked ? 'Unlock' : 'Lock',
           ),
         ],
       ),
     );
   }
-}
 
-class _StrokeSection extends StatelessWidget {
-  const _StrokeSection();
+  IconData _getShapeIcon(ShapeType type) {
+    switch (type) {
+      case ShapeType.rectangle:
+        return Icons.rectangle_outlined;
+      case ShapeType.ellipse:
+        return Icons.circle_outlined;
+      case ShapeType.frame:
+        return Icons.crop_square_outlined;
+      case ShapeType.path:
+        return Icons.gesture;
+      case ShapeType.text:
+        return Icons.text_fields;
+      case ShapeType.group:
+        return Icons.folder_outlined;
+      case ShapeType.image:
+        return Icons.image_outlined;
+      case ShapeType.svg:
+        return Icons.code;
+      case ShapeType.bool:
+        return Icons.merge_type;
+    }
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(VioSpacing.sm),
-      child: Center(
-        child: Text(
-          'No stroke',
-          style: VioTypography.caption.copyWith(
-            color: VioColors.textTertiary,
-          ),
-        ),
-      ),
-    );
+  void _saveName(String name) {
+    setState(() => _isEditing = false);
+    if (name.isEmpty || name == widget.shape.name) return;
+
+    final bloc = context.read<CanvasBloc>();
+    bloc.add(ShapeRenamed(widget.shape.id, name));
+  }
+
+  void _toggleVisibility(BuildContext context) {
+    final bloc = context.read<CanvasBloc>();
+    bloc.add(ShapeVisibilityToggled(widget.shape.id));
+  }
+
+  void _toggleLock(BuildContext context) {
+    final bloc = context.read<CanvasBloc>();
+    bloc.add(ShapeLockToggled(widget.shape.id));
   }
 }
 
-class _ShadowSection extends StatelessWidget {
-  const _ShadowSection();
+/// Panel for multiple shape selection
+class _MultipleSelectionPanel extends StatelessWidget {
+  const _MultipleSelectionPanel({required this.shapes});
+
+  final List<Shape> shapes;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(VioSpacing.sm),
-      child: Center(
-        child: Text(
-          'No shadow',
-          style: VioTypography.caption.copyWith(
-            color: VioColors.textTertiary,
+    return Column(
+      children: [
+        _buildHeader('Multiple Selection'),
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                // Selection info
+                Padding(
+                  padding: const EdgeInsets.all(VioSpacing.md),
+                  child: Container(
+                    padding: const EdgeInsets.all(VioSpacing.md),
+                    decoration: BoxDecoration(
+                      color: VioColors.surfaceElevated,
+                      borderRadius: BorderRadius.circular(VioSpacing.radiusMd),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.select_all,
+                          size: 24,
+                          color: VioColors.primary,
+                        ),
+                        const SizedBox(width: VioSpacing.md),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${shapes.length} objects selected',
+                              style: VioTypography.bodyMedium.copyWith(
+                                color: VioColors.textPrimary,
+                              ),
+                            ),
+                            Text(
+                              _getSelectionSummary(),
+                              style: VioTypography.caption.copyWith(
+                                color: VioColors.textTertiary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Alignment tools
+                VioPanel(
+                  title: 'Alignment',
+                  child: Padding(
+                    padding: const EdgeInsets.all(VioSpacing.sm),
+                    child: VioAlignmentButtons(
+                      onAlignLeft: () =>
+                          _alignShapes(context, Alignment.centerLeft),
+                      onAlignCenterH: () =>
+                          _alignShapes(context, Alignment.center),
+                      onAlignRight: () =>
+                          _alignShapes(context, Alignment.centerRight),
+                      onAlignTop: () =>
+                          _alignShapes(context, Alignment.topCenter),
+                      onAlignCenterV: () =>
+                          _alignShapes(context, Alignment.center),
+                      onAlignBottom: () =>
+                          _alignShapes(context, Alignment.bottomCenter),
+                    ),
+                  ),
+                ),
+
+                // Bulk opacity
+                VioPanel(
+                  title: 'Opacity',
+                  child: Padding(
+                    padding: const EdgeInsets.all(VioSpacing.sm),
+                    child: VioPropertySlider(
+                      label: '',
+                      value: _getAverageOpacity() * 100,
+                      onChanged: (value) =>
+                          _setAllOpacity(context, value / 100),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
+      ],
     );
+  }
+
+  String _getSelectionSummary() {
+    final typeCounts = <ShapeType, int>{};
+    for (final shape in shapes) {
+      typeCounts[shape.type] = (typeCounts[shape.type] ?? 0) + 1;
+    }
+
+    return typeCounts.entries
+        .map((e) => '${e.value} ${e.key.name}${e.value > 1 ? 's' : ''}')
+        .join(', ');
+  }
+
+  double _getAverageOpacity() {
+    if (shapes.isEmpty) return 1.0;
+    return shapes.map((s) => s.opacity).reduce((a, b) => a + b) / shapes.length;
+  }
+
+  void _alignShapes(BuildContext context, Alignment alignment) {
+    // TODO: Implement shape alignment
+  }
+
+  void _setAllOpacity(BuildContext context, double opacity) {
+    final bloc = context.read<CanvasBloc>();
+    for (final shape in shapes) {
+      bloc.add(ShapeUpdated(shape.copyWith(opacity: opacity)));
+    }
   }
 }
 
-class _BlurSection extends StatelessWidget {
-  const _BlurSection();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(VioSpacing.sm),
-      child: Center(
-        child: Text(
-          'No blur',
-          style: VioTypography.caption.copyWith(
-            color: VioColors.textTertiary,
-          ),
+/// Build panel header
+Widget _buildHeader(String title) {
+  return Container(
+    height: 40,
+    padding: const EdgeInsets.symmetric(horizontal: VioSpacing.md),
+    decoration: const BoxDecoration(
+      border: Border(
+        bottom: BorderSide(
+          color: VioColors.border,
         ),
       ),
-    );
-  }
+    ),
+    child: Row(
+      children: [
+        Text(
+          title,
+          style: VioTypography.subtitle2.copyWith(
+            color: VioColors.textPrimary,
+          ),
+        ),
+      ],
+    ),
+  );
 }

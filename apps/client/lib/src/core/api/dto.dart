@@ -53,11 +53,13 @@ extension ShapeDto on Shape {
     return {
       'type': gradient.type.name,
       'stops': gradient.stops
-          .map((s) => <String, dynamic>{
-                'color': s.color,
-                'offset': s.offset,
-                'opacity': s.opacity,
-              },)
+          .map(
+            (s) => <String, dynamic>{
+              'color': s.color,
+              'offset': s.offset,
+              'opacity': s.opacity,
+            },
+          )
           .toList(),
       'startX': gradient.startX,
       'startY': gradient.startY,
@@ -101,7 +103,8 @@ class ShapeFactory {
     final properties = json['properties'] as Map<String, dynamic>? ?? {};
 
     // frameId can come from json directly or from properties (for shapes nested in frames)
-    final frameId = json['frameId'] as String? ?? properties['frameId'] as String?;
+    final frameId =
+        json['frameId'] as String? ?? properties['frameId'] as String?;
 
     switch (type) {
       case ShapeType.rectangle:
@@ -265,7 +268,9 @@ class ProjectDto {
   ProjectDto({
     required this.id,
     required this.name,
-    required this.ownerId, required this.isPublic, this.description,
+    required this.ownerId,
+    required this.isPublic,
+    this.description,
     this.teamId,
     this.defaultBranchId,
     this.createdAt,
@@ -321,7 +326,10 @@ class BranchDto {
     required this.id,
     required this.projectId,
     required this.name,
-    required this.isDefault, required this.isProtected, required this.createdById, this.description,
+    required this.isDefault,
+    required this.isProtected,
+    required this.createdById,
+    this.description,
     this.headCommitId,
     this.createdAt,
     this.updatedAt,
@@ -466,7 +474,8 @@ class SyncOperation {
   SyncOperation({
     required this.type,
     required this.shapeId,
-    required this.timestamp, this.shape,
+    required this.timestamp,
+    this.shape,
   });
 
   final SyncOperationType type;

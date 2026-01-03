@@ -1042,12 +1042,14 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       return;
     }
 
-    emit(state.copyWith(
-      syncStatus: SyncStatus.loading,
-      projectId: event.projectId,
-      branchId: event.branchId,
-      clearSyncError: true,
-    ),);
+    emit(
+      state.copyWith(
+        syncStatus: SyncStatus.loading,
+        projectId: event.projectId,
+        branchId: event.branchId,
+        clearSyncError: true,
+      ),
+    );
 
     try {
       // Initialize the repository which loads from server
@@ -1062,10 +1064,12 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         shapes[shape.id] = shape;
       }
 
-      add(CanvasLoadSucceeded(
-        shapes: shapes,
-        serverVersion: 0, // Repository tracks version internally
-      ),);
+      add(
+        CanvasLoadSucceeded(
+          shapes: shapes,
+          serverVersion: 0, // Repository tracks version internally
+        ),
+      );
 
       // Subscribe to sync status changes
       _syncStatusSubscription?.cancel();
@@ -1101,13 +1105,15 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     _redoStack.clear();
     _undoStack.add(Map.from(event.shapes));
 
-    emit(state.copyWith(
-      shapes: event.shapes,
-      serverVersion: event.serverVersion,
-      syncStatus: SyncStatus.synced,
-      selectedShapeIds: const [],
-      clearSyncError: true,
-    ),);
+    emit(
+      state.copyWith(
+        shapes: event.shapes,
+        serverVersion: event.serverVersion,
+        syncStatus: SyncStatus.synced,
+        selectedShapeIds: const [],
+        clearSyncError: true,
+      ),
+    );
 
     VioLogger.info('Canvas loaded with ${event.shapes.length} shapes');
   }
@@ -1116,10 +1122,12 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     CanvasLoadFailed event,
     Emitter<CanvasState> emit,
   ) {
-    emit(state.copyWith(
-      syncStatus: SyncStatus.error,
-      syncError: event.error,
-    ),);
+    emit(
+      state.copyWith(
+        syncStatus: SyncStatus.error,
+        syncError: event.error,
+      ),
+    );
     VioLogger.error('Canvas load failed: ${event.error}');
   }
 
@@ -1145,11 +1153,13 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     CanvasSyncSucceeded event,
     Emitter<CanvasState> emit,
   ) {
-    emit(state.copyWith(
-      serverVersion: event.serverVersion,
-      syncStatus: SyncStatus.synced,
-      clearSyncError: true,
-    ),);
+    emit(
+      state.copyWith(
+        serverVersion: event.serverVersion,
+        syncStatus: SyncStatus.synced,
+        clearSyncError: true,
+      ),
+    );
     VioLogger.debug('Canvas synced');
   }
 
@@ -1157,10 +1167,12 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     CanvasSyncFailed event,
     Emitter<CanvasState> emit,
   ) {
-    emit(state.copyWith(
-      syncStatus: SyncStatus.error,
-      syncError: event.error,
-    ),);
+    emit(
+      state.copyWith(
+        syncStatus: SyncStatus.error,
+        syncError: event.error,
+      ),
+    );
     VioLogger.error('Canvas sync failed: ${event.error}');
   }
 

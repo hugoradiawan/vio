@@ -149,7 +149,8 @@ class RectangleShape extends Shape {
             ? Matrix2D.fromJson(json['transform'] as Map<String, dynamic>)
             : Matrix2D.identity,
         transformInverse: json['transformInverse'] != null
-            ? Matrix2D.fromJson(json['transformInverse'] as Map<String, dynamic>)
+            ? Matrix2D.fromJson(
+                json['transformInverse'] as Map<String, dynamic>)
             : null,
         fills: (json['fills'] as List?)
                 ?.map((f) => ShapeFill.fromJson(f as Map<String, dynamic>))
@@ -164,7 +165,8 @@ class RectangleShape extends Shape {
         blocked: json['blocked'] as bool? ?? false,
         rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
         constraints: json['constraints'] != null
-            ? ShapeConstraints.fromJson(json['constraints'] as Map<String, dynamic>)
+            ? ShapeConstraints.fromJson(
+                json['constraints'] as Map<String, dynamic>)
             : null,
         shadow: json['shadow'] != null
             ? ShapeShadow.fromJson(json['shadow'] as Map<String, dynamic>)
@@ -180,14 +182,14 @@ class RectangleShape extends Shape {
 
   @override
   List<Object?> get props => [
-    ...super.props,
-    x,
-    y,
-    rectWidth,
-    rectHeight,
-    r1,
-    r2,
-    r3,
-    r4,
-  ];
+        ...super.props,
+        x,
+        y,
+        rectWidth,
+        rectHeight,
+        r1,
+        r2,
+        r3,
+        r4,
+      ];
 }

@@ -29,7 +29,8 @@ class ProjectApiService {
   /// Create a new project
   Future<ProjectDto> createProject({
     required String name,
-    required String ownerId, String? description,
+    required String ownerId,
+    String? description,
     String? teamId,
     bool isPublic = false,
   }) async {
@@ -47,7 +48,8 @@ class ProjectApiService {
   }
 
   /// Update a project
-  Future<ProjectDto> updateProject(String id, {
+  Future<ProjectDto> updateProject(
+    String id, {
     String? name,
     String? description,
     bool? isPublic,

@@ -28,11 +28,11 @@ extension RectExtensions on Rect {
 
   /// Get all four corners as list of Offsets
   List<Offset> get corners => [
-    topLeft,
-    topRight,
-    Offset(right, bottom),
-    Offset(left, bottom),
-  ];
+        topLeft,
+        topRight,
+        Offset(right, bottom),
+        Offset(left, bottom),
+      ];
 
   /// Check if this rect fully contains another rect
   bool fullyContains(Rect other) {

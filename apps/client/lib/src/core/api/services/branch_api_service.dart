@@ -30,7 +30,8 @@ class BranchApiService {
   Future<BranchDto> createBranch({
     required String projectId,
     required String name,
-    required String createdById, String? description,
+    required String createdById,
+    String? description,
     String? sourceBranchId,
   }) async {
     final response = await _client.post<Map<String, dynamic>>(

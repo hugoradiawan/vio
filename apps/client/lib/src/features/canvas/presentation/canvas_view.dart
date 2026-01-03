@@ -49,6 +49,14 @@ class _CanvasViewState extends State<CanvasView> {
 
   /// Global keyboard event handler for shortcuts (works regardless of focus)
   bool _handleKeyboardEvent(KeyEvent event) {
+    // Check if a text field is currently focused - if so, don't intercept
+    // delete/backspace keys as they're needed for text editing
+    final primaryFocus = FocusManager.instance.primaryFocus;
+    final isTextFieldFocused = primaryFocus?.context?.widget is EditableText ||
+        primaryFocus?.context
+                ?.findAncestorWidgetOfExactType<EditableText>() !=
+            null;
+
     if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.space) {
         setState(() => _isSpacePressed = true);
@@ -100,9 +108,12 @@ class _CanvasViewState extends State<CanvasView> {
         switch (event.logicalKey) {
           case LogicalKeyboardKey.delete:
           case LogicalKeyboardKey.backspace:
-            // Delete/Backspace: Delete selected
-            context.read<CanvasBloc>().add(const DeleteSelected());
-            return true;
+            // Delete/Backspace: Delete selected (only if not in text field)
+            if (!isTextFieldFocused) {
+              context.read<CanvasBloc>().add(const DeleteSelected());
+              return true;
+            }
+            return false;
           case LogicalKeyboardKey.escape:
             // Escape: Clear selection
             context.read<CanvasBloc>().add(const SelectionCleared());

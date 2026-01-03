@@ -29,10 +29,12 @@ class VioApp extends StatelessWidget {
           BlocProvider(
             create: (_) => CanvasBloc(
               repository: ServiceLocator.instance.canvasRepository,
-            )..add(const CanvasLoadRequested(
-                projectId: _demoProjectId,
-                branchId: _demoBranchId,
-              ),),
+            )..add(
+                const CanvasLoadRequested(
+                  projectId: _demoProjectId,
+                  branchId: _demoBranchId,
+                ),
+              ),
           ),
         ],
         child: const WorkspacePage(),

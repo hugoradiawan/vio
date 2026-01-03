@@ -54,8 +54,7 @@ class EllipseShape extends Shape {
   double get centerY => y + radiusY;
 
   @override
-  Rect get bounds =>
-      Rect.fromLTWH(x, y, ellipseWidth, ellipseHeight);
+  Rect get bounds => Rect.fromLTWH(x, y, ellipseWidth, ellipseHeight);
 
   @override
   Offset get center => Offset(centerX, centerY);
@@ -133,7 +132,8 @@ class EllipseShape extends Shape {
             ? Matrix2D.fromJson(json['transform'] as Map<String, dynamic>)
             : Matrix2D.identity,
         transformInverse: json['transformInverse'] != null
-            ? Matrix2D.fromJson(json['transformInverse'] as Map<String, dynamic>)
+            ? Matrix2D.fromJson(
+                json['transformInverse'] as Map<String, dynamic>)
             : null,
         fills: (json['fills'] as List?)
                 ?.map((f) => ShapeFill.fromJson(f as Map<String, dynamic>))
@@ -148,7 +148,8 @@ class EllipseShape extends Shape {
         blocked: json['blocked'] as bool? ?? false,
         rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
         constraints: json['constraints'] != null
-            ? ShapeConstraints.fromJson(json['constraints'] as Map<String, dynamic>)
+            ? ShapeConstraints.fromJson(
+                json['constraints'] as Map<String, dynamic>)
             : null,
         shadow: json['shadow'] != null
             ? ShapeShadow.fromJson(json['shadow'] as Map<String, dynamic>)
@@ -160,10 +161,10 @@ class EllipseShape extends Shape {
 
   @override
   List<Object?> get props => [
-    ...super.props,
-    x,
-    y,
-    ellipseWidth,
-    ellipseHeight,
-  ];
+        ...super.props,
+        x,
+        y,
+        ellipseWidth,
+        ellipseHeight,
+      ];
 }

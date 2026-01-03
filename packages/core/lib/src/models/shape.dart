@@ -195,7 +195,8 @@ abstract class Shape extends Equatable {
         if (parentId != null) 'parentId': parentId,
         if (frameId != null) 'frameId': frameId,
         'transform': transform.toJson(),
-        if (transformInverse != null) 'transformInverse': transformInverse!.toJson(),
+        if (transformInverse != null)
+          'transformInverse': transformInverse!.toJson(),
         if (selrect != null)
           'selrect': {
             'left': selrect!.left,
@@ -319,6 +320,25 @@ class ShapeStroke extends Equatable {
 
   /// Line join style
   final StrokeJoin join;
+
+  /// Create a copy with updated properties
+  ShapeStroke copyWith({
+    int? color,
+    double? width,
+    double? opacity,
+    StrokeAlignment? alignment,
+    StrokeCap? cap,
+    StrokeJoin? join,
+  }) {
+    return ShapeStroke(
+      color: color ?? this.color,
+      width: width ?? this.width,
+      opacity: opacity ?? this.opacity,
+      alignment: alignment ?? this.alignment,
+      cap: cap ?? this.cap,
+      join: join ?? this.join,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'color': color,

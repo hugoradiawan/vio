@@ -114,12 +114,14 @@ class CanvasRepository {
     _shapes.add(shape);
     _isDirty = true;
 
-    _pendingOperations.add(SyncOperation(
-      type: SyncOperationType.create,
-      shapeId: shape.id,
-      shape: shape,
-      timestamp: DateTime.now(),
-    ),);
+    _pendingOperations.add(
+      SyncOperation(
+        type: SyncOperationType.create,
+        shapeId: shape.id,
+        shape: shape,
+        timestamp: DateTime.now(),
+      ),
+    );
 
     _shapesController.add(shapes);
     _updateSyncStatus(SyncStatus.pending);
@@ -140,12 +142,14 @@ class CanvasRepository {
 
     // Remove any pending operations for this shape and add new one
     _pendingOperations.removeWhere((op) => op.shapeId == shape.id);
-    _pendingOperations.add(SyncOperation(
-      type: SyncOperationType.update,
-      shapeId: shape.id,
-      shape: shape,
-      timestamp: DateTime.now(),
-    ),);
+    _pendingOperations.add(
+      SyncOperation(
+        type: SyncOperationType.update,
+        shapeId: shape.id,
+        shape: shape,
+        timestamp: DateTime.now(),
+      ),
+    );
 
     _shapesController.add(shapes);
     _updateSyncStatus(SyncStatus.pending);
@@ -166,11 +170,13 @@ class CanvasRepository {
 
     // Remove any pending operations for this shape and add delete
     _pendingOperations.removeWhere((op) => op.shapeId == shapeId);
-    _pendingOperations.add(SyncOperation(
-      type: SyncOperationType.delete,
-      shapeId: shapeId,
-      timestamp: DateTime.now(),
-    ),);
+    _pendingOperations.add(
+      SyncOperation(
+        type: SyncOperationType.delete,
+        shapeId: shapeId,
+        timestamp: DateTime.now(),
+      ),
+    );
 
     _shapesController.add(shapes);
     _updateSyncStatus(SyncStatus.pending);
@@ -236,7 +242,8 @@ class CanvasRepository {
         _updateSyncStatus(SyncStatus.synced);
 
         VioLogger.info(
-            'CanvasRepository: Synced successfully (v$_localVersion)',);
+          'CanvasRepository: Synced successfully (v$_localVersion)',
+        );
       } else {
         VioLogger.warning('CanvasRepository: Sync failed: ${response.message}');
         _updateSyncStatus(SyncStatus.error);

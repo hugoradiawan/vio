@@ -114,8 +114,7 @@ class SnapPoint {
   Offset get point => Offset(x, y);
 
   @override
-  String toString() =>
-      'SnapPoint($x, $y, $type, $axis, source: $sourceId)';
+  String toString() => 'SnapPoint($x, $y, $type, $axis, source: $sourceId)';
 }
 
 /// Represents a snap line to be drawn
@@ -450,7 +449,9 @@ class SnapPointGenerator {
 
 /// Index for efficient snap point queries
 class SnapIndex {
-  SnapIndex() : _xPoints = [], _yPoints = [];
+  SnapIndex()
+      : _xPoints = [],
+        _yPoints = [];
 
   final List<_IndexedSnapPoint> _xPoints;
   final List<_IndexedSnapPoint> _yPoints;
@@ -590,7 +591,8 @@ class SnapDetector {
       }
 
       // Check Y axis snapping
-      if (selPoint.axis == SnapAxis.vertical || selPoint.axis == SnapAxis.both) {
+      if (selPoint.axis == SnapAxis.vertical ||
+          selPoint.axis == SnapAxis.both) {
         final nearbyY = index.queryY(selPoint.y, threshold);
         for (final target in nearbyY) {
           if (excludeIds.contains(target.sourceId)) continue;

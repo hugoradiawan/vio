@@ -113,7 +113,8 @@ class LayerTreeBuilder {
   }
 
   /// Get all ancestor IDs of a shape (for expand-to-selection feature)
-  static List<String> getAncestorIds(String shapeId, Map<String, Shape> shapes) {
+  static List<String> getAncestorIds(
+      String shapeId, Map<String, Shape> shapes) {
     final ancestors = <String>[];
     var currentId = shapeId;
 

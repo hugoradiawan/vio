@@ -16,9 +16,9 @@ class HitTest {
     // Perform hit test based on shape type
     return switch (shape.type) {
       ShapeType.rectangle => _hitTestRectangle(
-        localPoint,
-        shape as RectangleShape,
-      ),
+          localPoint,
+          shape as RectangleShape,
+        ),
       ShapeType.ellipse => _hitTestEllipse(localPoint, shape as EllipseShape),
       ShapeType.frame => _hitTestFrame(localPoint, shape as FrameShape),
       ShapeType.path => _hitTestBounds(localPoint, shape.bounds),

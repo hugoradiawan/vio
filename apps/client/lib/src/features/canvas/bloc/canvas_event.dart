@@ -1,5 +1,17 @@
 part of 'canvas_bloc.dart';
 
+/// Tool intent for pointer interactions that need to be routed into the canvas
+/// logic (kept minimal to avoid coupling CanvasBloc to WorkspaceBloc).
+enum CanvasPointerTool {
+  /// Default selection / manipulation behavior
+  select,
+
+  /// Drag-to-create shapes
+  drawRectangle,
+  drawEllipse,
+  drawFrame,
+}
+
 /// Base class for canvas events
 sealed class CanvasEvent with EquatableMixin {
   const CanvasEvent();
@@ -69,6 +81,7 @@ class PointerDown extends CanvasEvent {
     required this.y,
     this.button = 0,
     this.shiftPressed = false,
+    this.tool = CanvasPointerTool.select,
   });
 
   /// X position in screen coordinates
@@ -83,8 +96,11 @@ class PointerDown extends CanvasEvent {
   /// Whether shift key is pressed (for multi-select)
   final bool shiftPressed;
 
+  /// Current tool intent (used for drawing tools)
+  final CanvasPointerTool tool;
+
   @override
-  List<Object?> get props => [x, y, button, shiftPressed];
+  List<Object?> get props => [x, y, button, shiftPressed, tool];
 }
 
 /// Fired when pointer/mouse moves on canvas

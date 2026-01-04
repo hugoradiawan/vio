@@ -388,6 +388,79 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     final screenPoint = Offset(event.x, event.y);
     final canvasPoint = _screenToCanvas(screenPoint);
 
+    // Drag-to-create tools
+    if (event.tool != CanvasPointerTool.select &&
+        state.interactionMode != InteractionMode.drawing) {
+      final newId = _uuid.v4();
+
+      FrameShape? defaultFrame;
+      for (final shape in state.shapes.values) {
+        if (shape is FrameShape) {
+          defaultFrame = shape;
+          break;
+        }
+      }
+      final frameId = defaultFrame?.id;
+
+      final newShape = switch (event.tool) {
+        CanvasPointerTool.drawRectangle => RectangleShape(
+            id: newId,
+            name: 'Rectangle',
+            x: canvasPoint.dx,
+            y: canvasPoint.dy,
+            rectWidth: 1,
+            rectHeight: 1,
+            fills: const [ShapeFill(color: 0xFF3B82F6)],
+            strokes: const [ShapeStroke(color: 0xFF1D4ED8, width: 2)],
+            frameId: frameId,
+          ),
+        CanvasPointerTool.drawEllipse => EllipseShape(
+            id: newId,
+            name: 'Ellipse',
+            x: canvasPoint.dx,
+            y: canvasPoint.dy,
+            ellipseWidth: 1,
+            ellipseHeight: 1,
+            fills: const [ShapeFill(color: 0xFF3B82F6)],
+            strokes: const [ShapeStroke(color: 0xFF1D4ED8, width: 2)],
+            frameId: frameId,
+          ),
+        CanvasPointerTool.drawFrame => FrameShape(
+            id: newId,
+            name: 'Frame',
+            x: canvasPoint.dx,
+            y: canvasPoint.dy,
+            frameWidth: 1,
+            frameHeight: 1,
+            fills: const [ShapeFill(color: 0xFF2D2D2D)],
+            strokes: const [ShapeStroke(color: 0xFF404040)],
+          ),
+        CanvasPointerTool.select => throw StateError('Unreachable'),
+      };
+
+      final newShapes = Map<String, Shape>.from(state.shapes)
+        ..[newId] = newShape;
+      final expanded = Set<String>.from(state.expandedLayerIds);
+      if (frameId != null) {
+        expanded.add(frameId);
+      }
+
+      emit(
+        state.copyWith(
+          shapes: newShapes,
+          selectedShapeIds: [newId],
+          expandedLayerIds: expanded,
+          interactionMode: InteractionMode.drawing,
+          drawingShapeId: newId,
+          dragStart: canvasPoint,
+          currentPointer: canvasPoint,
+          clearDragOffset: true,
+          clearSnap: true,
+        ),
+      );
+      return;
+    }
+
     // First, check if we hit a handle when shapes are selected
     if (state.hasSelection) {
       // Check corner radius handles first (for single rectangle)
@@ -508,6 +581,66 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     Emitter<CanvasState> emit,
   ) {
     final canvasPoint = _screenToCanvas(Offset(event.x, event.y));
+
+    // Handle drag-to-create shape updates
+    if (state.interactionMode == InteractionMode.drawing &&
+        state.drawingShapeId != null &&
+        state.dragStart != null) {
+      final shapeId = state.drawingShapeId!;
+      final shape = state.shapes[shapeId];
+      if (shape == null) return;
+
+      final start = state.dragStart!;
+      final dx = canvasPoint.dx - start.dx;
+      final dy = canvasPoint.dy - start.dy;
+
+      var width = dx.abs();
+      var height = dy.abs();
+
+      if (event.shiftPressed) {
+        final size = math.max(width, height);
+        width = size;
+        height = size;
+      }
+
+      width = width.clamp(1.0, double.infinity);
+      height = height.clamp(1.0, double.infinity);
+
+      final left = start.dx + (dx < 0 ? -width : 0);
+      final top = start.dy + (dy < 0 ? -height : 0);
+
+      final newShapes = Map<String, Shape>.from(state.shapes);
+      if (shape is RectangleShape) {
+        newShapes[shapeId] = shape.copyWith(
+          x: left,
+          y: top,
+          rectWidth: width,
+          rectHeight: height,
+        );
+      } else if (shape is EllipseShape) {
+        newShapes[shapeId] = shape.copyWith(
+          x: left,
+          y: top,
+          ellipseWidth: width,
+          ellipseHeight: height,
+        );
+      } else if (shape is FrameShape) {
+        newShapes[shapeId] = shape.copyWith(
+          x: left,
+          y: top,
+          frameWidth: width,
+          frameHeight: height,
+        );
+      }
+
+      emit(
+        state.copyWith(
+          shapes: newShapes,
+          currentPointer: canvasPoint,
+        ),
+      );
+      return;
+    }
 
     // Handle resizing
     if (state.interactionMode == InteractionMode.resizing &&
@@ -689,6 +822,27 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     PointerUp event,
     Emitter<CanvasState> emit,
   ) {
+    // Handle drag-to-create completion
+    if (state.interactionMode == InteractionMode.drawing &&
+        state.drawingShapeId != null) {
+      final shapeId = state.drawingShapeId!;
+      final createdShape = state.shapes[shapeId];
+      if (createdShape != null) {
+        _notifyRepositoryShapeAdded(createdShape);
+      }
+      _pushUndoState(state.shapes);
+      emit(
+        state.copyWith(
+          interactionMode: InteractionMode.idle,
+          clearDragStart: true,
+          clearCurrentPointer: true,
+          clearDrawingShapeId: true,
+          clearSnap: true,
+        ),
+      );
+      return;
+    }
+
     // Handle resize completion
     if (state.interactionMode == InteractionMode.resizing) {
       // Shapes were already updated in real-time, just push to undo stack

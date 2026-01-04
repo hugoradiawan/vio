@@ -53,6 +53,7 @@ class CanvasState extends Equatable {
     this.syncError,
     this.projectId,
     this.branchId,
+    this.drawingShapeId,
     this.activeHandle,
     this.resizeOrigin,
     this.originalShapeBounds,
@@ -139,6 +140,9 @@ class CanvasState extends Equatable {
 
   /// Current branch ID (null if not connected)
   final String? branchId;
+
+  /// ID of the shape currently being created via drag-to-create.
+  final String? drawingShapeId;
 
   /// Whether canvas is connected to a project/branch
   bool get isConnected => projectId != null && branchId != null;
@@ -263,6 +267,7 @@ class CanvasState extends Equatable {
     String? syncError,
     String? projectId,
     String? branchId,
+    String? drawingShapeId,
     String? activeHandle,
     Offset? resizeOrigin,
     Rect? originalShapeBounds,
@@ -276,6 +281,7 @@ class CanvasState extends Equatable {
     bool clearHoveredLayerId = false,
     bool clearSnap = false,
     bool clearSyncError = false,
+    bool clearDrawingShapeId = false,
     bool clearActiveHandle = false,
     bool clearResizeOrigin = false,
     bool clearOriginalShapeBounds = false,
@@ -307,6 +313,8 @@ class CanvasState extends Equatable {
       syncError: clearSyncError ? null : (syncError ?? this.syncError),
       projectId: projectId ?? this.projectId,
       branchId: branchId ?? this.branchId,
+      drawingShapeId:
+          clearDrawingShapeId ? null : (drawingShapeId ?? this.drawingShapeId),
       activeHandle:
           clearActiveHandle ? null : (activeHandle ?? this.activeHandle),
       resizeOrigin:
@@ -347,6 +355,7 @@ class CanvasState extends Equatable {
         syncError,
         projectId,
         branchId,
+        drawingShapeId,
         activeHandle,
         resizeOrigin,
         originalShapeBounds,

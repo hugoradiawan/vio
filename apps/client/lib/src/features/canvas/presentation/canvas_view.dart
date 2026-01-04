@@ -29,6 +29,14 @@ class _CanvasViewState extends State<CanvasView> {
   Offset? _lastPanPosition;
   double _lastScale = 1.0;
 
+  // Double-click tracking (for text edit activation)
+  int _lastPrimaryClickMs = 0;
+  Offset? _lastPrimaryClickPosition;
+  String? _lastPrimaryClickShapeId;
+
+  static const int _doubleClickThresholdMs = 350;
+  static const double _doubleClickMaxDistancePx = 6.0;
+
   String? _editingTextShapeId;
   final TextEditingController _textController = TextEditingController();
   final FocusNode _textFocusNode = FocusNode();
@@ -519,6 +527,47 @@ class _CanvasViewState extends State<CanvasView> {
         _lastPanPosition = event.localPosition;
       });
       return;
+    }
+
+    // Double click on text to edit (Select/DirectSelect tools).
+    if (event.buttons == kPrimaryButton &&
+        (workspaceState.activeTool == CanvasTool.select ||
+            workspaceState.activeTool == CanvasTool.directSelect)) {
+      final canvasState = context.read<CanvasBloc>().state;
+      final canvasPoint = canvasState.screenToCanvas(
+        Size(event.localPosition.dx, event.localPosition.dy),
+      );
+      final hitShape = HitTest.findTopShapeAtPoint(
+        canvasPoint,
+        canvasState.shapeList,
+      );
+
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      final withinTime = (nowMs - _lastPrimaryClickMs) <=
+          _doubleClickThresholdMs;
+      final withinDistance = _lastPrimaryClickPosition == null
+          ? false
+          : (event.localPosition - _lastPrimaryClickPosition!).distance <=
+              _doubleClickMaxDistancePx;
+      final sameShape = hitShape != null &&
+          hitShape.id == _lastPrimaryClickShapeId &&
+          hitShape is TextShape;
+
+      if (withinTime && withinDistance && sameShape) {
+        context
+            .read<CanvasBloc>()
+            .add(TextEditRequested(shapeId: hitShape.id));
+
+        // Reset click tracking to avoid triple-click oddities.
+        _lastPrimaryClickMs = 0;
+        _lastPrimaryClickPosition = null;
+        _lastPrimaryClickShapeId = null;
+        return;
+      }
+
+      _lastPrimaryClickMs = nowMs;
+      _lastPrimaryClickPosition = event.localPosition;
+      _lastPrimaryClickShapeId = hitShape?.id;
     }
 
     final tool = switch (workspaceState.activeTool) {

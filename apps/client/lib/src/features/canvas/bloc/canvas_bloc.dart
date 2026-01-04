@@ -84,8 +84,33 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     on<CanvasSyncFailed>(_onCanvasSyncFailed);
 
     // Text editing events
+    on<TextEditRequested>(_onTextEditRequested);
     on<TextEditCommitted>(_onTextEditCommitted);
     on<TextEditCanceled>(_onTextEditCanceled);
+  }
+
+  void _onTextEditRequested(
+    TextEditRequested event,
+    Emitter<CanvasState> emit,
+  ) {
+    final shape = state.shapes[event.shapeId];
+    if (shape is! TextShape) {
+      return;
+    }
+
+    final selection = [event.shapeId];
+    emit(
+      state.copyWith(
+        selectedShapeIds: selection,
+        expandedLayerIds: _expandAncestorsForShapes(selection),
+        editingTextShapeId: event.shapeId,
+        interactionMode: InteractionMode.idle,
+        clearDragStart: true,
+        clearCurrentPointer: true,
+        clearDragOffset: true,
+        clearSnap: true,
+      ),
+    );
   }
 
   /// Repository for server communication (optional for offline mode)
@@ -419,8 +444,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
 
       final newShapes = Map<String, Shape>.from(state.shapes)
         ..[newId] = newShape;
-      final newDraftIds = Set<String>.from(state.draftTextShapeIds)
-        ..add(newId);
+      final newDraftIds = Set<String>.from(state.draftTextShapeIds)..add(newId);
       final expanded = Set<String>.from(state.expandedLayerIds);
       if (frameId != null) {
         expanded.add(frameId);
@@ -1452,8 +1476,14 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     final bounds = state.selectionRect;
     if (bounds == null) return null;
 
+    final isSingleTextSelection = state.selectedShapes.length == 1 &&
+        state.selectedShapes.first is TextShape;
+
     final handlePositions = _getHandlePositions(bounds);
     for (final entry in handlePositions.entries) {
+      if (isSingleTextSelection && entry.key != HandlePosition.rotation) {
+        continue;
+      }
       final screenHandlePos = _canvasToScreen(entry.value);
       final handleInfo = HandleInfo(
         position: entry.key,

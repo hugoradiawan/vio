@@ -136,6 +136,16 @@ class TextEditCanceled extends CanvasEvent {
   List<Object?> get props => [shapeId];
 }
 
+/// Request starting an inline text edit session for an existing text shape.
+class TextEditRequested extends CanvasEvent {
+  const TextEditRequested({required this.shapeId});
+
+  final String shapeId;
+
+  @override
+  List<Object?> get props => [shapeId];
+}
+
 /// Fired when pointer/mouse moves on canvas
 class PointerMove extends CanvasEvent {
   const PointerMove({

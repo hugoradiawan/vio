@@ -47,6 +47,9 @@ class SelectionBoxPainter extends CustomPainter {
   List<CornerRadiusHandleInfo> get cornerRadiusHandles =>
       _computeCornerRadiusHandles();
 
+  bool get _isSingleTextSelection =>
+      selectedShapes.length == 1 && selectedShapes.first is TextShape;
+
   @override
   void paint(Canvas canvas, Size size) {
     if (selectedShapes.isEmpty) return;
@@ -202,6 +205,9 @@ class SelectionBoxPainter extends CustomPainter {
     final handlePositions = _getHandlePositions(bounds);
 
     for (final entry in handlePositions.entries) {
+      if (_isSingleTextSelection && entry.key != HandlePosition.rotation) {
+        continue;
+      }
       _drawHandle(canvas, entry.value, entry.key == HandlePosition.rotation);
     }
   }
@@ -267,7 +273,12 @@ class SelectionBoxPainter extends CustomPainter {
     if (bounds == null) return [];
 
     final positions = _getHandlePositions(bounds);
-    return positions.entries.map((entry) {
+    final entries = _isSingleTextSelection
+        ? positions.entries
+            .where((entry) => entry.key == HandlePosition.rotation)
+        : positions.entries;
+
+    return entries.map((entry) {
       // Transform handle position to screen coordinates
       final screenPoint =
           viewMatrix.transformPoint(entry.value.dx, entry.value.dy);

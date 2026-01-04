@@ -17,6 +17,13 @@ class ShapePainter {
     // Apply shape transform
     _applyTransform(canvas, shape.transform);
 
+    // Text shapes have a custom paint path (fills act as text color)
+    if (shape is TextShape) {
+      _paintText(canvas, shape);
+      canvas.restore();
+      return;
+    }
+
     // Apply opacity
     if (shape.opacity < 1.0) {
       canvas.saveLayer(
@@ -44,6 +51,56 @@ class ShapePainter {
     }
 
     canvas.restore();
+  }
+
+  static void _paintText(Canvas canvas, TextShape shape) {
+    final bounds = shape.bounds;
+    final text = shape.text;
+    if (text.isEmpty) {
+      return;
+    }
+
+    // Use the first fill as text color, otherwise default to white.
+    final fill = shape.fills.isNotEmpty ? shape.fills.first : null;
+    final color = fill != null
+        ? Color(fill.color).withValues(alpha: fill.opacity)
+        : Colors.white;
+
+    FontWeight? fontWeight;
+    final weightValue = shape.fontWeight;
+    if (weightValue != null) {
+      fontWeight = FontWeight.values.firstWhere(
+        (w) => w.value == weightValue,
+        orElse: () => FontWeight.w400,
+      );
+    }
+
+    final painter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: TextStyle(
+          color: color,
+          fontSize: shape.fontSize,
+          fontFamily: shape.fontFamily,
+          fontWeight: fontWeight,
+          height: 1.2,
+        ),
+      ),
+      textAlign: shape.textAlign,
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: bounds.width.isFinite ? bounds.width : double.infinity);
+
+    // Apply overall shape opacity (paintShape doesn't wrap text in saveLayer)
+    if (shape.opacity < 1.0) {
+      canvas.saveLayer(
+        bounds,
+        Paint()..color = Colors.white.withValues(alpha: shape.opacity),
+      );
+      painter.paint(canvas, Offset(bounds.left, bounds.top));
+      canvas.restore();
+    } else {
+      painter.paint(canvas, Offset(bounds.left, bounds.top));
+    }
   }
 
   /// Apply the shape's transformation matrix to the canvas

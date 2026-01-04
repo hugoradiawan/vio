@@ -82,6 +82,10 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     on<CanvasSyncRequested>(_onCanvasSyncRequested);
     on<CanvasSyncSucceeded>(_onCanvasSyncSucceeded);
     on<CanvasSyncFailed>(_onCanvasSyncFailed);
+
+    // Text editing events
+    on<TextEditCommitted>(_onTextEditCommitted);
+    on<TextEditCanceled>(_onTextEditCanceled);
   }
 
   /// Repository for server communication (optional for offline mode)
@@ -388,6 +392,59 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     final screenPoint = Offset(event.x, event.y);
     final canvasPoint = _screenToCanvas(screenPoint);
 
+    // Text tool: click-to-create and start inline edit
+    if (event.tool == CanvasPointerTool.drawText) {
+      final newId = _uuid.v4();
+
+      FrameShape? defaultFrame;
+      for (final shape in state.shapes.values) {
+        if (shape is FrameShape) {
+          defaultFrame = shape;
+          break;
+        }
+      }
+      final frameId = defaultFrame?.id;
+
+      final newShape = TextShape(
+        id: newId,
+        name: 'Text',
+        x: canvasPoint.dx,
+        y: canvasPoint.dy,
+        textWidth: 1,
+        textHeight: 1,
+        text: '',
+        fills: const [ShapeFill(color: 0xFFE6EDF3)],
+        frameId: frameId,
+      );
+
+      final newShapes = Map<String, Shape>.from(state.shapes)
+        ..[newId] = newShape;
+      final newDraftIds = Set<String>.from(state.draftTextShapeIds)
+        ..add(newId);
+      final expanded = Set<String>.from(state.expandedLayerIds);
+      if (frameId != null) {
+        expanded.add(frameId);
+      }
+
+      emit(
+        state.copyWith(
+          shapes: newShapes,
+          selectedShapeIds: [newId],
+          expandedLayerIds: expanded,
+          editingTextShapeId: newId,
+          draftTextShapeIds: newDraftIds,
+          interactionMode: InteractionMode.idle,
+          clearDragStart: true,
+          clearCurrentPointer: true,
+          clearDragOffset: true,
+          clearSnap: true,
+        ),
+      );
+
+      // Do NOT push undo state yet; we push only on commit.
+      return;
+    }
+
     // Drag-to-create tools
     if (event.tool != CanvasPointerTool.select &&
         state.interactionMode != InteractionMode.drawing) {
@@ -435,6 +492,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
             fills: const [ShapeFill(color: 0xFF2D2D2D)],
             strokes: const [ShapeStroke(color: 0xFF404040)],
           ),
+        CanvasPointerTool.drawText => throw StateError('Unreachable'),
         CanvasPointerTool.select => throw StateError('Unreachable'),
       };
 
@@ -574,6 +632,112 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         ),
       );
     }
+  }
+
+  void _onTextEditCommitted(
+    TextEditCommitted event,
+    Emitter<CanvasState> emit,
+  ) {
+    final existing = state.shapes[event.shapeId];
+    if (existing is! TextShape) {
+      emit(state.copyWith(clearEditingTextShapeId: true));
+      return;
+    }
+
+    final trimmed = event.text;
+    final isDraft = state.draftTextShapeIds.contains(event.shapeId);
+    if (trimmed.trim().isEmpty) {
+      // For draft text (just created), treat empty commit as cancel: remove it
+      // and do not sync/persist anything.
+      if (isDraft) {
+        final newShapes = Map<String, Shape>.from(state.shapes)
+          ..remove(event.shapeId);
+        final newDraftIds = Set<String>.from(state.draftTextShapeIds)
+          ..remove(event.shapeId);
+
+        emit(
+          state.copyWith(
+            shapes: newShapes,
+            draftTextShapeIds: newDraftIds,
+            selectedShapeIds: const [],
+            clearEditingTextShapeId: true,
+          ),
+        );
+        return;
+      }
+
+      // Non-draft: empty commit deletes the existing text shape.
+      final newShapes = Map<String, Shape>.from(state.shapes)
+        ..remove(event.shapeId);
+
+      _notifyRepositoryShapeDeleted(event.shapeId);
+
+      final newSelection = state.selectedShapeIds
+          .where((id) => id != event.shapeId)
+          .toList(growable: false);
+
+      emit(
+        state.copyWith(
+          shapes: newShapes,
+          selectedShapeIds: newSelection,
+          clearEditingTextShapeId: true,
+        ),
+      );
+
+      _pushUndoState(newShapes);
+      return;
+    }
+
+    final updated = existing.copyWith(
+      text: trimmed,
+      textWidth: event.width,
+      textHeight: event.height,
+    );
+
+    final newShapes = Map<String, Shape>.from(state.shapes)
+      ..[event.shapeId] = updated;
+
+    emit(
+      state.copyWith(
+        shapes: newShapes,
+        clearEditingTextShapeId: true,
+      ),
+    );
+
+    if (isDraft) {
+      _notifyRepositoryShapeAdded(updated);
+      final newDraftIds = Set<String>.from(state.draftTextShapeIds)
+        ..remove(event.shapeId);
+      emit(state.copyWith(draftTextShapeIds: newDraftIds));
+    } else {
+      _notifyRepositoryShapeUpdated(updated);
+    }
+    _pushUndoState(newShapes);
+  }
+
+  void _onTextEditCanceled(
+    TextEditCanceled event,
+    Emitter<CanvasState> emit,
+  ) {
+    final existing = state.shapes[event.shapeId];
+    final isDraft = state.draftTextShapeIds.contains(event.shapeId);
+    if (existing is TextShape && isDraft) {
+      final newShapes = Map<String, Shape>.from(state.shapes)
+        ..remove(event.shapeId);
+      final newDraftIds = Set<String>.from(state.draftTextShapeIds)
+        ..remove(event.shapeId);
+      emit(
+        state.copyWith(
+          shapes: newShapes,
+          draftTextShapeIds: newDraftIds,
+          selectedShapeIds: const [],
+          clearEditingTextShapeId: true,
+        ),
+      );
+      return;
+    }
+
+    emit(state.copyWith(clearEditingTextShapeId: true));
   }
 
   void _onPointerMove(

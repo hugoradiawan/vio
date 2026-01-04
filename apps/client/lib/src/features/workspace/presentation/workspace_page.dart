@@ -26,10 +26,13 @@ class WorkspacePage extends StatefulWidget {
 
 class _WorkspacePageState extends State<WorkspacePage> {
   final FocusNode _workspaceFocusNode = FocusNode();
+  bool _isEditingText = false;
 
   @override
   void initState() {
     super.initState();
+    _syncIsEditingText();
+    FocusManager.instance.addListener(_handleFocusChange);
     // Ensure workspace has focus for keyboard shortcuts/logging after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_workspaceFocusNode.hasFocus) {
@@ -38,8 +41,24 @@ class _WorkspacePageState extends State<WorkspacePage> {
     });
   }
 
+  void _handleFocusChange() {
+    final prev = _isEditingText;
+    _syncIsEditingText();
+    if (mounted && prev != _isEditingText) {
+      setState(() {});
+    }
+  }
+
+  void _syncIsEditingText() {
+    final focus = FocusManager.instance.primaryFocus;
+    _isEditingText =
+        focus?.context?.widget is EditableText ||
+        focus?.context?.findAncestorWidgetOfExactType<EditableText>() != null;
+  }
+
   @override
   void dispose() {
+    FocusManager.instance.removeListener(_handleFocusChange);
     _workspaceFocusNode.dispose();
     super.dispose();
   }
@@ -49,13 +68,23 @@ class _WorkspacePageState extends State<WorkspacePage> {
     return BlocBuilder<WorkspaceBloc, WorkspaceState>(
       builder: (context, state) {
         return Shortcuts(
-          shortcuts: _buildShortcutIntents(),
+          shortcuts: _buildShortcutIntents(
+            includeToolShortcuts: !_isEditingText,
+          ),
           child: Actions(
             actions: _buildActions(context),
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
               onTap: () {
-                // Request focus for shortcuts when tapping outside text fields
+                // Request focus for shortcuts when tapping outside text fields.
+                // IMPORTANT: Don't steal focus during inline text editing,
+                // otherwise the TextField immediately blurs and auto-commits.
+                final isEditingText = _isEditingText ||
+                    context.read<CanvasBloc>().state.editingTextShapeId != null;
+                if (isEditingText) {
+                  return;
+                }
+
                 FocusScope.of(context).requestFocus(_workspaceFocusNode);
               },
               child: Focus(
@@ -213,28 +242,31 @@ class _WorkspacePageState extends State<WorkspacePage> {
   }
 
   /// Build shortcut to intent mappings
-  Map<ShortcutActivator, Intent> _buildShortcutIntents() {
+    Map<ShortcutActivator, Intent> _buildShortcutIntents({
+    required bool includeToolShortcuts,
+    }) {
     return {
+      if (includeToolShortcuts) ...{
       // Tool shortcuts - only single key, no modifiers
-      // These will be skipped when focus is on text fields
       const SingleActivator(LogicalKeyboardKey.keyV):
-          const _ToolIntent(CanvasTool.select),
+        const _ToolIntent(CanvasTool.select),
       const SingleActivator(LogicalKeyboardKey.keyA):
-          const _ToolIntent(CanvasTool.directSelect),
+        const _ToolIntent(CanvasTool.directSelect),
       const SingleActivator(LogicalKeyboardKey.keyR):
-          const _ToolIntent(CanvasTool.rectangle),
+        const _ToolIntent(CanvasTool.rectangle),
       const SingleActivator(LogicalKeyboardKey.keyO):
-          const _ToolIntent(CanvasTool.ellipse),
+        const _ToolIntent(CanvasTool.ellipse),
       const SingleActivator(LogicalKeyboardKey.keyP):
-          const _ToolIntent(CanvasTool.path),
+        const _ToolIntent(CanvasTool.path),
       const SingleActivator(LogicalKeyboardKey.keyT):
-          const _ToolIntent(CanvasTool.text),
+        const _ToolIntent(CanvasTool.text),
       const SingleActivator(LogicalKeyboardKey.keyF):
-          const _ToolIntent(CanvasTool.frame),
+        const _ToolIntent(CanvasTool.frame),
       const SingleActivator(LogicalKeyboardKey.keyH):
-          const _ToolIntent(CanvasTool.hand),
+        const _ToolIntent(CanvasTool.hand),
       const SingleActivator(LogicalKeyboardKey.keyC):
-          const _ToolIntent(CanvasTool.comment),
+        const _ToolIntent(CanvasTool.comment),
+      },
 
       // View shortcuts - with modifiers, safe to use
       const SingleActivator(LogicalKeyboardKey.backquote, control: true):
@@ -289,7 +321,10 @@ class _WorkspacePageState extends State<WorkspacePage> {
         onInvoke: (intent) {
           // Don't trigger tool shortcuts when editing text
           final focus = FocusManager.instance.primaryFocus;
-          if (focus?.context?.widget is EditableText) {
+          final isEditingText = focus?.context?.widget is EditableText ||
+              focus?.context?.findAncestorWidgetOfExactType<EditableText>() !=
+                  null;
+          if (isEditingText) {
             return null;
           }
           workspaceBloc.add(ToolSelected(intent.tool));

@@ -54,6 +54,8 @@ class CanvasState extends Equatable {
     this.projectId,
     this.branchId,
     this.drawingShapeId,
+    this.editingTextShapeId,
+    this.draftTextShapeIds = const {},
     this.activeHandle,
     this.resizeOrigin,
     this.originalShapeBounds,
@@ -143,6 +145,13 @@ class CanvasState extends Equatable {
 
   /// ID of the shape currently being created via drag-to-create.
   final String? drawingShapeId;
+
+  /// ID of the text shape currently being edited (inline editor overlay).
+  final String? editingTextShapeId;
+
+  /// Text shapes that were created for inline edit but not yet committed.
+  /// These should not be persisted/synced unless the user types non-empty text.
+  final Set<String> draftTextShapeIds;
 
   /// Whether canvas is connected to a project/branch
   bool get isConnected => projectId != null && branchId != null;
@@ -268,6 +277,8 @@ class CanvasState extends Equatable {
     String? projectId,
     String? branchId,
     String? drawingShapeId,
+    String? editingTextShapeId,
+    Set<String>? draftTextShapeIds,
     String? activeHandle,
     Offset? resizeOrigin,
     Rect? originalShapeBounds,
@@ -282,6 +293,7 @@ class CanvasState extends Equatable {
     bool clearSnap = false,
     bool clearSyncError = false,
     bool clearDrawingShapeId = false,
+    bool clearEditingTextShapeId = false,
     bool clearActiveHandle = false,
     bool clearResizeOrigin = false,
     bool clearOriginalShapeBounds = false,
@@ -315,6 +327,10 @@ class CanvasState extends Equatable {
       branchId: branchId ?? this.branchId,
       drawingShapeId:
           clearDrawingShapeId ? null : (drawingShapeId ?? this.drawingShapeId),
+      editingTextShapeId: clearEditingTextShapeId
+          ? null
+          : (editingTextShapeId ?? this.editingTextShapeId),
+        draftTextShapeIds: draftTextShapeIds ?? this.draftTextShapeIds,
       activeHandle:
           clearActiveHandle ? null : (activeHandle ?? this.activeHandle),
       resizeOrigin:
@@ -356,6 +372,8 @@ class CanvasState extends Equatable {
         projectId,
         branchId,
         drawingShapeId,
+        editingTextShapeId,
+        draftTextShapeIds,
         activeHandle,
         resizeOrigin,
         originalShapeBounds,

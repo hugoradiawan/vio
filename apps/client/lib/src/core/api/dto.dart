@@ -1,3 +1,4 @@
+import 'package:flutter/rendering.dart';
 import 'package:vio_core/vio_core.dart';
 
 /// Extension for converting Shape to/from JSON for API communication
@@ -76,6 +77,16 @@ extension ShapeDto on Shape {
         'r2': rect.r2,
         'r3': rect.r3,
         'r4': rect.r4,
+      };
+    }
+    if (this is TextShape) {
+      final text = this as TextShape;
+      return {
+        'text': text.text,
+        'fontSize': text.fontSize,
+        if (text.fontFamily != null) 'fontFamily': text.fontFamily,
+        if (text.fontWeight != null) 'fontWeight': text.fontWeight,
+        'textAlign': text.textAlign.name,
       };
     }
     // EllipseShape has no extra properties beyond x, y, width, height
@@ -169,8 +180,34 @@ class ShapeFactory {
           clipContent: properties['clipContent'] as bool? ?? true,
         );
 
-      case ShapeType.path:
       case ShapeType.text:
+        return TextShape(
+          id: json['id'] as String,
+          name: json['name'] as String,
+          x: (json['x'] as num).toDouble(),
+          y: (json['y'] as num).toDouble(),
+          textWidth: (json['width'] as num?)?.toDouble() ?? 1.0,
+          textHeight: (json['height'] as num?)?.toDouble() ?? 1.0,
+          parentId: json['parentId'] as String?,
+          frameId: frameId,
+          transform: transform,
+          rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
+          fills: fills,
+          strokes: strokes,
+          opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
+          hidden: json['hidden'] as bool? ?? false,
+          blocked: json['blocked'] as bool? ?? false,
+          text: properties['text'] as String? ?? '',
+          fontSize: (properties['fontSize'] as num?)?.toDouble() ?? 16.0,
+          fontFamily: properties['fontFamily'] as String?,
+          fontWeight: (properties['fontWeight'] as num?)?.toInt(),
+          textAlign: TextAlign.values.firstWhere(
+            (TextAlign e) => e.name == (properties['textAlign'] as String?),
+            orElse: () => TextAlign.left,
+          ),
+        );
+
+      case ShapeType.path:
       case ShapeType.group:
       case ShapeType.image:
       case ShapeType.svg:

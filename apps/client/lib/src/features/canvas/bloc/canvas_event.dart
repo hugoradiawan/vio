@@ -10,6 +10,9 @@ enum CanvasPointerTool {
   drawRectangle,
   drawEllipse,
   drawFrame,
+
+  /// Click-to-create text
+  drawText,
 }
 
 /// Base class for canvas events
@@ -101,6 +104,36 @@ class PointerDown extends CanvasEvent {
 
   @override
   List<Object?> get props => [x, y, button, shiftPressed, tool];
+}
+
+/// Commit an active text edit session.
+///
+/// `width`/`height` should be the measured text bounds in canvas coordinates.
+class TextEditCommitted extends CanvasEvent {
+  const TextEditCommitted({
+    required this.shapeId,
+    required this.text,
+    required this.width,
+    required this.height,
+  });
+
+  final String shapeId;
+  final String text;
+  final double width;
+  final double height;
+
+  @override
+  List<Object?> get props => [shapeId, text, width, height];
+}
+
+/// Cancel an active text edit session.
+class TextEditCanceled extends CanvasEvent {
+  const TextEditCanceled({required this.shapeId});
+
+  final String shapeId;
+
+  @override
+  List<Object?> get props => [shapeId];
 }
 
 /// Fired when pointer/mouse moves on canvas

@@ -29,6 +29,15 @@ class _CanvasViewState extends State<CanvasView> {
   Offset? _lastPanPosition;
   double _lastScale = 1.0;
 
+  String? _editingTextShapeId;
+  final TextEditingController _textController = TextEditingController();
+  final FocusNode _textFocusNode = FocusNode();
+
+  /// When we explicitly commit/cancel an edit and then unfocus the field,
+  /// the FocusNode listener would otherwise fire and enqueue a second
+  /// commit (which can turn into a cancel after the shape is removed).
+  String? _suppressBlurCommitForShapeId;
+
   /// Timestamp of last pointer move event (for throttling during drag)
   int _lastMoveTimestamp = 0;
 
@@ -40,11 +49,24 @@ class _CanvasViewState extends State<CanvasView> {
     super.initState();
     // Register global keyboard handler for shortcuts
     HardwareKeyboard.instance.addHandler(_handleKeyboardEvent);
+
+    _textFocusNode.addListener(() {
+      final id = _editingTextShapeId;
+      if (!_textFocusNode.hasFocus && id != null) {
+        if (_suppressBlurCommitForShapeId == id) {
+          _suppressBlurCommitForShapeId = null;
+          return;
+        }
+        _commitTextEdit(shapeId: id);
+      }
+    });
   }
 
   @override
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_handleKeyboardEvent);
+    _textController.dispose();
+    _textFocusNode.dispose();
     super.dispose();
   }
 
@@ -59,6 +81,12 @@ class _CanvasViewState extends State<CanvasView> {
 
     if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.space) {
+        // Space is used for temporary pan mode, but must not override typing
+        // spaces inside the inline text editor.
+        if (isTextFieldFocused || _editingTextShapeId != null) {
+          return false;
+        }
+
         setState(() => _isSpacePressed = true);
         return true;
       }
@@ -115,7 +143,11 @@ class _CanvasViewState extends State<CanvasView> {
             }
             return false;
           case LogicalKeyboardKey.escape:
-            // Escape: Clear selection
+            // Escape: Cancel text edit (if editing), otherwise clear selection
+            if (isTextFieldFocused && _editingTextShapeId != null) {
+              _cancelTextEdit();
+              return true;
+            }
             context.read<CanvasBloc>().add(const SelectionCleared());
             return true;
           default:
@@ -124,6 +156,12 @@ class _CanvasViewState extends State<CanvasView> {
       }
     } else if (event is KeyUpEvent) {
       if (event.logicalKey == LogicalKeyboardKey.space) {
+        // Don't interfere with text input. If we didn't capture the key-down,
+        // we also shouldn't capture the key-up.
+        if (isTextFieldFocused || _editingTextShapeId != null) {
+          return false;
+        }
+
         setState(() {
           _isSpacePressed = false;
           _isPanning = false;
@@ -157,22 +195,57 @@ class _CanvasViewState extends State<CanvasView> {
                   prev.gridSize != curr.gridSize ||
                   prev.activeTool != curr.activeTool,
               builder: (context, workspaceState) {
-                return BlocListener<CanvasBloc, CanvasState>(
-                  listenWhen: (prev, curr) =>
-                      prev.interactionMode == InteractionMode.drawing &&
-                      curr.interactionMode != InteractionMode.drawing,
-                  listener: (context, canvasState) {
-                    final tool = context.read<WorkspaceBloc>().state.activeTool;
-                    final isBoxTool = tool == CanvasTool.rectangle ||
-                        tool == CanvasTool.ellipse ||
-                        tool == CanvasTool.frame;
+                return MultiBlocListener(
+                  listeners: [
+                    BlocListener<CanvasBloc, CanvasState>(
+                      listenWhen: (prev, curr) =>
+                          prev.interactionMode == InteractionMode.drawing &&
+                          curr.interactionMode != InteractionMode.drawing,
+                      listener: (context, canvasState) {
+                        final tool =
+                            context.read<WorkspaceBloc>().state.activeTool;
+                        final isBoxTool = tool == CanvasTool.rectangle ||
+                            tool == CanvasTool.ellipse ||
+                            tool == CanvasTool.frame;
 
-                    if (isBoxTool) {
-                      context
-                          .read<WorkspaceBloc>()
-                          .add(const ToolSelected(CanvasTool.select));
-                    }
-                  },
+                        if (isBoxTool) {
+                          context
+                              .read<WorkspaceBloc>()
+                              .add(const ToolSelected(CanvasTool.select));
+                        }
+                      },
+                    ),
+                    BlocListener<CanvasBloc, CanvasState>(
+                      listenWhen: (prev, curr) =>
+                          prev.editingTextShapeId != curr.editingTextShapeId,
+                      listener: (context, canvasState) {
+                        final id = canvasState.editingTextShapeId;
+                        setState(() {
+                          _editingTextShapeId = id;
+                        });
+
+                        if (id == null) {
+                          return;
+                        }
+
+                        final shape = canvasState.shapes[id];
+                        if (shape is! TextShape) {
+                          return;
+                        }
+
+                        _textController.text = shape.text;
+                        _textController.selection = TextSelection.fromPosition(
+                          TextPosition(offset: _textController.text.length),
+                        );
+
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) {
+                            _textFocusNode.requestFocus();
+                          }
+                        });
+                      },
+                    ),
+                  ],
                   child: MouseRegion(
                     cursor: _getCursor(workspaceState.activeTool),
                     onHover: (event) =>
@@ -366,6 +439,15 @@ class _CanvasViewState extends State<CanvasView> {
                                 syncError: canvasState.syncError,
                               ),
                             ),
+
+                            // Inline text editor overlay
+                            if (_editingTextShapeId != null)
+                              _TextEditorOverlay(
+                                shapeId: _editingTextShapeId!,
+                                controller: _textController,
+                                focusNode: _textFocusNode,
+                                canvasState: canvasState,
+                              ),
                           ],
                         ),
                       ),
@@ -404,6 +486,30 @@ class _CanvasViewState extends State<CanvasView> {
     PointerDownEvent event,
     WorkspaceState workspaceState,
   ) {
+    // If we are editing text and the user clicks outside the editor, commit
+    // the current edit BEFORE forwarding this pointer down.
+    // Otherwise, the focus-loss commit can run after a new text draft is
+    // created and accidentally commit the wrong shape ID.
+    final editingId = _editingTextShapeId;
+    if (editingId != null) {
+      final canvasState = context.read<CanvasBloc>().state;
+      final shape = canvasState.shapes[editingId];
+      if (shape is TextShape) {
+        final editorRect = _getTextEditorScreenRect(shape, canvasState);
+        if (editorRect.contains(event.localPosition)) {
+          // Click is inside the text editor; don't forward to canvas.
+          return;
+        }
+      }
+
+      _commitTextEdit(shapeId: editingId);
+
+      // We'll unfocus to allow pointer interaction, but suppress the blur
+      // listener from enqueuing a duplicate commit.
+      _suppressBlurCommitForShapeId = editingId;
+      _textFocusNode.unfocus();
+    }
+
     // Middle mouse button or space+left click = pan
     if (event.buttons == kMiddleMouseButton ||
         (_isSpacePressed && event.buttons == kPrimaryButton) ||
@@ -419,6 +525,7 @@ class _CanvasViewState extends State<CanvasView> {
       CanvasTool.rectangle => CanvasPointerTool.drawRectangle,
       CanvasTool.ellipse => CanvasPointerTool.drawEllipse,
       CanvasTool.frame => CanvasPointerTool.drawFrame,
+      CanvasTool.text => CanvasPointerTool.drawText,
       _ => CanvasPointerTool.select,
     };
 
@@ -545,6 +652,170 @@ class _CanvasViewState extends State<CanvasView> {
             ),
           );
     }
+  }
+
+  void _commitTextEdit({String? shapeId}) {
+    shapeId ??= _editingTextShapeId;
+    if (shapeId == null) return;
+
+    final bloc = context.read<CanvasBloc>();
+    final shape = bloc.state.shapes[shapeId];
+    if (shape is! TextShape) {
+      bloc.add(TextEditCanceled(shapeId: shapeId));
+      return;
+    }
+
+    final text = _textController.text;
+    final (width, height) = _measureText(text, shape);
+
+    bloc.add(
+      TextEditCommitted(
+        shapeId: shapeId,
+        text: text,
+        width: width,
+        height: height,
+      ),
+    );
+  }
+
+  Rect _getTextEditorScreenRect(TextShape shape, CanvasState canvasState) {
+    final bounds = shape.bounds;
+    final anchorCanvas = shape.transformPoint(bounds.topLeft);
+    final anchorScreen = canvasState.canvasToScreen(anchorCanvas);
+
+    final canvasWidth = bounds.width <= 1 ? 200.0 : bounds.width;
+    final canvasHeight = bounds.height <= 1 ? 24.0 : bounds.height;
+
+    final screenWidth = canvasWidth * canvasState.zoom;
+    final screenHeight = canvasHeight * canvasState.zoom;
+
+    return Rect.fromLTWH(
+      anchorScreen.dx,
+      anchorScreen.dy,
+      screenWidth,
+      screenHeight,
+    );
+  }
+
+  void _cancelTextEdit() {
+    final shapeId = _editingTextShapeId;
+    if (shapeId == null) return;
+
+    // Suppress blur-commit when we cancel and lose focus.
+    _suppressBlurCommitForShapeId = shapeId;
+    _textFocusNode.unfocus();
+    context.read<CanvasBloc>().add(TextEditCanceled(shapeId: shapeId));
+  }
+
+  (double, double) _measureText(String text, TextShape shape) {
+    if (text.trim().isEmpty) {
+      return (1, 1);
+    }
+
+    FontWeight? fontWeight;
+    final weightValue = shape.fontWeight;
+    if (weightValue != null) {
+      fontWeight = FontWeight.values.firstWhere(
+        (w) => w.value == weightValue,
+        orElse: () => FontWeight.w400,
+      );
+    }
+
+    final painter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: TextStyle(
+          fontSize: shape.fontSize,
+          fontFamily: shape.fontFamily,
+          fontWeight: fontWeight,
+          height: 1.2,
+        ),
+      ),
+      textAlign: shape.textAlign,
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    // Add a small padding so caret isn't clipped.
+    final width = (painter.width + 2).clamp(1.0, double.infinity);
+    final height = (painter.height + 2).clamp(1.0, double.infinity);
+    return (width, height);
+  }
+}
+
+class _TextEditorOverlay extends StatelessWidget {
+  const _TextEditorOverlay({
+    required this.shapeId,
+    required this.controller,
+    required this.focusNode,
+    required this.canvasState,
+  });
+
+  final String shapeId;
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final CanvasState canvasState;
+
+  @override
+  Widget build(BuildContext context) {
+    final shape = canvasState.shapes[shapeId];
+    if (shape is! TextShape) {
+      return const SizedBox.shrink();
+    }
+
+    // Anchor at transformed top-left of the text bounds.
+    final bounds = shape.bounds;
+    final anchorCanvas = shape.transformPoint(bounds.topLeft);
+    final anchorScreen = canvasState.canvasToScreen(anchorCanvas);
+
+    // Provide a usable editing area even before we measure text.
+    // Keep the layout size in canvas units and scale it once via Transform.
+    final canvasWidth = bounds.width <= 1 ? 200.0 : bounds.width;
+    final canvasHeight = bounds.height <= 1 ? 24.0 : bounds.height;
+
+    final fill = shape.fills.isNotEmpty ? shape.fills.first : null;
+    final color = fill != null
+        ? Color(fill.color).withValues(alpha: fill.opacity)
+        : const Color(0xFFE6EDF3);
+
+    FontWeight? fontWeight;
+    final weightValue = shape.fontWeight;
+    if (weightValue != null) {
+      fontWeight = FontWeight.values.firstWhere(
+        (w) => w.value == weightValue,
+        orElse: () => FontWeight.w400,
+      );
+    }
+
+    return Positioned(
+      left: anchorScreen.dx,
+      top: anchorScreen.dy,
+      child: SizedBox(
+        width: canvasWidth,
+        height: canvasHeight,
+        child: Transform.scale(
+          scale: canvasState.zoom,
+          alignment: Alignment.topLeft,
+          child: TextField(
+            controller: controller,
+            focusNode: focusNode,
+            maxLines: null,
+            keyboardType: TextInputType.multiline,
+            style: TextStyle(
+              color: color,
+              fontSize: shape.fontSize,
+              fontFamily: shape.fontFamily,
+              fontWeight: fontWeight,
+              height: 1.2,
+            ),
+            decoration: const InputDecoration(
+              isDense: true,
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

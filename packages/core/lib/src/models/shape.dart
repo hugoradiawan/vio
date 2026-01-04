@@ -176,8 +176,9 @@ abstract class Shape extends Equatable {
         return EllipseShape.fromJson(json);
       case ShapeType.frame:
         return FrameShape.fromJson(json);
-      case ShapeType.path:
       case ShapeType.text:
+        return TextShape.fromJson(json);
+      case ShapeType.path:
       case ShapeType.group:
       case ShapeType.image:
       case ShapeType.svg:

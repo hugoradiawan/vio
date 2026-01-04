@@ -140,8 +140,21 @@ class _FillItem extends StatelessWidget {
     return (color & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase();
   }
 
-  void _showColorPicker(BuildContext context) {
-    // TODO: Show color picker dialog
+  Future<void> _showColorPicker(BuildContext context) async {
+    final result = await VioColorPickerDialog.show(
+      context,
+      initialColor: fill.color,
+      initialOpacity: fill.opacity,
+    );
+    if (result != null && context.mounted) {
+      final newFills = List<ShapeFill>.from(shape.fills);
+      newFills[index] = ShapeFill(
+        color: result.color,
+        opacity: result.opacity,
+        gradient: fill.gradient,
+      );
+      _updateShape(context, newFills: newFills);
+    }
   }
 
   void _updateFillOpacity(BuildContext context, double opacity) {
@@ -363,8 +376,20 @@ class _StrokeItem extends StatelessWidget {
     }
   }
 
-  void _showColorPicker(BuildContext context) {
-    // TODO: Show color picker dialog
+  Future<void> _showColorPicker(BuildContext context) async {
+    final result = await VioColorPickerDialog.show(
+      context,
+      initialColor: stroke.color,
+      initialOpacity: stroke.opacity,
+    );
+    if (result != null && context.mounted) {
+      final newStrokes = List<ShapeStroke>.from(shape.strokes);
+      newStrokes[index] = stroke.copyWith(
+        color: result.color,
+        opacity: result.opacity,
+      );
+      _updateShape(context, newStrokes: newStrokes);
+    }
   }
 
   void _updateStrokeOpacity(BuildContext context, double opacity) {

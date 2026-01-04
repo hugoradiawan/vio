@@ -233,8 +233,6 @@ class _WorkspacePageState extends State<WorkspacePage> {
           const _ToolIntent(CanvasTool.frame),
       const SingleActivator(LogicalKeyboardKey.keyH):
           const _ToolIntent(CanvasTool.hand),
-      const SingleActivator(LogicalKeyboardKey.keyZ):
-          const _ToolIntent(CanvasTool.zoom),
       const SingleActivator(LogicalKeyboardKey.keyC):
           const _ToolIntent(CanvasTool.comment),
 

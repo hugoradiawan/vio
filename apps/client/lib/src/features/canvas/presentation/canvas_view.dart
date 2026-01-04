@@ -394,7 +394,7 @@ class _CanvasViewState extends State<CanvasView> {
       CanvasTool.text => SystemMouseCursors.text,
       CanvasTool.frame => SystemMouseCursors.precise,
       CanvasTool.hand => SystemMouseCursors.grab,
-      CanvasTool.zoom => SystemMouseCursors.zoomIn,
+      CanvasTool.zoom => SystemMouseCursors.basic,
       CanvasTool.comment => SystemMouseCursors.basic,
     };
   }
@@ -412,20 +412,6 @@ class _CanvasViewState extends State<CanvasView> {
         _isPanning = true;
         _lastPanPosition = event.localPosition;
       });
-      return;
-    }
-
-    // Zoom tool: click to zoom in, Alt+click to zoom out
-    if (workspaceState.activeTool == CanvasTool.zoom) {
-      final scaleFactor =
-          HardwareKeyboard.instance.isAltPressed ? (1 / 1.25) : 1.25;
-      context.read<CanvasBloc>().add(
-            ViewportZoomed(
-              scaleFactor: scaleFactor,
-              focalX: event.localPosition.dx,
-              focalY: event.localPosition.dy,
-            ),
-          );
       return;
     }
 

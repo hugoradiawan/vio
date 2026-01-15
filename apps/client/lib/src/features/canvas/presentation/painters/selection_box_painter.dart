@@ -50,6 +50,14 @@ class SelectionBoxPainter extends CustomPainter {
   bool get _isSingleTextSelection =>
       selectedShapes.length == 1 && selectedShapes.first is TextShape;
 
+  bool _isTextHandle(HandlePosition position) {
+    return position == HandlePosition.rotation ||
+        position == HandlePosition.topLeft ||
+        position == HandlePosition.topRight ||
+        position == HandlePosition.bottomLeft ||
+        position == HandlePosition.bottomRight;
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
     if (selectedShapes.isEmpty) return;
@@ -205,7 +213,7 @@ class SelectionBoxPainter extends CustomPainter {
     final handlePositions = _getHandlePositions(bounds);
 
     for (final entry in handlePositions.entries) {
-      if (_isSingleTextSelection && entry.key != HandlePosition.rotation) {
+      if (_isSingleTextSelection && !_isTextHandle(entry.key)) {
         continue;
       }
       _drawHandle(canvas, entry.value, entry.key == HandlePosition.rotation);
@@ -274,8 +282,7 @@ class SelectionBoxPainter extends CustomPainter {
 
     final positions = _getHandlePositions(bounds);
     final entries = _isSingleTextSelection
-        ? positions.entries
-            .where((entry) => entry.key == HandlePosition.rotation)
+        ? positions.entries.where((entry) => _isTextHandle(entry.key))
         : positions.entries;
 
     return entries.map((entry) {

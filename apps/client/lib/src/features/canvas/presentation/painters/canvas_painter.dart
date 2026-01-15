@@ -15,6 +15,7 @@ class CanvasPainter extends CustomPainter {
     this.selectedShapeIds = const [],
     this.hoveredShapeId,
     this.hoveredLayerId,
+    this.editingTextShapeId,
   });
 
   /// Transformation matrix for viewport
@@ -37,6 +38,9 @@ class CanvasPainter extends CustomPainter {
 
   /// ID of layer hovered in layers panel
   final String? hoveredLayerId;
+
+  /// ID of the text shape currently being edited (rendered by overlay)
+  final String? editingTextShapeId;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -67,6 +71,12 @@ class CanvasPainter extends CustomPainter {
     for (final shape in shapes) {
       final isSelected = selectedShapeIds.contains(shape.id);
       final isDragging = isSelected && dragOffset != null;
+
+      // When a text shape is being edited, an overlay EditableText renders it.
+      // Skip painting it here to avoid double-rendered (duplicated) text.
+      if (shape is TextShape && shape.id == editingTextShapeId) {
+        continue;
+      }
 
       if (isDragging) {
         // Apply drag offset translation for selected shapes during drag

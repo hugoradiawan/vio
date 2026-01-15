@@ -435,8 +435,8 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         name: 'Text',
         x: canvasPoint.dx,
         y: canvasPoint.dy,
-        textWidth: 1,
-        textHeight: 1,
+        textWidth: 200,
+        textHeight: 24,
         text: '',
         fills: const [ShapeFill(color: 0xFFE6EDF3)],
         frameId: frameId,
@@ -1479,9 +1479,17 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     final isSingleTextSelection = state.selectedShapes.length == 1 &&
         state.selectedShapes.first is TextShape;
 
+    bool isTextHandle(HandlePosition position) {
+      return position == HandlePosition.rotation ||
+          position == HandlePosition.topLeft ||
+          position == HandlePosition.topRight ||
+          position == HandlePosition.bottomLeft ||
+          position == HandlePosition.bottomRight;
+    }
+
     final handlePositions = _getHandlePositions(bounds);
     for (final entry in handlePositions.entries) {
-      if (isSingleTextSelection && entry.key != HandlePosition.rotation) {
+      if (isSingleTextSelection && !isTextHandle(entry.key)) {
         continue;
       }
       final screenHandlePos = _canvasToScreen(entry.value);
@@ -1699,6 +1707,13 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
           y: shapeNewY,
           frameWidth: shapeNewWidth,
           frameHeight: shapeNewHeight,
+        );
+      } else if (originalShape is TextShape) {
+        newShapes[shapeId] = originalShape.copyWith(
+          x: shapeNewX,
+          y: shapeNewY,
+          textWidth: shapeNewWidth,
+          textHeight: shapeNewHeight,
         );
       }
     }

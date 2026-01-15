@@ -236,6 +236,20 @@ class _CanvasViewState extends State<CanvasView> {
                           return;
                         }
 
+                        // After creating a new text element, immediately switch
+                        // back to Select (Penpot-like behavior). Only do this
+                        // for draft text shapes so editing existing text doesn't
+                        // unexpectedly change tools.
+                        if (canvasState.draftTextShapeIds.contains(id)) {
+                          final workspaceBloc = context.read<WorkspaceBloc>();
+                          if (workspaceBloc.state.activeTool ==
+                              CanvasTool.text) {
+                            workspaceBloc.add(
+                              const ToolSelected(CanvasTool.select),
+                            );
+                          }
+                        }
+
                         final shape = canvasState.shapes[id];
                         if (shape is! TextShape) {
                           return;
@@ -339,6 +353,7 @@ class _CanvasViewState extends State<CanvasView> {
                                       canvasState.selectedShapeIds,
                                   hoveredShapeId: canvasState.hoveredShapeId,
                                   hoveredLayerId: canvasState.hoveredLayerId,
+                                  editingTextShapeId: _editingTextShapeId,
                                 ),
                               ),
                             ),
@@ -543,8 +558,8 @@ class _CanvasViewState extends State<CanvasView> {
       );
 
       final nowMs = DateTime.now().millisecondsSinceEpoch;
-      final withinTime = (nowMs - _lastPrimaryClickMs) <=
-          _doubleClickThresholdMs;
+      final withinTime =
+          (nowMs - _lastPrimaryClickMs) <= _doubleClickThresholdMs;
       final withinDistance = _lastPrimaryClickPosition == null
           ? false
           : (event.localPosition - _lastPrimaryClickPosition!).distance <=
@@ -554,9 +569,7 @@ class _CanvasViewState extends State<CanvasView> {
           hitShape is TextShape;
 
       if (withinTime && withinDistance && sameShape) {
-        context
-            .read<CanvasBloc>()
-            .add(TextEditRequested(shapeId: hitShape.id));
+        context.read<CanvasBloc>().add(TextEditRequested(shapeId: hitShape.id));
 
         // Reset click tracking to avoid triple-click oddities.
         _lastPrimaryClickMs = 0;
@@ -782,7 +795,12 @@ class _CanvasViewState extends State<CanvasView> {
       ),
       textAlign: shape.textAlign,
       textDirection: TextDirection.ltr,
-    )..layout();
+    )..layout(
+        // Keep committed bounds consistent with what the editor shows.
+        // Use the current shape width as a wrapping constraint.
+        maxWidth: (shape.textWidth <= 1 ? 200.0 : shape.textWidth)
+            .clamp(1.0, double.infinity),
+      );
 
     // Add a small padding so caret isn't clipped.
     final width = (painter.width + 2).clamp(1.0, double.infinity);
@@ -817,9 +835,12 @@ class _TextEditorOverlay extends StatelessWidget {
     final anchorScreen = canvasState.canvasToScreen(anchorCanvas);
 
     // Provide a usable editing area even before we measure text.
-    // Keep the layout size in canvas units and scale it once via Transform.
+    // Keep the layout size in screen space to avoid transforming EditableText.
     final canvasWidth = bounds.width <= 1 ? 200.0 : bounds.width;
     final canvasHeight = bounds.height <= 1 ? 24.0 : bounds.height;
+
+    final screenWidth = canvasWidth * canvasState.zoom;
+    final screenHeight = canvasHeight * canvasState.zoom;
 
     final fill = shape.fills.isNotEmpty ? shape.fills.first : null;
     final color = fill != null
@@ -839,29 +860,26 @@ class _TextEditorOverlay extends StatelessWidget {
       left: anchorScreen.dx,
       top: anchorScreen.dy,
       child: SizedBox(
-        width: canvasWidth,
-        height: canvasHeight,
-        child: Transform.scale(
-          scale: canvasState.zoom,
-          alignment: Alignment.topLeft,
-          child: TextField(
-            controller: controller,
-            focusNode: focusNode,
-            maxLines: null,
-            keyboardType: TextInputType.multiline,
-            style: TextStyle(
-              color: color,
-              fontSize: shape.fontSize,
-              fontFamily: shape.fontFamily,
-              fontWeight: fontWeight,
-              height: 1.2,
-            ),
-            decoration: const InputDecoration(
-              isDense: true,
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.zero,
-            ),
+        width: screenWidth,
+        height: screenHeight,
+        child: EditableText(
+          controller: controller,
+          focusNode: focusNode,
+          maxLines: null,
+          keyboardType: TextInputType.multiline,
+          textAlign: shape.textAlign,
+          textDirection: TextDirection.ltr,
+          style: TextStyle(
+            color: color,
+            // Match the painted text size under zoom by scaling font size.
+            fontSize: shape.fontSize * canvasState.zoom,
+            fontFamily: shape.fontFamily,
+            fontWeight: fontWeight,
+            height: 1.2,
           ),
+          cursorColor: VioColors.primary,
+          backgroundCursorColor: VioColors.background,
+          selectionColor: VioColors.primary.withValues(alpha: 0.25),
         ),
       ),
     );

@@ -83,6 +83,9 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     on<CanvasSyncSucceeded>(_onCanvasSyncSucceeded);
     on<CanvasSyncFailed>(_onCanvasSyncFailed);
 
+    // Layer tree drag/drop reparent
+    on<ShapesReparented>(_onShapesReparented);
+
     // Text editing events
     on<TextEditRequested>(_onTextEditRequested);
     on<TextEditCommitted>(_onTextEditCommitted);
@@ -1182,7 +1185,34 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     } else if (state.interactionMode == InteractionMode.movingShapes) {
       // Finished moving shapes - commit the drag offset to shape positions
       if (state.dragOffset != null && state.selectedShapeIds.isNotEmpty) {
+        Rect? selectionRectFor(Map<String, Shape> shapes, List<String> ids) {
+          if (ids.isEmpty) return null;
+          double? minX, minY, maxX, maxY;
+          for (final id in ids) {
+            final s = shapes[id];
+            if (s == null) continue;
+            final bounds = s.bounds;
+            final corners = [
+              s.transformPoint(Offset(bounds.left, bounds.top)),
+              s.transformPoint(Offset(bounds.right, bounds.top)),
+              s.transformPoint(Offset(bounds.right, bounds.bottom)),
+              s.transformPoint(Offset(bounds.left, bounds.bottom)),
+            ];
+            for (final c in corners) {
+              minX = minX == null ? c.dx : math.min(minX, c.dx);
+              minY = minY == null ? c.dy : math.min(minY, c.dy);
+              maxX = maxX == null ? c.dx : math.max(maxX, c.dx);
+              maxY = maxY == null ? c.dy : math.max(maxY, c.dy);
+            }
+          }
+          if (minX == null || minY == null || maxX == null || maxY == null) {
+            return null;
+          }
+          return Rect.fromLTWH(minX, minY, maxX - minX, maxY - minY);
+        }
+
         final newShapes = Map<String, Shape>.from(state.shapes);
+        final updatedShapeIds = <String>{};
         for (final shapeId in state.selectedShapeIds) {
           final shape = newShapes[shapeId];
           if (shape != null) {
@@ -1195,18 +1225,68 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
                 f: shape.transform.f + state.dragOffset!.dy,
               );
               newShapes[shapeId] = shape.copyWith(transform: newTransform);
+              updatedShapeIds.add(shapeId);
             } else {
               // For non-rotated shapes, move x,y position normally
               newShapes[shapeId] = shape.moveBy(
                 state.dragOffset!.dx,
                 state.dragOffset!.dy,
               );
+              updatedShapeIds.add(shapeId);
             }
           }
         }
+
+        final dropCenter =
+            selectionRectFor(newShapes, state.selectedShapeIds)?.center;
+
+        // Figma-like behavior: if the selection center ends up inside a frame,
+        // reparent all selected (non-frame) shapes to that frame.
+        // We keep absolute x/y, so there is no coordinate conversion.
+        final selectionContainsFrame = state.selectedShapeIds
+            .map((id) => newShapes[id])
+            .any((s) => s is FrameShape);
+
+        if (!selectionContainsFrame && dropCenter != null) {
+          final destinationFrame = _findTopFrameContainingPoint(
+            point: dropCenter,
+            shapesInZOrder: newShapes.values.toList(growable: false),
+            excludeIds: state.selectedShapeIds.toSet(),
+          );
+          final destinationFrameId = destinationFrame?.id;
+
+          for (final shapeId in state.selectedShapeIds) {
+            final shape = newShapes[shapeId];
+            if (shape == null || shape is FrameShape) {
+              continue;
+            }
+
+            if (shape.frameId != destinationFrameId) {
+              newShapes[shapeId] = shape.copyWith(frameId: destinationFrameId);
+              updatedShapeIds.add(shapeId);
+            }
+          }
+        }
+
+        // Expand the destination frame chain so the layer tree updates visibly.
+        final expanded = _expandAncestorsForShapesIn(
+          newShapes,
+          state.selectedShapeIds,
+          state.expandedLayerIds,
+        );
+
+        // Queue sync updates for changed shapes.
+        for (final id in updatedShapeIds) {
+          final updated = newShapes[id];
+          if (updated != null) {
+            _notifyRepositoryShapeUpdated(updated);
+          }
+        }
+
         emit(
           state.copyWith(
             shapes: newShapes,
+            expandedLayerIds: expanded,
             interactionMode: InteractionMode.idle,
             clearDragStart: true,
             clearCurrentPointer: true,
@@ -1238,11 +1318,141 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     }
   }
 
+  /// Find the top-most frame (by current paint/z order) that contains [point]
+  /// in canvas coordinates.
+  ///
+  /// Note: This checks the frame bounds, not the label hit area (unlike
+  /// [HitTest.hitTestShape] for frames).
+  FrameShape? _findTopFrameContainingPoint({
+    required Offset point,
+    required List<Shape> shapesInZOrder,
+    required Set<String> excludeIds,
+  }) {
+    for (var i = shapesInZOrder.length - 1; i >= 0; i--) {
+      final shape = shapesInZOrder[i];
+      if (shape is! FrameShape) continue;
+      if (shape.hidden) continue;
+      if (excludeIds.contains(shape.id)) continue;
+
+      final bounds = _getTransformedBounds(shape);
+      if (bounds.contains(point)) {
+        return shape;
+      }
+    }
+    return null;
+  }
+
+  /// Axis-aligned bounding box of a shape after applying its transform.
+  ///
+  /// Mirrors the logic in HitTest's internal bounds transform.
+  Rect _getTransformedBounds(Shape shape) {
+    final bounds = shape.bounds;
+
+    final corners = [
+      shape.transformPoint(Offset(bounds.left, bounds.top)),
+      shape.transformPoint(Offset(bounds.right, bounds.top)),
+      shape.transformPoint(Offset(bounds.right, bounds.bottom)),
+      shape.transformPoint(Offset(bounds.left, bounds.bottom)),
+    ];
+
+    var minX = corners[0].dx;
+    var maxX = corners[0].dx;
+    var minY = corners[0].dy;
+    var maxY = corners[0].dy;
+
+    for (final corner in corners) {
+      if (corner.dx < minX) minX = corner.dx;
+      if (corner.dx > maxX) maxX = corner.dx;
+      if (corner.dy < minY) minY = corner.dy;
+      if (corner.dy > maxY) maxY = corner.dy;
+    }
+
+    return Rect.fromLTWH(minX, minY, maxX - minX, maxY - minY);
+  }
+
+  /// Expand all ancestors (frameId / parentId chain) for the given shapes,
+  /// using [shapes] rather than [state.shapes].
+  Set<String> _expandAncestorsForShapesIn(
+    Map<String, Shape> shapes,
+    List<String> shapeIds,
+    Set<String> currentExpanded,
+  ) {
+    final expanded = Set<String>.from(currentExpanded);
+
+    for (final shapeId in shapeIds) {
+      final shape = shapes[shapeId];
+      if (shape == null) continue;
+
+      String? parentId = shape.parentId ?? shape.frameId;
+      while (parentId != null) {
+        final parent = shapes[parentId];
+        if (parent == null) break;
+        expanded.add(parentId);
+        parentId = parent.parentId ?? parent.frameId;
+      }
+    }
+
+    return expanded;
+  }
+
   void _onSelectionCleared(
     SelectionCleared event,
     Emitter<CanvasState> emit,
   ) {
     emit(state.copyWith(selectedShapeIds: []));
+  }
+
+  void _onShapesReparented(
+    ShapesReparented event,
+    Emitter<CanvasState> emit,
+  ) {
+    if (event.shapeIds.isEmpty) return;
+
+    final destinationFrameId = event.destinationFrameId;
+    if (destinationFrameId != null) {
+      final destinationFrame = state.shapes[destinationFrameId];
+      if (destinationFrame is! FrameShape) {
+        return;
+      }
+    }
+
+    final newShapes = Map<String, Shape>.from(state.shapes);
+    final updatedShapeIds = <String>{};
+
+    for (final id in event.shapeIds) {
+      final shape = newShapes[id];
+      if (shape == null) continue;
+      if (shape is FrameShape) continue;
+
+      if (shape.frameId != destinationFrameId) {
+        newShapes[id] = shape.copyWith(frameId: destinationFrameId);
+        updatedShapeIds.add(id);
+      }
+    }
+
+    if (updatedShapeIds.isEmpty) return;
+
+    // Expand destination frame chain so the moved items remain visible.
+    final expanded = _expandAncestorsForShapesIn(
+      newShapes,
+      updatedShapeIds.toList(growable: false),
+      state.expandedLayerIds,
+    );
+
+    for (final id in updatedShapeIds) {
+      final updated = newShapes[id];
+      if (updated != null) {
+        _notifyRepositoryShapeUpdated(updated);
+      }
+    }
+
+    emit(
+      state.copyWith(
+        shapes: newShapes,
+        expandedLayerIds: expanded,
+      ),
+    );
+    _pushUndoState(newShapes);
   }
 
   void _onShapeAdded(

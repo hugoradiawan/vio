@@ -218,6 +218,23 @@ class PointerUp extends CanvasEvent {
   List<Object?> get props => [x, y];
 }
 
+/// Reparent one or more shapes to a destination frame (or root when null).
+///
+/// Coordinates remain absolute in canvas space; only `frameId` (and any
+/// frame-owned ordering metadata) is updated.
+class ShapesReparented extends CanvasEvent {
+  const ShapesReparented({
+    required this.shapeIds,
+    required this.destinationFrameId,
+  });
+
+  final List<String> shapeIds;
+  final String? destinationFrameId;
+
+  @override
+  List<Object?> get props => [shapeIds, destinationFrameId];
+}
+
 /// Fired when pointer leaves the canvas area
 class CanvasPointerExited extends CanvasEvent {
   const CanvasPointerExited();

@@ -6,6 +6,12 @@ import 'package:vio_ui_kit/vio_ui_kit.dart';
 import '../../bloc/canvas_bloc.dart';
 import 'layer_item.dart';
 
+class _LayerDragPayload {
+  const _LayerDragPayload(this.shapeIds);
+  final List<String> shapeIds;
+}
+
+
 /// Displays the hierarchical layer tree
 class LayerTree extends StatelessWidget {
   const LayerTree({super.key});
@@ -20,22 +26,111 @@ class LayerTree extends StatelessWidget {
 
         final tree = LayerTreeBuilder.buildTree(state.shapes);
 
-        return ListView.builder(
-          itemCount: _countVisibleNodes(tree, state.expandedLayerIds),
-          itemBuilder: (context, index) {
-            final (node, _) =
-                _getNodeAtIndex(tree, index, state.expandedLayerIds);
-            if (node == null) return const SizedBox.shrink();
+        List<String> reparentableIds(List<String> ids) {
+          final out = <String>[];
+          for (final id in ids) {
+            final shape = state.shapes[id];
+            if (shape == null) continue;
+            if (shape is FrameShape) continue;
+            out.add(id);
+          }
+          return out;
+        }
 
-            return LayerItem(
-              key: ValueKey(node.shape.id),
-              shape: node.shape,
-              depth: node.depth,
-              isExpanded: state.expandedLayerIds.contains(node.shape.id),
-              hasChildren: node.hasChildren,
-              isSelected: state.selectedShapeIds.contains(node.shape.id),
-              isHovered: state.hoveredLayerId == node.shape.id ||
-                  state.hoveredShapeId == node.shape.id,
+        Widget buildLayerRow(LayerNode node, bool isDropTargetActive) {
+          final isSelected = state.selectedShapeIds.contains(node.shape.id);
+          final dragIds =
+              isSelected ? state.selectedShapeIds : <String>[node.shape.id];
+          final payload = _LayerDragPayload(dragIds);
+
+          final row = LayerItem(
+            key: ValueKey(node.shape.id),
+            shape: node.shape,
+            depth: node.depth,
+            isExpanded: state.expandedLayerIds.contains(node.shape.id),
+            hasChildren: node.hasChildren,
+            isSelected: isSelected,
+            isHovered: state.hoveredLayerId == node.shape.id ||
+                state.hoveredShapeId == node.shape.id,
+          );
+
+          return Draggable<_LayerDragPayload>(
+            data: payload,
+            feedback: Material(
+              color: Colors.transparent,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 220),
+                child: Opacity(opacity: 0.9, child: row),
+              ),
+            ),
+            childWhenDragging: Opacity(opacity: 0.35, child: row),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                border: isDropTargetActive
+                    ? Border.all(
+                        color: VioColors.primary.withValues(alpha: 0.8),
+                      )
+                    : null,
+                color: isDropTargetActive
+                    ? VioColors.primary.withValues(alpha: 0.06)
+                    : null,
+              ),
+              child: row,
+            ),
+          );
+        }
+
+        return DragTarget<_LayerDragPayload>(
+          onWillAcceptWithDetails: (details) {
+            // Root drop target: accept any drag to reparent to root.
+            return reparentableIds(details.data.shapeIds).isNotEmpty;
+          },
+          onAcceptWithDetails: (details) {
+            final ids = reparentableIds(details.data.shapeIds);
+            if (ids.isEmpty) return;
+            context.read<CanvasBloc>().add(
+                  ShapesReparented(
+                    shapeIds: ids,
+                    destinationFrameId: null,
+                  ),
+                );
+          },
+          builder: (context, candidateData, rejectedData) {
+            return ListView.builder(
+              itemCount: _countVisibleNodes(tree, state.expandedLayerIds),
+              itemBuilder: (context, index) {
+                final (node, _) =
+                    _getNodeAtIndex(tree, index, state.expandedLayerIds);
+                if (node == null) return const SizedBox.shrink();
+
+                final isFrame = node.shape is FrameShape;
+
+                return DragTarget<_LayerDragPayload>(
+                  onWillAcceptWithDetails: (details) {
+                    if (!isFrame) return false;
+                    final ids = reparentableIds(details.data.shapeIds);
+                    if (ids.isEmpty) return false;
+                    // Don't allow dropping a selection onto itself.
+                    if (ids.contains(node.shape.id)) {
+                      return false;
+                    }
+                    return true;
+                  },
+                  onAcceptWithDetails: (details) {
+                    final ids = reparentableIds(details.data.shapeIds);
+                    if (ids.isEmpty) return;
+                    context.read<CanvasBloc>().add(
+                          ShapesReparented(
+                            shapeIds: ids,
+                            destinationFrameId: node.shape.id,
+                          ),
+                        );
+                  },
+                  builder: (context, candidate, rejected) {
+                    return buildLayerRow(node, candidate.isNotEmpty);
+                  },
+                );
+              },
             );
           },
         );

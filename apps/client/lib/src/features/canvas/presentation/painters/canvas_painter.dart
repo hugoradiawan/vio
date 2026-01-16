@@ -67,38 +67,85 @@ class CanvasPainter extends CustomPainter {
       ]),
     );
 
-    // Draw all shapes
+    final isDraggingSelection =
+        dragOffset != null && selectedShapeIds.isNotEmpty;
+    final selectedIdSet = selectedShapeIds.toSet();
+
+    // Build a simple frame containment map using existing absolute coordinates.
+    // If a shape has a valid frameId, it is rendered as a child of that frame.
+    final shapesById = <String, Shape>{for (final s in shapes) s.id: s};
+    final childrenByFrameId = <String, List<Shape>>{};
+    final rootShapes = <Shape>[];
+
     for (final shape in shapes) {
-      final isSelected = selectedShapeIds.contains(shape.id);
-      final isDragging = isSelected && dragOffset != null;
-
-      // When a text shape is being edited, an overlay EditableText renders it.
-      // Skip painting it here to avoid double-rendered (duplicated) text.
-      if (shape is TextShape && shape.id == editingTextShapeId) {
-        continue;
-      }
-
-      if (isDragging) {
-        // Apply drag offset translation for selected shapes during drag
-        canvas.save();
-        canvas.translate(dragOffset!.dx, dragOffset!.dy);
-        ShapePainter.paintShape(canvas, shape);
-        canvas.restore();
+      final frameId = shape.frameId;
+      final frame = frameId == null ? null : shapesById[frameId];
+      if (frameId != null && frame is FrameShape) {
+        childrenByFrameId.putIfAbsent(frameId, () => []).add(shape);
       } else {
-        ShapePainter.paintShape(canvas, shape);
+        rootShapes.add(shape);
       }
+    }
 
-      // Draw frame name labels
-      if (shape.type == ShapeType.frame) {
-        if (isDragging) {
-          canvas.save();
-          canvas.translate(dragOffset!.dx, dragOffset!.dy);
-          _drawFrameLabel(canvas, shape as FrameShape);
-          canvas.restore();
-        } else {
-          _drawFrameLabel(canvas, shape as FrameShape);
+    void paintShapeTree(Shape shape) {
+      final shouldSkipForDragOverlay =
+          isDraggingSelection && selectedIdSet.contains(shape.id);
+
+      if (!shouldSkipForDragOverlay) {
+        // When a text shape is being edited, an overlay EditableText renders it.
+        // Skip painting it here to avoid double-rendered (duplicated) text.
+        if (shape is! TextShape || shape.id != editingTextShapeId) {
+          ShapePainter.paintShape(canvas, shape);
+        }
+
+        if (shape is FrameShape) {
+          _drawFrameLabel(canvas, shape);
         }
       }
+
+      if (shape is FrameShape) {
+        final children = childrenByFrameId[shape.id];
+        if (children == null || children.isEmpty) {
+          return;
+        }
+
+        if (shape.clipContent) {
+          canvas.save();
+          canvas.clipRect(
+            Rect.fromLTWH(
+                shape.x, shape.y, shape.frameWidth, shape.frameHeight,),
+          );
+          for (final child in children) {
+            paintShapeTree(child);
+          }
+          canvas.restore();
+        } else {
+          for (final child in children) {
+            paintShapeTree(child);
+          }
+        }
+      }
+    }
+
+    // Paint non-dragging scene normally (with clipping).
+    for (final shape in rootShapes) {
+      paintShapeTree(shape);
+    }
+
+    // While dragging, paint the selection on top without clipping so it remains
+    // visible when crossing frame boundaries.
+    if (isDraggingSelection) {
+      canvas.save();
+      canvas.translate(dragOffset!.dx, dragOffset!.dy);
+      for (final shape in shapes) {
+        if (!selectedIdSet.contains(shape.id)) continue;
+        if (shape is TextShape && shape.id == editingTextShapeId) continue;
+        ShapePainter.paintShape(canvas, shape);
+        if (shape is FrameShape) {
+          _drawFrameLabel(canvas, shape);
+        }
+      }
+      canvas.restore();
     }
 
     // Draw hover outline (from canvas or layer panel)

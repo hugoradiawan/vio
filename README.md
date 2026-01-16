@@ -69,9 +69,16 @@ vio/
 ## 🎨 Features
 
 - **Infinite Canvas**: High-performance rendering with CustomPainter
+- **Text Tool**: Inline editing, typography controls, Google Fonts rendering
 - **Git-like Version Control**: Branches, commits, and pull requests for designs
 - **Real-time Collaboration**: Cursor presence and draft state sync via gRPC
 - **Blue Dark Mode**: Beautiful dark theme optimized for design work
+
+## 🖱️ Canvas Controls
+
+- Pan: trackpad two-finger scroll / mouse wheel
+- Horizontal pan: `Shift` + mouse wheel
+- Zoom: `Ctrl` + mouse wheel / trackpad pinch
 
 ## 📖 Documentation
 

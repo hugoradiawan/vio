@@ -68,6 +68,7 @@ Recreate the core functionality of Penpot (Open Source Design & Prototyping Tool
 - [x] Implement viewport transformation matrix (Translation + Scale)
 - [x] Create grid system that scales with zoom level
 - [x] Implement pan gestures (Mouse drag, Trackpad)
+- [x] Add Shift+mouse scroll horizontal pan
 - [x] Implement zoom gestures (Mouse wheel, Trackpad pinch)
 - [x] Add canvas coordinate system helpers
 
@@ -209,7 +210,7 @@ Recreate the core functionality of Penpot (Open Source Design & Prototyping Tool
 
 ### 5.1 Additional Shape Types
 - [ ] Path/Pen tool
-- [ ] Text with fonts
+- [x] Text with fonts
 - [ ] Images
 - [ ] Boolean operations (union, subtract, intersect)
 

@@ -5,6 +5,42 @@
 
 ---
 
+## 2026-01-16
+
+### Session: Canvas Horizontal Pan Shortcut
+
+| Date | Task | Status | Notes/Blockers |
+|------|------|--------|----------------|
+| 2026-01-16 | Add Shift+mouse wheel horizontal pan | ✅ Completed | Shift + wheel maps vertical scroll to horizontal pan; Ctrl + wheel still zooms |
+
+### Changes Made
+
+#### apps/client/lib/src/features/canvas/presentation/
+- `canvas_view.dart` - Updated pointer signal handling so Shift + mouse wheel pans the viewport horizontally
+
+### Session: Text Element Enhancements
+
+| Date | Task | Status | Notes/Blockers |
+|------|------|--------|----------------|
+| 2026-01-16 | Enhance text element (editing + typography) | ✅ Completed | Inline edit overlay, typography controls, Google Fonts rendering, stable box sizing with grow-only relayout |
+
+### Changes Made
+
+#### packages/core/lib/src/models/
+- `text_shape.dart` - Added persistent typography fields (line height multiplier, letter spacing %, text align)
+
+#### apps/client/lib/src/features/canvas/
+- `canvas_bloc.dart` - Improved text editing lifecycle (draft text, commit/cancel behavior, grow-only sizing)
+
+#### apps/client/lib/src/features/canvas/presentation/
+- `canvas_view.dart` - Text overlay editing + measurement updated to keep alignment/width constraints consistent
+
+#### apps/client/lib/src/features/canvas/presentation/painters/
+- `shape_painter.dart` - Text rendering via Google Fonts with fixed-width layout for correct alignment + clipping
+
+#### apps/client/lib/src/features/workspace/presentation/widgets/
+- `property_sections.dart` - Typography inspector (font/size/align/line height/letter spacing) + relayout after changes
+
 ## 2025-01-03
 
 ### Session 6: Shape Rotation Implementation

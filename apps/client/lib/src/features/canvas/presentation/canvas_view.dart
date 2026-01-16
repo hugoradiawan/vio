@@ -745,6 +745,7 @@ class _CanvasViewState extends State<CanvasView> {
       // Check if this is a zoom gesture (Ctrl+scroll or trackpad pinch)
       // On web, trackpad pinch zoom comes as scroll events with ctrlKey
       final isZoomGesture = HardwareKeyboard.instance.isControlPressed;
+      final isShiftScroll = HardwareKeyboard.instance.isShiftPressed;
 
       if (isZoomGesture) {
         // Zoom towards mouse position
@@ -764,11 +765,19 @@ class _CanvasViewState extends State<CanvasView> {
               ),
             );
       } else {
-        // Regular scroll/pan - trackpad two-finger scroll or mouse wheel
+        // Regular scroll/pan - trackpad two-finger scroll or mouse wheel.
+        // Shift + mouse wheel pans horizontally (common design-tool behavior).
+        final deltaX = isShiftScroll
+            ? -(event.scrollDelta.dx != 0
+                ? event.scrollDelta.dx
+                : event.scrollDelta.dy)
+            : -event.scrollDelta.dx;
+        final deltaY = isShiftScroll ? 0.0 : -event.scrollDelta.dy;
+
         context.read<CanvasBloc>().add(
               ViewportPanned(
-                deltaX: -event.scrollDelta.dx,
-                deltaY: -event.scrollDelta.dy,
+                deltaX: deltaX,
+                deltaY: deltaY,
               ),
             );
       }

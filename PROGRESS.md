@@ -41,6 +41,25 @@
 #### apps/client/lib/src/features/workspace/presentation/widgets/
 - `property_sections.dart` - Typography inspector (font/size/align/line height/letter spacing) + relayout after changes
 
+### Session: Frame Preset Sizes
+
+| Date | Task | Status | Notes/Blockers |
+|------|------|--------|----------------|
+| 2026-01-16 | Add frame preset sizes (tool default + apply to selection) | ✅ Completed | Default preset applies on click-to-create; drag-to-create ignores preset; applying preset changes only width/height |
+
+### Changes Made
+
+#### apps/client/lib/src/features/canvas/
+- `models/frame_presets.dart` - Preset catalog (Penpot-inspired + extended list) + lookup helper
+- `bloc/canvas_bloc.dart` - Click-to-create preset frames + preset disarm on drag
+- `presentation/canvas_view.dart` - Pass default preset size into `PointerDown`
+
+#### apps/client/lib/src/features/workspace/
+- `presentation/widgets/frame_preset_picker.dart` - Category + preset picker widget
+- `presentation/widgets/right_panel.dart` - Default preset UI (Frame tool) + multi-select frame preset apply
+- `presentation/widgets/shape_properties.dart` - Frame preset apply for selected frame
+- `bloc/workspace_state.dart` / `bloc/workspace_event.dart` / `bloc/workspace_bloc.dart` - Persist default frame preset selection
+
 ## 2025-01-03
 
 ### Session 6: Shape Rotation Implementation

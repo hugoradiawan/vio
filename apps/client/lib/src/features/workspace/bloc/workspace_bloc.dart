@@ -19,6 +19,7 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
     on<GridToggled>(_onGridToggled);
     on<SnapToGridToggled>(_onSnapToGridToggled);
     on<RulersToggled>(_onRulersToggled);
+    on<FrameToolPresetChanged>(_onFrameToolPresetChanged);
   }
 
   Future<void> _onInitialized(
@@ -77,5 +78,12 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
     Emitter<WorkspaceState> emit,
   ) {
     emit(state.copyWith(showRulers: !state.showRulers));
+  }
+
+  void _onFrameToolPresetChanged(
+    FrameToolPresetChanged event,
+    Emitter<WorkspaceState> emit,
+  ) {
+    emit(state.copyWith(frameToolPresetId: event.presetId));
   }
 }

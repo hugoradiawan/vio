@@ -6,6 +6,8 @@ import 'package:vio_core/vio_core.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../../canvas/bloc/canvas_bloc.dart';
+import '../../../canvas/models/frame_presets.dart';
+import 'frame_preset_picker.dart';
 
 /// Common position and size properties for all shapes
 class PositionSizeSection extends StatelessWidget {
@@ -433,11 +435,37 @@ class FrameProperties extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final matchedPresetId = _matchPresetIdForFrame(shape);
+
     return Padding(
       padding: const EdgeInsets.all(VioSpacing.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          FramePresetPicker(
+            value: matchedPresetId,
+            onChanged: (presetId) {
+              final preset =
+                  presetId == null ? null : framePresetById(presetId);
+              if (preset == null) {
+                return;
+              }
+
+              final bloc = context.read<CanvasBloc>();
+              bloc.add(
+                ShapeUpdated(
+                  shape.copyWith(
+                    frameWidth: preset.width,
+                    frameHeight: preset.height,
+                  ),
+                ),
+              );
+            },
+            categoryLabel: 'Preset category',
+            presetLabel: 'Preset size',
+          ),
+          const SizedBox(height: VioSpacing.sm),
+
           // Clip content toggle
           _buildToggleRow(
             context,
@@ -464,6 +492,21 @@ class FrameProperties extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String? _matchPresetIdForFrame(FrameShape frame) {
+    bool nearlyEqual(double a, double b) => (a - b).abs() < 0.001;
+
+    for (final category in framePresetCategories) {
+      for (final preset in category.items) {
+        if (nearlyEqual(preset.width, frame.frameWidth) &&
+            nearlyEqual(preset.height, frame.frameHeight)) {
+          return preset.id;
+        }
+      }
+    }
+
+    return null;
   }
 
   Widget _buildToggleRow(

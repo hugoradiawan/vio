@@ -4,6 +4,9 @@ import 'package:vio_core/vio_core.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../../canvas/bloc/canvas_bloc.dart';
+import '../../../canvas/models/frame_presets.dart';
+import '../../bloc/workspace_bloc.dart';
+import 'frame_preset_picker.dart';
 import 'property_sections.dart';
 import 'shape_properties.dart';
 
@@ -31,7 +34,17 @@ class RightPanel extends StatelessWidget {
           final selectedIds = state.selectedShapeIds;
 
           if (selectedIds.isEmpty) {
-            return const _NoSelectionPanel();
+            return BlocBuilder<WorkspaceBloc, WorkspaceState>(
+              buildWhen: (prev, curr) =>
+                  prev.activeTool != curr.activeTool ||
+                  prev.frameToolPresetId != curr.frameToolPresetId,
+              builder: (context, workspaceState) {
+                if (workspaceState.activeTool == CanvasTool.frame) {
+                  return _FrameToolPanel(workspaceState: workspaceState);
+                }
+                return const _NoSelectionPanel();
+              },
+            );
           }
 
           if (selectedIds.length == 1) {
@@ -50,6 +63,50 @@ class RightPanel extends StatelessWidget {
           return _MultipleSelectionPanel(shapes: selectedShapes);
         },
       ),
+    );
+  }
+}
+
+class _FrameToolPanel extends StatelessWidget {
+  const _FrameToolPanel({required this.workspaceState});
+
+  final WorkspaceState workspaceState;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _buildHeader('Frame'),
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                VioPanel(
+                  title: 'Default preset',
+                  child: FramePresetPicker(
+                    value: workspaceState.frameToolPresetId,
+                    onChanged: (presetId) {
+                      context
+                          .read<WorkspaceBloc>()
+                          .add(FrameToolPresetChanged(presetId));
+                    },
+                  ),
+                ),
+                const SizedBox(height: VioSpacing.sm),
+                Padding(
+                  padding: const EdgeInsets.all(VioSpacing.sm),
+                  child: Text(
+                    'Tip: Click to create a frame using the default preset. Drag to create a custom size.',
+                    style: VioTypography.caption.copyWith(
+                      color: VioColors.textTertiary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -431,6 +488,11 @@ class _MultipleSelectionPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final selectedFrames =
+        shapes.whereType<FrameShape>().toList(growable: false);
+    final allSelectedAreFrames =
+        selectedFrames.length == shapes.length && shapes.isNotEmpty;
+
     return Column(
       children: [
         _buildHeader('Multiple Selection'),
@@ -499,6 +561,35 @@ class _MultipleSelectionPanel extends StatelessWidget {
                   ),
                 ),
 
+                if (allSelectedAreFrames)
+                  VioPanel(
+                    title: 'Frame preset',
+                    child: FramePresetPicker(
+                      value: _matchedPresetIdForFrames(selectedFrames),
+                      onChanged: (presetId) {
+                        final preset =
+                            presetId == null ? null : framePresetById(presetId);
+                        if (preset == null) {
+                          return;
+                        }
+
+                        final bloc = context.read<CanvasBloc>();
+                        for (final frame in selectedFrames) {
+                          bloc.add(
+                            ShapeUpdated(
+                              frame.copyWith(
+                                frameWidth: preset.width,
+                                frameHeight: preset.height,
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                      categoryLabel: 'Preset category',
+                      presetLabel: 'Preset size',
+                    ),
+                  ),
+
                 // Bulk opacity
                 VioPanel(
                   title: 'Opacity',
@@ -518,6 +609,30 @@ class _MultipleSelectionPanel extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  String? _matchedPresetIdForFrames(List<FrameShape> frames) {
+    if (frames.isEmpty) return null;
+
+    final first = frames.first;
+    final sameSize = frames.every(
+      (f) =>
+          (f.frameWidth - first.frameWidth).abs() < 0.001 &&
+          (f.frameHeight - first.frameHeight).abs() < 0.001,
+    );
+    if (!sameSize) return null;
+
+    bool nearlyEqual(double a, double b) => (a - b).abs() < 0.001;
+    for (final category in framePresetCategories) {
+      for (final preset in category.items) {
+        if (nearlyEqual(preset.width, first.frameWidth) &&
+            nearlyEqual(preset.height, first.frameHeight)) {
+          return preset.id;
+        }
+      }
+    }
+
+    return null;
   }
 
   String _getSelectionSummary() {

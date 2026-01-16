@@ -85,6 +85,8 @@ class PointerDown extends CanvasEvent {
     this.button = 0,
     this.shiftPressed = false,
     this.tool = CanvasPointerTool.select,
+    this.initialWidth,
+    this.initialHeight,
   });
 
   /// X position in screen coordinates
@@ -102,8 +104,21 @@ class PointerDown extends CanvasEvent {
   /// Current tool intent (used for drawing tools)
   final CanvasPointerTool tool;
 
+  /// Optional initial size for click-to-create (used by Frame presets).
+  /// Values are in canvas coordinates.
+  final double? initialWidth;
+  final double? initialHeight;
+
   @override
-  List<Object?> get props => [x, y, button, shiftPressed, tool];
+  List<Object?> get props => [
+        x,
+        y,
+        button,
+        shiftPressed,
+        tool,
+        initialWidth,
+        initialHeight,
+      ];
 }
 
 /// Commit an active text edit session.

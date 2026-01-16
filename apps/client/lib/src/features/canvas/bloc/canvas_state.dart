@@ -54,6 +54,7 @@ class CanvasState extends Equatable {
     this.projectId,
     this.branchId,
     this.drawingShapeId,
+    this.drawingPresetSize,
     this.editingTextShapeId,
     this.draftTextShapeIds = const {},
     this.activeHandle,
@@ -145,6 +146,9 @@ class CanvasState extends Equatable {
 
   /// ID of the shape currently being created via drag-to-create.
   final String? drawingShapeId;
+
+  /// Optional preset size for click-to-create (used by the Frame tool).
+  final Size? drawingPresetSize;
 
   /// ID of the text shape currently being edited (inline editor overlay).
   final String? editingTextShapeId;
@@ -277,6 +281,7 @@ class CanvasState extends Equatable {
     String? projectId,
     String? branchId,
     String? drawingShapeId,
+    Size? drawingPresetSize,
     String? editingTextShapeId,
     Set<String>? draftTextShapeIds,
     String? activeHandle,
@@ -293,6 +298,7 @@ class CanvasState extends Equatable {
     bool clearSnap = false,
     bool clearSyncError = false,
     bool clearDrawingShapeId = false,
+    bool clearDrawingPresetSize = false,
     bool clearEditingTextShapeId = false,
     bool clearActiveHandle = false,
     bool clearResizeOrigin = false,
@@ -327,6 +333,9 @@ class CanvasState extends Equatable {
       branchId: branchId ?? this.branchId,
       drawingShapeId:
           clearDrawingShapeId ? null : (drawingShapeId ?? this.drawingShapeId),
+        drawingPresetSize: clearDrawingPresetSize
+          ? null
+          : (drawingPresetSize ?? this.drawingPresetSize),
       editingTextShapeId: clearEditingTextShapeId
           ? null
           : (editingTextShapeId ?? this.editingTextShapeId),
@@ -372,6 +381,7 @@ class CanvasState extends Equatable {
         projectId,
         branchId,
         drawingShapeId,
+        drawingPresetSize,
         editingTextShapeId,
         draftTextShapeIds,
         activeHandle,

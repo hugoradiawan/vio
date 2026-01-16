@@ -568,6 +568,11 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
           expandedLayerIds: expanded,
           interactionMode: InteractionMode.drawing,
           drawingShapeId: newId,
+          drawingPresetSize: event.tool == CanvasPointerTool.drawFrame &&
+                  event.initialWidth != null &&
+                  event.initialHeight != null
+              ? Size(event.initialWidth!, event.initialHeight!)
+              : null,
           dragStart: canvasPoint,
           currentPointer: canvasPoint,
           clearDragOffset: true,
@@ -821,6 +826,14 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       if (shape == null) return;
 
       final start = state.dragStart!;
+
+      // If a preset is armed, a simple click should apply it.
+      // As soon as the user drags beyond a small threshold, treat it as
+      // custom drag-to-create and disarm the preset.
+      const presetDisarmThreshold = 3.0;
+      final shouldDisarmPreset = state.drawingPresetSize != null &&
+          (canvasPoint - start).distance > presetDisarmThreshold;
+
       final dx = canvasPoint.dx - start.dx;
       final dy = canvasPoint.dy - start.dy;
 
@@ -867,6 +880,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         state.copyWith(
           shapes: newShapes,
           currentPointer: canvasPoint,
+          clearDrawingPresetSize: shouldDisarmPreset,
         ),
       );
       return;
@@ -1056,17 +1070,39 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     if (state.interactionMode == InteractionMode.drawing &&
         state.drawingShapeId != null) {
       final shapeId = state.drawingShapeId!;
-      final createdShape = state.shapes[shapeId];
-      if (createdShape != null) {
-        _notifyRepositoryShapeAdded(createdShape);
+      var nextShapes = state.shapes;
+      final createdShape = nextShapes[shapeId];
+
+      // Click-to-create preset frames (no drag).
+      if (createdShape is FrameShape &&
+          state.drawingPresetSize != null &&
+          state.dragStart != null &&
+          state.currentPointer != null) {
+        const clickThreshold = 3.0;
+        final distance = (state.currentPointer! - state.dragStart!).distance;
+        if (distance <= clickThreshold) {
+          nextShapes = Map<String, Shape>.from(nextShapes)
+            ..[shapeId] = createdShape.copyWith(
+              frameWidth: state.drawingPresetSize!.width,
+              frameHeight: state.drawingPresetSize!.height,
+            );
+        }
       }
-      _pushUndoState(state.shapes);
+
+      final finalShape = nextShapes[shapeId];
+      if (finalShape != null) {
+        _notifyRepositoryShapeAdded(finalShape);
+      }
+
+      _pushUndoState(nextShapes);
       emit(
         state.copyWith(
+          shapes: nextShapes,
           interactionMode: InteractionMode.idle,
           clearDragStart: true,
           clearCurrentPointer: true,
           clearDrawingShapeId: true,
+          clearDrawingPresetSize: true,
           clearSnap: true,
         ),
       );

@@ -12,6 +12,7 @@ import 'package:vio_ui_kit/vio_ui_kit.dart';
 import '../../../core/core.dart';
 import '../../workspace/bloc/workspace_bloc.dart';
 import '../bloc/canvas_bloc.dart';
+import '../models/frame_presets.dart';
 import 'painters/canvas_painter.dart';
 import 'painters/grid_painter.dart';
 import 'painters/ruler_painter.dart';
@@ -659,6 +660,10 @@ class _CanvasViewState extends State<CanvasView> {
       _ => CanvasPointerTool.select,
     };
 
+    final preset = tool == CanvasPointerTool.drawFrame
+        ? framePresetById(workspaceState.frameToolPresetId)
+        : null;
+
     context.read<CanvasBloc>().add(
           PointerDown(
             x: event.localPosition.dx,
@@ -666,6 +671,8 @@ class _CanvasViewState extends State<CanvasView> {
             button: event.buttons,
             shiftPressed: HardwareKeyboard.instance.isShiftPressed,
             tool: tool,
+            initialWidth: preset?.width,
+            initialHeight: preset?.height,
           ),
         );
   }

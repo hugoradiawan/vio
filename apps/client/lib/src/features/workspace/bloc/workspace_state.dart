@@ -53,6 +53,7 @@ class WorkspaceState extends Equatable {
     this.snapToGrid = true,
     this.showRulers = true,
     this.gridSize = 8.0,
+    this.frameToolPresetId,
     this.errorMessage,
   });
 
@@ -83,6 +84,9 @@ class WorkspaceState extends Equatable {
   /// Grid cell size in logical pixels
   final double gridSize;
 
+  /// Default frame preset id used by the Frame tool (null = custom).
+  final String? frameToolPresetId;
+
   /// Error message if status is error
   final String? errorMessage;
 
@@ -102,6 +106,7 @@ class WorkspaceState extends Equatable {
     bool? snapToGrid,
     bool? showRulers,
     double? gridSize,
+    String? frameToolPresetId,
     String? errorMessage,
   }) {
     return WorkspaceState(
@@ -114,6 +119,7 @@ class WorkspaceState extends Equatable {
       snapToGrid: snapToGrid ?? this.snapToGrid,
       showRulers: showRulers ?? this.showRulers,
       gridSize: gridSize ?? this.gridSize,
+      frameToolPresetId: frameToolPresetId ?? this.frameToolPresetId,
       errorMessage: errorMessage ?? this.errorMessage,
     );
   }
@@ -129,6 +135,7 @@ class WorkspaceState extends Equatable {
         snapToGrid,
         showRulers,
         gridSize,
+        frameToolPresetId,
         errorMessage,
       ];
 }

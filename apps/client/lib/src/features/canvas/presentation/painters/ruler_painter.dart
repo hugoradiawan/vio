@@ -26,6 +26,11 @@ class HorizontalRulerPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // The ruler widget is shifted by [rulerOffset] pixels (because the vertical
+    // ruler occupies the left gutter). Adjust the viewport offset so tick
+    // values line up with the actual canvas origin.
+    final effectiveOffset = offset - rulerOffset;
+
     final paint = Paint()
       ..color = VioColors.surface2
       ..style = PaintingStyle.fill;
@@ -60,11 +65,11 @@ class HorizontalRulerPainter extends CustomPainter {
     }
 
     final scaledInterval = interval * zoom;
-    final startValue = (-offset / zoom / interval).floor() * interval;
-    final startX = startValue * zoom + offset;
+    final startValue = (-effectiveOffset / zoom / interval).floor() * interval;
+    final startX = startValue * zoom + effectiveOffset;
 
     for (double x = startX; x < size.width; x += scaledInterval) {
-      final value = ((x - offset) / zoom).round();
+      final value = ((x - effectiveOffset) / zoom).round();
 
       // Major tick
       canvas.drawLine(
@@ -101,10 +106,12 @@ class HorizontalRulerPainter extends CustomPainter {
   void _drawSelectionHighlight(Canvas canvas, Size size) {
     if (selectionRect == null) return;
 
+    final effectiveOffset = offset - rulerOffset;
+
     // Convert selection bounds to screen coordinates
     // Subtract rulerOffset because the canvas content area starts after the vertical ruler
-    final leftScreen = selectionRect!.left * zoom + offset - rulerOffset;
-    final rightScreen = selectionRect!.right * zoom + offset - rulerOffset;
+    final leftScreen = selectionRect!.left * zoom + effectiveOffset;
+    final rightScreen = selectionRect!.right * zoom + effectiveOffset;
 
     // Clamp to visible area
     final visibleLeft = leftScreen.clamp(0.0, size.width);
@@ -228,6 +235,11 @@ class VerticalRulerPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // The ruler widget is shifted by [rulerOffset] pixels (because the
+    // horizontal ruler occupies the top gutter). Adjust the viewport offset so
+    // tick values line up with the actual canvas origin.
+    final effectiveOffset = offset - rulerOffset;
+
     final paint = Paint()
       ..color = VioColors.surface2
       ..style = PaintingStyle.fill;
@@ -258,11 +270,11 @@ class VerticalRulerPainter extends CustomPainter {
     }
 
     final scaledInterval = interval * zoom;
-    final startValue = (-offset / zoom / interval).floor() * interval;
-    final startY = startValue * zoom + offset;
+    final startValue = (-effectiveOffset / zoom / interval).floor() * interval;
+    final startY = startValue * zoom + effectiveOffset;
 
     for (double y = startY; y < size.height; y += scaledInterval) {
-      final value = ((y - offset) / zoom).round();
+      final value = ((y - effectiveOffset) / zoom).round();
 
       // Major tick
       canvas.drawLine(
@@ -307,10 +319,12 @@ class VerticalRulerPainter extends CustomPainter {
   void _drawSelectionHighlight(Canvas canvas, Size size) {
     if (selectionRect == null) return;
 
+    final effectiveOffset = offset - rulerOffset;
+
     // Convert selection bounds to screen coordinates
     // Subtract rulerOffset because the canvas content area starts after the horizontal ruler
-    final topScreen = selectionRect!.top * zoom + offset - rulerOffset;
-    final bottomScreen = selectionRect!.bottom * zoom + offset - rulerOffset;
+    final topScreen = selectionRect!.top * zoom + effectiveOffset;
+    final bottomScreen = selectionRect!.bottom * zoom + effectiveOffset;
 
     // Clamp to visible area
     final visibleTop = topScreen.clamp(0.0, size.height);

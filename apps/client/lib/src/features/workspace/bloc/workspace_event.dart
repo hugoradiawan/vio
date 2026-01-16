@@ -57,3 +57,15 @@ class SnapToGridToggled extends WorkspaceEvent {
 class RulersToggled extends WorkspaceEvent {
   const RulersToggled();
 }
+
+/// Fired when the user changes the default frame preset (used when creating
+/// new frames with the Frame tool).
+class FrameToolPresetChanged extends WorkspaceEvent {
+  const FrameToolPresetChanged(this.presetId);
+
+  /// Selected preset id, or null for custom/no default.
+  final String? presetId;
+
+  @override
+  List<Object?> get props => [presetId];
+}

@@ -18,6 +18,8 @@ class TextShape extends Shape {
     this.fontSize = 16.0,
     this.fontFamily,
     this.fontWeight,
+    this.lineHeight,
+    this.letterSpacingPercent = 0.0,
     this.textAlign = TextAlign.left,
     super.parentId,
     super.frameId,
@@ -59,6 +61,14 @@ class TextShape extends Shape {
   /// Optional font weight (CSS-ish numeric weight: 100..900)
   final int? fontWeight;
 
+  /// Line height multiplier (e.g. 1.2 == 120%).
+  ///
+  /// If null, treat as "auto" (use font defaults).
+  final double? lineHeight;
+
+  /// Letter spacing as a percentage of the font size (e.g. 0 == 0%, 5 == 5%).
+  final double letterSpacingPercent;
+
   /// Text alignment
   final TextAlign textAlign;
 
@@ -91,6 +101,8 @@ class TextShape extends Shape {
     double? fontSize,
     String? fontFamily,
     int? fontWeight,
+    double? lineHeight,
+    double? letterSpacingPercent,
     TextAlign? textAlign,
   }) {
     return TextShape(
@@ -118,6 +130,8 @@ class TextShape extends Shape {
       fontSize: fontSize ?? this.fontSize,
       fontFamily: fontFamily ?? this.fontFamily,
       fontWeight: fontWeight ?? this.fontWeight,
+      lineHeight: lineHeight ?? this.lineHeight,
+      letterSpacingPercent: letterSpacingPercent ?? this.letterSpacingPercent,
       textAlign: textAlign ?? this.textAlign,
     );
   }
@@ -138,6 +152,8 @@ class TextShape extends Shape {
         'fontSize': fontSize,
         if (fontFamily != null) 'fontFamily': fontFamily,
         if (fontWeight != null) 'fontWeight': fontWeight,
+        if (lineHeight != null) 'lineHeight': lineHeight,
+        'letterSpacingPercent': letterSpacingPercent,
         'textAlign': textAlign.name,
       };
 
@@ -156,6 +172,9 @@ class TextShape extends Shape {
         fontSize: (json['fontSize'] as num?)?.toDouble() ?? 16.0,
         fontFamily: json['fontFamily'] as String?,
         fontWeight: (json['fontWeight'] as num?)?.toInt(),
+        lineHeight: (json['lineHeight'] as num?)?.toDouble(),
+        letterSpacingPercent:
+            (json['letterSpacingPercent'] as num?)?.toDouble() ?? 0.0,
         textAlign: TextAlign.values.firstWhere(
           (e) => e.name == json['textAlign'],
           orElse: () => TextAlign.left,
@@ -204,6 +223,8 @@ class TextShape extends Shape {
         fontSize,
         fontFamily,
         fontWeight,
+        lineHeight,
+        letterSpacingPercent,
         textAlign,
       ];
 }

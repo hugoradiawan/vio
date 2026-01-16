@@ -126,6 +126,25 @@ class TextEditCommitted extends CanvasEvent {
   List<Object?> get props => [shapeId, text, width, height];
 }
 
+/// Update the measured bounds of the currently edited text shape.
+///
+/// This is used while typing (e.g., when pressing Enter to add a new line)
+/// so the selection box can grow without committing the edit.
+class TextEditLayoutChanged extends CanvasEvent {
+  const TextEditLayoutChanged({
+    required this.shapeId,
+    required this.width,
+    required this.height,
+  });
+
+  final String shapeId;
+  final double width;
+  final double height;
+
+  @override
+  List<Object?> get props => [shapeId, width, height];
+}
+
 /// Cancel an active text edit session.
 class TextEditCanceled extends CanvasEvent {
   const TextEditCanceled({required this.shapeId});

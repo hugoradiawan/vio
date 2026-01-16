@@ -113,6 +113,11 @@ class PositionSizeSection extends StatelessWidget {
         ],
       );
     }
+
+    if (shape is TextShape) {
+      return const SizedBox.shrink();
+    }
+
     // For other shapes, show opacity
     return Row(
       children: [

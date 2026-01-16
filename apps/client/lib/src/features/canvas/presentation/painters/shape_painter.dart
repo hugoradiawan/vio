@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:vio_core/vio_core.dart';
 
 /// Utility class for rendering shapes with fills and strokes
@@ -60,6 +61,12 @@ class ShapePainter {
       return;
     }
 
+    // Always clip to the text box so glyphs never render outside the bounds.
+    // This also protects against brief mismatches while runtime-loaded fonts
+    // (GoogleFonts) are still resolving.
+    canvas.save();
+    canvas.clipRect(bounds);
+
     // Use the first fill as text color, otherwise default to white.
     final fill = shape.fills.isNotEmpty ? shape.fills.first : null;
     final color = fill != null
@@ -75,20 +82,47 @@ class ShapePainter {
       );
     }
 
+    final letterSpacing = shape.letterSpacingPercent == 0
+        ? null
+        : shape.fontSize * (shape.letterSpacingPercent / 100.0);
+    final baseStyle = TextStyle(
+      color: color,
+      fontSize: shape.fontSize,
+      fontWeight: fontWeight,
+      height: shape.lineHeight,
+      letterSpacing: letterSpacing,
+    );
+
+    TextStyle resolveFontStyle() {
+      final family = shape.fontFamily;
+      if (family == null || family.isEmpty) {
+        return baseStyle;
+      }
+      try {
+        return GoogleFonts.getFont(family, textStyle: baseStyle);
+      } catch (_) {
+        // Non-google/system font: fall back to raw fontFamily.
+        return baseStyle.copyWith(fontFamily: family);
+      }
+    }
+
+    final maxWidth = bounds.width <= 1 ? 200.0 : bounds.width;
+    final widthConstraint = maxWidth.isFinite ? maxWidth : double.infinity;
+
     final painter = TextPainter(
       text: TextSpan(
         text: text,
-        style: TextStyle(
-          color: color,
-          fontSize: shape.fontSize,
-          fontFamily: shape.fontFamily,
-          fontWeight: fontWeight,
-          height: 1.2,
-        ),
+        style: resolveFontStyle(),
       ),
       textAlign: shape.textAlign,
       textDirection: TextDirection.ltr,
-    )..layout(maxWidth: bounds.width.isFinite ? bounds.width : double.infinity);
+    )..layout(
+        // IMPORTANT: Force the paragraph width to be the text box width.
+        // Without this, TextPainter will size itself to the intrinsic text
+        // width and center/right alignment appears as left-aligned.
+        minWidth: widthConstraint.isFinite ? widthConstraint : 0,
+        maxWidth: widthConstraint,
+      );
 
     // Apply overall shape opacity (paintShape doesn't wrap text in saveLayer)
     if (shape.opacity < 1.0) {
@@ -101,6 +135,8 @@ class ShapePainter {
     } else {
       painter.paint(canvas, Offset(bounds.left, bounds.top));
     }
+
+    canvas.restore();
   }
 
   /// Apply the shape's transformation matrix to the canvas

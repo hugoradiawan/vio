@@ -1,5 +1,9 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:vio_core/vio_core.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
@@ -582,6 +586,489 @@ class ShadowSection extends StatelessWidget {
 
     final bloc = context.read<CanvasBloc>();
     bloc.add(ShapeUpdated(shape.copyWith(shadow: newShadow)));
+  }
+}
+
+// ============================================================================
+// Typography (TextShape)
+// ============================================================================
+
+class TypographySection extends StatelessWidget {
+  const TypographySection({
+    required this.shape,
+    super.key,
+  });
+
+  final TextShape shape;
+
+  static const List<String> _fontFamilyOptions = <String>[
+    '',
+    'Inter',
+    'Roboto',
+    'Open Sans',
+    'Lato',
+    'Montserrat',
+    'Poppins',
+    'Raleway',
+    'Nunito',
+    'Merriweather',
+    'Playfair Display',
+    'Source Sans 3',
+    'Ubuntu',
+    'Fira Sans',
+    'Fira Code',
+    'JetBrains Mono',
+    // System fonts (fallback via fontFamily)
+    'Arial',
+    'Courier New',
+  ];
+
+  static const List<int> _fontWeightOptions = <int>[
+    0, // Default
+    100,
+    200,
+    300,
+    400,
+    500,
+    600,
+    700,
+    800,
+    900,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final isAutoLineHeight = shape.lineHeight == null;
+    final fontFamilyValue = shape.fontFamily ?? '';
+    final fontWeightValue = shape.fontWeight ?? 0;
+
+    return Padding(
+      padding: const EdgeInsets.all(VioSpacing.sm),
+      child: Column(
+        children: [
+          // Font family
+          Row(
+            children: [
+              Expanded(
+                child: _LabeledField(
+                  label: 'Font',
+                  child: _Dropdown<String>(
+                    value: _fontFamilyOptions.contains(fontFamilyValue)
+                        ? fontFamilyValue
+                        : '',
+                    items: _fontFamilyOptions,
+                    itemLabel: (value) => value.isEmpty ? 'Default' : value,
+                    onChanged: (value) {
+                      final updated = shape.copyWith(
+                        fontFamily: value.isEmpty ? null : value,
+                      );
+                      _emitUpdated(context, updated, relayoutText: true);
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: VioSpacing.sm),
+
+          // Weight + Size
+          Row(
+            children: [
+              Expanded(
+                child: _LabeledField(
+                  label: 'Weight',
+                  child: _Dropdown<int>(
+                    value: _fontWeightOptions.contains(fontWeightValue)
+                        ? fontWeightValue
+                        : 0,
+                    items: _fontWeightOptions,
+                    itemLabel: (value) =>
+                        value == 0 ? 'Default' : value.toString(),
+                    onChanged: (value) {
+                      final updated = shape.copyWith(
+                        fontWeight: value == 0 ? null : value,
+                      );
+                      _emitUpdated(context, updated, relayoutText: true);
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: VioSpacing.sm),
+              SizedBox(
+                width: 96,
+                child: _LabeledField(
+                  label: 'Size',
+                  child: VioNumericField(
+                    value: shape.fontSize,
+                    min: 1,
+                    max: 512,
+                    label: 'px',
+                    onChanged: (value) {
+                      final updated = shape.copyWith(fontSize: value);
+                      _emitUpdated(context, updated, relayoutText: true);
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: VioSpacing.sm),
+
+          // Line height + Letter spacing
+          Row(
+            children: [
+              Expanded(
+                child: _LabeledField(
+                  label: 'Line height',
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: VioNumericField(
+                          value: shape.lineHeight == null
+                              ? null
+                              : (shape.lineHeight! * 100),
+                          min: 0,
+                          max: 2000,
+                          enabled: !isAutoLineHeight,
+                          label: '%',
+                          onChanged: (value) {
+                            final updated = shape.copyWith(
+                              lineHeight: value / 100.0,
+                            );
+                            _emitUpdated(context, updated, relayoutText: true);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: VioSpacing.xs),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: Checkbox(
+                              value: isAutoLineHeight,
+                              onChanged: (value) {
+                                final updated = shape.copyWith(
+                                  lineHeight: (value ?? false)
+                                      ? null
+                                      : (shape.lineHeight ?? 1.2),
+                                );
+                                _emitUpdated(
+                                  context,
+                                  updated,
+                                  relayoutText: true,
+                                );
+                              },
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Auto',
+                            style: VioTypography.caption.copyWith(
+                              color: VioColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: VioSpacing.sm),
+              SizedBox(
+                width: 120,
+                child: _LabeledField(
+                  label: 'Letter',
+                  child: VioNumericField(
+                    value: shape.letterSpacingPercent,
+                    min: -100,
+                    max: 500,
+                    label: '%',
+                    onChanged: (value) {
+                      final updated = shape.copyWith(
+                        letterSpacingPercent: value,
+                      );
+                      _emitUpdated(context, updated, relayoutText: true);
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: VioSpacing.sm),
+
+          // Text alignment
+          _LabeledField(
+            label: 'Align',
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                VioIconButton(
+                  icon: Icons.format_align_left,
+                  tooltip: 'Left',
+                  isSelected: _isLeftAligned(shape.textAlign),
+                  onPressed: () {
+                    final updated = shape.copyWith(textAlign: TextAlign.left);
+                    _emitUpdated(context, updated, relayoutText: true);
+                  },
+                ),
+                VioIconButton(
+                  icon: Icons.format_align_center,
+                  tooltip: 'Center',
+                  isSelected: shape.textAlign == TextAlign.center,
+                  onPressed: () {
+                    final updated = shape.copyWith(textAlign: TextAlign.center);
+                    _emitUpdated(context, updated, relayoutText: true);
+                  },
+                ),
+                VioIconButton(
+                  icon: Icons.format_align_right,
+                  tooltip: 'Right',
+                  isSelected: _isRightAligned(shape.textAlign),
+                  onPressed: () {
+                    final updated = shape.copyWith(textAlign: TextAlign.right);
+                    _emitUpdated(context, updated, relayoutText: true);
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _emitUpdated(
+    BuildContext context,
+    TextShape updated, {
+    required bool relayoutText,
+  }) {
+    final shapeToSend = relayoutText ? _relayoutTextHeight(updated) : updated;
+    final bloc = context.read<CanvasBloc>();
+    bloc.add(ShapeUpdated(shapeToSend));
+
+    // Google fonts may finish loading asynchronously after we measure.
+    // When that happens, metrics can change and text can overflow unless we
+    // re-measure. This keeps the box correct once the real font is ready.
+    _relayoutAfterFontLoad(bloc: bloc, shape: shapeToSend);
+  }
+
+  Future<void> _relayoutAfterFontLoad({
+    required CanvasBloc bloc,
+    required TextShape shape,
+  }) async {
+    final text = shape.text;
+    if (text.trim().isEmpty) return;
+
+    final family = shape.fontFamily;
+    if (family == null || family.isEmpty) return;
+
+    FontWeight? fontWeight;
+    final weightValue = shape.fontWeight;
+    if (weightValue != null) {
+      fontWeight = FontWeight.values.firstWhere(
+        (w) => w.value == weightValue,
+        orElse: () => FontWeight.w400,
+      );
+    }
+
+    final letterSpacing = shape.letterSpacingPercent == 0
+        ? null
+        : shape.fontSize * (shape.letterSpacingPercent / 100.0);
+
+    final baseStyle = TextStyle(
+      fontSize: shape.fontSize,
+      fontWeight: fontWeight,
+      height: shape.lineHeight,
+      letterSpacing: letterSpacing,
+    );
+
+    TextStyle resolvedStyle;
+    try {
+      resolvedStyle = GoogleFonts.getFont(family, textStyle: baseStyle);
+    } catch (_) {
+      // Not a Google font (system/unknown) => nothing to await.
+      return;
+    }
+
+    try {
+      // Wait for the font to load, then re-measure against the real metrics.
+      await GoogleFonts.pendingFonts([resolvedStyle]);
+    } catch (_) {
+      // Best-effort only.
+      return;
+    }
+
+    final latest = bloc.state.shapes[shape.id];
+    if (latest is! TextShape) return;
+
+    // Reuse the same relayout logic (grow-only) now that the font is ready.
+    final relayout = _relayoutTextHeight(latest);
+    if (relayout.textWidth == latest.textWidth &&
+        relayout.textHeight == latest.textHeight) {
+      return;
+    }
+
+    bloc.add(ShapeUpdated(relayout));
+  }
+
+  TextShape _relayoutTextHeight(TextShape updated) {
+    final text = updated.text;
+    if (text.trim().isEmpty) {
+      return updated;
+    }
+
+    FontWeight? fontWeight;
+    final weightValue = updated.fontWeight;
+    if (weightValue != null) {
+      fontWeight = FontWeight.values.firstWhere(
+        (w) => w.value == weightValue,
+        orElse: () => FontWeight.w400,
+      );
+    }
+
+    final letterSpacing = updated.letterSpacingPercent == 0
+        ? null
+        : updated.fontSize * (updated.letterSpacingPercent / 100.0);
+
+    final baseStyle = TextStyle(
+      fontSize: updated.fontSize,
+      fontWeight: fontWeight,
+      height: updated.lineHeight,
+      letterSpacing: letterSpacing,
+    );
+
+    TextStyle resolveFontStyle() {
+      final family = updated.fontFamily;
+      if (family == null || family.isEmpty) {
+        return baseStyle;
+      }
+      try {
+        return GoogleFonts.getFont(family, textStyle: baseStyle);
+      } catch (_) {
+        return baseStyle.copyWith(fontFamily: family);
+      }
+    }
+
+    final wrapWidth = (updated.textWidth <= 1 ? 200.0 : updated.textWidth)
+        .clamp(1.0, double.infinity);
+
+    final painter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: resolveFontStyle(),
+      ),
+      textAlign: updated.textAlign,
+      textDirection: TextDirection.ltr,
+    )..layout(
+        // Force the paragraph width to the current text box width so
+        // center/right alignment is computed within the box.
+        minWidth: wrapWidth,
+        maxWidth: wrapWidth,
+      );
+
+    final neededHeight = (painter.height + 2).clamp(1.0, double.infinity);
+
+    final minWidth = updated.textWidth <= 1 ? 200.0 : updated.textWidth;
+    final minHeight = updated.textHeight <= 1 ? 24.0 : updated.textHeight;
+
+    // Keep width stable; only grow if the current width is effectively unset.
+    final newWidth = math.max(minWidth, wrapWidth);
+    final newHeight = math.max(minHeight, neededHeight);
+
+    if (newWidth == updated.textWidth && newHeight == updated.textHeight) {
+      return updated;
+    }
+
+    return updated.copyWith(textWidth: newWidth, textHeight: newHeight);
+  }
+
+  bool _isLeftAligned(TextAlign align) {
+    return align == TextAlign.left || align == TextAlign.start;
+  }
+
+  bool _isRightAligned(TextAlign align) {
+    return align == TextAlign.right || align == TextAlign.end;
+  }
+}
+
+class _LabeledField extends StatelessWidget {
+  const _LabeledField({
+    required this.label,
+    required this.child,
+  });
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: VioTypography.caption.copyWith(
+            color: VioColors.textTertiary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        child,
+      ],
+    );
+  }
+}
+
+class _Dropdown<T> extends StatelessWidget {
+  const _Dropdown({
+    required this.value,
+    required this.items,
+    required this.itemLabel,
+    required this.onChanged,
+  });
+
+  final T value;
+  final List<T> items;
+  final String Function(T) itemLabel;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 32,
+      padding: const EdgeInsets.symmetric(horizontal: VioSpacing.sm),
+      decoration: BoxDecoration(
+        color: VioColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
+        border: Border.all(color: VioColors.border),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<T>(
+          value: value,
+          isDense: true,
+          style: VioTypography.caption.copyWith(
+            color: VioColors.textPrimary,
+          ),
+          dropdownColor: VioColors.surfaceElevated,
+          items: items
+              .map(
+                (item) => DropdownMenuItem<T>(
+                  value: item,
+                  child: Text(itemLabel(item)),
+                ),
+              )
+              .toList(growable: false),
+          onChanged: (next) {
+            if (next != null) {
+              onChanged(next);
+            }
+          },
+        ),
+      ),
+    );
   }
 }
 

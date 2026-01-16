@@ -1,7 +1,11 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:vio_core/vio_core.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
@@ -41,6 +45,10 @@ class _CanvasViewState extends State<CanvasView> {
   final TextEditingController _textController = TextEditingController();
   final FocusNode _textFocusNode = FocusNode();
 
+  Timer? _textLayoutDebounce;
+  double? _lastSentTextWidth;
+  double? _lastSentTextHeight;
+
   /// When we explicitly commit/cancel an edit and then unfocus the field,
   /// the FocusNode listener would otherwise fire and enqueue a second
   /// commit (which can turn into a cancel after the shape is removed).
@@ -58,6 +66,8 @@ class _CanvasViewState extends State<CanvasView> {
     // Register global keyboard handler for shortcuts
     HardwareKeyboard.instance.addHandler(_handleKeyboardEvent);
 
+    _textController.addListener(_onTextControllerChanged);
+
     _textFocusNode.addListener(() {
       final id = _editingTextShapeId;
       if (!_textFocusNode.hasFocus && id != null) {
@@ -73,9 +83,56 @@ class _CanvasViewState extends State<CanvasView> {
   @override
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_handleKeyboardEvent);
+
+    _textLayoutDebounce?.cancel();
+    _textController.removeListener(_onTextControllerChanged);
     _textController.dispose();
     _textFocusNode.dispose();
     super.dispose();
+  }
+
+  void _onTextControllerChanged() {
+    final shapeId = _editingTextShapeId;
+    if (shapeId == null) {
+      return;
+    }
+
+    // Debounce to avoid spamming bloc with events for every keystroke.
+    _textLayoutDebounce?.cancel();
+    _textLayoutDebounce = Timer(const Duration(milliseconds: 50), () {
+      if (!mounted) return;
+
+      final bloc = context.read<CanvasBloc>();
+      final shape = bloc.state.shapes[shapeId];
+      if (shape is! TextShape) return;
+
+      final (measuredWidth, measuredHeight) =
+          _measureText(_textController.text, shape);
+
+      // Keep a minimum editor size (Penpot-like default).
+      final width = math.max(200.0, measuredWidth);
+      final height = math.max(24.0, measuredHeight);
+
+      // Tiny threshold to reduce no-op updates.
+      const eps = 0.5;
+      if (_lastSentTextWidth != null &&
+          _lastSentTextHeight != null &&
+          (width - _lastSentTextWidth!).abs() < eps &&
+          (height - _lastSentTextHeight!).abs() < eps) {
+        return;
+      }
+
+      _lastSentTextWidth = width;
+      _lastSentTextHeight = height;
+
+      bloc.add(
+        TextEditLayoutChanged(
+          shapeId: shapeId,
+          width: width,
+          height: height,
+        ),
+      );
+    });
   }
 
   /// Global keyboard event handler for shortcuts (works regardless of focus)
@@ -232,6 +289,9 @@ class _CanvasViewState extends State<CanvasView> {
                           _editingTextShapeId = id;
                         });
 
+                        _lastSentTextWidth = null;
+                        _lastSentTextHeight = null;
+
                         if (id == null) {
                           return;
                         }
@@ -265,6 +325,14 @@ class _CanvasViewState extends State<CanvasView> {
                             _textFocusNode.requestFocus();
                           }
                         });
+
+                        // If this is a Google font, it may load async and change
+                        // metrics after we've measured. Trigger a relayout once
+                        // the font is ready so text never overflows the box.
+                        _relayoutEditingTextAfterFontLoad(
+                          shapeId: id,
+                          shape: shape,
+                        );
                       },
                     ),
                   ],
@@ -783,29 +851,117 @@ class _CanvasViewState extends State<CanvasView> {
       );
     }
 
+    final letterSpacing = shape.letterSpacingPercent == 0
+        ? null
+        : shape.fontSize * (shape.letterSpacingPercent / 100.0);
+
+    final baseStyle = TextStyle(
+      fontSize: shape.fontSize,
+      fontWeight: fontWeight,
+      height: shape.lineHeight,
+      letterSpacing: letterSpacing,
+    );
+
+    TextStyle resolveFontStyle() {
+      final family = shape.fontFamily;
+      if (family == null || family.isEmpty) {
+        return baseStyle;
+      }
+      try {
+        return GoogleFonts.getFont(family, textStyle: baseStyle);
+      } catch (_) {
+        return baseStyle.copyWith(fontFamily: family);
+      }
+    }
+
+    final wrapWidth = (shape.textWidth <= 1 ? 200.0 : shape.textWidth)
+        .clamp(1.0, double.infinity);
+
     final painter = TextPainter(
       text: TextSpan(
         text: text,
-        style: TextStyle(
-          fontSize: shape.fontSize,
-          fontFamily: shape.fontFamily,
-          fontWeight: fontWeight,
-          height: 1.2,
-        ),
+        style: resolveFontStyle(),
       ),
       textAlign: shape.textAlign,
       textDirection: TextDirection.ltr,
     )..layout(
         // Keep committed bounds consistent with what the editor shows.
-        // Use the current shape width as a wrapping constraint.
-        maxWidth: (shape.textWidth <= 1 ? 200.0 : shape.textWidth)
-            .clamp(1.0, double.infinity),
+        // Force the paragraph width to the current text box width so
+        // center/right alignment is computed within the box.
+        minWidth: wrapWidth,
+        maxWidth: wrapWidth,
       );
 
+    // Keep width stable (the text box width). Only compute the needed height.
     // Add a small padding so caret isn't clipped.
-    final width = (painter.width + 2).clamp(1.0, double.infinity);
     final height = (painter.height + 2).clamp(1.0, double.infinity);
-    return (width, height);
+    return (wrapWidth, height);
+  }
+
+  void _relayoutEditingTextAfterFontLoad({
+    required String shapeId,
+    required TextShape shape,
+  }) {
+    final family = shape.fontFamily;
+    if (family == null || family.isEmpty) return;
+
+    final text = _textController.text;
+    if (text.trim().isEmpty) return;
+
+    Future<void>(() async {
+      FontWeight? fontWeight;
+      final weightValue = shape.fontWeight;
+      if (weightValue != null) {
+        fontWeight = FontWeight.values.firstWhere(
+          (w) => w.value == weightValue,
+          orElse: () => FontWeight.w400,
+        );
+      }
+
+      final letterSpacing = shape.letterSpacingPercent == 0
+          ? null
+          : shape.fontSize * (shape.letterSpacingPercent / 100.0);
+
+      final baseStyle = TextStyle(
+        fontSize: shape.fontSize,
+        fontWeight: fontWeight,
+        height: shape.lineHeight,
+        letterSpacing: letterSpacing,
+      );
+
+      TextStyle resolvedStyle;
+      try {
+        resolvedStyle = GoogleFonts.getFont(family, textStyle: baseStyle);
+      } catch (_) {
+        return;
+      }
+
+      try {
+        await GoogleFonts.pendingFonts([resolvedStyle]);
+      } catch (_) {
+        return;
+      }
+
+      if (!mounted) return;
+      if (_editingTextShapeId != shapeId) return;
+
+      final bloc = context.read<CanvasBloc>();
+      final latest = bloc.state.shapes[shapeId];
+      if (latest is! TextShape) return;
+
+      final (measuredWidth, measuredHeight) =
+          _measureText(_textController.text, latest);
+      final width = math.max(200.0, measuredWidth);
+      final height = math.max(24.0, measuredHeight);
+
+      bloc.add(
+        TextEditLayoutChanged(
+          shapeId: shapeId,
+          width: width,
+          height: height,
+        ),
+      );
+    });
   }
 }
 
@@ -856,6 +1012,32 @@ class _TextEditorOverlay extends StatelessWidget {
       );
     }
 
+    final scaledFontSize = shape.fontSize * canvasState.zoom;
+    final scaledLetterSpacing = shape.letterSpacingPercent == 0
+        ? null
+        : scaledFontSize * (shape.letterSpacingPercent / 100.0);
+
+    final baseStyle = TextStyle(
+      color: color,
+      // Match the painted text size under zoom by scaling font size.
+      fontSize: scaledFontSize,
+      fontWeight: fontWeight,
+      height: shape.lineHeight,
+      letterSpacing: scaledLetterSpacing,
+    );
+
+    TextStyle resolveFontStyle() {
+      final family = shape.fontFamily;
+      if (family == null || family.isEmpty) {
+        return baseStyle;
+      }
+      try {
+        return GoogleFonts.getFont(family, textStyle: baseStyle);
+      } catch (_) {
+        return baseStyle.copyWith(fontFamily: family);
+      }
+    }
+
     return Positioned(
       left: anchorScreen.dx,
       top: anchorScreen.dy,
@@ -869,14 +1051,7 @@ class _TextEditorOverlay extends StatelessWidget {
           keyboardType: TextInputType.multiline,
           textAlign: shape.textAlign,
           textDirection: TextDirection.ltr,
-          style: TextStyle(
-            color: color,
-            // Match the painted text size under zoom by scaling font size.
-            fontSize: shape.fontSize * canvasState.zoom,
-            fontFamily: shape.fontFamily,
-            fontWeight: fontWeight,
-            height: 1.2,
-          ),
+          style: resolveFontStyle(),
           cursorColor: VioColors.primary,
           backgroundCursorColor: VioColors.background,
           selectionColor: VioColors.primary.withValues(alpha: 0.25),

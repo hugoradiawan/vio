@@ -104,6 +104,7 @@ class _SingleShapePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isText = shape is TextShape;
     return Column(
       children: [
         _buildHeader(_getShapeTypeLabel(shape.type)),
@@ -119,6 +120,12 @@ class _SingleShapePanel extends StatelessWidget {
                   title: 'Transform',
                   child: PositionSizeSection(shape: shape),
                 ),
+
+                if (shape is TextShape)
+                  VioPanel(
+                    title: 'Typography',
+                    child: TypographySection(shape: shape as TextShape),
+                  ),
 
                 // Shape-specific properties
                 if (shape is RectangleShape)
@@ -150,49 +157,51 @@ class _SingleShapePanel extends StatelessWidget {
                   child: FillSection(shape: shape),
                 ),
 
-                // Stroke
-                VioPanel(
-                  title: 'Stroke',
-                  trailing: VioSvgIconButton(
-                    assetPath: VioIcons.add,
-                    size: 14,
-                    buttonSize: 24,
-                    onPressed: () => _addStroke(context),
-                    tooltip: 'Add stroke',
+                if (!isText) ...[
+                  // Stroke
+                  VioPanel(
+                    title: 'Stroke',
+                    trailing: VioSvgIconButton(
+                      assetPath: VioIcons.add,
+                      size: 14,
+                      buttonSize: 24,
+                      onPressed: () => _addStroke(context),
+                      tooltip: 'Add stroke',
+                    ),
+                    child: StrokeSection(shape: shape),
                   ),
-                  child: StrokeSection(shape: shape),
-                ),
 
-                // Effects
-                VioPanel(
-                  title: 'Shadow',
-                  trailing: VioSvgIconButton(
-                    assetPath: VioIcons.add,
-                    size: 14,
-                    buttonSize: 24,
-                    onPressed: () => _addShadow(context),
-                    tooltip: 'Add shadow',
+                  // Effects
+                  VioPanel(
+                    title: 'Shadow',
+                    trailing: VioSvgIconButton(
+                      assetPath: VioIcons.add,
+                      size: 14,
+                      buttonSize: 24,
+                      onPressed: () => _addShadow(context),
+                      tooltip: 'Add shadow',
+                    ),
+                    child: ShadowSection(shape: shape),
                   ),
-                  child: ShadowSection(shape: shape),
-                ),
 
-                VioPanel(
-                  title: 'Blur',
-                  trailing: VioSvgIconButton(
-                    assetPath: VioIcons.add,
-                    size: 14,
-                    buttonSize: 24,
-                    onPressed: () => _addBlur(context),
-                    tooltip: 'Add blur',
+                  VioPanel(
+                    title: 'Blur',
+                    trailing: VioSvgIconButton(
+                      assetPath: VioIcons.add,
+                      size: 14,
+                      buttonSize: 24,
+                      onPressed: () => _addBlur(context),
+                      tooltip: 'Add blur',
+                    ),
+                    child: BlurSection(shape: shape),
                   ),
-                  child: BlurSection(shape: shape),
-                ),
 
-                // Opacity
-                VioPanel(
-                  title: 'Opacity',
-                  child: OpacitySection(shape: shape),
-                ),
+                  // Opacity
+                  VioPanel(
+                    title: 'Opacity',
+                    child: OpacitySection(shape: shape),
+                  ),
+                ],
 
                 const SizedBox(height: VioSpacing.lg),
               ],

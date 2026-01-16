@@ -86,6 +86,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     // Text editing events
     on<TextEditRequested>(_onTextEditRequested);
     on<TextEditCommitted>(_onTextEditCommitted);
+    on<TextEditLayoutChanged>(_onTextEditLayoutChanged);
     on<TextEditCanceled>(_onTextEditCanceled);
   }
 
@@ -111,6 +112,39 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         clearSnap: true,
       ),
     );
+  }
+
+  void _onTextEditLayoutChanged(
+    TextEditLayoutChanged event,
+    Emitter<CanvasState> emit,
+  ) {
+    // Only apply while the shape is actively being edited.
+    if (state.editingTextShapeId != event.shapeId) {
+      return;
+    }
+
+    final existing = state.shapes[event.shapeId];
+    if (existing is! TextShape) {
+      return;
+    }
+
+    // Grow-only during editing to avoid jitter when deleting text.
+    final nextWidth = math.max(existing.textWidth, event.width);
+    final nextHeight = math.max(existing.textHeight, event.height);
+
+    if (nextWidth == existing.textWidth && nextHeight == existing.textHeight) {
+      return;
+    }
+
+    final updated = existing.copyWith(
+      textWidth: nextWidth,
+      textHeight: nextHeight,
+    );
+
+    final newShapes = Map<String, Shape>.from(state.shapes)
+      ..[event.shapeId] = updated;
+
+    emit(state.copyWith(shapes: newShapes));
   }
 
   /// Repository for server communication (optional for offline mode)
@@ -714,8 +748,16 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
 
     final updated = existing.copyWith(
       text: trimmed,
-      textWidth: event.width,
-      textHeight: event.height,
+      // Penpot-like: don't auto-shrink the box on commit.
+      // Keep the user's current box size, only grow when needed.
+      textWidth: math.max(
+        existing.textWidth <= 1 ? 200.0 : existing.textWidth,
+        event.width,
+      ),
+      textHeight: math.max(
+        existing.textHeight <= 1 ? 24.0 : existing.textHeight,
+        event.height,
+      ),
     );
 
     final newShapes = Map<String, Shape>.from(state.shapes)

@@ -435,6 +435,10 @@ class _CanvasViewState extends State<CanvasView> {
                                     selectedShapes: canvasState.selectedShapes,
                                     viewMatrix: canvasState.viewMatrix,
                                     dragOffset: canvasState.dragOffset,
+                                    activeCornerIndex:
+                                        canvasState.activeCornerIndex,
+                                    hoveredCornerIndex:
+                                      canvasState.hoveredCornerIndex,
                                     showCornerRadiusHandles:
                                         canvasState.selectedShapes.length ==
                                                 1 &&

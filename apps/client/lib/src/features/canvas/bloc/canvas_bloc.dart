@@ -831,6 +831,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     PointerMove event,
     Emitter<CanvasState> emit,
   ) {
+    final screenPoint = Offset(event.x, event.y);
     final canvasPoint = _screenToCanvas(Offset(event.x, event.y));
 
     // Handle drag-to-create shape updates
@@ -1052,18 +1053,32 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         ),
       );
     } else {
+      // Hover corner-radius handles (single rectangle selection).
+      // Only when not actively dragging the radius.
+      _CornerRadiusHit? hoveredCorner;
+      if (state.interactionMode != InteractionMode.adjustingCornerRadius &&
+          state.selectedShapes.length == 1 &&
+          state.selectedShapes.first is RectangleShape) {
+        hoveredCorner = _hitTestCornerRadiusHandle(screenPoint);
+      }
+
       // Hit test to find shape under pointer for hover highlight
       final hoveredShape =
           HitTest.findTopShapeAtPoint(canvasPoint, state.shapeList);
       final newHoveredId = hoveredShape?.id;
 
+      final nextHoveredCornerIndex = hoveredCorner?.index;
+
       // Only emit if hovered shape changed
-      if (newHoveredId != state.hoveredShapeId) {
+      if (newHoveredId != state.hoveredShapeId ||
+          nextHoveredCornerIndex != state.hoveredCornerIndex) {
         if (newHoveredId == null) {
           emit(
             state.copyWith(
               currentPointer: canvasPoint,
               clearHoveredShapeId: true,
+              hoveredCornerIndex: nextHoveredCornerIndex,
+              clearHoveredCornerIndex: nextHoveredCornerIndex == null,
             ),
           );
         } else {
@@ -1071,6 +1086,8 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
             state.copyWith(
               currentPointer: canvasPoint,
               hoveredShapeId: newHoveredId,
+              hoveredCornerIndex: nextHoveredCornerIndex,
+              clearHoveredCornerIndex: nextHoveredCornerIndex == null,
             ),
           );
         }
@@ -1533,7 +1550,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     SelectionCleared event,
     Emitter<CanvasState> emit,
   ) {
-    emit(state.copyWith(selectedShapeIds: []));
+    emit(state.copyWith(selectedShapeIds: [], clearHoveredCornerIndex: true));
   }
 
   void _onShapesReparented(
@@ -1920,7 +1937,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     CanvasPointerExited event,
     Emitter<CanvasState> emit,
   ) {
-    emit(state.copyWith(clearHoveredShapeId: true));
+    emit(state.copyWith(clearHoveredShapeId: true, clearHoveredCornerIndex: true));
   }
 
   /// Expands all ancestor layers for the given shape IDs
@@ -2092,7 +2109,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
   static const double _rotationHandleOffset = 24.0;
 
   /// Corner radius handle size in screen pixels
-  static const double _cornerRadiusHandleSize = 6.0;
+  static const double _cornerRadiusHandleSize = 10.0;
 
   /// Hit test for resize/rotate handles
   HandleInfo? _hitTestHandle(Offset screenPoint) {
@@ -2171,22 +2188,32 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
 
   /// Get corner radius handle positions in canvas coordinates
   List<Offset> _getCornerRadiusHandlePositions(RectangleShape rect) {
-    const handleOffset = 16.0;
     final bounds = rect.bounds;
-    const diagonalOffset = handleOffset * 0.707;
+
+    const minInset = 8.0;
+    double insetFor(double radius) => math.max(minInset, radius);
 
     return [
       rect.transformPoint(
-        Offset(bounds.left + diagonalOffset, bounds.top + diagonalOffset),
+        Offset(bounds.left + insetFor(rect.r1), bounds.top + insetFor(rect.r1)),
       ),
       rect.transformPoint(
-        Offset(bounds.right - diagonalOffset, bounds.top + diagonalOffset),
+        Offset(
+          bounds.right - insetFor(rect.r2),
+          bounds.top + insetFor(rect.r2),
+        ),
       ),
       rect.transformPoint(
-        Offset(bounds.right - diagonalOffset, bounds.bottom - diagonalOffset),
+        Offset(
+          bounds.right - insetFor(rect.r3),
+          bounds.bottom - insetFor(rect.r3),
+        ),
       ),
       rect.transformPoint(
-        Offset(bounds.left + diagonalOffset, bounds.bottom - diagonalOffset),
+        Offset(
+          bounds.left + insetFor(rect.r4),
+          bounds.bottom - insetFor(rect.r4),
+        ),
       ),
     ];
   }
@@ -2363,6 +2390,9 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
   ) {
     final bounds = shape.bounds;
 
+    // Convert pointer to local coordinates so radius works with transforms.
+    final localPointer = shape.inverseTransformPoint(currentPointer);
+
     // Calculate distance from corner to current pointer position
     Offset corner;
     switch (cornerIndex) {
@@ -2383,12 +2413,11 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     }
 
     // Calculate diagonal distance from corner to pointer
-    final dx = (currentPointer.dx - corner.dx).abs();
-    final dy = (currentPointer.dy - corner.dy).abs();
-    final diagonalDistance = math.sqrt(dx * dx + dy * dy);
+    final dx = (localPointer.dx - corner.dx).abs();
+    final dy = (localPointer.dy - corner.dy).abs();
 
-    // Convert to radius (handle is offset at 45 degrees, so divide by sqrt(2))
-    final radius = diagonalDistance / 1.414;
+    // Use the smaller inset to match the handle behavior (inset r,r).
+    final radius = math.min(dx, dy);
 
     // Clamp to reasonable values (max is half the smaller dimension)
     final maxRadius = math.min(bounds.width, bounds.height) / 2;

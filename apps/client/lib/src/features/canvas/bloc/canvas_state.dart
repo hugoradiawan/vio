@@ -62,6 +62,7 @@ class CanvasState extends Equatable {
     this.originalShapeBounds,
     this.originalShapes,
     this.activeCornerIndex,
+    this.hoveredCornerIndex,
     this.initialRotationAngle,
   });
 
@@ -116,6 +117,9 @@ class CanvasState extends Equatable {
 
   /// Active corner index for corner radius adjustment (0-3)
   final int? activeCornerIndex;
+
+  /// Corner radius handle currently hovered (0-3)
+  final int? hoveredCornerIndex;
 
   /// Initial rotation angle when rotation began (in degrees)
   final double? initialRotationAngle;
@@ -289,6 +293,7 @@ class CanvasState extends Equatable {
     Rect? originalShapeBounds,
     Map<String, Shape>? originalShapes,
     int? activeCornerIndex,
+    int? hoveredCornerIndex,
     double? initialRotationAngle,
     bool clearDragStart = false,
     bool clearCurrentPointer = false,
@@ -305,6 +310,7 @@ class CanvasState extends Equatable {
     bool clearOriginalShapeBounds = false,
     bool clearOriginalShapes = false,
     bool clearActiveCornerIndex = false,
+    bool clearHoveredCornerIndex = false,
     bool clearInitialRotationAngle = false,
   }) {
     return CanvasState(
@@ -352,6 +358,9 @@ class CanvasState extends Equatable {
       activeCornerIndex: clearActiveCornerIndex
           ? null
           : (activeCornerIndex ?? this.activeCornerIndex),
+        hoveredCornerIndex: clearHoveredCornerIndex
+          ? null
+          : (hoveredCornerIndex ?? this.hoveredCornerIndex),
       initialRotationAngle: clearInitialRotationAngle
           ? null
           : (initialRotationAngle ?? this.initialRotationAngle),
@@ -389,6 +398,7 @@ class CanvasState extends Equatable {
         originalShapeBounds,
         originalShapes,
         activeCornerIndex,
+        hoveredCornerIndex,
         initialRotationAngle,
       ];
 }

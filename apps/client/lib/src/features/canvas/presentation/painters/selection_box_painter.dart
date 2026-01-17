@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:vio_core/vio_core.dart';
@@ -13,9 +15,11 @@ class SelectionBoxPainter extends CustomPainter {
     required this.selectedShapes,
     required this.viewMatrix,
     this.dragOffset,
+    this.activeCornerIndex,
+    this.hoveredCornerIndex,
     this.handleSize = 8.0,
     this.rotationHandleOffset = 24.0,
-    this.cornerRadiusHandleSize = 6.0,
+    this.cornerRadiusHandleSize = 10.0,
     this.showCornerRadiusHandles = false,
   });
 
@@ -27,6 +31,12 @@ class SelectionBoxPainter extends CustomPainter {
 
   /// Current drag offset (applied at render time)
   final Offset? dragOffset;
+
+  /// Active corner index while adjusting radius (0..3), null otherwise.
+  final int? activeCornerIndex;
+
+  /// Hovered corner index while pointer is over a radius handle (0..3).
+  final int? hoveredCornerIndex;
 
   /// Size of resize handles
   final double handleSize;
@@ -109,6 +119,87 @@ class SelectionBoxPainter extends CustomPainter {
     }
 
     canvas.restore();
+
+    // Draw radius info in screen space while hovering/adjusting.
+    if (showCornerRadiusHandles &&
+        selectedShapes.length == 1 &&
+        selectedShapes.first is RectangleShape &&
+        (activeCornerIndex != null || hoveredCornerIndex != null)) {
+      final index = activeCornerIndex ?? hoveredCornerIndex;
+      if (index == null) return;
+      _drawCornerRadiusInfoBox(
+        canvas,
+        selectedShapes.first as RectangleShape,
+        index,
+      );
+    }
+  }
+
+  void _drawCornerRadiusInfoBox(
+    Canvas canvas,
+    RectangleShape rect,
+    int cornerIndex,
+  ) {
+    final positions = _getCornerRadiusHandlePositions(rect);
+    if (cornerIndex < 0 || cornerIndex >= positions.length) return;
+
+    final basePos = positions[cornerIndex];
+    final withDrag = dragOffset == null
+        ? basePos
+        : Offset(basePos.dx + dragOffset!.dx, basePos.dy + dragOffset!.dy);
+
+    final screen = viewMatrix.transformPoint(withDrag.dx, withDrag.dy);
+    final screenPos = Offset(screen.x, screen.y);
+
+    final radius = switch (cornerIndex) {
+      0 => rect.r1,
+      1 => rect.r2,
+      2 => rect.r3,
+      3 => rect.r4,
+      _ => rect.r1,
+    };
+
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: 'Radius ${radius.round()}',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout();
+
+    const padding = EdgeInsets.symmetric(horizontal: 6, vertical: 2);
+    final boxSize = Size(
+      textPainter.width + padding.horizontal,
+      textPainter.height + padding.vertical,
+    );
+
+    final boxRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        screenPos.dx + 12,
+        screenPos.dy - boxSize.height - 12,
+        boxSize.width,
+        boxSize.height,
+      ),
+      const Radius.circular(4),
+    );
+
+    final bgPaint = Paint()
+      ..color = VioColors.primary
+      ..style = PaintingStyle.fill;
+
+    canvas.drawRRect(boxRect, bgPaint);
+    textPainter.paint(
+      canvas,
+      Offset(
+        boxRect.left + padding.left,
+        boxRect.top + padding.top,
+      ),
+    );
   }
 
   /// Get the combined bounding box of all selected shapes
@@ -320,30 +411,38 @@ class SelectionBoxPainter extends CustomPainter {
 
   /// Get corner radius handle positions inside the rectangle
   List<Offset> _getCornerRadiusHandlePositions(RectangleShape rect) {
-    // Handle offset from corner (diagonal distance inward)
-    const handleOffset = 16.0;
     final bounds = rect.bounds;
 
-    // Calculate handle positions based on current corner radii
-    // Each handle is positioned diagonally inward from its corner
-    const diagonalOffset = handleOffset * 0.707; // cos(45°) ≈ 0.707
+    // Inset from corner in local coordinates. Bigger radius => bigger inset
+    // (handle moves toward the middle).
+    const minInset = 8.0;
+    double insetFor(double radius) => math.max(minInset, radius);
 
     return [
       // Top-left (r1)
       rect.transformPoint(
-        Offset(bounds.left + diagonalOffset, bounds.top + diagonalOffset),
+        Offset(bounds.left + insetFor(rect.r1), bounds.top + insetFor(rect.r1)),
       ),
       // Top-right (r2)
       rect.transformPoint(
-        Offset(bounds.right - diagonalOffset, bounds.top + diagonalOffset),
+        Offset(
+          bounds.right - insetFor(rect.r2),
+          bounds.top + insetFor(rect.r2),
+        ),
       ),
       // Bottom-right (r3)
       rect.transformPoint(
-        Offset(bounds.right - diagonalOffset, bounds.bottom - diagonalOffset),
+        Offset(
+          bounds.right - insetFor(rect.r3),
+          bounds.bottom - insetFor(rect.r3),
+        ),
       ),
       // Bottom-left (r4)
       rect.transformPoint(
-        Offset(bounds.left + diagonalOffset, bounds.bottom - diagonalOffset),
+        Offset(
+          bounds.left + insetFor(rect.r4),
+          bounds.bottom - insetFor(rect.r4),
+        ),
       ),
     ];
   }
@@ -375,6 +474,9 @@ class SelectionBoxPainter extends CustomPainter {
   bool shouldRepaint(SelectionBoxPainter oldDelegate) {
     // Fast path for drag offset changes
     if (dragOffset != oldDelegate.dragOffset) return true;
+
+    if (activeCornerIndex != oldDelegate.activeCornerIndex) return true;
+    if (hoveredCornerIndex != oldDelegate.hoveredCornerIndex) return true;
 
     return !identical(selectedShapes, oldDelegate.selectedShapes) ||
         viewMatrix != oldDelegate.viewMatrix ||

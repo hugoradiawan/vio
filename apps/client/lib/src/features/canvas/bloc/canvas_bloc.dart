@@ -1213,27 +1213,66 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
 
         final newShapes = Map<String, Shape>.from(state.shapes);
         final updatedShapeIds = <String>{};
+
+        Shape _movedBy(Shape shape, Offset delta) {
+          final hasRotation = shape.rotation != 0;
+          if (hasRotation) {
+            final newTransform = shape.transform.copyWith(
+              e: shape.transform.e + delta.dx,
+              f: shape.transform.f + delta.dy,
+            );
+            return shape.copyWith(transform: newTransform);
+          }
+          return shape.moveBy(delta.dx, delta.dy);
+        }
+
+        Set<String> _collectFrameDescendants(Set<String> rootFrameIds) {
+          final result = <String>{};
+          final queue = <String>[...rootFrameIds];
+          final seenFrames = <String>{...rootFrameIds};
+
+          while (queue.isNotEmpty) {
+            final frameId = queue.removeLast();
+            for (final entry in newShapes.entries) {
+              final shape = entry.value;
+              if (shape.frameId != frameId) continue;
+              final id = entry.key;
+              if (result.add(id) && shape is FrameShape) {
+                if (seenFrames.add(id)) {
+                  queue.add(id);
+                }
+              }
+            }
+          }
+
+          return result;
+        }
+
+        final selectedSet = state.selectedShapeIds.toSet();
+
+        // Move selected shapes.
         for (final shapeId in state.selectedShapeIds) {
           final shape = newShapes[shapeId];
-          if (shape != null) {
-            // Check if shape has rotation (non-identity transform with rotation)
-            final hasRotation = shape.rotation != 0;
-            if (hasRotation) {
-              // For rotated shapes, update the transform's translation
-              final newTransform = shape.transform.copyWith(
-                e: shape.transform.e + state.dragOffset!.dx,
-                f: shape.transform.f + state.dragOffset!.dy,
-              );
-              newShapes[shapeId] = shape.copyWith(transform: newTransform);
-              updatedShapeIds.add(shapeId);
-            } else {
-              // For non-rotated shapes, move x,y position normally
-              newShapes[shapeId] = shape.moveBy(
-                state.dragOffset!.dx,
-                state.dragOffset!.dy,
-              );
-              updatedShapeIds.add(shapeId);
-            }
+          if (shape == null) continue;
+          newShapes[shapeId] = _movedBy(shape, state.dragOffset!);
+          updatedShapeIds.add(shapeId);
+        }
+
+        // If frames are moved, also move their contents so they behave like
+        // frame-local coordinates (Penpot/Figma behavior).
+        final movedFrameIds = <String>{
+          for (final id in state.selectedShapeIds)
+            if (newShapes[id] is FrameShape) id,
+        };
+
+        if (movedFrameIds.isNotEmpty) {
+          final descendants = _collectFrameDescendants(movedFrameIds);
+          for (final id in descendants) {
+            if (selectedSet.contains(id)) continue; // avoid double-moving
+            final shape = newShapes[id];
+            if (shape == null) continue;
+            newShapes[id] = _movedBy(shape, state.dragOffset!);
+            updatedShapeIds.add(id);
           }
         }
 

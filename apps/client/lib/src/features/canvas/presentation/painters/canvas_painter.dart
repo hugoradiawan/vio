@@ -71,49 +71,84 @@ class CanvasPainter extends CustomPainter {
         dragOffset != null && selectedShapeIds.isNotEmpty;
     final selectedIdSet = selectedShapeIds.toSet();
 
-    // Build a simple frame containment map using existing absolute coordinates.
-    // If a shape has a valid frameId, it is rendered as a child of that frame.
+    // Build a simple containment map using existing absolute coordinates.
+    // - If a shape has a valid parentId that points to a group, it is rendered
+    //   as a child of that group.
+    // - Otherwise, if a shape has a valid frameId, it is rendered as a child
+    //   of that frame.
     final shapesById = <String, Shape>{for (final s in shapes) s.id: s};
-    final childrenByFrameId = <String, List<Shape>>{};
+    final childrenByContainerId = <String, List<Shape>>{};
     final rootShapes = <Shape>[];
 
     for (final shape in shapes) {
+      final parentId = shape.parentId;
+      final parent = parentId == null ? null : shapesById[parentId];
+      if (parentId != null && parent is GroupShape) {
+        childrenByContainerId.putIfAbsent(parentId, () => []).add(shape);
+        continue;
+      }
+
       final frameId = shape.frameId;
       final frame = frameId == null ? null : shapesById[frameId];
       if (frameId != null && frame is FrameShape) {
-        childrenByFrameId.putIfAbsent(frameId, () => []).add(shape);
+        childrenByContainerId.putIfAbsent(frameId, () => []).add(shape);
       } else {
         rootShapes.add(shape);
       }
     }
 
-    void paintShapeTree(Shape shape) {
-      final shouldSkipForDragOverlay =
-          isDraggingSelection && selectedIdSet.contains(shape.id);
-
-      if (!shouldSkipForDragOverlay) {
-        // When a text shape is being edited, an overlay EditableText renders it.
-        // Skip painting it here to avoid double-rendered (duplicated) text.
-        if (shape is! TextShape || shape.id != editingTextShapeId) {
-          ShapePainter.paintShape(canvas, shape);
-        }
-
-        if (shape is FrameShape) {
-          _drawFrameLabel(canvas, shape);
+    // During dragging, if a container (group/frame) is selected, also move its
+    // descendants in the drag overlay so children don't appear to detach.
+    final dragOverlayIdSet = <String>{...selectedIdSet};
+    if (isDraggingSelection) {
+      void addDescendants(String containerId) {
+        final children = childrenByContainerId[containerId];
+        if (children == null) return;
+        for (final child in children) {
+          if (dragOverlayIdSet.add(child.id)) {
+            addDescendants(child.id);
+          }
         }
       }
 
-      if (shape is FrameShape) {
-        final children = childrenByFrameId[shape.id];
-        if (children == null || children.isEmpty) {
-          return;
+      for (final id in selectedIdSet) {
+        final shape = shapesById[id];
+        if (shape is GroupShape || shape is FrameShape) {
+          addDescendants(id);
         }
+      }
+    }
 
+    void paintShapeTree(Shape shape) {
+      if (isDraggingSelection && dragOverlayIdSet.contains(shape.id)) {
+        return;
+      }
+
+      // When a text shape is being edited, an overlay EditableText renders it.
+      // Skip painting it here to avoid double-rendered (duplicated) text.
+      if (shape is! TextShape || shape.id != editingTextShapeId) {
+        ShapePainter.paintShape(canvas, shape);
+      }
+
+      if (shape is FrameShape) {
+        _drawFrameLabel(canvas, shape);
+      }
+
+      final children = childrenByContainerId[shape.id];
+      if (children == null || children.isEmpty) {
+        return;
+      }
+
+      if (shape is FrameShape) {
         if (shape.clipContent) {
           canvas.save();
           canvas.clipRect(
             Rect.fromLTWH(
-                shape.x, shape.y, shape.frameWidth, shape.frameHeight,),
+              shape.x,
+              shape.y,
+              shape.frameWidth,
+              shape.frameHeight,
+            ),
           );
           for (final child in children) {
             paintShapeTree(child);
@@ -123,6 +158,10 @@ class CanvasPainter extends CustomPainter {
           for (final child in children) {
             paintShapeTree(child);
           }
+        }
+      } else if (shape is GroupShape) {
+        for (final child in children) {
+          paintShapeTree(child);
         }
       }
     }
@@ -136,15 +175,89 @@ class CanvasPainter extends CustomPainter {
     // visible when crossing frame boundaries.
     if (isDraggingSelection) {
       canvas.save();
-      canvas.translate(dragOffset!.dx, dragOffset!.dy);
-      for (final shape in shapes) {
-        if (!selectedIdSet.contains(shape.id)) continue;
-        if (shape is TextShape && shape.id == editingTextShapeId) continue;
-        ShapePainter.paintShape(canvas, shape);
-        if (shape is FrameShape) {
-          _drawFrameLabel(canvas, shape);
+      final overlayOffset = dragOffset!;
+
+      void paintOverlayTree(Shape shape) {
+        final isOverlay = dragOverlayIdSet.contains(shape.id);
+        if (isOverlay) {
+          canvas.save();
+
+          final frameId = shape.frameId;
+          final frame = frameId == null ? null : shapesById[frameId];
+          final isInClippingFrame = frame is FrameShape && frame.clipContent;
+          final isFrameAlsoDragging = frameId != null &&
+              dragOverlayIdSet.contains(frameId); // frame moves with overlay
+
+          // If the clip frame is NOT being dragged, keep the clip rect anchored
+          // to the frame (untranslated), then translate the shape.
+          if (isInClippingFrame && !isFrameAlsoDragging) {
+            canvas.clipRect(
+              Rect.fromLTWH(
+                frame.x,
+                frame.y,
+                frame.frameWidth,
+                frame.frameHeight,
+              ),
+            );
+            canvas.translate(overlayOffset.dx, overlayOffset.dy);
+          } else {
+            // Otherwise (no clip frame or the frame itself is moving), translate
+            // first so the clip (if any) moves along with the frame.
+            canvas.translate(overlayOffset.dx, overlayOffset.dy);
+            if (isInClippingFrame) {
+              canvas.clipRect(
+                Rect.fromLTWH(
+                  frame.x,
+                  frame.y,
+                  frame.frameWidth,
+                  frame.frameHeight,
+                ),
+              );
+            }
+          }
+
+          if (shape is! TextShape || shape.id != editingTextShapeId) {
+            ShapePainter.paintShape(canvas, shape);
+          }
+          if (shape is FrameShape) {
+            _drawFrameLabel(canvas, shape);
+          }
+
+          canvas.restore();
+        }
+
+        final children = childrenByContainerId[shape.id];
+        if (children == null || children.isEmpty) {
+          return;
+        }
+
+        // Apply the same clip rules during drag so objects are clipped instantly
+        // when they move outside their frame.
+        if (shape is FrameShape && shape.clipContent) {
+          canvas.save();
+          canvas.clipRect(
+            Rect.fromLTWH(
+              shape.x,
+              shape.y,
+              shape.frameWidth,
+              shape.frameHeight,
+            ),
+          );
+          for (final child in children) {
+            paintOverlayTree(child);
+          }
+          canvas.restore();
+        } else {
+          for (final child in children) {
+            paintOverlayTree(child);
+          }
         }
       }
+
+      for (final shape in rootShapes) {
+        paintOverlayTree(shape);
+      }
+
       canvas.restore();
     }
 
@@ -165,6 +278,9 @@ class CanvasPainter extends CustomPainter {
   void _drawSelectionOutlines(Canvas canvas) {
     if (selectedShapeIds.isEmpty) return;
 
+    final shapesById = <String, Shape>{for (final s in shapes) s.id: s};
+    final selectedIdSet = selectedShapeIds.toSet();
+
     final outlinePaint = Paint()
       ..color = VioColors.canvasSelection
       ..style = PaintingStyle.stroke
@@ -182,10 +298,42 @@ class CanvasPainter extends CustomPainter {
       );
 
       canvas.save();
-      // Apply drag offset if dragging
+
       if (dragOffset != null) {
-        canvas.translate(dragOffset!.dx, dragOffset!.dy);
+        // Match the same clip order as the drag overlay:
+        // - If the frame is not moving, clip first, then translate the shape.
+        // - If the frame is moving, translate first (clip moves with it).
+        final frameId = shape.frameId;
+        final frame = frameId == null ? null : shapesById[frameId];
+        final isInClippingFrame = frame is FrameShape && frame.clipContent;
+        final isFrameAlsoDragging = frameId != null &&
+            selectedIdSet.contains(frameId); // frame selected implies dragging
+
+        if (isInClippingFrame && !isFrameAlsoDragging) {
+          canvas.clipRect(
+            Rect.fromLTWH(
+              frame.x,
+              frame.y,
+              frame.frameWidth,
+              frame.frameHeight,
+            ),
+          );
+          canvas.translate(dragOffset!.dx, dragOffset!.dy);
+        } else {
+          canvas.translate(dragOffset!.dx, dragOffset!.dy);
+          if (isInClippingFrame) {
+            canvas.clipRect(
+              Rect.fromLTWH(
+                frame.x,
+                frame.y,
+                frame.frameWidth,
+                frame.frameHeight,
+              ),
+            );
+          }
+        }
       }
+
       // Apply shape transform for outline
       canvas.transform(
         Float64List.fromList([

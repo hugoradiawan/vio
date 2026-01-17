@@ -2,6 +2,13 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/rendering.dart';
 import 'package:vio_core/vio_core.dart';
 
+/// Sentinel value for copyWith parameters where we need to distinguish between
+/// "not provided" and "explicitly set to null".
+///
+/// Example: `shape.copyWith(frameId: null)` should clear the frameId, while
+/// omitting `frameId` should keep the existing value.
+const Object kUnset = Object();
+
 /// Base class for all shape types on the canvas
 ///
 /// This mirrors Penpot's shape model from common/src/app/common/types/shape.cljc
@@ -143,8 +150,8 @@ abstract class Shape extends Equatable {
   Shape copyWith({
     String? id,
     String? name,
-    String? parentId,
-    String? frameId,
+    Object? parentId = kUnset,
+    Object? frameId = kUnset,
     Matrix2D? transform,
     Matrix2D? transformInverse,
     Rect? selrect,
@@ -178,8 +185,9 @@ abstract class Shape extends Equatable {
         return FrameShape.fromJson(json);
       case ShapeType.text:
         return TextShape.fromJson(json);
-      case ShapeType.path:
       case ShapeType.group:
+        return GroupShape.fromJson(json);
+      case ShapeType.path:
       case ShapeType.image:
       case ShapeType.svg:
       case ShapeType.bool:

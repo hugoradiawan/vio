@@ -117,44 +117,95 @@ class _LayersTab extends StatelessWidget {
     return Column(
       children: [
         // Toolbar
-        Container(
-          height: 36,
-          padding: const EdgeInsets.symmetric(horizontal: VioSpacing.xs),
-          decoration: const BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: VioColors.border,
+        BlocBuilder<WorkspaceBloc, WorkspaceState>(
+          buildWhen: (prev, curr) =>
+              prev.isLayersSearchOpen != curr.isLayersSearchOpen ||
+              prev.layersSearchQuery != curr.layersSearchQuery,
+          builder: (context, workspaceState) {
+            return Container(
+              height: 36,
+              padding: const EdgeInsets.symmetric(horizontal: VioSpacing.xs),
+              decoration: const BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: VioColors.border,
+                  ),
+                ),
               ),
-            ),
-          ),
-          child: Row(
-            children: [
-              VioIconButton(
-                icon: Icons.add,
-                size: 28,
-                tooltip: 'Add Component',
-                onPressed: () {},
+              child: Row(
+                children: [
+                  if (!workspaceState.isLayersSearchOpen) ...[
+                    VioIconButton(
+                      icon: Icons.folder_outlined,
+                      size: 28,
+                      tooltip: 'New Group',
+                      onPressed: () {
+                        context.read<CanvasBloc>().add(
+                              const CreateGroupFromSelection(),
+                            );
+                      },
+                    ),
+                    const Spacer(),
+                    VioIconButton(
+                      icon: Icons.search,
+                      size: 28,
+                      tooltip: 'Search',
+                      onPressed: () {
+                        context
+                            .read<WorkspaceBloc>()
+                            .add(const LayersSearchToggled());
+                      },
+                    ),
+                  ] else ...[
+                    const SizedBox(width: VioSpacing.xs),
+                    Expanded(
+                      child: TextField(
+                        autofocus: true,
+                        style: VioTypography.body2.copyWith(
+                          color: VioColors.textPrimary,
+                        ),
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          hintText: 'Search layers…',
+                          border: InputBorder.none,
+                        ),
+                        onChanged: (value) {
+                          context
+                              .read<WorkspaceBloc>()
+                              .add(LayersSearchQueryChanged(value));
+                        },
+                      ),
+                    ),
+                    VioIconButton(
+                      icon: Icons.close,
+                      size: 28,
+                      tooltip: 'Close search',
+                      onPressed: () {
+                        context
+                            .read<WorkspaceBloc>()
+                            .add(const LayersSearchCleared());
+                      },
+                    ),
+                  ],
+                ],
               ),
-              VioIconButton(
-                icon: Icons.folder_outlined,
-                size: 28,
-                tooltip: 'New Group',
-                onPressed: () {},
-              ),
-              const Spacer(),
-              VioIconButton(
-                icon: Icons.search,
-                size: 28,
-                tooltip: 'Search',
-                onPressed: () {},
-              ),
-            ],
-          ),
+            );
+          },
         ),
 
         // Layers list
-        const Expanded(
-          child: LayerTree(),
+        Expanded(
+          child: BlocBuilder<WorkspaceBloc, WorkspaceState>(
+            buildWhen: (prev, curr) =>
+                prev.isLayersSearchOpen != curr.isLayersSearchOpen ||
+                prev.layersSearchQuery != curr.layersSearchQuery,
+            builder: (context, workspaceState) {
+              return LayerTree(
+                searchQuery: workspaceState.layersSearchQuery,
+                searchOpen: workspaceState.isLayersSearchOpen,
+              );
+            },
+          ),
         ),
 
         // Bottom controls

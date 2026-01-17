@@ -69,3 +69,23 @@ class FrameToolPresetChanged extends WorkspaceEvent {
   @override
   List<Object?> get props => [presetId];
 }
+
+/// Toggle the Layers panel search UI.
+class LayersSearchToggled extends WorkspaceEvent {
+  const LayersSearchToggled();
+}
+
+/// Set the Layers search query.
+class LayersSearchQueryChanged extends WorkspaceEvent {
+  const LayersSearchQueryChanged(this.query);
+
+  final String query;
+
+  @override
+  List<Object?> get props => [query];
+}
+
+/// Close Layers search and clear query.
+class LayersSearchCleared extends WorkspaceEvent {
+  const LayersSearchCleared();
+}

@@ -11,10 +11,16 @@ class _LayerDragPayload {
   final List<String> shapeIds;
 }
 
-
 /// Displays the hierarchical layer tree
 class LayerTree extends StatelessWidget {
-  const LayerTree({super.key});
+  const LayerTree({
+    super.key,
+    this.searchQuery = '',
+    this.searchOpen = false,
+  });
+
+  final String searchQuery;
+  final bool searchOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +31,16 @@ class LayerTree extends StatelessWidget {
         }
 
         final tree = LayerTreeBuilder.buildTree(state.shapes);
+
+        final normalizedQuery = searchQuery.trim().toLowerCase();
+        final isSearching = searchOpen && normalizedQuery.isNotEmpty;
+
+        final visibleTree =
+            isSearching ? _filterTree(tree, normalizedQuery) : tree;
+
+        final effectiveExpandedIds = isSearching
+            ? _collectExpandableIds(visibleTree)
+            : state.expandedLayerIds;
 
         List<String> reparentableIds(List<String> ids) {
           final out = <String>[];
@@ -98,10 +114,10 @@ class LayerTree extends StatelessWidget {
           },
           builder: (context, candidateData, rejectedData) {
             return ListView.builder(
-              itemCount: _countVisibleNodes(tree, state.expandedLayerIds),
+              itemCount: _countVisibleNodes(visibleTree, effectiveExpandedIds),
               itemBuilder: (context, index) {
                 final (node, _) =
-                    _getNodeAtIndex(tree, index, state.expandedLayerIds);
+                    _getNodeAtIndex(visibleTree, index, effectiveExpandedIds);
                 if (node == null) return const SizedBox.shrink();
 
                 final isFrame = node.shape is FrameShape;
@@ -137,6 +153,47 @@ class LayerTree extends StatelessWidget {
         );
       },
     );
+  }
+
+  List<LayerNode> _filterTree(List<LayerNode> nodes, String query) {
+    final out = <LayerNode>[];
+
+    for (final node in nodes) {
+      final name = node.shape.name.toLowerCase();
+      final selfMatches = name.contains(query);
+
+      final filteredChildren = node.hasChildren
+          ? _filterTree(node.children, query)
+          : const <LayerNode>[];
+
+      if (selfMatches || filteredChildren.isNotEmpty) {
+        out.add(
+          LayerNode(
+            shape: node.shape,
+            children: filteredChildren,
+            depth: node.depth,
+          ),
+        );
+      }
+    }
+
+    return out;
+  }
+
+  Set<String> _collectExpandableIds(List<LayerNode> nodes) {
+    final expanded = <String>{};
+
+    void visit(List<LayerNode> list) {
+      for (final node in list) {
+        if (node.hasChildren) {
+          expanded.add(node.shape.id);
+          visit(node.children);
+        }
+      }
+    }
+
+    visit(nodes);
+    return expanded;
   }
 
   /// Count total visible nodes (considering expanded/collapsed state)

@@ -235,6 +235,13 @@ class ShapesReparented extends CanvasEvent {
   List<Object?> get props => [shapeIds, destinationFrameId];
 }
 
+/// Create a new group from the current selection.
+///
+/// Constraints (Penpot-like): grouping across different frames is disallowed.
+class CreateGroupFromSelection extends CanvasEvent {
+  const CreateGroupFromSelection();
+}
+
 /// Fired when pointer leaves the canvas area
 class CanvasPointerExited extends CanvasEvent {
   const CanvasPointerExited();

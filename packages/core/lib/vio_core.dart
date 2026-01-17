@@ -10,6 +10,7 @@ export 'src/math/math_utils.dart';
 export 'src/math/matrix2d.dart';
 export 'src/models/ellipse_shape.dart';
 export 'src/models/frame_shape.dart';
+export 'src/models/group_shape.dart';
 export 'src/models/rectangle_shape.dart';
 // Models
 export 'src/models/result.dart';

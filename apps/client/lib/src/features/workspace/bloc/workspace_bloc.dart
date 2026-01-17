@@ -20,6 +20,9 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
     on<SnapToGridToggled>(_onSnapToGridToggled);
     on<RulersToggled>(_onRulersToggled);
     on<FrameToolPresetChanged>(_onFrameToolPresetChanged);
+    on<LayersSearchToggled>(_onLayersSearchToggled);
+    on<LayersSearchQueryChanged>(_onLayersSearchQueryChanged);
+    on<LayersSearchCleared>(_onLayersSearchCleared);
   }
 
   Future<void> _onInitialized(
@@ -85,5 +88,32 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
     Emitter<WorkspaceState> emit,
   ) {
     emit(state.copyWith(frameToolPresetId: event.presetId));
+  }
+
+  void _onLayersSearchToggled(
+    LayersSearchToggled event,
+    Emitter<WorkspaceState> emit,
+  ) {
+    final nextOpen = !state.isLayersSearchOpen;
+    emit(
+      state.copyWith(
+        isLayersSearchOpen: nextOpen,
+        layersSearchQuery: nextOpen ? state.layersSearchQuery : '',
+      ),
+    );
+  }
+
+  void _onLayersSearchQueryChanged(
+    LayersSearchQueryChanged event,
+    Emitter<WorkspaceState> emit,
+  ) {
+    emit(state.copyWith(layersSearchQuery: event.query));
+  }
+
+  void _onLayersSearchCleared(
+    LayersSearchCleared event,
+    Emitter<WorkspaceState> emit,
+  ) {
+    emit(state.copyWith(isLayersSearchOpen: false, layersSearchQuery: ''));
   }
 }

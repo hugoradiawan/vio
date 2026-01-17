@@ -62,8 +62,8 @@ class EllipseShape extends Shape {
   EllipseShape copyWith({
     String? id,
     String? name,
-    String? parentId,
-    String? frameId,
+    Object? parentId = kUnset,
+    Object? frameId = kUnset,
     Matrix2D? transform,
     Matrix2D? transformInverse,
     Rect? selrect,
@@ -81,11 +81,16 @@ class EllipseShape extends Shape {
     double? ellipseWidth,
     double? ellipseHeight,
   }) {
+    final resolvedParentId =
+        identical(parentId, kUnset) ? this.parentId : parentId as String?;
+    final resolvedFrameId =
+        identical(frameId, kUnset) ? this.frameId : frameId as String?;
+
     return EllipseShape(
       id: id ?? this.id,
       name: name ?? this.name,
-      parentId: parentId ?? this.parentId,
-      frameId: frameId ?? this.frameId,
+      parentId: resolvedParentId,
+      frameId: resolvedFrameId,
       transform: transform ?? this.transform,
       transformInverse: transformInverse ?? this.transformInverse,
       selrect: selrect ?? this.selrect,

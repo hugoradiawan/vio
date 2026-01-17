@@ -23,6 +23,16 @@ class _CornerRadiusHit {
   final Offset position;
 }
 
+class _PruneEmptyGroupsResult {
+  const _PruneEmptyGroupsResult({
+    required this.shapes,
+    required this.deletedGroupIds,
+  });
+
+  final Map<String, Shape> shapes;
+  final Set<String> deletedGroupIds;
+}
+
 /// Maximum number of undo states to keep
 const _maxUndoHistory = 50;
 
@@ -85,6 +95,9 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
 
     // Layer tree drag/drop reparent
     on<ShapesReparented>(_onShapesReparented);
+
+    // Grouping
+    on<CreateGroupFromSelection>(_onCreateGroupFromSelection);
 
     // Text editing events
     on<TextEditRequested>(_onTextEditRequested);
@@ -1250,6 +1263,25 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
           return result;
         }
 
+        Set<String> collectGroupDescendants(Set<String> rootGroupIds) {
+          final result = <String>{};
+          final queue = <String>[...rootGroupIds];
+
+          while (queue.isNotEmpty) {
+            final groupId = queue.removeLast();
+            for (final entry in newShapes.entries) {
+              final shape = entry.value;
+              if (shape.parentId != groupId) continue;
+              final id = entry.key;
+              if (result.add(id) && shape is GroupShape) {
+                queue.add(id);
+              }
+            }
+          }
+
+          return result;
+        }
+
         final selectedSet = state.selectedShapeIds.toSet();
 
         // Move selected shapes.
@@ -1261,13 +1293,31 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
           updatedShapeIds.add(shapeId);
         }
 
-        // If frames are moved, also move their contents so they behave like
-        // frame-local coordinates (Penpot/Figma behavior).
-        final movedFrameIds = <String>{
+        // If groups are moved, also move their descendants.
+        final movedGroupIds = <String>{
           for (final id in state.selectedShapeIds)
-            if (newShapes[id] is FrameShape &&
+            if (newShapes[id] is GroupShape &&
                 (newShapes[id]?.blocked ?? false) == false)
               id,
+        };
+
+        if (movedGroupIds.isNotEmpty) {
+          final descendants = collectGroupDescendants(movedGroupIds);
+          for (final id in descendants) {
+            if (selectedSet.contains(id)) continue; // avoid double-moving
+            final shape = newShapes[id];
+            if (shape == null) continue;
+            newShapes[id] = movedBy(shape, state.dragOffset!);
+            updatedShapeIds.add(id);
+          }
+        }
+
+        // If frames were moved (directly selected OR moved as a group
+        // descendant), also move their contents so they behave like
+        // frame-local coordinates (Penpot/Figma behavior).
+        final movedFrameIds = <String>{
+          for (final id in updatedShapeIds)
+            if (newShapes[id] is FrameShape) id,
         };
 
         if (movedFrameIds.isNotEmpty) {
@@ -1309,31 +1359,68 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
             }
 
             if (shape.frameId != destinationFrameId) {
-              newShapes[shapeId] = shape.copyWith(frameId: destinationFrameId);
+              // Reparenting into a frame removes any group parent.
+              newShapes[shapeId] = shape.copyWith(
+                frameId: destinationFrameId,
+                parentId: null,
+              );
               updatedShapeIds.add(shapeId);
             }
+          }
+
+          // If groups were reparented, propagate frameId to descendants.
+          final movedGroups = <String>{
+            for (final id in state.selectedShapeIds)
+              if (newShapes[id] is GroupShape &&
+                  (newShapes[id]?.blocked ?? false) == false)
+                id,
+          };
+
+          if (movedGroups.isNotEmpty) {
+            final descendants = collectGroupDescendants(movedGroups);
+            for (final id in descendants) {
+              if (selectedSet.contains(id)) continue;
+              final child = newShapes[id];
+              if (child == null) continue;
+              if (child.frameId != destinationFrameId) {
+                newShapes[id] = child.copyWith(frameId: destinationFrameId);
+                updatedShapeIds.add(id);
+              }
+            }
+          }
+        }
+
+        // Remove any groups that became empty due to move/reparent.
+        final pruneResult = _pruneEmptyGroups(newShapes);
+        final prunedShapes = pruneResult.shapes;
+        if (pruneResult.deletedGroupIds.isNotEmpty) {
+          for (final id in pruneResult.deletedGroupIds) {
+            _notifyRepositoryShapeDeleted(id);
           }
         }
 
         // Expand the destination frame chain so the layer tree updates visibly.
         final expanded = _expandAncestorsForShapesIn(
-          newShapes,
+          prunedShapes,
           state.selectedShapeIds,
           state.expandedLayerIds,
         );
 
         // Queue sync updates for changed shapes.
         for (final id in updatedShapeIds) {
-          final updated = newShapes[id];
+          final updated = prunedShapes[id];
           if (updated != null) {
             _notifyRepositoryShapeUpdated(updated);
           }
         }
 
+        final cleanedExpanded = Set<String>.from(expanded)
+          ..removeAll(pruneResult.deletedGroupIds);
+
         emit(
           state.copyWith(
-            shapes: newShapes,
-            expandedLayerIds: expanded,
+            shapes: prunedShapes,
+            expandedLayerIds: cleanedExpanded,
             interactionMode: InteractionMode.idle,
             clearDragStart: true,
             clearCurrentPointer: true,
@@ -1342,7 +1429,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
           ),
         );
         // Push to undo stack after shapes are moved
-        _pushUndoState(newShapes);
+        _pushUndoState(prunedShapes);
       } else {
         emit(
           state.copyWith(
@@ -1466,40 +1553,172 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     final newShapes = Map<String, Shape>.from(state.shapes);
     final updatedShapeIds = <String>{};
 
+    Set<String> collectGroupDescendants(Set<String> rootGroupIds) {
+      final result = <String>{};
+      final queue = <String>[...rootGroupIds];
+
+      while (queue.isNotEmpty) {
+        final groupId = queue.removeLast();
+        for (final entry in newShapes.entries) {
+          final shape = entry.value;
+          if (shape.parentId != groupId) continue;
+          final id = entry.key;
+          if (result.add(id) && shape is GroupShape) {
+            queue.add(id);
+          }
+        }
+      }
+
+      return result;
+    }
+
+    final movedGroupIds = <String>{};
+
     for (final id in event.shapeIds) {
       final shape = newShapes[id];
       if (shape == null) continue;
       if (shape is FrameShape) continue;
       if (shape.blocked) continue;
 
-      if (shape.frameId != destinationFrameId) {
-        newShapes[id] = shape.copyWith(frameId: destinationFrameId);
+      if (shape.frameId != destinationFrameId || shape.parentId != null) {
+        // Reparenting into a frame/root removes any group parent.
+        newShapes[id] = shape.copyWith(
+          frameId: destinationFrameId,
+          parentId: null,
+        );
         updatedShapeIds.add(id);
+      }
+
+      if (shape is GroupShape) {
+        movedGroupIds.add(id);
+      }
+    }
+
+    // Ensure descendants of moved groups inherit the new frameId.
+    if (movedGroupIds.isNotEmpty) {
+      final descendants = collectGroupDescendants(movedGroupIds);
+      for (final id in descendants) {
+        final shape = newShapes[id];
+        if (shape == null) continue;
+        if (shape.frameId != destinationFrameId) {
+          newShapes[id] = shape.copyWith(frameId: destinationFrameId);
+          updatedShapeIds.add(id);
+        }
       }
     }
 
     if (updatedShapeIds.isEmpty) return;
 
+    final pruneResult = _pruneEmptyGroups(newShapes);
+    final prunedShapes = pruneResult.shapes;
+    if (pruneResult.deletedGroupIds.isNotEmpty) {
+      for (final id in pruneResult.deletedGroupIds) {
+        _notifyRepositoryShapeDeleted(id);
+      }
+    }
+
     // Expand destination frame chain so the moved items remain visible.
     final expanded = _expandAncestorsForShapesIn(
-      newShapes,
+      prunedShapes,
       updatedShapeIds.toList(growable: false),
       state.expandedLayerIds,
     );
 
     for (final id in updatedShapeIds) {
-      final updated = newShapes[id];
+      final updated = prunedShapes[id];
       if (updated != null) {
         _notifyRepositoryShapeUpdated(updated);
       }
     }
 
+    final cleanedExpanded = Set<String>.from(expanded)
+      ..removeAll(pruneResult.deletedGroupIds);
+
+    final cleanedSelection = state.selectedShapeIds
+        .where((id) => !pruneResult.deletedGroupIds.contains(id))
+        .toList(growable: false);
+
+    emit(
+      state.copyWith(
+        shapes: prunedShapes,
+        expandedLayerIds: cleanedExpanded,
+        selectedShapeIds: cleanedSelection,
+      ),
+    );
+    _pushUndoState(prunedShapes);
+  }
+
+  void _onCreateGroupFromSelection(
+    CreateGroupFromSelection event,
+    Emitter<CanvasState> emit,
+  ) {
+    if (state.selectedShapeIds.length < 2) return;
+
+    final selected = state.selectedShapeIds
+        .map((id) => state.shapes[id])
+        .whereType<Shape>()
+        .where((s) => s is! FrameShape)
+        .where((s) => !s.blocked)
+        .toList(growable: false);
+
+    if (selected.length < 2) return;
+
+    // Disallow grouping across frames.
+    final frameIds = selected.map((s) => s.frameId).toSet();
+    if (frameIds.length > 1) return;
+    final groupFrameId = frameIds.isEmpty ? null : frameIds.first;
+
+    // Keep group at the same hierarchy level if possible.
+    final parentIds = selected.map((s) => s.parentId).toSet();
+    final groupParentId = parentIds.length == 1 ? parentIds.first : null;
+
+    Rect? union;
+    for (final shape in selected) {
+      final b = _getTransformedBounds(shape);
+      union = union == null ? b : union.expandToInclude(b);
+    }
+    if (union == null) return;
+
+    final groupId = _uuid.v4();
+    final group = GroupShape(
+      id: groupId,
+      name: 'Group',
+      x: union.left,
+      y: union.top,
+      groupWidth: union.width,
+      groupHeight: union.height,
+      frameId: groupFrameId,
+      parentId: groupParentId,
+    );
+
+    final newShapes = Map<String, Shape>.from(state.shapes);
+    newShapes[groupId] = group;
+    _notifyRepositoryShapeAdded(group);
+
+    for (final shape in selected) {
+      newShapes[shape.id] = shape.copyWith(parentId: groupId);
+      final updated = newShapes[shape.id];
+      if (updated != null) {
+        _notifyRepositoryShapeUpdated(updated);
+      }
+    }
+
+    final expandedWithGroup = Set<String>.from(state.expandedLayerIds)
+      ..add(groupId);
+    final expanded = _expandAncestorsForShapesIn(
+      newShapes,
+      [groupId],
+      expandedWithGroup,
+    );
+
     emit(
       state.copyWith(
         shapes: newShapes,
+        selectedShapeIds: [groupId],
         expandedLayerIds: expanded,
       ),
     );
+
     _pushUndoState(newShapes);
   }
 
@@ -1535,17 +1754,30 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     newShapes.remove(event.shapeId);
     _notifyRepositoryShapeDeleted(event.shapeId);
 
+    final pruneResult = _pruneEmptyGroups(newShapes);
+    final prunedShapes = pruneResult.shapes;
+    if (pruneResult.deletedGroupIds.isNotEmpty) {
+      for (final id in pruneResult.deletedGroupIds) {
+        _notifyRepositoryShapeDeleted(id);
+      }
+    }
+
     // Also remove from selection
+    final removedAll = <String>{event.shapeId, ...pruneResult.deletedGroupIds};
     final newSelection =
-        state.selectedShapeIds.where((id) => id != event.shapeId).toList();
+        state.selectedShapeIds.where((id) => !removedAll.contains(id)).toList();
+
+    final cleanedExpanded = Set<String>.from(state.expandedLayerIds)
+      ..removeAll(pruneResult.deletedGroupIds);
 
     emit(
       state.copyWith(
-        shapes: newShapes,
+        shapes: prunedShapes,
         selectedShapeIds: newSelection,
+        expandedLayerIds: cleanedExpanded,
       ),
     );
-    _pushUndoState(newShapes);
+    _pushUndoState(prunedShapes);
   }
 
   void _onShapeUpdated(
@@ -1700,16 +1932,67 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       final shape = state.shapes[shapeId];
       if (shape == null) continue;
 
-      // Walk up the parent chain and expand all ancestors
-      String? parentId = shape.frameId;
+      // Walk up the parent chain (group parentId, then frameId) and expand.
+      String? parentId = shape.parentId ?? shape.frameId;
       while (parentId != null) {
-        expanded.add(parentId);
         final parent = state.shapes[parentId];
-        parentId = parent?.frameId;
+        if (parent == null) break;
+        expanded.add(parentId);
+        parentId = parent.parentId ?? parent.frameId;
       }
     }
 
     return expanded;
+  }
+
+  _PruneEmptyGroupsResult _pruneEmptyGroups(Map<String, Shape> shapes) {
+    final nextShapes = Map<String, Shape>.from(shapes);
+
+    // Count direct children per parentId.
+    final childCounts = <String, int>{};
+    for (final shape in nextShapes.values) {
+      final parentId = shape.parentId;
+      if (parentId == null) continue;
+      childCounts[parentId] = (childCounts[parentId] ?? 0) + 1;
+    }
+
+    final deleted = <String>{};
+
+    while (true) {
+      final emptyGroupIds = <String>[];
+      for (final entry in nextShapes.entries) {
+        final shape = entry.value;
+        if (shape is! GroupShape) continue;
+        final count = childCounts[entry.key] ?? 0;
+        if (count == 0) {
+          emptyGroupIds.add(entry.key);
+        }
+      }
+
+      if (emptyGroupIds.isEmpty) break;
+
+      for (final groupId in emptyGroupIds) {
+        final group = nextShapes[groupId];
+        if (group is! GroupShape) continue;
+
+        nextShapes.remove(groupId);
+        deleted.add(groupId);
+
+        // If this group was itself a child, decrement the parent's count so
+        // now-empty parents are pruned too.
+        final parentId = group.parentId;
+        if (parentId != null) {
+          final current = childCounts[parentId] ?? 0;
+          if (current > 0) {
+            childCounts[parentId] = current - 1;
+          }
+        }
+
+        childCounts.remove(groupId);
+      }
+    }
+
+    return _PruneEmptyGroupsResult(shapes: nextShapes, deletedGroupIds: deleted);
   }
 
   /// Detect snap points for current drag operation
@@ -2127,18 +2410,32 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       newShapes.remove(id);
     }
 
+    final pruneResult = _pruneEmptyGroups(newShapes);
+    final prunedShapes = pruneResult.shapes;
+    if (pruneResult.deletedGroupIds.isNotEmpty) {
+      for (final id in pruneResult.deletedGroupIds) {
+        _notifyRepositoryShapeDeleted(id);
+      }
+    }
+
     // Also remove from selection
     final removedSet = event.shapeIds.toSet();
+    final removedAll = <String>{...removedSet, ...pruneResult.deletedGroupIds};
     final newSelection =
-        state.selectedShapeIds.where((id) => !removedSet.contains(id)).toList();
+        state.selectedShapeIds.where((id) => !removedAll.contains(id)).toList();
+
+    final cleanedExpanded = Set<String>.from(state.expandedLayerIds)
+      ..removeAll(pruneResult.deletedGroupIds);
 
     emit(
       state.copyWith(
-        shapes: newShapes,
+        shapes: prunedShapes,
         selectedShapeIds: newSelection,
+        expandedLayerIds: cleanedExpanded,
+        syncStatus: state.isConnected ? SyncStatus.pending : state.syncStatus,
       ),
     );
-    _pushUndoState(newShapes);
+    _pushUndoState(prunedShapes);
   }
 
   void _onCopySelected(
@@ -2150,6 +2447,8 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     // Copy selected shapes to clipboard
     final shapesToCopy = state.selectedShapes;
     emit(state.copyWith(clipboardShapes: shapesToCopy));
+
+    // Copy doesn't alter shapes, so no undo state.
   }
 
   void _onCutSelected(
@@ -2160,6 +2459,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
 
     final cuttable = <Shape>[];
     final remainingSelected = <String>[];
+
     for (final id in state.selectedShapeIds) {
       final shape = state.shapes[id];
       if (shape == null) continue;
@@ -2173,7 +2473,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     if (cuttable.isEmpty) return;
 
     // Copy to clipboard first
-    final shapesToCopy = cuttable;
+    final shapesToCopy = List<Shape>.unmodifiable(cuttable);
 
     // Then remove from canvas
     final newShapes = Map<String, Shape>.from(state.shapes);
@@ -2182,14 +2482,30 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       _notifyRepositoryShapeDeleted(shape.id);
     }
 
+    final pruneResult = _pruneEmptyGroups(newShapes);
+    final prunedShapes = pruneResult.shapes;
+    if (pruneResult.deletedGroupIds.isNotEmpty) {
+      for (final id in pruneResult.deletedGroupIds) {
+        _notifyRepositoryShapeDeleted(id);
+      }
+    }
+
+    final cleanedExpanded = Set<String>.from(state.expandedLayerIds)
+      ..removeAll(pruneResult.deletedGroupIds);
+    final cleanedSelection = remainingSelected
+        .where((id) => !pruneResult.deletedGroupIds.contains(id))
+        .toList(growable: false);
+
     emit(
       state.copyWith(
         clipboardShapes: shapesToCopy,
-        shapes: newShapes,
-        selectedShapeIds: remainingSelected,
+        shapes: prunedShapes,
+        selectedShapeIds: cleanedSelection,
+        expandedLayerIds: cleanedExpanded,
+        syncStatus: state.isConnected ? SyncStatus.pending : state.syncStatus,
       ),
     );
-    _pushUndoState(newShapes);
+    _pushUndoState(prunedShapes);
   }
 
   void _onPasteShapes(
@@ -2283,14 +2599,29 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       return;
     }
 
+    final pruneResult = _pruneEmptyGroups(newShapes);
+    final prunedShapes = pruneResult.shapes;
+    if (pruneResult.deletedGroupIds.isNotEmpty) {
+      for (final id in pruneResult.deletedGroupIds) {
+        _notifyRepositoryShapeDeleted(id);
+      }
+    }
+
+    final cleanedExpanded = Set<String>.from(state.expandedLayerIds)
+      ..removeAll(pruneResult.deletedGroupIds);
+    final cleanedSelection = remainingSelected
+        .where((id) => !pruneResult.deletedGroupIds.contains(id))
+        .toList(growable: false);
+
     emit(
       state.copyWith(
-        shapes: newShapes,
-        selectedShapeIds: remainingSelected,
+        shapes: prunedShapes,
+        selectedShapeIds: cleanedSelection,
+        expandedLayerIds: cleanedExpanded,
         syncStatus: state.isConnected ? SyncStatus.pending : state.syncStatus,
       ),
     );
-    _pushUndoState(newShapes);
+    _pushUndoState(prunedShapes);
   }
 
   // ============================================================================

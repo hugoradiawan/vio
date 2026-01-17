@@ -54,6 +54,8 @@ class WorkspaceState extends Equatable {
     this.showRulers = true,
     this.gridSize = 8.0,
     this.frameToolPresetId,
+    this.isLayersSearchOpen = false,
+    this.layersSearchQuery = '',
     this.errorMessage,
   });
 
@@ -87,6 +89,12 @@ class WorkspaceState extends Equatable {
   /// Default frame preset id used by the Frame tool (null = custom).
   final String? frameToolPresetId;
 
+  /// Whether the Layers panel search UI is open.
+  final bool isLayersSearchOpen;
+
+  /// Current search query for filtering the layers tree.
+  final String layersSearchQuery;
+
   /// Error message if status is error
   final String? errorMessage;
 
@@ -107,6 +115,8 @@ class WorkspaceState extends Equatable {
     bool? showRulers,
     double? gridSize,
     String? frameToolPresetId,
+    bool? isLayersSearchOpen,
+    String? layersSearchQuery,
     String? errorMessage,
   }) {
     return WorkspaceState(
@@ -120,6 +130,8 @@ class WorkspaceState extends Equatable {
       showRulers: showRulers ?? this.showRulers,
       gridSize: gridSize ?? this.gridSize,
       frameToolPresetId: frameToolPresetId ?? this.frameToolPresetId,
+      isLayersSearchOpen: isLayersSearchOpen ?? this.isLayersSearchOpen,
+      layersSearchQuery: layersSearchQuery ?? this.layersSearchQuery,
       errorMessage: errorMessage ?? this.errorMessage,
     );
   }
@@ -136,6 +148,8 @@ class WorkspaceState extends Equatable {
         showRulers,
         gridSize,
         frameToolPresetId,
+        isLayersSearchOpen,
+        layersSearchQuery,
         errorMessage,
       ];
 }

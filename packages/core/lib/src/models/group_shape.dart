@@ -1,26 +1,20 @@
 import 'package:flutter/rendering.dart';
 import 'package:vio_core/vio_core.dart';
 
-/// Text shape
+/// Group shape (folder) used to organize layers.
 ///
-/// Minimal MVP model for Penpot-style canvas text.
-/// - `fills` is treated as the text color (first fill)
-/// - `strokes` currently ignored for rendering
-class TextShape extends Shape {
-  const TextShape({
+/// Groups are containers in the layer tree via `parentId` relationships.
+///
+/// Coordinates are kept absolute (like the rest of Vio currently). When a group
+/// is moved, the CanvasBloc explicitly moves its descendants.
+class GroupShape extends Shape {
+  const GroupShape({
     required super.id,
     required super.name,
     required this.x,
     required this.y,
-    required this.textWidth,
-    required this.textHeight,
-    required this.text,
-    this.fontSize = 16.0,
-    this.fontFamily,
-    this.fontWeight,
-    this.lineHeight,
-    this.letterSpacingPercent = 0.0,
-    this.textAlign = TextAlign.left,
+    required this.groupWidth,
+    required this.groupHeight,
     super.parentId,
     super.frameId,
     super.transform = Matrix2D.identity,
@@ -35,48 +29,25 @@ class TextShape extends Shape {
     super.constraints,
     super.shadow,
     super.blur,
-  }) : super(type: ShapeType.text);
+  }) : super(type: ShapeType.group);
 
-  /// X position (top-left)
+  /// X position
   final double x;
 
-  /// Y position (top-left)
+  /// Y position
   final double y;
 
-  /// Width of the text bounds (in local coordinates)
-  final double textWidth;
+  /// Width
+  final double groupWidth;
 
-  /// Height of the text bounds (in local coordinates)
-  final double textHeight;
-
-  /// Text content
-  final String text;
-
-  /// Font size in logical pixels
-  final double fontSize;
-
-  /// Optional font family
-  final String? fontFamily;
-
-  /// Optional font weight (CSS-ish numeric weight: 100..900)
-  final int? fontWeight;
-
-  /// Line height multiplier (e.g. 1.2 == 120%).
-  ///
-  /// If null, treat as "auto" (use font defaults).
-  final double? lineHeight;
-
-  /// Letter spacing as a percentage of the font size (e.g. 0 == 0%, 5 == 5%).
-  final double letterSpacingPercent;
-
-  /// Text alignment
-  final TextAlign textAlign;
+  /// Height
+  final double groupHeight;
 
   @override
-  Rect get bounds => Rect.fromLTWH(x, y, textWidth, textHeight);
+  Rect get bounds => Rect.fromLTWH(x, y, groupWidth, groupHeight);
 
   @override
-  TextShape copyWith({
+  GroupShape copyWith({
     String? id,
     String? name,
     Object? parentId = kUnset,
@@ -95,22 +66,15 @@ class TextShape extends Shape {
     ShapeBlur? blur,
     double? x,
     double? y,
-    double? textWidth,
-    double? textHeight,
-    String? text,
-    double? fontSize,
-    String? fontFamily,
-    int? fontWeight,
-    double? lineHeight,
-    double? letterSpacingPercent,
-    TextAlign? textAlign,
+    double? groupWidth,
+    double? groupHeight,
   }) {
     final resolvedParentId =
         identical(parentId, kUnset) ? this.parentId : parentId as String?;
     final resolvedFrameId =
         identical(frameId, kUnset) ? this.frameId : frameId as String?;
 
-    return TextShape(
+    return GroupShape(
       id: id ?? this.id,
       name: name ?? this.name,
       parentId: resolvedParentId,
@@ -129,20 +93,13 @@ class TextShape extends Shape {
       blur: blur ?? this.blur,
       x: x ?? this.x,
       y: y ?? this.y,
-      textWidth: textWidth ?? this.textWidth,
-      textHeight: textHeight ?? this.textHeight,
-      text: text ?? this.text,
-      fontSize: fontSize ?? this.fontSize,
-      fontFamily: fontFamily ?? this.fontFamily,
-      fontWeight: fontWeight ?? this.fontWeight,
-      lineHeight: lineHeight ?? this.lineHeight,
-      letterSpacingPercent: letterSpacingPercent ?? this.letterSpacingPercent,
-      textAlign: textAlign ?? this.textAlign,
+      groupWidth: groupWidth ?? this.groupWidth,
+      groupHeight: groupHeight ?? this.groupHeight,
     );
   }
 
   @override
-  TextShape moveBy(double dx, double dy) {
+  GroupShape moveBy(double dx, double dy) {
     return copyWith(x: x + dx, y: y + dy);
   }
 
@@ -151,39 +108,17 @@ class TextShape extends Shape {
         ...baseToJson(),
         'x': x,
         'y': y,
-        'textWidth': textWidth,
-        'textHeight': textHeight,
-        'text': text,
-        'fontSize': fontSize,
-        if (fontFamily != null) 'fontFamily': fontFamily,
-        if (fontWeight != null) 'fontWeight': fontWeight,
-        if (lineHeight != null) 'lineHeight': lineHeight,
-        'letterSpacingPercent': letterSpacingPercent,
-        'textAlign': textAlign.name,
+        'groupWidth': groupWidth,
+        'groupHeight': groupHeight,
       };
 
-  factory TextShape.fromJson(Map<String, dynamic> json) => TextShape(
+  factory GroupShape.fromJson(Map<String, dynamic> json) => GroupShape(
         id: json['id'] as String,
         name: json['name'] as String,
         x: (json['x'] as num).toDouble(),
         y: (json['y'] as num).toDouble(),
-        textWidth: (json['textWidth'] as num?)?.toDouble() ??
-            (json['width'] as num?)?.toDouble() ??
-            1.0,
-        textHeight: (json['textHeight'] as num?)?.toDouble() ??
-            (json['height'] as num?)?.toDouble() ??
-            1.0,
-        text: json['text'] as String? ?? '',
-        fontSize: (json['fontSize'] as num?)?.toDouble() ?? 16.0,
-        fontFamily: json['fontFamily'] as String?,
-        fontWeight: (json['fontWeight'] as num?)?.toInt(),
-        lineHeight: (json['lineHeight'] as num?)?.toDouble(),
-        letterSpacingPercent:
-            (json['letterSpacingPercent'] as num?)?.toDouble() ?? 0.0,
-        textAlign: TextAlign.values.firstWhere(
-          (e) => e.name == json['textAlign'],
-          orElse: () => TextAlign.left,
-        ),
+        groupWidth: (json['groupWidth'] as num).toDouble(),
+        groupHeight: (json['groupHeight'] as num).toDouble(),
         parentId: json['parentId'] as String?,
         frameId: json['frameId'] as String?,
         transform: json['transform'] != null
@@ -222,14 +157,7 @@ class TextShape extends Shape {
         ...super.props,
         x,
         y,
-        textWidth,
-        textHeight,
-        text,
-        fontSize,
-        fontFamily,
-        fontWeight,
-        lineHeight,
-        letterSpacingPercent,
-        textAlign,
+        groupWidth,
+        groupHeight,
       ];
 }

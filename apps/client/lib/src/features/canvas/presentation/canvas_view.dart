@@ -516,7 +516,7 @@ class _CanvasViewState extends State<CanvasView> {
                             // Coordinates display
                             Positioned(
                               bottom: VioSpacing.sm,
-                              left: VioSpacing.sm,
+                              left: VioSpacing.xxl,
                               child: _CoordinatesDisplay(
                                 pointer: canvasState.currentPointer,
                               ),

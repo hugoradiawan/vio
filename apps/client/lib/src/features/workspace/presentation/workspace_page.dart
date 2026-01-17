@@ -6,10 +6,8 @@ import 'package:vio_ui_kit/vio_ui_kit.dart';
 import '../../canvas/bloc/canvas_bloc.dart';
 import '../../canvas/presentation/canvas_view.dart';
 import '../bloc/workspace_bloc.dart';
-import 'widgets/bottom_bar.dart';
 import 'widgets/left_panel.dart';
 import 'widgets/right_panel.dart';
-import 'widgets/top_toolbar.dart';
 
 /// Main workspace page containing:
 /// - Top toolbar with tools and actions
@@ -103,8 +101,6 @@ class _WorkspacePageState extends State<WorkspacePage> {
                   backgroundColor: VioColors.background,
                   body: Column(
                     children: [
-                      // Top toolbar
-                      const TopToolbar(),
                       // Main content area
                       Expanded(
                         child: Row(
@@ -119,7 +115,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
                                   children: [
                                     const CanvasView(),
                                     Positioned(
-                                      top: VioSpacing.xxxl,
+                                      bottom: VioSpacing.sm,
                                       left: 0,
                                       right: 0,
                                       child: Center(
@@ -140,8 +136,6 @@ class _WorkspacePageState extends State<WorkspacePage> {
                           ],
                         ),
                       ),
-                      // Bottom bar (zoom, view controls)
-                      const BottomBar(),
                     ],
                   ),
                 ),

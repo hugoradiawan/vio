@@ -8,7 +8,7 @@ class HitTest {
   /// Test if a point hits a shape, accounting for transforms
   /// Returns true if the point is inside the shape
   static bool hitTestShape(Offset point, Shape shape) {
-    if (shape.hidden) return false;
+    if (shape.hidden || shape.blocked) return false;
 
     // Transform the point into the shape's local coordinate system
     final localPoint = shape.inverseTransformPoint(point);
@@ -148,7 +148,7 @@ class HitTest {
   static List<Shape> findShapesInRect(Rect rect, List<Shape> shapes) {
     final hits = <Shape>[];
     for (final shape in shapes) {
-      if (shape.hidden) continue;
+      if (shape.hidden || shape.blocked) continue;
       // Skip frames - they can only be selected by clicking their label
       if (shape.type == ShapeType.frame) continue;
 

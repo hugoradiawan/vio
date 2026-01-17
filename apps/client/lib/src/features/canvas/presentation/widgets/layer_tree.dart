@@ -32,6 +32,7 @@ class LayerTree extends StatelessWidget {
             final shape = state.shapes[id];
             if (shape == null) continue;
             if (shape is FrameShape) continue;
+            if (shape.blocked) continue;
             out.add(id);
           }
           return out;

@@ -938,6 +938,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       for (final shapeId in selectedIds) {
         final originalShape = originalShapes[shapeId];
         if (originalShape == null) continue;
+        if (originalShape.blocked) continue;
 
         // Calculate rotation center
         Offset rotationCenter;
@@ -984,6 +985,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         state.selectedShapes.length == 1) {
       final shape = state.selectedShapes.first;
       if (shape is RectangleShape) {
+        if (shape.blocked) return;
         final newRadius = _calculateCornerRadius(
           canvasPoint,
           state.activeCornerIndex!,
@@ -1254,6 +1256,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         for (final shapeId in state.selectedShapeIds) {
           final shape = newShapes[shapeId];
           if (shape == null) continue;
+          if (shape.blocked) continue;
           newShapes[shapeId] = movedBy(shape, state.dragOffset!);
           updatedShapeIds.add(shapeId);
         }
@@ -1262,7 +1265,9 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         // frame-local coordinates (Penpot/Figma behavior).
         final movedFrameIds = <String>{
           for (final id in state.selectedShapeIds)
-            if (newShapes[id] is FrameShape) id,
+            if (newShapes[id] is FrameShape &&
+                (newShapes[id]?.blocked ?? false) == false)
+              id,
         };
 
         if (movedFrameIds.isNotEmpty) {
@@ -1297,6 +1302,9 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
           for (final shapeId in state.selectedShapeIds) {
             final shape = newShapes[shapeId];
             if (shape == null || shape is FrameShape) {
+              continue;
+            }
+            if (shape.blocked) {
               continue;
             }
 
@@ -1462,6 +1470,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       final shape = newShapes[id];
       if (shape == null) continue;
       if (shape is FrameShape) continue;
+      if (shape.blocked) continue;
 
       if (shape.frameId != destinationFrameId) {
         newShapes[id] = shape.copyWith(frameId: destinationFrameId);
@@ -1642,7 +1651,9 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     final updatedShape = shape.copyWith(hidden: !shape.hidden);
     final newShapes = Map<String, Shape>.from(state.shapes);
     newShapes[event.shapeId] = updatedShape;
+    _notifyRepositoryShapeUpdated(updatedShape);
     emit(state.copyWith(shapes: newShapes));
+    _pushUndoState(newShapes);
   }
 
   void _onShapeLockToggled(
@@ -1655,7 +1666,9 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     final updatedShape = shape.copyWith(blocked: !shape.blocked);
     final newShapes = Map<String, Shape>.from(state.shapes);
     newShapes[event.shapeId] = updatedShape;
+    _notifyRepositoryShapeUpdated(updatedShape);
     emit(state.copyWith(shapes: newShapes));
+    _pushUndoState(newShapes);
   }
 
   void _onShapeRenamed(
@@ -1800,6 +1813,8 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
 
   /// Hit test for resize/rotate handles
   HandleInfo? _hitTestHandle(Offset screenPoint) {
+    if (state.selectedShapes.any((s) => s.blocked)) return null;
+
     final bounds = state.selectionRect;
     if (bounds == null) return null;
 
@@ -1857,6 +1872,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     if (state.selectedShapes.length != 1) return null;
 
     final shape = state.selectedShapes.first;
+    if (shape.blocked) return null;
     if (shape is! RectangleShape) return null;
 
     final positions = _getCornerRadiusHandlePositions(shape);
@@ -1995,6 +2011,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       final originalShape = originalShapes?[shapeId];
       final currentShape = newShapes[shapeId];
       if (originalShape == null || currentShape == null) continue;
+      if (originalShape.blocked) continue;
 
       // Calculate shape's relative position within original selection bounds
       // using the ORIGINAL shape bounds (not current)
@@ -2141,20 +2158,35 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
   ) {
     if (state.selectedShapeIds.isEmpty) return;
 
+    final cuttable = <Shape>[];
+    final remainingSelected = <String>[];
+    for (final id in state.selectedShapeIds) {
+      final shape = state.shapes[id];
+      if (shape == null) continue;
+      if (shape.blocked) {
+        remainingSelected.add(id);
+        continue;
+      }
+      cuttable.add(shape);
+    }
+
+    if (cuttable.isEmpty) return;
+
     // Copy to clipboard first
-    final shapesToCopy = state.selectedShapes;
+    final shapesToCopy = cuttable;
 
     // Then remove from canvas
     final newShapes = Map<String, Shape>.from(state.shapes);
-    for (final id in state.selectedShapeIds) {
-      newShapes.remove(id);
+    for (final shape in cuttable) {
+      newShapes.remove(shape.id);
+      _notifyRepositoryShapeDeleted(shape.id);
     }
 
     emit(
       state.copyWith(
         clipboardShapes: shapesToCopy,
         shapes: newShapes,
-        selectedShapeIds: const [],
+        selectedShapeIds: remainingSelected,
       ),
     );
     _pushUndoState(newShapes);
@@ -2204,6 +2236,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     final newIds = <String>[];
 
     for (final shape in state.selectedShapes) {
+      if (shape.blocked) continue;
       final newId = _uuid.v4();
       final duplicated = shape.duplicate(
         newId: newId,
@@ -2213,6 +2246,8 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       newShapes[newId] = duplicated;
       newIds.add(newId);
     }
+
+    if (newIds.isEmpty) return;
 
     // Select the duplicated shapes
     emit(
@@ -2231,15 +2266,27 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     if (state.selectedShapeIds.isEmpty) return;
 
     final newShapes = Map<String, Shape>.from(state.shapes);
+    final remainingSelected = <String>[];
     for (final id in state.selectedShapeIds) {
+      final shape = state.shapes[id];
+      if (shape == null) continue;
+      if (shape.blocked) {
+        remainingSelected.add(id);
+        continue;
+      }
       newShapes.remove(id);
       _notifyRepositoryShapeDeleted(id);
+    }
+
+    // If everything selected was locked, do nothing.
+    if (newShapes.length == state.shapes.length) {
+      return;
     }
 
     emit(
       state.copyWith(
         shapes: newShapes,
-        selectedShapeIds: const [],
+        selectedShapeIds: remainingSelected,
         syncStatus: state.isConnected ? SyncStatus.pending : state.syncStatus,
       ),
     );

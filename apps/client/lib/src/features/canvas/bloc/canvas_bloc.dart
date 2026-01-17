@@ -1214,7 +1214,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         final newShapes = Map<String, Shape>.from(state.shapes);
         final updatedShapeIds = <String>{};
 
-        Shape _movedBy(Shape shape, Offset delta) {
+        Shape movedBy(Shape shape, Offset delta) {
           final hasRotation = shape.rotation != 0;
           if (hasRotation) {
             final newTransform = shape.transform.copyWith(
@@ -1226,7 +1226,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
           return shape.moveBy(delta.dx, delta.dy);
         }
 
-        Set<String> _collectFrameDescendants(Set<String> rootFrameIds) {
+        Set<String> collectFrameDescendants(Set<String> rootFrameIds) {
           final result = <String>{};
           final queue = <String>[...rootFrameIds];
           final seenFrames = <String>{...rootFrameIds};
@@ -1254,7 +1254,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         for (final shapeId in state.selectedShapeIds) {
           final shape = newShapes[shapeId];
           if (shape == null) continue;
-          newShapes[shapeId] = _movedBy(shape, state.dragOffset!);
+          newShapes[shapeId] = movedBy(shape, state.dragOffset!);
           updatedShapeIds.add(shapeId);
         }
 
@@ -1266,12 +1266,12 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         };
 
         if (movedFrameIds.isNotEmpty) {
-          final descendants = _collectFrameDescendants(movedFrameIds);
+          final descendants = collectFrameDescendants(movedFrameIds);
           for (final id in descendants) {
             if (selectedSet.contains(id)) continue; // avoid double-moving
             final shape = newShapes[id];
             if (shape == null) continue;
-            newShapes[id] = _movedBy(shape, state.dragOffset!);
+            newShapes[id] = movedBy(shape, state.dragOffset!);
             updatedShapeIds.add(id);
           }
         }

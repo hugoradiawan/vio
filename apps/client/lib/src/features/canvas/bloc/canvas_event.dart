@@ -242,6 +242,24 @@ class CreateGroupFromSelection extends CanvasEvent {
   const CreateGroupFromSelection();
 }
 
+/// Ungroup any selected groups (Penpot-like).
+///
+/// Direct children of the group are moved up one level (to the group's parent
+/// container). The group itself is removed.
+class UngroupSelected extends CanvasEvent {
+  const UngroupSelected();
+}
+
+/// Bring the current selection to the front within their sibling scopes.
+class BringToFrontSelected extends CanvasEvent {
+  const BringToFrontSelected();
+}
+
+/// Send the current selection to the back within their sibling scopes.
+class SendToBackSelected extends CanvasEvent {
+  const SendToBackSelected();
+}
+
 /// Fired when pointer leaves the canvas area
 class CanvasPointerExited extends CanvasEvent {
   const CanvasPointerExited();

@@ -49,8 +49,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
 
   void _syncIsEditingText() {
     final focus = FocusManager.instance.primaryFocus;
-    _isEditingText =
-        focus?.context?.widget is EditableText ||
+    _isEditingText = focus?.context?.widget is EditableText ||
         focus?.context?.findAncestorWidgetOfExactType<EditableText>() != null;
   }
 
@@ -236,30 +235,30 @@ class _WorkspacePageState extends State<WorkspacePage> {
   }
 
   /// Build shortcut to intent mappings
-    Map<ShortcutActivator, Intent> _buildShortcutIntents({
+  Map<ShortcutActivator, Intent> _buildShortcutIntents({
     required bool includeToolShortcuts,
-    }) {
+  }) {
     return {
       if (includeToolShortcuts) ...{
-      // Tool shortcuts - only single key, no modifiers
-      const SingleActivator(LogicalKeyboardKey.keyV):
-        const _ToolIntent(CanvasTool.select),
-      const SingleActivator(LogicalKeyboardKey.keyA):
-        const _ToolIntent(CanvasTool.directSelect),
-      const SingleActivator(LogicalKeyboardKey.keyR):
-        const _ToolIntent(CanvasTool.rectangle),
-      const SingleActivator(LogicalKeyboardKey.keyO):
-        const _ToolIntent(CanvasTool.ellipse),
-      const SingleActivator(LogicalKeyboardKey.keyP):
-        const _ToolIntent(CanvasTool.path),
-      const SingleActivator(LogicalKeyboardKey.keyT):
-        const _ToolIntent(CanvasTool.text),
-      const SingleActivator(LogicalKeyboardKey.keyF):
-        const _ToolIntent(CanvasTool.frame),
-      const SingleActivator(LogicalKeyboardKey.keyH):
-        const _ToolIntent(CanvasTool.hand),
-      const SingleActivator(LogicalKeyboardKey.keyC):
-        const _ToolIntent(CanvasTool.comment),
+        // Tool shortcuts - only single key, no modifiers
+        const SingleActivator(LogicalKeyboardKey.keyV):
+            const _ToolIntent(CanvasTool.select),
+        const SingleActivator(LogicalKeyboardKey.keyA):
+            const _ToolIntent(CanvasTool.directSelect),
+        const SingleActivator(LogicalKeyboardKey.keyR):
+            const _ToolIntent(CanvasTool.rectangle),
+        const SingleActivator(LogicalKeyboardKey.keyO):
+            const _ToolIntent(CanvasTool.ellipse),
+        const SingleActivator(LogicalKeyboardKey.keyP):
+            const _ToolIntent(CanvasTool.path),
+        const SingleActivator(LogicalKeyboardKey.keyT):
+            const _ToolIntent(CanvasTool.text),
+        const SingleActivator(LogicalKeyboardKey.keyF):
+            const _ToolIntent(CanvasTool.frame),
+        const SingleActivator(LogicalKeyboardKey.keyH):
+            const _ToolIntent(CanvasTool.hand),
+        const SingleActivator(LogicalKeyboardKey.keyC):
+            const _ToolIntent(CanvasTool.comment),
       },
 
       // View shortcuts - with modifiers, safe to use

@@ -12,6 +12,7 @@ class RectangleShape extends Shape {
     required this.rectHeight,
     super.parentId,
     super.frameId,
+    super.sortOrder = 0,
     super.transform = Matrix2D.identity,
     super.transformInverse,
     super.selrect,
@@ -69,6 +70,7 @@ class RectangleShape extends Shape {
     String? name,
     Object? parentId = kUnset,
     Object? frameId = kUnset,
+    int? sortOrder,
     Matrix2D? transform,
     Matrix2D? transformInverse,
     Rect? selrect,
@@ -100,6 +102,7 @@ class RectangleShape extends Shape {
       name: name ?? this.name,
       parentId: resolvedParentId,
       frameId: resolvedFrameId,
+      sortOrder: sortOrder ?? this.sortOrder,
       transform: transform ?? this.transform,
       transformInverse: transformInverse ?? this.transformInverse,
       selrect: selrect ?? this.selrect,
@@ -150,6 +153,7 @@ class RectangleShape extends Shape {
         rectHeight: (json['rectHeight'] as num).toDouble(),
         parentId: json['parentId'] as String?,
         frameId: json['frameId'] as String?,
+        sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
         transform: json['transform'] != null
             ? Matrix2D.fromJson(json['transform'] as Map<String, dynamic>)
             : Matrix2D.identity,

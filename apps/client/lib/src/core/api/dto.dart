@@ -11,6 +11,7 @@ extension ShapeDto on Shape {
       'name': name,
       'parentId': parentId,
       'frameId': frameId,
+      'sortOrder': sortOrder,
       'transformA': transform.a,
       'transformB': transform.b,
       'transformC': transform.c,
@@ -101,6 +102,7 @@ class ShapeFactory {
   /// Create a Shape from JSON map
   static Shape fromJson(Map<String, dynamic> json) {
     final type = _parseShapeType(json['type'] as String);
+    final sortOrder = (json['sortOrder'] as num?)?.toInt() ?? 0;
     final transform = Matrix2D(
       a: (json['transformA'] as num?)?.toDouble() ?? 1.0,
       b: (json['transformB'] as num?)?.toDouble() ?? 0.0,
@@ -128,6 +130,7 @@ class ShapeFactory {
           rectHeight: (json['height'] as num).toDouble(),
           parentId: json['parentId'] as String?,
           frameId: frameId,
+          sortOrder: sortOrder,
           transform: transform,
           rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
           fills: fills,
@@ -151,6 +154,7 @@ class ShapeFactory {
           ellipseHeight: (json['height'] as num).toDouble(),
           parentId: json['parentId'] as String?,
           frameId: frameId,
+          sortOrder: sortOrder,
           transform: transform,
           rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
           fills: fills,
@@ -170,6 +174,7 @@ class ShapeFactory {
           frameHeight: (json['height'] as num).toDouble(),
           parentId: json['parentId'] as String?,
           frameId: frameId,
+          sortOrder: sortOrder,
           transform: transform,
           rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
           fills: fills,
@@ -190,6 +195,7 @@ class ShapeFactory {
           textHeight: (json['height'] as num?)?.toDouble() ?? 1.0,
           parentId: json['parentId'] as String?,
           frameId: frameId,
+          sortOrder: sortOrder,
           transform: transform,
           rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
           fills: fills,

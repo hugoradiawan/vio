@@ -98,6 +98,11 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
 
     // Grouping
     on<CreateGroupFromSelection>(_onCreateGroupFromSelection);
+    on<UngroupSelected>(_onUngroupSelected);
+
+    // Z-order
+    on<BringToFrontSelected>(_onBringToFrontSelected);
+    on<SendToBackSelected>(_onSendToBackSelected);
 
     // Text editing events
     on<TextEditRequested>(_onTextEditRequested);
@@ -273,6 +278,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       y: 50,
       rectWidth: 200,
       rectHeight: 150,
+      sortOrder: 1,
       r1: 8,
       r2: 8,
       r3: 8,
@@ -291,6 +297,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       y: 100,
       rectWidth: 180,
       rectHeight: 120,
+      sortOrder: 2,
       fills: const [ShapeFill(color: 0xFF22C55E)],
       strokes: const [ShapeStroke(color: 0xFF16A34A, width: 2)],
       frameId: frame.id,
@@ -305,6 +312,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       y: 140,
       ellipseWidth: 160,
       ellipseHeight: 120,
+      sortOrder: 3,
       fills: const [ShapeFill(color: 0xFFEF4444)],
       strokes: const [ShapeStroke(color: 0xFFDC2626, width: 2)],
       frameId: frame.id,
@@ -319,6 +327,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       y: 300,
       rectWidth: 250,
       rectHeight: 180,
+      sortOrder: 4,
       strokes: const [
         ShapeStroke(
           color: 0xFFFACC15,
@@ -338,6 +347,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       y: 330,
       ellipseWidth: 140,
       ellipseHeight: 140,
+      sortOrder: 5,
       fills: const [ShapeFill(color: 0xFFA855F7)],
       strokes: const [ShapeStroke(color: 0xFF9333EA, width: 2)],
       frameId: frame.id,
@@ -480,6 +490,12 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       }
       final frameId = defaultFrame?.id;
 
+      final sortOrder = _nextSortOrderForNewShape(
+        shapes: state.shapes,
+        parentId: null,
+        frameId: frameId,
+      );
+
       final newShape = TextShape(
         id: newId,
         name: 'Text',
@@ -488,6 +504,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         textWidth: 200,
         textHeight: 24,
         text: '',
+        sortOrder: sortOrder,
         fills: const [ShapeFill(color: 0xFFE6EDF3)],
         frameId: frameId,
       );
@@ -533,6 +550,12 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       }
       final frameId = defaultFrame?.id;
 
+      final sortOrder = _nextSortOrderForNewShape(
+        shapes: state.shapes,
+        parentId: null,
+        frameId: frameId,
+      );
+
       final newShape = switch (event.tool) {
         CanvasPointerTool.drawRectangle => RectangleShape(
             id: newId,
@@ -541,6 +564,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
             y: canvasPoint.dy,
             rectWidth: 1,
             rectHeight: 1,
+            sortOrder: sortOrder,
             fills: const [ShapeFill(color: 0xFF3B82F6)],
             strokes: const [ShapeStroke(color: 0xFF1D4ED8, width: 2)],
             frameId: frameId,
@@ -552,6 +576,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
             y: canvasPoint.dy,
             ellipseWidth: 1,
             ellipseHeight: 1,
+            sortOrder: sortOrder,
             fills: const [ShapeFill(color: 0xFF3B82F6)],
             strokes: const [ShapeStroke(color: 0xFF1D4ED8, width: 2)],
             frameId: frameId,
@@ -563,6 +588,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
             y: canvasPoint.dy,
             frameWidth: 1,
             frameHeight: 1,
+            sortOrder: sortOrder,
             fills: const [ShapeFill(color: 0xFF2D2D2D)],
             strokes: const [ShapeStroke(color: 0xFF404040)],
           ),
@@ -1697,6 +1723,12 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     if (union == null) return;
 
     final groupId = _uuid.v4();
+
+    final groupSortOrder = _nextSortOrderForNewShape(
+      shapes: state.shapes,
+      parentId: groupParentId,
+      frameId: groupFrameId,
+    );
     final group = GroupShape(
       id: groupId,
       name: 'Group',
@@ -1706,6 +1738,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       groupHeight: union.height,
       frameId: groupFrameId,
       parentId: groupParentId,
+      sortOrder: groupSortOrder,
     );
 
     final newShapes = Map<String, Shape>.from(state.shapes);
@@ -1937,7 +1970,12 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     CanvasPointerExited event,
     Emitter<CanvasState> emit,
   ) {
-    emit(state.copyWith(clearHoveredShapeId: true, clearHoveredCornerIndex: true));
+    emit(
+      state.copyWith(
+        clearHoveredShapeId: true,
+        clearHoveredCornerIndex: true,
+      ),
+    );
   }
 
   /// Expands all ancestor layers for the given shape IDs
@@ -2009,7 +2047,303 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       }
     }
 
-    return _PruneEmptyGroupsResult(shapes: nextShapes, deletedGroupIds: deleted);
+    return _PruneEmptyGroupsResult(
+      shapes: nextShapes,
+      deletedGroupIds: deleted,
+    );
+  }
+
+  // ============================================================================
+  // Z-order Helpers
+  // ============================================================================
+
+  String? _effectiveContainerIdFor({
+    required Map<String, Shape> shapes,
+    required String? parentId,
+    required String? frameId,
+  }) {
+    final parent = parentId == null ? null : shapes[parentId];
+    if (parentId != null && parent is GroupShape) {
+      return parentId;
+    }
+    final frame = frameId == null ? null : shapes[frameId];
+    if (frameId != null && frame is FrameShape) {
+      return frameId;
+    }
+    return null;
+  }
+
+  int _nextSortOrderForNewShape({
+    required Map<String, Shape> shapes,
+    required String? parentId,
+    required String? frameId,
+  }) {
+    final containerId = _effectiveContainerIdFor(
+      shapes: shapes,
+      parentId: parentId,
+      frameId: frameId,
+    );
+
+    var maxOrder = -1;
+    for (final shape in shapes.values) {
+      final shapeContainer = _effectiveContainerIdFor(
+        shapes: shapes,
+        parentId: shape.parentId,
+        frameId: shape.frameId,
+      );
+      if (shapeContainer == containerId) {
+        if (shape.sortOrder > maxOrder) {
+          maxOrder = shape.sortOrder;
+        }
+      }
+    }
+
+    return maxOrder + 1;
+  }
+
+  Map<String, Shape> _reorderSelectionInSiblings({
+    required Map<String, Shape> shapes,
+    required List<String> selectedIds,
+    required bool toFront,
+  }) {
+    if (selectedIds.isEmpty) return shapes;
+
+    final shapesById = shapes;
+
+    // Group selected IDs by their effective container (sibling scope).
+    final selectedByScope = <String?, List<String>>{};
+    for (final id in selectedIds) {
+      final shape = shapesById[id];
+      if (shape == null) continue;
+      if (shape.blocked) continue;
+      final scope = _effectiveContainerIdFor(
+        shapes: shapesById,
+        parentId: shape.parentId,
+        frameId: shape.frameId,
+      );
+      selectedByScope.putIfAbsent(scope, () => []).add(id);
+    }
+
+    if (selectedByScope.isEmpty) return shapes;
+
+    final nextShapes = Map<String, Shape>.from(shapesById);
+
+    int compareZ(Shape a, Shape b) {
+      final byOrder = a.sortOrder.compareTo(b.sortOrder);
+      if (byOrder != 0) return byOrder;
+      return a.id.compareTo(b.id);
+    }
+
+    for (final entry in selectedByScope.entries) {
+      final scope = entry.key;
+      final scopeSelected = entry.value.toSet();
+
+      final scopeSiblings = <Shape>[];
+      for (final shape in shapesById.values) {
+        final shapeScope = _effectiveContainerIdFor(
+          shapes: shapesById,
+          parentId: shape.parentId,
+          frameId: shape.frameId,
+        );
+        if (shapeScope == scope) {
+          scopeSiblings.add(shape);
+        }
+      }
+
+      if (scopeSiblings.isEmpty) continue;
+
+      scopeSiblings.sort(compareZ);
+      final moved = <Shape>[];
+      final remaining = <Shape>[];
+      for (final shape in scopeSiblings) {
+        if (scopeSelected.contains(shape.id)) {
+          moved.add(shape);
+        } else {
+          remaining.add(shape);
+        }
+      }
+
+      final reordered =
+          toFront ? [...remaining, ...moved] : [...moved, ...remaining];
+
+      for (var i = 0; i < reordered.length; i++) {
+        final shape = reordered[i];
+        if (shape.sortOrder != i) {
+          nextShapes[shape.id] = shape.copyWith(sortOrder: i);
+        }
+      }
+    }
+
+    return nextShapes;
+  }
+
+  void _onBringToFrontSelected(
+    BringToFrontSelected event,
+    Emitter<CanvasState> emit,
+  ) {
+    if (state.selectedShapeIds.isEmpty) return;
+
+    final reordered = _reorderSelectionInSiblings(
+      shapes: state.shapes,
+      selectedIds: state.selectedShapeIds,
+      toFront: true,
+    );
+
+    if (identical(reordered, state.shapes)) return;
+
+    // Notify repository for shapes that changed sortOrder.
+    for (final entry in reordered.entries) {
+      final prev = state.shapes[entry.key];
+      final next = entry.value;
+      if (prev != null && prev.sortOrder != next.sortOrder) {
+        _notifyRepositoryShapeUpdated(next);
+      }
+    }
+
+    emit(state.copyWith(shapes: reordered));
+    _pushUndoState(reordered);
+  }
+
+  void _onSendToBackSelected(
+    SendToBackSelected event,
+    Emitter<CanvasState> emit,
+  ) {
+    if (state.selectedShapeIds.isEmpty) return;
+
+    final reordered = _reorderSelectionInSiblings(
+      shapes: state.shapes,
+      selectedIds: state.selectedShapeIds,
+      toFront: false,
+    );
+
+    if (identical(reordered, state.shapes)) return;
+
+    for (final entry in reordered.entries) {
+      final prev = state.shapes[entry.key];
+      final next = entry.value;
+      if (prev != null && prev.sortOrder != next.sortOrder) {
+        _notifyRepositoryShapeUpdated(next);
+      }
+    }
+
+    emit(state.copyWith(shapes: reordered));
+    _pushUndoState(reordered);
+  }
+
+  void _onUngroupSelected(
+    UngroupSelected event,
+    Emitter<CanvasState> emit,
+  ) {
+    if (state.selectedShapeIds.isEmpty) return;
+
+    final shapesById = Map<String, Shape>.from(state.shapes);
+    final selectedSet = state.selectedShapeIds.toSet();
+
+    final selectedGroups = state.selectedShapeIds
+        .map((id) => shapesById[id])
+        .whereType<GroupShape>()
+        .where((g) => !g.blocked)
+        .toList(growable: false);
+
+    if (selectedGroups.isEmpty) return;
+
+    int compareZ(Shape a, Shape b) {
+      final byOrder = a.sortOrder.compareTo(b.sortOrder);
+      if (byOrder != 0) return byOrder;
+      return a.id.compareTo(b.id);
+    }
+
+    final newSelection = <String>[];
+
+    // Process ungroup per destination scope so we can insert children where the
+    // group used to be.
+    final groupsByScope = <String?, List<GroupShape>>{};
+    for (final group in selectedGroups) {
+      final scope = _effectiveContainerIdFor(
+        shapes: shapesById,
+        parentId: group.parentId,
+        frameId: group.frameId,
+      );
+      groupsByScope.putIfAbsent(scope, () => []).add(group);
+    }
+
+    for (final entry in groupsByScope.entries) {
+      final scope = entry.key;
+      final scopeGroups = entry.value..sort(compareZ);
+
+      // Build current siblings list in this scope.
+      final siblings = <Shape>[];
+      for (final shape in shapesById.values) {
+        final shapeScope = _effectiveContainerIdFor(
+          shapes: shapesById,
+          parentId: shape.parentId,
+          frameId: shape.frameId,
+        );
+        if (shapeScope == scope) {
+          siblings.add(shape);
+        }
+      }
+      siblings.sort(compareZ);
+
+      for (final group in scopeGroups) {
+        final groupIndex = siblings.indexWhere((s) => s.id == group.id);
+        if (groupIndex < 0) continue;
+
+        // Collect direct children of this group.
+        final children = shapesById.values
+            .where((s) => s.parentId == group.id)
+            .toList(growable: false)
+          ..sort(compareZ);
+
+        // Reparent direct children up one level.
+        for (final child in children) {
+          shapesById[child.id] = child.copyWith(parentId: group.parentId);
+          _notifyRepositoryShapeUpdated(shapesById[child.id]!);
+        }
+
+        // Remove the group itself.
+        shapesById.remove(group.id);
+        _notifyRepositoryShapeDeleted(group.id);
+
+        // Replace the group in the siblings list with its children.
+        siblings.removeAt(groupIndex);
+        siblings.insertAll(groupIndex, children);
+
+        // Select children after ungroup.
+        for (final child in children) {
+          newSelection.add(child.id);
+        }
+      }
+
+      // Normalize sort order in this scope after modifications.
+      for (var i = 0; i < siblings.length; i++) {
+        final shape = siblings[i];
+        final updated = shapesById[shape.id];
+        if (updated != null && updated.sortOrder != i) {
+          shapesById[shape.id] = updated.copyWith(sortOrder: i);
+          _notifyRepositoryShapeUpdated(shapesById[shape.id]!);
+        }
+      }
+    }
+
+    // Keep any non-group selection as well.
+    for (final id in selectedSet) {
+      final shape = state.shapes[id];
+      if (shape is GroupShape) continue;
+      if (shapesById.containsKey(id)) {
+        newSelection.add(id);
+      }
+    }
+
+    final cleanedSelection = newSelection.toSet().toList(growable: false);
+
+    emit(
+      state.copyWith(
+        shapes: shapesById,
+        selectedShapeIds: cleanedSelection,
+      ),
+    );
+    _pushUndoState(shapesById);
   }
 
   /// Detect snap points for current drag operation
@@ -2548,6 +2882,27 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     final newShapes = Map<String, Shape>.from(state.shapes);
     final newIds = <String>[];
 
+    final nextSortOrders = <String?, int>{};
+    int nextForScope({required String? parentId, required String? frameId}) {
+      final key = _effectiveContainerIdFor(
+        shapes: newShapes,
+        parentId: parentId,
+        frameId: frameId,
+      );
+      final existing = nextSortOrders[key];
+      if (existing != null) {
+        nextSortOrders[key] = existing + 1;
+        return existing;
+      }
+      final initial = _nextSortOrderForNewShape(
+        shapes: newShapes,
+        parentId: parentId,
+        frameId: frameId,
+      );
+      nextSortOrders[key] = initial + 1;
+      return initial;
+    }
+
     for (final shape in state.clipboardShapes) {
       final newId = _uuid.v4();
       final duplicated = shape.duplicate(
@@ -2555,7 +2910,12 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         offsetX: pasteOffset,
         offsetY: pasteOffset,
       );
-      newShapes[newId] = duplicated;
+
+      final z = nextForScope(
+        parentId: duplicated.parentId,
+        frameId: duplicated.frameId,
+      );
+      newShapes[newId] = duplicated.copyWith(sortOrder: z);
       newIds.add(newId);
     }
 
@@ -2580,6 +2940,27 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     final newShapes = Map<String, Shape>.from(state.shapes);
     final newIds = <String>[];
 
+    final nextSortOrders = <String?, int>{};
+    int nextForScope({required String? parentId, required String? frameId}) {
+      final key = _effectiveContainerIdFor(
+        shapes: newShapes,
+        parentId: parentId,
+        frameId: frameId,
+      );
+      final existing = nextSortOrders[key];
+      if (existing != null) {
+        nextSortOrders[key] = existing + 1;
+        return existing;
+      }
+      final initial = _nextSortOrderForNewShape(
+        shapes: newShapes,
+        parentId: parentId,
+        frameId: frameId,
+      );
+      nextSortOrders[key] = initial + 1;
+      return initial;
+    }
+
     for (final shape in state.selectedShapes) {
       if (shape.blocked) continue;
       final newId = _uuid.v4();
@@ -2588,7 +2969,12 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         offsetX: duplicateOffset,
         offsetY: duplicateOffset,
       );
-      newShapes[newId] = duplicated;
+
+      final z = nextForScope(
+        parentId: duplicated.parentId,
+        frameId: duplicated.frameId,
+      );
+      newShapes[newId] = duplicated.copyWith(sortOrder: z);
       newIds.add(newId);
     }
 

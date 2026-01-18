@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -19,6 +20,16 @@ import 'painters/ruler_painter.dart';
 import 'painters/selection_box_painter.dart';
 import 'painters/size_indicator_painter.dart';
 import 'painters/snap_guides_painter.dart';
+
+enum _CanvasContextAction {
+  cut,
+  copy,
+  paste,
+  group,
+  ungroup,
+  bringToFront,
+  sendToBack,
+}
 
 /// Main canvas view with infinite pan/zoom capability
 class CanvasView extends StatefulWidget {
@@ -64,6 +75,13 @@ class _CanvasViewState extends State<CanvasView> {
   @override
   void initState() {
     super.initState();
+
+    // On Flutter Web, prevent the browser from showing its own context menu so
+    // right-click can be used for the canvas/layers context menu.
+    if (kIsWeb) {
+      BrowserContextMenu.disableContextMenu();
+    }
+
     // Register global keyboard handler for shortcuts
     HardwareKeyboard.instance.addHandler(_handleKeyboardEvent);
 
@@ -83,6 +101,10 @@ class _CanvasViewState extends State<CanvasView> {
 
   @override
   void dispose() {
+    if (kIsWeb) {
+      BrowserContextMenu.enableContextMenu();
+    }
+
     HardwareKeyboard.instance.removeHandler(_handleKeyboardEvent);
 
     _textLayoutDebounce?.cancel();
@@ -438,7 +460,7 @@ class _CanvasViewState extends State<CanvasView> {
                                     activeCornerIndex:
                                         canvasState.activeCornerIndex,
                                     hoveredCornerIndex:
-                                      canvasState.hoveredCornerIndex,
+                                        canvasState.hoveredCornerIndex,
                                     showCornerRadiusHandles:
                                         canvasState.selectedShapes.length ==
                                                 1 &&
@@ -606,6 +628,44 @@ class _CanvasViewState extends State<CanvasView> {
       _textFocusNode.unfocus();
     }
 
+    // Right click: select-under-cursor (Penpot-like), then show context menu.
+    final isRightClick = (event.buttons & kSecondaryButton) != 0;
+    if (isRightClick) {
+      final canvasBloc = context.read<CanvasBloc>();
+      final canvasState = canvasBloc.state;
+
+      final canvasPoint = canvasState.screenToCanvas(
+        Size(event.localPosition.dx, event.localPosition.dy),
+      );
+      final hitShape = HitTest.findTopShapeAtPoint(
+        canvasPoint,
+        canvasState.shapeList,
+      );
+
+      final effectiveSelectionIds = hitShape == null
+          ? const <String>[]
+          : (canvasState.selectedShapeIds.contains(hitShape.id)
+              ? canvasState.selectedShapeIds
+              : <String>[hitShape.id]);
+
+      // Apply selection update before showing the menu.
+      if (hitShape == null) {
+        canvasBloc.add(const SelectionCleared());
+      } else if (!canvasState.selectedShapeIds.contains(hitShape.id)) {
+        canvasBloc.add(ShapesSelected([hitShape.id]));
+      }
+
+      unawaited(
+        _showCanvasContextMenu(
+          context: context,
+          globalPosition: event.position,
+          canvasState: canvasState,
+          selectionIds: effectiveSelectionIds,
+        ),
+      );
+      return;
+    }
+
     // Middle mouse button or space+left click = pan
     if (event.buttons == kMiddleMouseButton ||
         (_isSpacePressed && event.buttons == kPrimaryButton) ||
@@ -679,6 +739,139 @@ class _CanvasViewState extends State<CanvasView> {
             initialHeight: preset?.height,
           ),
         );
+  }
+
+  Future<void> _showCanvasContextMenu({
+    required BuildContext context,
+    required Offset globalPosition,
+    required CanvasState canvasState,
+    required List<String> selectionIds,
+  }) async {
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+
+    final selectedShapes = selectionIds
+        .map((id) => canvasState.shapes[id])
+        .whereType<Shape>()
+        .toList(growable: false);
+
+    final hasSelection = selectedShapes.isNotEmpty;
+    final hasClipboard = canvasState.clipboardShapes.isNotEmpty;
+
+    final hasUnlockedSelection = selectedShapes.any((s) => !s.blocked);
+
+    final canGroup = () {
+      if (selectedShapes.length < 2) return false;
+      final groupable = selectedShapes
+          .where((s) => s is! FrameShape)
+          .where((s) => !s.blocked)
+          .toList(growable: false);
+      if (groupable.length < 2) return false;
+      final frameIds = groupable.map((s) => s.frameId).toSet();
+      return frameIds.length <= 1;
+    }();
+
+    final canUngroup = selectedShapes.any(
+      (s) => s is GroupShape && !s.blocked,
+    );
+
+    const menuItemHeight = 34.0;
+    const menuItemPadding = EdgeInsets.symmetric(horizontal: 12);
+    const menuTextStyle = TextStyle(fontSize: 13);
+
+    final action = await showMenu<_CanvasContextAction>(
+      context: context,
+      position: RelativeRect.fromRect(
+        Rect.fromLTWH(globalPosition.dx, globalPosition.dy, 0, 0),
+        Offset.zero & overlay.size,
+      ),
+      items: <PopupMenuEntry<_CanvasContextAction>>[
+        PopupMenuItem(
+          value: _CanvasContextAction.cut,
+          enabled: hasSelection && hasUnlockedSelection,
+          height: menuItemHeight,
+          padding: menuItemPadding,
+          textStyle: menuTextStyle,
+          child: const Text('Cut'),
+        ),
+        PopupMenuItem(
+          value: _CanvasContextAction.copy,
+          enabled: hasSelection,
+          height: menuItemHeight,
+          padding: menuItemPadding,
+          textStyle: menuTextStyle,
+          child: const Text('Copy'),
+        ),
+        PopupMenuItem(
+          value: _CanvasContextAction.paste,
+          enabled: hasClipboard,
+          height: menuItemHeight,
+          padding: menuItemPadding,
+          textStyle: menuTextStyle,
+          child: const Text('Paste'),
+        ),
+        const PopupMenuDivider(height: 8),
+        PopupMenuItem(
+          value: _CanvasContextAction.group,
+          enabled: canGroup,
+          height: menuItemHeight,
+          padding: menuItemPadding,
+          textStyle: menuTextStyle,
+          child: const Text('Group'),
+        ),
+        PopupMenuItem(
+          value: _CanvasContextAction.ungroup,
+          enabled: canUngroup,
+          height: menuItemHeight,
+          padding: menuItemPadding,
+          textStyle: menuTextStyle,
+          child: const Text('Ungroup'),
+        ),
+        const PopupMenuDivider(height: 8),
+        PopupMenuItem(
+          value: _CanvasContextAction.bringToFront,
+          enabled: hasSelection && hasUnlockedSelection,
+          height: menuItemHeight,
+          padding: menuItemPadding,
+          textStyle: menuTextStyle,
+          child: const Text('Bring to front'),
+        ),
+        PopupMenuItem(
+          value: _CanvasContextAction.sendToBack,
+          enabled: hasSelection && hasUnlockedSelection,
+          height: menuItemHeight,
+          padding: menuItemPadding,
+          textStyle: menuTextStyle,
+          child: const Text('Send to back'),
+        ),
+      ],
+    );
+
+    if (!mounted || action == null) return;
+
+    final bloc = context.read<CanvasBloc>();
+    switch (action) {
+      case _CanvasContextAction.cut:
+        bloc.add(const CutSelected());
+        break;
+      case _CanvasContextAction.copy:
+        bloc.add(const CopySelected());
+        break;
+      case _CanvasContextAction.paste:
+        bloc.add(const PasteShapes());
+        break;
+      case _CanvasContextAction.group:
+        bloc.add(const CreateGroupFromSelection());
+        break;
+      case _CanvasContextAction.ungroup:
+        bloc.add(const UngroupSelected());
+        break;
+      case _CanvasContextAction.bringToFront:
+        bloc.add(const BringToFrontSelected());
+        break;
+      case _CanvasContextAction.sendToBack:
+        bloc.add(const SendToBackSelected());
+        break;
+    }
   }
 
   void _handlePointerMove(

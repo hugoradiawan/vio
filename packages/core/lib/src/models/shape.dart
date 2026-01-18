@@ -25,6 +25,7 @@ abstract class Shape extends Equatable {
     required this.type,
     this.parentId,
     this.frameId,
+    this.sortOrder = 0,
     this.transform = Matrix2D.identity,
     this.transformInverse,
     this.selrect,
@@ -53,6 +54,14 @@ abstract class Shape extends Equatable {
 
   /// Frame this shape belongs to
   final String? frameId;
+
+  /// Explicit z-order among siblings (lower renders behind higher).
+  ///
+  /// This is interpreted within the shape's effective container:
+  /// - `parentId` when it points to a `GroupShape`
+  /// - otherwise `frameId` when it points to a `FrameShape`
+  /// - otherwise the root canvas
+  final int sortOrder;
 
   /// Transformation matrix (position, rotation, scale, skew)
   final Matrix2D transform;
@@ -152,6 +161,7 @@ abstract class Shape extends Equatable {
     String? name,
     Object? parentId = kUnset,
     Object? frameId = kUnset,
+    int? sortOrder,
     Matrix2D? transform,
     Matrix2D? transformInverse,
     Rect? selrect,
@@ -203,6 +213,7 @@ abstract class Shape extends Equatable {
         'type': type.name,
         if (parentId != null) 'parentId': parentId,
         if (frameId != null) 'frameId': frameId,
+        'sortOrder': sortOrder,
         'transform': transform.toJson(),
         if (transformInverse != null)
           'transformInverse': transformInverse!.toJson(),
@@ -231,6 +242,7 @@ abstract class Shape extends Equatable {
         type,
         parentId,
         frameId,
+        sortOrder,
         transform,
         selrect,
         fills,

@@ -6,6 +6,16 @@ import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../bloc/canvas_bloc.dart';
 
+enum _LayerContextAction {
+  cut,
+  copy,
+  paste,
+  group,
+  ungroup,
+  bringToFront,
+  sendToBack,
+}
+
 /// A single layer item in the layers panel
 class LayerItem extends StatefulWidget {
   const LayerItem({
@@ -107,6 +117,10 @@ class _LayerItemState extends State<LayerItem> {
       child: GestureDetector(
         onTap: () => _handleTap(context),
         onDoubleTap: _startEditing,
+        onSecondaryTapDown: (details) => _handleSecondaryTapDown(
+          context,
+          details.globalPosition,
+        ),
         child: Container(
           height: 32,
           decoration: BoxDecoration(
@@ -138,6 +152,148 @@ class _LayerItemState extends State<LayerItem> {
         ),
       ),
     );
+  }
+
+  Future<void> _handleSecondaryTapDown(
+    BuildContext context,
+    Offset globalPosition,
+  ) async {
+    if (!context.mounted) return;
+
+    final bloc = context.read<CanvasBloc>();
+    final state = bloc.state;
+
+    final selectionIds = state.selectedShapeIds.contains(widget.shape.id)
+        ? state.selectedShapeIds
+        : <String>[widget.shape.id];
+
+    // Select-under-cursor always.
+    if (!state.selectedShapeIds.contains(widget.shape.id)) {
+      bloc.add(ShapesSelected([widget.shape.id]));
+    }
+
+    final selectedShapes = selectionIds
+        .map((id) => state.shapes[id])
+        .whereType<Shape>()
+        .toList(growable: false);
+
+    final hasSelection = selectedShapes.isNotEmpty;
+    final hasClipboard = state.clipboardShapes.isNotEmpty;
+    final hasUnlockedSelection = selectedShapes.any((s) => !s.blocked);
+
+    final canGroup = () {
+      if (selectedShapes.length < 2) return false;
+      final groupable = selectedShapes
+          .where((s) => s is! FrameShape)
+          .where((s) => !s.blocked)
+          .toList(growable: false);
+      if (groupable.length < 2) return false;
+      final frameIds = groupable.map((s) => s.frameId).toSet();
+      return frameIds.length <= 1;
+    }();
+
+    final canUngroup = selectedShapes.any(
+      (s) => s is GroupShape && !s.blocked,
+    );
+
+    const menuItemHeight = 34.0;
+    const menuItemPadding = EdgeInsets.symmetric(horizontal: 12);
+    const menuTextStyle = TextStyle(fontSize: 13);
+
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final action = await showMenu<_LayerContextAction>(
+      context: context,
+      position: RelativeRect.fromRect(
+        Rect.fromLTWH(globalPosition.dx, globalPosition.dy, 0, 0),
+        Offset.zero & overlay.size,
+      ),
+      items: <PopupMenuEntry<_LayerContextAction>>[
+        PopupMenuItem(
+          value: _LayerContextAction.cut,
+          enabled: hasSelection && hasUnlockedSelection,
+          height: menuItemHeight,
+          padding: menuItemPadding,
+          textStyle: menuTextStyle,
+          child: const Text('Cut'),
+        ),
+        PopupMenuItem(
+          value: _LayerContextAction.copy,
+          enabled: hasSelection,
+          height: menuItemHeight,
+          padding: menuItemPadding,
+          textStyle: menuTextStyle,
+          child: const Text('Copy'),
+        ),
+        PopupMenuItem(
+          value: _LayerContextAction.paste,
+          enabled: hasClipboard,
+          height: menuItemHeight,
+          padding: menuItemPadding,
+          textStyle: menuTextStyle,
+          child: const Text('Paste'),
+        ),
+        const PopupMenuDivider(height: 8),
+        PopupMenuItem(
+          value: _LayerContextAction.group,
+          enabled: canGroup,
+          height: menuItemHeight,
+          padding: menuItemPadding,
+          textStyle: menuTextStyle,
+          child: const Text('Group'),
+        ),
+        PopupMenuItem(
+          value: _LayerContextAction.ungroup,
+          enabled: canUngroup,
+          height: menuItemHeight,
+          padding: menuItemPadding,
+          textStyle: menuTextStyle,
+          child: const Text('Ungroup'),
+        ),
+        const PopupMenuDivider(height: 8),
+        PopupMenuItem(
+          value: _LayerContextAction.bringToFront,
+          enabled: hasSelection && hasUnlockedSelection,
+          height: menuItemHeight,
+          padding: menuItemPadding,
+          textStyle: menuTextStyle,
+          child: const Text('Bring to front'),
+        ),
+        PopupMenuItem(
+          value: _LayerContextAction.sendToBack,
+          enabled: hasSelection && hasUnlockedSelection,
+          height: menuItemHeight,
+          padding: menuItemPadding,
+          textStyle: menuTextStyle,
+          child: const Text('Send to back'),
+        ),
+      ],
+    );
+
+    if (!context.mounted || action == null) return;
+
+    switch (action) {
+      case _LayerContextAction.cut:
+        bloc.add(const CutSelected());
+        break;
+      case _LayerContextAction.copy:
+        bloc.add(const CopySelected());
+        break;
+      case _LayerContextAction.paste:
+        bloc.add(const PasteShapes());
+        break;
+      case _LayerContextAction.group:
+        bloc.add(const CreateGroupFromSelection());
+        break;
+      case _LayerContextAction.ungroup:
+        bloc.add(const UngroupSelected());
+        break;
+      case _LayerContextAction.bringToFront:
+        bloc.add(const BringToFrontSelected());
+        break;
+      case _LayerContextAction.sendToBack:
+        bloc.add(const SendToBackSelected());
+        break;
+    }
   }
 
   Color _getBackgroundColor() {

@@ -80,6 +80,12 @@ class CanvasPainter extends CustomPainter {
     final childrenByContainerId = <String, List<Shape>>{};
     final rootShapes = <Shape>[];
 
+    int compareZ(Shape a, Shape b) {
+      final byOrder = a.sortOrder.compareTo(b.sortOrder);
+      if (byOrder != 0) return byOrder;
+      return a.id.compareTo(b.id);
+    }
+
     for (final shape in shapes) {
       final parentId = shape.parentId;
       final parent = parentId == null ? null : shapesById[parentId];
@@ -96,6 +102,11 @@ class CanvasPainter extends CustomPainter {
         rootShapes.add(shape);
       }
     }
+
+    for (final list in childrenByContainerId.values) {
+      list.sort(compareZ);
+    }
+    rootShapes.sort(compareZ);
 
     // During dragging, if a container (group/frame) is selected, also move its
     // descendants in the drag overlay so children don't appear to detach.

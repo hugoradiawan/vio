@@ -168,7 +168,68 @@ class CanvasState extends Equatable {
   bool get hasPendingChanges => syncStatus == SyncStatus.pending;
 
   /// Get shapes as an ordered list (for rendering)
-  List<Shape> get shapeList => shapes.values.toList();
+  List<Shape> get shapeList {
+    if (shapes.isEmpty) return const [];
+
+    final shapesById = shapes;
+    int compareZ(Shape a, Shape b) {
+      final byOrder = a.sortOrder.compareTo(b.sortOrder);
+      if (byOrder != 0) return byOrder;
+      // Stable tie-breaker to avoid non-determinism.
+      return a.id.compareTo(b.id);
+    }
+
+    final childrenByContainerId = <String, List<Shape>>{};
+    final rootShapes = <Shape>[];
+
+    for (final shape in shapesById.values) {
+      final parentId = shape.parentId;
+      final parent = parentId == null ? null : shapesById[parentId];
+      if (parentId != null && parent is GroupShape) {
+        childrenByContainerId.putIfAbsent(parentId, () => []).add(shape);
+        continue;
+      }
+
+      final frameId = shape.frameId;
+      final frame = frameId == null ? null : shapesById[frameId];
+      if (frameId != null && frame is FrameShape) {
+        childrenByContainerId.putIfAbsent(frameId, () => []).add(shape);
+      } else {
+        rootShapes.add(shape);
+      }
+    }
+
+    for (final list in childrenByContainerId.values) {
+      list.sort(compareZ);
+    }
+    rootShapes.sort(compareZ);
+
+    final ordered = <Shape>[];
+    final visited = <String>{};
+
+    void visit(Shape shape) {
+      if (!visited.add(shape.id)) return;
+      ordered.add(shape);
+      final children = childrenByContainerId[shape.id];
+      if (children == null) return;
+      for (final child in children) {
+        visit(child);
+      }
+    }
+
+    for (final root in rootShapes) {
+      visit(root);
+    }
+
+    // Safety: if there are any detached/cyclic shapes, still include them.
+    final remainder = shapesById.values
+        .where((s) => !visited.contains(s.id))
+        .toList(growable: false)
+      ..sort(compareZ);
+    ordered.addAll(remainder);
+
+    return ordered;
+  }
 
   /// Get currently selected shapes
   List<Shape> get selectedShapes =>
@@ -339,13 +400,13 @@ class CanvasState extends Equatable {
       branchId: branchId ?? this.branchId,
       drawingShapeId:
           clearDrawingShapeId ? null : (drawingShapeId ?? this.drawingShapeId),
-        drawingPresetSize: clearDrawingPresetSize
+      drawingPresetSize: clearDrawingPresetSize
           ? null
           : (drawingPresetSize ?? this.drawingPresetSize),
       editingTextShapeId: clearEditingTextShapeId
           ? null
           : (editingTextShapeId ?? this.editingTextShapeId),
-        draftTextShapeIds: draftTextShapeIds ?? this.draftTextShapeIds,
+      draftTextShapeIds: draftTextShapeIds ?? this.draftTextShapeIds,
       activeHandle:
           clearActiveHandle ? null : (activeHandle ?? this.activeHandle),
       resizeOrigin:
@@ -358,7 +419,7 @@ class CanvasState extends Equatable {
       activeCornerIndex: clearActiveCornerIndex
           ? null
           : (activeCornerIndex ?? this.activeCornerIndex),
-        hoveredCornerIndex: clearHoveredCornerIndex
+      hoveredCornerIndex: clearHoveredCornerIndex
           ? null
           : (hoveredCornerIndex ?? this.hoveredCornerIndex),
       initialRotationAngle: clearInitialRotationAngle

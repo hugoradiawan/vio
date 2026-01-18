@@ -265,14 +265,16 @@ class _CanvasViewState extends State<CanvasView> {
     // Use CanvasBloc provided from parent (VioApp)
     return LayoutBuilder(
       builder: (context, constraints) {
+        final canvasBloc = context.read<CanvasBloc>();
         // Initialize canvas with size
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          context.read<CanvasBloc>().add(
-                CanvasInitialized(
-                  width: constraints.maxWidth,
-                  height: constraints.maxHeight,
-                ),
-              );
+          if (!mounted) return;
+          canvasBloc.add(
+            CanvasInitialized(
+              width: constraints.maxWidth,
+              height: constraints.maxHeight,
+            ),
+          );
         });
         return BlocBuilder<CanvasBloc, CanvasState>(
           builder: (context, canvasState) {
@@ -869,7 +871,8 @@ class _CanvasViewState extends State<CanvasView> {
       ],
     );
 
-    if (!mounted || action == null) return;
+    if (action == null) return;
+    if (!context.mounted) return;
 
     final bloc = context.read<CanvasBloc>();
     switch (action) {

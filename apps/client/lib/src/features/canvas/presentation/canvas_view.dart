@@ -283,6 +283,9 @@ class _CanvasViewState extends State<CanvasView> {
                   prev.gridSize != curr.gridSize ||
                   prev.activeTool != curr.activeTool,
               builder: (context, workspaceState) {
+                final selectionRect = canvasState.selectionRect;
+                final orderedShapes = canvasState.shapeList;
+
                 return MultiBlocListener(
                   listeners: [
                     BlocListener<CanvasBloc, CanvasState>(
@@ -420,13 +423,16 @@ class _CanvasViewState extends State<CanvasView> {
                             // Grid layer
                             if (workspaceState.showGrid)
                               Positioned.fill(
-                                child: CustomPaint(
-                                  painter: GridPainter(
-                                    gridSize: workspaceState.gridSize,
-                                    zoom: canvasState.zoom,
-                                    offset: Offset(
-                                      canvasState.viewportOffset.dx,
-                                      canvasState.viewportOffset.dy,
+                                child: RepaintBoundary(
+                                  child: CustomPaint(
+                                    isComplex: true,
+                                    painter: GridPainter(
+                                      gridSize: workspaceState.gridSize,
+                                      zoom: canvasState.zoom,
+                                      offset: Offset(
+                                        canvasState.viewportOffset.dx,
+                                        canvasState.viewportOffset.dy,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -434,17 +440,21 @@ class _CanvasViewState extends State<CanvasView> {
 
                             // Canvas content layer
                             Positioned.fill(
-                              child: CustomPaint(
-                                painter: CanvasPainter(
-                                  viewMatrix: canvasState.viewMatrix,
-                                  shapes: canvasState.shapeList,
-                                  dragRect: canvasState.dragRect,
-                                  dragOffset: canvasState.dragOffset,
-                                  selectedShapeIds:
-                                      canvasState.selectedShapeIds,
-                                  hoveredShapeId: canvasState.hoveredShapeId,
-                                  hoveredLayerId: canvasState.hoveredLayerId,
-                                  editingTextShapeId: _editingTextShapeId,
+                              child: RepaintBoundary(
+                                child: CustomPaint(
+                                  isComplex: true,
+                                  willChange: true,
+                                  painter: CanvasPainter(
+                                    viewMatrix: canvasState.viewMatrix,
+                                    shapes: orderedShapes,
+                                    dragRect: canvasState.dragRect,
+                                    dragOffset: canvasState.dragOffset,
+                                    selectedShapeIds:
+                                        canvasState.selectedShapeIds,
+                                    hoveredShapeId: canvasState.hoveredShapeId,
+                                    hoveredLayerId: canvasState.hoveredLayerId,
+                                    editingTextShapeId: _editingTextShapeId,
+                                  ),
                                 ),
                               ),
                             ),
@@ -452,20 +462,24 @@ class _CanvasViewState extends State<CanvasView> {
                             // Selection box layer
                             if (canvasState.hasSelection)
                               Positioned.fill(
-                                child: CustomPaint(
-                                  painter: SelectionBoxPainter(
-                                    selectedShapes: canvasState.selectedShapes,
-                                    viewMatrix: canvasState.viewMatrix,
-                                    dragOffset: canvasState.dragOffset,
-                                    activeCornerIndex:
-                                        canvasState.activeCornerIndex,
-                                    hoveredCornerIndex:
-                                        canvasState.hoveredCornerIndex,
-                                    showCornerRadiusHandles:
-                                        canvasState.selectedShapes.length ==
-                                                1 &&
-                                            canvasState.selectedShapes.first
-                                                is RectangleShape,
+                                child: RepaintBoundary(
+                                  child: CustomPaint(
+                                    willChange: true,
+                                    painter: SelectionBoxPainter(
+                                      selectedShapes:
+                                          canvasState.selectedShapes,
+                                      viewMatrix: canvasState.viewMatrix,
+                                      dragOffset: canvasState.dragOffset,
+                                      activeCornerIndex:
+                                          canvasState.activeCornerIndex,
+                                      hoveredCornerIndex:
+                                          canvasState.hoveredCornerIndex,
+                                      showCornerRadiusHandles:
+                                          canvasState.selectedShapes.length ==
+                                                  1 &&
+                                              canvasState.selectedShapes.first
+                                                  is RectangleShape,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -474,25 +488,30 @@ class _CanvasViewState extends State<CanvasView> {
                             if (canvasState.snapLines.isNotEmpty ||
                                 canvasState.snapPoints.isNotEmpty)
                               Positioned.fill(
-                                child: CustomPaint(
-                                  painter: SnapGuidesPainter(
-                                    snapLines: canvasState.snapLines,
-                                    snapPoints: canvasState.snapPoints,
-                                    viewMatrix: canvasState.viewMatrix,
-                                    zoom: canvasState.zoom,
+                                child: RepaintBoundary(
+                                  child: CustomPaint(
+                                    willChange: true,
+                                    painter: SnapGuidesPainter(
+                                      snapLines: canvasState.snapLines,
+                                      snapPoints: canvasState.snapPoints,
+                                      viewMatrix: canvasState.viewMatrix,
+                                      zoom: canvasState.zoom,
+                                    ),
                                   ),
                                 ),
                               ),
 
                             // Size indicator layer
                             if (canvasState.hasSelection &&
-                                canvasState.selectionRect != null)
+                                selectionRect != null)
                               Positioned.fill(
-                                child: CustomPaint(
-                                  painter: SizeIndicatorPainter(
-                                    selectionRect: canvasState.selectionRect,
-                                    viewMatrix: canvasState.viewMatrix,
-                                    zoom: canvasState.zoom,
+                                child: RepaintBoundary(
+                                  child: CustomPaint(
+                                    painter: SizeIndicatorPainter(
+                                      selectionRect: selectionRect,
+                                      viewMatrix: canvasState.viewMatrix,
+                                      zoom: canvasState.zoom,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -505,11 +524,13 @@ class _CanvasViewState extends State<CanvasView> {
                                 left: 20,
                                 right: 0,
                                 height: 20,
-                                child: CustomPaint(
-                                  painter: HorizontalRulerPainter(
-                                    offset: canvasState.viewportOffset.dx,
-                                    zoom: canvasState.zoom,
-                                    selectionRect: canvasState.selectionRect,
+                                child: RepaintBoundary(
+                                  child: CustomPaint(
+                                    painter: HorizontalRulerPainter(
+                                      offset: canvasState.viewportOffset.dx,
+                                      zoom: canvasState.zoom,
+                                      selectionRect: selectionRect,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -519,11 +540,13 @@ class _CanvasViewState extends State<CanvasView> {
                                 left: 0,
                                 bottom: 0,
                                 width: 20,
-                                child: CustomPaint(
-                                  painter: VerticalRulerPainter(
-                                    offset: canvasState.viewportOffset.dy,
-                                    zoom: canvasState.zoom,
-                                    selectionRect: canvasState.selectionRect,
+                                child: RepaintBoundary(
+                                  child: CustomPaint(
+                                    painter: VerticalRulerPainter(
+                                      offset: canvasState.viewportOffset.dy,
+                                      zoom: canvasState.zoom,
+                                      selectionRect: selectionRect,
+                                    ),
                                   ),
                                 ),
                               ),

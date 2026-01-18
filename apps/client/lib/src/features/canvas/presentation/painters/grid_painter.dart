@@ -9,6 +9,21 @@ class GridPainter extends CustomPainter {
     required this.offset,
   });
 
+  static final Paint _minorPaint = Paint()
+    ..color = VioColors.canvasGrid.withValues(alpha: 0.3)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 0.5;
+
+  static final Paint _majorPaint = Paint()
+    ..color = VioColors.canvasGrid.withValues(alpha: 0.6)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1;
+
+  static final Paint _originPaint = Paint()
+    ..color = VioColors.error.withValues(alpha: 0.5)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1;
+
   /// Base grid cell size in logical pixels
   final double gridSize;
 
@@ -18,12 +33,11 @@ class GridPainter extends CustomPainter {
   /// Current viewport offset
   final Offset offset;
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    // Calculate effective grid size based on zoom
-    double effectiveGridSize = gridSize * zoom;
+  double _effectiveGridSize() {
+    // Calculate effective grid size based on zoom.
+    var effectiveGridSize = gridSize * zoom;
 
-    // If grid is too small or too large, adjust
+    // If grid is too small or too large, adjust.
     while (effectiveGridSize < 10) {
       effectiveGridSize *= 10;
     }
@@ -31,15 +45,12 @@ class GridPainter extends CustomPainter {
       effectiveGridSize /= 10;
     }
 
-    // Minor grid paint
-    final minorPaint = Paint()
-      ..color = VioColors.canvasGrid.withValues(alpha: 0.3)
-      ..strokeWidth = 0.5;
+    return effectiveGridSize;
+  }
 
-    // Major grid paint (every 10th line)
-    final majorPaint = Paint()
-      ..color = VioColors.canvasGrid.withValues(alpha: 0.6)
-      ..strokeWidth = 1;
+  @override
+  void paint(Canvas canvas, Size size) {
+    final effectiveGridSize = _effectiveGridSize();
 
     // Calculate starting positions
     final startX = offset.dx % effectiveGridSize;
@@ -49,49 +60,48 @@ class GridPainter extends CustomPainter {
     final startIndexX = (offset.dx / effectiveGridSize).floor().abs();
     final startIndexY = (offset.dy / effectiveGridSize).floor().abs();
 
-    // Draw vertical lines
-    int indexX = 0;
-    for (double x = startX; x < size.width; x += effectiveGridSize) {
+    // Batch grid lines into paths to reduce draw calls on web.
+    final minorPath = Path();
+    final majorPath = Path();
+
+    // Vertical lines
+    var indexX = 0;
+    for (var x = startX; x < size.width; x += effectiveGridSize) {
       final isMajor = (startIndexX + indexX) % 10 == 0;
-      canvas.drawLine(
-        Offset(x, 0),
-        Offset(x, size.height),
-        isMajor ? majorPaint : minorPaint,
-      );
+      final path = isMajor ? majorPath : minorPath;
+      path
+        ..moveTo(x, 0)
+        ..lineTo(x, size.height);
       indexX++;
     }
 
-    // Draw horizontal lines
-    int indexY = 0;
-    for (double y = startY; y < size.height; y += effectiveGridSize) {
+    // Horizontal lines
+    var indexY = 0;
+    for (var y = startY; y < size.height; y += effectiveGridSize) {
       final isMajor = (startIndexY + indexY) % 10 == 0;
-      canvas.drawLine(
-        Offset(0, y),
-        Offset(size.width, y),
-        isMajor ? majorPaint : minorPaint,
-      );
+      final path = isMajor ? majorPath : minorPath;
+      path
+        ..moveTo(0, y)
+        ..lineTo(size.width, y);
       indexY++;
     }
 
+    canvas.drawPath(minorPath, _minorPaint);
+    canvas.drawPath(majorPath, _majorPaint);
+
     // Draw origin crosshair if visible
     if (offset.dx >= 0 && offset.dx <= size.width) {
-      final originPaint = Paint()
-        ..color = VioColors.error.withValues(alpha: 0.5)
-        ..strokeWidth = 1;
       canvas.drawLine(
         Offset(offset.dx, 0),
         Offset(offset.dx, size.height),
-        originPaint,
+        _originPaint,
       );
     }
     if (offset.dy >= 0 && offset.dy <= size.height) {
-      final originPaint = Paint()
-        ..color = VioColors.error.withValues(alpha: 0.5)
-        ..strokeWidth = 1;
       canvas.drawLine(
         Offset(0, offset.dy),
         Offset(size.width, offset.dy),
-        originPaint,
+        _originPaint,
       );
     }
   }

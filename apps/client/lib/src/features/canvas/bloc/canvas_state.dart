@@ -32,7 +32,7 @@ enum InteractionMode {
 
 /// Represents the complete state of the canvas
 class CanvasState extends Equatable {
-  const CanvasState({
+  CanvasState({
     this.zoom = 1.0,
     this.viewportOffset = const Offset(0, 0),
     this.viewportSize = const Size(800, 600),
@@ -41,6 +41,7 @@ class CanvasState extends Equatable {
     this.currentPointer,
     this.dragOffset,
     this.shapes = const {},
+    List<Shape>? orderedShapes,
     this.selectedShapeIds = const [],
     this.hoveredShapeId,
     this.expandedLayerIds = const {},
@@ -64,7 +65,7 @@ class CanvasState extends Equatable {
     this.activeCornerIndex,
     this.hoveredCornerIndex,
     this.initialRotationAngle,
-  });
+  }) : orderedShapes = orderedShapes ?? _buildShapeList(shapes);
 
   /// Current zoom level (1.0 = 100%)
   final double zoom;
@@ -90,6 +91,12 @@ class CanvasState extends Equatable {
 
   /// All shapes on the canvas, keyed by ID
   final Map<String, Shape> shapes;
+
+  /// Cached ordered shapes list (for rendering + hit-test).
+  ///
+  /// This is intentionally stored in state so we don't rebuild/sort the list on
+  /// every pointer-move state update when the underlying shapes didn't change.
+  final List<Shape> orderedShapes;
 
   /// IDs of currently selected shapes
   final List<String> selectedShapeIds;
@@ -168,7 +175,9 @@ class CanvasState extends Equatable {
   bool get hasPendingChanges => syncStatus == SyncStatus.pending;
 
   /// Get shapes as an ordered list (for rendering)
-  List<Shape> get shapeList {
+  List<Shape> get shapeList => orderedShapes;
+
+  static List<Shape> _buildShapeList(Map<String, Shape> shapes) {
     if (shapes.isEmpty) return const [];
 
     final shapesById = shapes;
@@ -374,6 +383,11 @@ class CanvasState extends Equatable {
     bool clearHoveredCornerIndex = false,
     bool clearInitialRotationAngle = false,
   }) {
+    final nextShapes = shapes ?? this.shapes;
+    final nextOrderedShapes = identical(nextShapes, this.shapes)
+      ? orderedShapes
+      : null;
+
     return CanvasState(
       zoom: zoom ?? this.zoom,
       viewportOffset: viewportOffset ?? this.viewportOffset,
@@ -383,7 +397,8 @@ class CanvasState extends Equatable {
       currentPointer:
           clearCurrentPointer ? null : (currentPointer ?? this.currentPointer),
       dragOffset: clearDragOffset ? null : (dragOffset ?? this.dragOffset),
-      shapes: shapes ?? this.shapes,
+      shapes: nextShapes,
+      orderedShapes: nextOrderedShapes,
       selectedShapeIds: selectedShapeIds ?? this.selectedShapeIds,
       hoveredShapeId:
           clearHoveredShapeId ? null : (hoveredShapeId ?? this.hoveredShapeId),

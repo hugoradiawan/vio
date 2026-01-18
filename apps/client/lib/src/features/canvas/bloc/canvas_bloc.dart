@@ -177,6 +177,66 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
   /// Manual redo stack - stores snapshots for redo
   final List<Map<String, Shape>> _redoStack = [];
 
+  // ============================================================================
+  // Web perf: snap/hover throttling & snap index caching
+  // ============================================================================
+
+  static const Duration _snapThrottle = Duration(milliseconds: 16); // ~60fps
+  static const Duration _hoverThrottle = Duration(milliseconds: 16); // ~60fps
+
+  SnapDetector? _activeSnapDetector;
+  Set<String> _activeSnapExcludeIds = const {};
+  DateTime _lastSnapComputeAt = DateTime.fromMillisecondsSinceEpoch(0);
+  Offset _lastSnapDragOffset = Offset.zero;
+  SnapResult _lastSnapResult = SnapResult.empty;
+
+  DateTime _lastHoverComputeAt = DateTime.fromMillisecondsSinceEpoch(0);
+  Offset? _lastHoverScreenPoint;
+
+  void _beginSnapSession(Set<String> selectedIds) {
+    // Build once per drag session; selected shapes are excluded.
+    final snapIndex = SnapIndex();
+    for (final shape in state.shapes.values) {
+      if (selectedIds.contains(shape.id)) continue;
+
+      if (shape is FrameShape) {
+        snapIndex.addPoints(SnapPointGenerator.fromFrame(shape));
+      } else {
+        snapIndex.addPoints(SnapPointGenerator.fromShape(shape));
+      }
+    }
+    snapIndex.build();
+
+    _activeSnapDetector = SnapDetector(config: const SnapConfig(), index: snapIndex);
+    _activeSnapExcludeIds = selectedIds;
+    _lastSnapComputeAt = DateTime.fromMillisecondsSinceEpoch(0);
+    _lastSnapDragOffset = Offset.zero;
+    _lastSnapResult = SnapResult.empty;
+  }
+
+  void _endSnapSession() {
+    _activeSnapDetector = null;
+    _activeSnapExcludeIds = const {};
+    _lastSnapComputeAt = DateTime.fromMillisecondsSinceEpoch(0);
+    _lastSnapDragOffset = Offset.zero;
+    _lastSnapResult = SnapResult.empty;
+  }
+
+  bool _shouldRecomputeHover(Offset screenPoint) {
+    final now = DateTime.now();
+    final lastPoint = _lastHoverScreenPoint;
+    final movedEnough =
+        lastPoint == null || (screenPoint - lastPoint).distance >= 1.0;
+
+    if (!movedEnough && now.difference(_lastHoverComputeAt) < _hoverThrottle) {
+      return false;
+    }
+
+    _lastHoverComputeAt = now;
+    _lastHoverScreenPoint = screenPoint;
+    return true;
+  }
+
   /// Whether undo is available
   bool get canUndo => _undoStack.length > 1;
 
@@ -689,6 +749,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       if (addToSelection) {
         // Toggle selection
         if (state.selectedShapeIds.contains(hitShape.id)) {
+          _endSnapSession();
           emit(
             state.copyWith(
               selectedShapeIds: state.selectedShapeIds
@@ -701,6 +762,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
           );
         } else {
           final newSelection = [...state.selectedShapeIds, hitShape.id];
+          _beginSnapSession(newSelection.toSet());
           emit(
             state.copyWith(
               selectedShapeIds: newSelection,
@@ -716,6 +778,8 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         final isAlreadySelected = state.selectedShapeIds.contains(hitShape.id);
         final newSelection =
             isAlreadySelected ? state.selectedShapeIds : [hitShape.id];
+
+        _beginSnapSession(newSelection.toSet());
         emit(
           state.copyWith(
             selectedShapeIds: newSelection,
@@ -728,6 +792,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       }
     } else {
       // No shape hit - start marquee selection
+      _endSnapSession();
       emit(
         state.copyWith(
           interactionMode: InteractionMode.dragging,
@@ -1059,15 +1124,10 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         canvasPoint.dy - state.dragStart!.dy,
       );
 
-      // Perform snap detection
+      // Perform snap detection (cached + throttled)
       final snapResult = _detectSnap(newDragOffset);
-
-      // Apply snap offset if snapping occurred
       if (snapResult.hasSnap) {
-        newDragOffset = Offset(
-          newDragOffset.dx + snapResult.deltaX,
-          newDragOffset.dy + snapResult.deltaY,
-        );
+        newDragOffset = newDragOffset + snapResult.snapOffset;
       }
 
       emit(
@@ -1079,6 +1139,12 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         ),
       );
     } else {
+      // Throttle hover hit-testing on web/desktop pointer-move.
+      if (!_shouldRecomputeHover(screenPoint)) {
+        emit(state.copyWith(currentPointer: canvasPoint));
+        return;
+      }
+
       // Hover corner-radius handles (single rectangle selection).
       // Only when not actively dragging the radius.
       _CornerRadiusHit? hoveredCorner;
@@ -1241,6 +1307,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         ),
       );
     } else if (state.interactionMode == InteractionMode.movingShapes) {
+      _endSnapSession();
       // Finished moving shapes - commit the drag offset to shape positions
       if (state.dragOffset != null && state.selectedShapeIds.isNotEmpty) {
         Rect? selectionRectFor(Map<String, Shape> shapes, List<String> ids) {
@@ -2348,37 +2415,33 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
 
   /// Detect snap points for current drag operation
   SnapResult _detectSnap(Offset dragOffset) {
-    // Build snap index from non-selected shapes
-    final snapIndex = SnapIndex();
-    final selectedIds = state.selectedShapeIds.toSet();
-
-    for (final shape in state.shapes.values) {
-      // Skip selected shapes
-      if (selectedIds.contains(shape.id)) continue;
-
-      // Add snap points from frames
-      if (shape is FrameShape) {
-        snapIndex.addPoints(SnapPointGenerator.fromFrame(shape));
-      } else {
-        snapIndex.addPoints(SnapPointGenerator.fromShape(shape));
-      }
-    }
-
-    snapIndex.build();
-
-    // Calculate selection rect with current drag offset
     final selectionRect = _getSelectionRectWithOffset(dragOffset);
     if (selectionRect == null) return SnapResult.empty;
 
-    // Detect snaps
-    const config = SnapConfig();
-    final detector = SnapDetector(config: config, index: snapIndex);
+    final detector = _activeSnapDetector;
+    if (detector == null) {
+      // Fallback: should be rare (e.g., programmatic move without pointerDown).
+      _beginSnapSession(state.selectedShapeIds.toSet());
+    }
 
-    return detector.detectSnap(
+    final now = DateTime.now();
+    final shouldThrottle =
+        now.difference(_lastSnapComputeAt) < _snapThrottle &&
+            (dragOffset - _lastSnapDragOffset).distance < 0.5;
+    if (shouldThrottle) {
+      return _lastSnapResult;
+    }
+
+    final computed = _activeSnapDetector!.detectSnap(
       selectionRect: selectionRect,
       zoom: state.zoom,
-      excludeIds: selectedIds,
+      excludeIds: _activeSnapExcludeIds,
     );
+
+    _lastSnapComputeAt = now;
+    _lastSnapDragOffset = dragOffset;
+    _lastSnapResult = computed;
+    return computed;
   }
 
   /// Get combined selection rect with drag offset applied

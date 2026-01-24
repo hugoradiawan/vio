@@ -70,6 +70,8 @@ vio/
 
 - **Infinite Canvas**: High-performance rendering with CustomPainter
 - **Text Tool**: Inline editing, typography controls, Google Fonts rendering
+- **Context Menus**: Right-click menus on canvas and layers (cut/copy/paste, group/ungroup, z-order)
+- **Layers Panel**: Penpot-like row hover controls (eye/lock), drag/drop reparenting
 - **Git-like Version Control**: Branches, commits, and pull requests for designs
 - **Real-time Collaboration**: Cursor presence and draft state sync via gRPC
 - **Blue Dark Mode**: Beautiful dark theme optimized for design work
@@ -79,6 +81,18 @@ vio/
 - Pan: trackpad two-finger scroll / mouse wheel
 - Horizontal pan: `Shift` + mouse wheel
 - Zoom: `Ctrl` + mouse wheel / trackpad pinch
+- Context menu: right click
+
+## ⌨️ Keyboard Shortcuts
+
+- `Ctrl+\` — Toggle zen mode (hide left panel + right panel + rulers)
+- `Ctrl+Alt+\` — Toggle left panel
+- `Ctrl+Shift+\` — Toggle right panel
+- `Ctrl+Shift+R` — Toggle rulers
+- `Ctrl+`` — Toggle grid
+- `Ctrl+'` — Toggle snap-to-grid
+- `Ctrl+C / Ctrl+X / Ctrl+V / Ctrl+D` — Copy / Cut / Paste / Duplicate
+- `Ctrl+Z / Ctrl+Y` — Undo / Redo
 
 ## 📖 Documentation
 

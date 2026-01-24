@@ -101,6 +101,16 @@ Recreate the core functionality of Penpot (Open Source Design & Prototyping Tool
 - [x] Create themed widget components
 - [x] Implement theme provider with bloc
 
+### 1.7 Productivity UX
+- [x] Add right-click context menu on canvas (cut/copy/paste, group/ungroup, bring-to-front/send-to-back)
+- [x] Add right-click context menu on layers tree rows
+- [x] Add explicit z-order via `sortOrder`
+- [x] Add layer row hover-only eye/lock controls (always visible when hidden/locked)
+- [x] Add ruler right-click menu ("Hide rulers") and suppress canvas menu on ruler strip
+- [x] Add `Ctrl+\` zen mode (hide left/right panels + rulers, press again to restore)
+- [x] Web: suppress native browser context menu while canvas is active
+- [x] Web: optimize grid painting + throttle hover/snap computations
+
 ---
 
 ## Phase 2: Backend & Data Layer

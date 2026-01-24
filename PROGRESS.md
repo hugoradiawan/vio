@@ -5,6 +5,35 @@
 
 ---
 
+## 2026-01-24
+
+### Session: Editor UX + Web Performance
+
+| Date | Task | Status | Notes/Blockers |
+|------|------|--------|----------------|
+| 2026-01-24 | Add Penpot-like context menus (canvas + layers) | ✅ Completed | Right click selects-under-cursor; cut/copy/paste + group/ungroup + z-order |
+| 2026-01-24 | Add explicit z-order (`sortOrder`) | ✅ Completed | Render/hit-test order derived from sortOrder within containers |
+| 2026-01-24 | Improve web perf (grid batching, hover/snap throttling) | ✅ Completed | Reduced draw calls; cached snap index per drag |
+| 2026-01-24 | Rulers + panels UX shortcuts | ✅ Completed | Ruler context menu; `Ctrl+\\` zen mode toggle |
+| 2026-01-24 | Layers row hover-only controls | ✅ Completed | Eye/lock buttons only show on row hover unless hidden/locked |
+
+### Changes Made
+
+#### apps/client/lib/src/features/workspace/
+- `presentation/workspace_page.dart` - Added `Ctrl+\\` zen mode shortcut; kept panel shortcuts
+- `bloc/workspace_bloc.dart` / `bloc/workspace_state.dart` / `bloc/workspace_event.dart` - Zen mode state + restore previous visibility
+
+#### apps/client/lib/src/features/canvas/
+- `presentation/canvas_view.dart` - Canvas context menu + web native menu suppression; ruler context menu routing
+- `presentation/painters/grid_painter.dart` - Batched grid lines into paths for fewer draw calls
+- `bloc/canvas_bloc.dart` - Snap index cached per drag session + hover/snap throttling
+
+#### apps/client/lib/src/features/canvas/presentation/widgets/
+- `layer_item.dart` / `layer_tree.dart` - Layer row context menu; hover-only eye/lock controls (always visible when hidden/locked)
+
+#### packages/core/lib/src/models/
+- `shape.dart` (+ shape types) - Added `sortOrder` for explicit z-ordering
+
 ## 2026-01-16
 
 ### Session: Canvas Horizontal Pan Shortcut

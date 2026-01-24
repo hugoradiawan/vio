@@ -88,3 +88,4 @@ coverage/
 
 # FVM Version Cache
 .fvm/
+/backend/src/gen

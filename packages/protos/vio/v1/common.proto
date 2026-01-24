@@ -1,0 +1,193 @@
+// Vio Common Types
+//
+// This file defines shared types used across all Vio services including
+// transforms, visual styles (fills, strokes, gradients), pagination,
+// and timestamps.
+//
+// These types mirror the data structures used in the Flutter client
+// (packages/core/lib/src/models/) and PostgreSQL database schema
+// (backend/src/db/schema/).
+syntax = "proto3";
+
+package vio.v1;
+
+// =============================================================================
+// Transform Matrix
+// =============================================================================
+
+// 6-parameter affine transformation matrix for 2D graphics.
+//
+// Represents the matrix:
+//   | a  c  e |
+//   | b  d  f |
+//   | 0  0  1 |
+//
+// This is used for positioning, rotating, scaling, and skewing shapes.
+// The identity matrix (no transformation) has a=1, b=0, c=0, d=1, e=0, f=0.
+//
+// See: packages/core/lib/src/math/matrix2d.dart for Flutter implementation.
+message Transform {
+  // Horizontal scaling factor. Default: 1.0 (no scale).
+  double a = 1;
+  // Vertical skew factor. Default: 0.0 (no skew).
+  double b = 2;
+  // Horizontal skew factor. Default: 0.0 (no skew).
+  double c = 3;
+  // Vertical scaling factor. Default: 1.0 (no scale).
+  double d = 4;
+  // Horizontal translation (X offset) in canvas coordinates.
+  double e = 5;
+  // Vertical translation (Y offset) in canvas coordinates.
+  double f = 6;
+}
+
+// =============================================================================
+// Fill Styles
+// =============================================================================
+
+// Fill style applied to shape interiors.
+//
+// Shapes can have multiple fills stacked on top of each other.
+// Each fill can be a solid color or a gradient.
+message Fill {
+  // ARGB color value as a 32-bit unsigned integer (0xAARRGGBB).
+  // Example: 0xFF3B82F6 = opaque blue (#3B82F6).
+  uint32 color = 1;
+  // Fill opacity from 0.0 (fully transparent) to 1.0 (fully opaque).
+  double opacity = 2;
+  // Optional gradient fill. When present, overrides solid color.
+  optional Gradient gradient = 3;
+}
+
+// Gradient fill definition with multiple color stops.
+//
+// Gradients interpolate colors along a line (linear) or from a center
+// point outward (radial).
+message Gradient {
+  // Type of gradient interpolation.
+  enum Type {
+    // Default/unspecified - should not be used.
+    TYPE_UNSPECIFIED = 0;
+    // Linear gradient: colors transition along a straight line.
+    TYPE_LINEAR = 1;
+    // Radial gradient: colors transition outward from a center point.
+    TYPE_RADIAL = 2;
+  }
+  // Gradient type (linear or radial).
+  Type type = 1;
+  // Color stops defining the gradient. Must have at least 2 stops.
+  // Stops should be ordered by offset from 0.0 to 1.0.
+  repeated GradientStop stops = 2;
+  // Start point X coordinate (0.0 to 1.0 relative to shape bounds).
+  double start_x = 3;
+  // Start point Y coordinate (0.0 to 1.0 relative to shape bounds).
+  double start_y = 4;
+  // End point X coordinate (0.0 to 1.0 relative to shape bounds).
+  double end_x = 5;
+  // End point Y coordinate (0.0 to 1.0 relative to shape bounds).
+  double end_y = 6;
+}
+
+// Single color stop in a gradient.
+message GradientStop {
+  // ARGB color value as a 32-bit unsigned integer (0xAARRGGBB).
+  uint32 color = 1;
+  // Position of this stop along the gradient (0.0 = start, 1.0 = end).
+  double offset = 2;
+  // Opacity of this stop from 0.0 (transparent) to 1.0 (opaque).
+  double opacity = 3;
+}
+
+// =============================================================================
+// Stroke Styles
+// =============================================================================
+
+// Stroke style applied to shape outlines/borders.
+//
+// Shapes can have multiple strokes stacked (e.g., inner + outer stroke).
+message Stroke {
+  // ARGB color value as a 32-bit unsigned integer (0xAARRGGBB).
+  uint32 color = 1;
+  // Stroke width in canvas units (pixels at 100% zoom).
+  double width = 2;
+  // Stroke opacity from 0.0 (transparent) to 1.0 (opaque).
+  double opacity = 3;
+  // Stroke position relative to the shape path.
+  StrokeAlignment alignment = 4;
+  // Line cap style for stroke endpoints.
+  StrokeCap cap = 5;
+  // Line join style for stroke corners.
+  StrokeJoin join = 6;
+}
+
+// Stroke alignment relative to the shape's path.
+enum StrokeAlignment {
+  // Default/unspecified - treated as CENTER.
+  STROKE_ALIGNMENT_UNSPECIFIED = 0;
+  // Stroke is centered on the path (half inside, half outside).
+  STROKE_ALIGNMENT_CENTER = 1;
+  // Stroke is drawn entirely inside the shape bounds.
+  STROKE_ALIGNMENT_INSIDE = 2;
+  // Stroke is drawn entirely outside the shape bounds.
+  STROKE_ALIGNMENT_OUTSIDE = 3;
+}
+
+// Line cap style for stroke line endings.
+enum StrokeCap {
+  // Default/unspecified - treated as BUTT.
+  STROKE_CAP_UNSPECIFIED = 0;
+  // Flat cap that ends exactly at the path endpoint.
+  STROKE_CAP_BUTT = 1;
+  // Rounded cap that extends past the endpoint by half the stroke width.
+  STROKE_CAP_ROUND = 2;
+  // Square cap that extends past the endpoint by half the stroke width.
+  STROKE_CAP_SQUARE = 3;
+}
+
+// Line join style for stroke corners where two lines meet.
+enum StrokeJoin {
+  // Default/unspecified - treated as MITER.
+  STROKE_JOIN_UNSPECIFIED = 0;
+  // Sharp corner that extends to a point.
+  STROKE_JOIN_MITER = 1;
+  // Rounded corner.
+  STROKE_JOIN_ROUND = 2;
+  // Beveled/flat corner.
+  STROKE_JOIN_BEVEL = 3;
+}
+
+// =============================================================================
+// Pagination
+// =============================================================================
+
+// Pagination parameters for list operations.
+//
+// Used by ListProjects, ListCommits, and other list RPCs.
+message PageToken {
+  // Maximum number of items to return. Server may return fewer.
+  // Default varies by endpoint, typically 50-100.
+  int32 limit = 1;
+  // Number of items to skip before starting to return results.
+  // Use for pagination: page N has offset = (N-1) * limit.
+  int32 offset = 2;
+}
+
+// =============================================================================
+// Time & Utility Types
+// =============================================================================
+
+// Timestamp represented as milliseconds since Unix epoch (1970-01-01T00:00:00Z).
+//
+// Using milliseconds (not seconds or nanoseconds) for:
+// - JavaScript compatibility (Date.now() returns milliseconds)
+// - Sufficient precision for design tool operations
+// - Simpler than google.protobuf.Timestamp for this use case
+message Timestamp {
+  // Milliseconds since Unix epoch (January 1, 1970 00:00:00 UTC).
+  int64 millis = 1;
+}
+
+// Empty message for RPCs that don't require request data or return no data.
+//
+// Used for operations like DeleteProject, Logout, etc.
+message Empty {}

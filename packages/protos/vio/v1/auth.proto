@@ -1,0 +1,160 @@
+// Vio Authentication Service
+//
+// This file defines the authentication API for user registration, login,
+// token management, and session handling.
+//
+// Authentication Flow:
+// 1. Register: Create new user account → receive access + refresh tokens
+// 2. Login: Authenticate with credentials → receive access + refresh tokens
+// 3. Use access_token in Authorization header for API calls
+// 4. RefreshToken: Exchange refresh_token for new tokens when access expires
+// 5. Logout: Invalidate refresh_token to end session
+//
+// Access tokens are short-lived (typically 15-60 minutes).
+// Refresh tokens are long-lived (typically 7-30 days).
+syntax = "proto3";
+
+package vio.v1;
+
+import "vio/v1/common.proto";
+
+// =============================================================================
+// Authentication Service
+// =============================================================================
+
+// AuthService handles user authentication and token management.
+//
+// All endpoints except Register and Login require no authentication.
+// Other Vio services require a valid access_token in the Authorization header.
+service AuthService {
+  // Register a new user account.
+  //
+  // Creates a new user with the provided credentials and returns
+  // authentication tokens for immediate login.
+  //
+  // Errors:
+  // - ALREADY_EXISTS: Email is already registered
+  // - INVALID_ARGUMENT: Invalid email format or weak password
+  rpc Register(RegisterRequest) returns (AuthResponse);
+
+  // Authenticate with email and password.
+  //
+  // Returns access and refresh tokens on successful authentication.
+  //
+  // Errors:
+  // - NOT_FOUND: Email not registered
+  // - UNAUTHENTICATED: Invalid password
+  rpc Login(LoginRequest) returns (AuthResponse);
+
+  // Exchange a refresh token for new access and refresh tokens.
+  //
+  // Use this when the access_token expires to get new tokens without
+  // requiring the user to re-enter credentials.
+  //
+  // Errors:
+  // - UNAUTHENTICATED: Invalid or expired refresh token
+  rpc RefreshToken(RefreshTokenRequest) returns (AuthResponse);
+
+  // Validate an access token and return the associated user.
+  //
+  // Use this to verify a token is still valid and get current user info.
+  //
+  // Returns valid=false for expired or invalid tokens (no error thrown).
+  rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
+
+  // Invalidate a refresh token to end a user session.
+  //
+  // After logout, the refresh_token cannot be used to get new tokens.
+  // The access_token remains valid until it expires naturally.
+  //
+  // Errors:
+  // - INVALID_ARGUMENT: Invalid refresh token format
+  rpc Logout(LogoutRequest) returns (Empty);
+}
+
+// =============================================================================
+// Request Messages
+// =============================================================================
+
+// Request to register a new user account.
+message RegisterRequest {
+  // User's email address. Must be unique and valid format.
+  string email = 1;
+  // Password for the account. Should meet minimum security requirements.
+  string password = 2;
+  // User's display name shown in the UI and to collaborators.
+  string name = 3;
+}
+
+// Request to authenticate with credentials.
+message LoginRequest {
+  // Registered email address.
+  string email = 1;
+  // Account password.
+  string password = 2;
+}
+
+// Request to refresh authentication tokens.
+message RefreshTokenRequest {
+  // Valid refresh token from previous authentication.
+  string refresh_token = 1;
+}
+
+// Request to validate an access token.
+message ValidateTokenRequest {
+  // JWT access token to validate.
+  string access_token = 1;
+}
+
+// Request to logout and invalidate refresh token.
+message LogoutRequest {
+  // Refresh token to invalidate.
+  string refresh_token = 1;
+}
+
+// =============================================================================
+// Response Messages
+// =============================================================================
+
+// Response indicating whether a token is valid.
+message ValidateTokenResponse {
+  // True if the access_token is valid and not expired.
+  bool valid = 1;
+  // User associated with the token, if valid.
+  optional User user = 2;
+}
+
+// Successful authentication response with tokens.
+//
+// Returned by Register, Login, and RefreshToken on success.
+message AuthResponse {
+  // JWT access token for API authorization.
+  // Include in requests as: Authorization: Bearer <access_token>
+  string access_token = 1;
+  // Refresh token for obtaining new tokens when access_token expires.
+  // Store securely and never expose to client-side JavaScript.
+  string refresh_token = 2;
+  // Seconds until the access_token expires.
+  // Client should refresh before this time elapses.
+  int64 expires_in = 3;
+  // Authenticated user details.
+  User user = 4;
+}
+
+// =============================================================================
+// User Model
+// =============================================================================
+
+// User account information.
+message User {
+  // Unique user identifier (UUID).
+  string id = 1;
+  // User's email address.
+  string email = 2;
+  // User's display name.
+  string name = 3;
+  // URL to user's avatar image, if set.
+  optional string avatar_url = 4;
+  // When the user account was created.
+  Timestamp created_at = 5;
+}

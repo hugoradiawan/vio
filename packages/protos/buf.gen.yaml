@@ -1,0 +1,17 @@
+version: v2
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/vio/protos/gen/go
+plugins:
+  # TypeScript message types - pinned to v1.x for Connect compatibility
+  - remote: buf.build/bufbuild/es:v1.10.0
+    out: ../../backend/src/gen
+    opt:
+      - target=ts
+  # Connect-ES service definitions - v1.x compatible with es v1.x
+  - remote: buf.build/connectrpc/es:v1.6.1
+    out: ../../backend/src/gen
+    opt:
+      - target=ts

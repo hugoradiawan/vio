@@ -1,0 +1,362 @@
+// Vio Shape Service
+//
+// This file defines the shape CRUD API and shape data model.
+//
+// Shapes are the fundamental building blocks of designs in Vio:
+// - Rectangles, ellipses, paths for vector graphics
+// - Text for typography
+// - Frames for artboards/containers
+// - Groups for logical organization
+// - Images for raster content
+//
+// Shape hierarchy:
+// - Shapes can belong to a Frame (artboard)
+// - Shapes can have a parent Group
+// - Shapes use sortOrder for z-ordering within their container
+//
+// See: packages/core/lib/src/models/shape.dart for Flutter model.
+// See: backend/src/db/schema/index.ts for database schema.
+syntax = "proto3";
+
+package vio.v1;
+
+import "vio/v1/common.proto";
+
+// =============================================================================
+// Shape Service
+// =============================================================================
+
+// ShapeService handles CRUD operations for design shapes.
+//
+// Shapes are the primary design elements users create and manipulate.
+// This service provides both individual and batch operations.
+service ShapeService {
+  // List all shapes in a project, optionally filtered by frame.
+  //
+  // Returns shapes ordered by sort_order ascending.
+  // Use frame_id filter to get shapes for a specific artboard.
+  //
+  // Errors:
+  // - NOT_FOUND: Project or frame does not exist
+  // - PERMISSION_DENIED: User cannot access project
+  rpc ListShapes(ListShapesRequest) returns (ListShapesResponse);
+
+  // Get a single shape with its children.
+  //
+  // Returns the shape and any direct child shapes (for groups/frames).
+  //
+  // Errors:
+  // - NOT_FOUND: Shape does not exist
+  // - PERMISSION_DENIED: User cannot access project
+  rpc GetShape(GetShapeRequest) returns (GetShapeResponse);
+
+  // Create a new shape.
+  //
+  // Validates shape data and assigns the next sort_order if not specified.
+  //
+  // Errors:
+  // - NOT_FOUND: Project, frame, or parent does not exist
+  // - INVALID_ARGUMENT: Invalid shape type or missing required fields
+  // - PERMISSION_DENIED: User cannot modify project
+  rpc CreateShape(CreateShapeRequest) returns (CreateShapeResponse);
+
+  // Update an existing shape.
+  //
+  // Only provided fields are updated (partial update semantics).
+  // Updates the shape's updated_at timestamp.
+  //
+  // Errors:
+  // - NOT_FOUND: Shape does not exist
+  // - PERMISSION_DENIED: User cannot modify this shape
+  // - FAILED_PRECONDITION: Shape is blocked (locked)
+  rpc UpdateShape(UpdateShapeRequest) returns (UpdateShapeResponse);
+
+  // Delete a shape.
+  //
+  // Also deletes any child shapes (cascading delete for groups).
+  //
+  // Errors:
+  // - NOT_FOUND: Shape does not exist
+  // - PERMISSION_DENIED: User cannot modify project
+  // - FAILED_PRECONDITION: Shape is blocked (locked)
+  rpc DeleteShape(DeleteShapeRequest) returns (Empty);
+
+  // Perform multiple shape operations atomically.
+  //
+  // Creates, updates, and deletes shapes in a single transaction.
+  // Useful for complex operations like paste, duplicate, or undo.
+  //
+  // Errors:
+  // - Various errors from individual operations
+  // - Entire batch fails if any operation fails
+  rpc BatchMutate(BatchMutateRequest) returns (BatchMutateResponse);
+}
+
+// =============================================================================
+// Shape Type Enum
+// =============================================================================
+
+// Type of shape determining its rendering and behavior.
+enum ShapeType {
+  // Default/unspecified - should not be used.
+  SHAPE_TYPE_UNSPECIFIED = 0;
+  // Rectangle with optional corner radii.
+  SHAPE_TYPE_RECTANGLE = 1;
+  // Ellipse or circle.
+  SHAPE_TYPE_ELLIPSE = 2;
+  // Vector path with bezier curves.
+  SHAPE_TYPE_PATH = 3;
+  // Text content with typography settings.
+  SHAPE_TYPE_TEXT = 4;
+  // Frame/artboard container for other shapes.
+  SHAPE_TYPE_FRAME = 5;
+  // Logical group of shapes.
+  SHAPE_TYPE_GROUP = 6;
+  // Raster image.
+  SHAPE_TYPE_IMAGE = 7;
+  // SVG vector graphic.
+  SHAPE_TYPE_SVG = 8;
+  // Boolean operation result (union, subtract, intersect).
+  SHAPE_TYPE_BOOL = 9;
+}
+
+// =============================================================================
+// Shape Model
+// =============================================================================
+
+// A shape on the canvas.
+//
+// Shapes are the fundamental design elements. All shapes share common
+// properties (position, size, fills, strokes) while type-specific
+// properties are stored in the properties bytes field.
+message Shape {
+  // Unique shape identifier (UUID).
+  string id = 1;
+  // Project this shape belongs to.
+  string project_id = 2;
+  // Frame (artboard) containing this shape, if any.
+  optional string frame_id = 3;
+  // Parent group containing this shape, if any.
+  optional string parent_id = 4;
+  // Type of shape (rectangle, ellipse, text, etc.).
+  ShapeType type = 5;
+  // Display name shown in the layers panel.
+  string name = 6;
+
+  // Position and size in canvas coordinates.
+  // For shapes in a frame, these are relative to the frame origin.
+
+  // X position of shape's origin (typically top-left).
+  double x = 7;
+  // Y position of shape's origin (typically top-left).
+  double y = 8;
+  // Width of the shape's bounding box.
+  double width = 9;
+  // Height of the shape's bounding box.
+  double height = 10;
+  // Rotation angle in degrees (0-360).
+  double rotation = 11;
+
+  // 6-parameter affine transform matrix.
+  // Applied after position/size for complex transformations.
+  Transform transform = 12;
+
+  // Visual styling properties.
+
+  // Fill styles (solid colors and/or gradients).
+  // Multiple fills stack on top of each other.
+  repeated Fill fills = 13;
+  // Stroke styles (outlines/borders).
+  // Multiple strokes stack on top of each other.
+  repeated Stroke strokes = 14;
+  // Overall shape opacity (0.0 = transparent, 1.0 = opaque).
+  // Multiplied with fill/stroke opacities.
+  double opacity = 15;
+
+  // Shape state flags.
+
+  // Whether the shape is hidden in the canvas view.
+  bool hidden = 16;
+  // Whether the shape is locked from editing.
+  // Blocked shapes cannot be moved, resized, or modified.
+  bool blocked = 17;
+  // Z-order within parent container (frame or group).
+  // Higher values render on top of lower values.
+  int32 sort_order = 18;
+
+  // Type-specific properties as JSON-encoded bytes.
+  //
+  // Format depends on shape type:
+  // - Rectangle: { "r1": number, "r2": number, "r3": number, "r4": number }
+  //   (corner radii: top-left, top-right, bottom-right, bottom-left)
+  // - Text: { "text": string, "fontFamily": string, "fontSize": number, ... }
+  // - Path: { "segments": [...], "closed": boolean }
+  bytes properties = 19;
+
+  // Timestamps.
+
+  // When the shape was created.
+  Timestamp created_at = 20;
+  // When the shape was last modified.
+  Timestamp updated_at = 21;
+}
+
+// =============================================================================
+// Request/Response Messages
+// =============================================================================
+
+// Request to list shapes in a project.
+message ListShapesRequest {
+  // Project to list shapes from.
+  string project_id = 1;
+  // Optional: filter to shapes in a specific frame.
+  optional string frame_id = 2;
+}
+
+// Response containing shapes.
+message ListShapesResponse {
+  // All shapes matching the request criteria.
+  repeated Shape shapes = 1;
+}
+
+// Request to get a single shape.
+message GetShapeRequest {
+  // Project containing the shape.
+  string project_id = 1;
+  // ID of the shape to retrieve.
+  string shape_id = 2;
+}
+
+// Response containing shape and children.
+message GetShapeResponse {
+  // The requested shape.
+  Shape shape = 1;
+  // Direct children of this shape (for groups/frames).
+  repeated Shape children = 2;
+}
+
+// Request to create a new shape.
+message CreateShapeRequest {
+  // Project to create shape in.
+  string project_id = 1;
+  // Frame to place shape in (optional).
+  optional string frame_id = 2;
+  // Parent group (optional).
+  optional string parent_id = 3;
+  // Type of shape to create.
+  ShapeType type = 4;
+  // Display name for the shape.
+  string name = 5;
+  // X position.
+  double x = 6;
+  // Y position.
+  double y = 7;
+  // Width.
+  double width = 8;
+  // Height.
+  double height = 9;
+  // Rotation in degrees (default: 0).
+  optional double rotation = 10;
+  // Transform matrix (default: identity).
+  optional Transform transform = 11;
+  // Fill styles.
+  repeated Fill fills = 12;
+  // Stroke styles.
+  repeated Stroke strokes = 13;
+  // Opacity (default: 1.0).
+  optional double opacity = 14;
+  // Type-specific properties (JSON).
+  optional bytes properties = 15;
+  // Z-order (default: auto-assigned).
+  optional int32 sort_order = 16;
+}
+
+// Response after creating a shape.
+message CreateShapeResponse {
+  // The newly created shape with generated ID and timestamps.
+  Shape shape = 1;
+}
+
+// Request to update a shape.
+// All fields are optional - only provided fields are updated.
+message UpdateShapeRequest {
+  // Project containing the shape.
+  string project_id = 1;
+  // ID of the shape to update.
+  string shape_id = 2;
+
+  // Updatable fields (all optional for partial updates).
+
+  // New display name.
+  optional string name = 3;
+  // New X position.
+  optional double x = 4;
+  // New Y position.
+  optional double y = 5;
+  // New width.
+  optional double width = 6;
+  // New height.
+  optional double height = 7;
+  // New rotation.
+  optional double rotation = 8;
+  // New transform matrix.
+  optional Transform transform = 9;
+  // New fills (replaces all existing fills).
+  repeated Fill fills = 10;
+  // New strokes (replaces all existing strokes).
+  repeated Stroke strokes = 11;
+  // New opacity.
+  optional double opacity = 12;
+  // New hidden state.
+  optional bool hidden = 13;
+  // New blocked (locked) state.
+  optional bool blocked = 14;
+  // New type-specific properties.
+  optional bytes properties = 15;
+  // New sort order.
+  optional int32 sort_order = 16;
+  // Move to different frame.
+  optional string frame_id = 17;
+  // Move to different parent group.
+  optional string parent_id = 18;
+}
+
+// Response after updating a shape.
+message UpdateShapeResponse {
+  // The updated shape.
+  Shape shape = 1;
+}
+
+// Request to delete a shape.
+message DeleteShapeRequest {
+  // Project containing the shape.
+  string project_id = 1;
+  // ID of the shape to delete.
+  string shape_id = 2;
+}
+
+// =============================================================================
+// Batch Operations
+// =============================================================================
+
+// Request to perform multiple shape operations atomically.
+message BatchMutateRequest {
+  // Project for all operations.
+  string project_id = 1;
+  // Shapes to create.
+  repeated CreateShapeRequest create = 2;
+  // Shapes to update.
+  repeated UpdateShapeRequest update = 3;
+  // Shape IDs to delete.
+  repeated string delete_ids = 4;
+}
+
+// Response from batch mutation.
+message BatchMutateResponse {
+  // Newly created shapes.
+  repeated Shape created = 1;
+  // Updated shapes.
+  repeated Shape updated = 2;
+  // IDs of deleted shapes.
+  repeated string deleted_ids = 3;
+}

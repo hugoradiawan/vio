@@ -1,0 +1,233 @@
+// Vio Commit Service
+//
+// This file defines the commit API for Git-like version history.
+//
+// Commits are immutable snapshots of the entire canvas state at a point in time.
+// Each commit references a Snapshot containing the serialized shape data.
+//
+// Commit history forms a directed acyclic graph (DAG):
+// - Each commit has a parent_id pointing to the previous commit
+// - The first commit on a branch has no parent
+// - Merges create commits with the merged branch's head as parent
+//
+// Workflow:
+// 1. User makes changes on canvas (shapes created/updated/deleted)
+// 2. User creates a commit with a message describing the changes
+// 3. Commit captures full canvas state in a snapshot
+// 4. Branch head_commit_id updates to point to new commit
+//
+// See: PLAN.md Phase 3 for full version control specification.
+syntax = "proto3";
+
+package vio.v1;
+
+import "vio/v1/common.proto";
+
+// =============================================================================
+// Commit Service
+// =============================================================================
+
+// CommitService handles version history operations.
+//
+// Commits are the core of Vio's version control system. They provide
+// a complete history of changes and allow reverting to previous states.
+service CommitService {
+  // List commits for a project or specific branch.
+  //
+  // Returns commits ordered by created_at descending (newest first).
+  // Use branch_id filter to see only commits on a specific branch.
+  //
+  // Errors:
+  // - NOT_FOUND: Project or branch does not exist
+  // - PERMISSION_DENIED: User cannot access project
+  rpc ListCommits(ListCommitsRequest) returns (ListCommitsResponse);
+  
+  // Get a single commit with its snapshot data.
+  //
+  // Returns the commit metadata and optionally the full snapshot
+  // containing all shapes at that point in time.
+  //
+  // Errors:
+  // - NOT_FOUND: Commit does not exist
+  // - PERMISSION_DENIED: User cannot access project
+  rpc GetCommit(GetCommitRequest) returns (GetCommitResponse);
+  
+  // Create a new commit on a branch.
+  //
+  // Captures the current canvas state as a snapshot and creates
+  // a commit referencing it. Updates the branch's head_commit_id.
+  //
+  // Errors:
+  // - NOT_FOUND: Project or branch does not exist
+  // - PERMISSION_DENIED: User cannot commit to this branch
+  // - FAILED_PRECONDITION: Branch is protected
+  rpc CreateCommit(CreateCommitRequest) returns (CreateCommitResponse);
+  
+  // Get the diff between two commits.
+  //
+  // Compares snapshots to determine which shapes were added,
+  // removed, or modified between the two points in history.
+  //
+  // Errors:
+  // - NOT_FOUND: One or both commits do not exist
+  // - PERMISSION_DENIED: User cannot access project
+  rpc GetDiff(GetDiffRequest) returns (GetDiffResponse);
+}
+
+// =============================================================================
+// Commit Model
+// =============================================================================
+
+// An immutable snapshot commit in the version history.
+//
+// Commits form a linked list (or DAG for merges) via parent_id.
+// Each commit references a snapshot containing the full canvas state.
+message Commit {
+  // Unique commit identifier (UUID).
+  string id = 1;
+  // Project this commit belongs to.
+  string project_id = 2;
+  // Branch this commit was created on.
+  string branch_id = 3;
+  // Previous commit in history (null for first commit on branch).
+  optional string parent_id = 4;
+  // Human-readable description of what changed in this commit.
+  string message = 5;
+  // User who created the commit.
+  string author_id = 6;
+  // Reference to the snapshot containing canvas state.
+  string snapshot_id = 7;
+  // When the commit was created.
+  Timestamp created_at = 8;
+}
+
+// =============================================================================
+// Snapshot Model
+// =============================================================================
+
+// A complete snapshot of canvas state at a point in time.
+//
+// Snapshots contain all shape data serialized as JSON. They are
+// immutable and referenced by commits.
+//
+// The data field contains the full canvas state including:
+// - All shapes with their properties
+// - Shape hierarchy (parent/child relationships)
+// - Frame definitions
+message Snapshot {
+  // Unique snapshot identifier (UUID).
+  string id = 1;
+  // Project this snapshot belongs to.
+  string project_id = 2;
+  // JSON-encoded canvas state.
+  // Format: { "shapes": [...], "frames": [...], "version": number }
+  bytes data = 3;
+  // When the snapshot was created.
+  Timestamp created_at = 4;
+}
+
+// =============================================================================
+// Request/Response Messages
+// =============================================================================
+
+// Request to list commits.
+message ListCommitsRequest {
+  // Project to list commits for.
+  string project_id = 1;
+  // Optional: filter to commits on a specific branch.
+  optional string branch_id = 2;
+  // Pagination parameters.
+  optional PageToken page = 3;
+}
+
+// Response containing commits.
+message ListCommitsResponse {
+  // Commits matching the request, newest first.
+  repeated Commit commits = 1;
+}
+
+// Request to get a single commit.
+message GetCommitRequest {
+  // Project containing the commit.
+  string project_id = 1;
+  // ID of the commit to retrieve.
+  string commit_id = 2;
+}
+
+// Response containing commit details.
+message GetCommitResponse {
+  // The requested commit.
+  Commit commit = 1;
+  // The commit's snapshot with canvas state (optional, may be large).
+  optional Snapshot snapshot = 2;
+  // The parent commit, if any.
+  optional Commit parent = 3;
+}
+
+// Request to create a new commit.
+message CreateCommitRequest {
+  // Project to create commit in.
+  string project_id = 1;
+  // Branch to commit to. Branch head will be updated.
+  string branch_id = 2;
+  // Description of what changed.
+  string message = 3;
+  // User creating the commit.
+  string author_id = 4;
+  // JSON-encoded canvas state to snapshot.
+  bytes snapshot_data = 5;
+}
+
+// Response after creating a commit.
+message CreateCommitResponse {
+  // The newly created commit.
+  Commit commit = 1;
+}
+
+// Request to get diff between commits.
+message GetDiffRequest {
+  // Project containing both commits.
+  string project_id = 1;
+  // "From" commit (older).
+  string source_commit_id = 2;
+  // "To" commit (newer).
+  string target_commit_id = 3;
+}
+
+// Response containing diff results.
+message GetDiffResponse {
+  // Summary of the source commit.
+  CommitSummary source = 1;
+  // Summary of the target commit.
+  CommitSummary target = 2;
+  // Diff showing what changed between commits.
+  DiffResult diff = 3;
+}
+
+// =============================================================================
+// Diff Types
+// =============================================================================
+
+// Abbreviated commit info for diff display.
+message CommitSummary {
+  // Commit ID.
+  string id = 1;
+  // Commit message.
+  string message = 2;
+  // When the commit was created.
+  Timestamp created_at = 3;
+}
+
+// Results of comparing two commits.
+//
+// Shapes are compared by ID. If a shape exists only in target,
+// it was added. If only in source, it was removed. If in both
+// but different, it was modified.
+message DiffResult {
+  // IDs of shapes that exist in target but not source.
+  repeated string added_shape_ids = 1;
+  // IDs of shapes that exist in source but not target.
+  repeated string removed_shape_ids = 2;
+  // IDs of shapes that exist in both but have different properties.
+  repeated string modified_shape_ids = 3;
+}

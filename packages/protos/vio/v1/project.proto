@@ -1,0 +1,224 @@
+// Vio Project Service
+//
+// This file defines the project management API. Projects are the top-level
+// container in Vio, analogous to a "file" in traditional design tools.
+//
+// Each project contains:
+// - Multiple branches (Git-like version control)
+// - Multiple frames (artboards/canvases)
+// - All shapes within those frames
+//
+// Projects can be personal (owned by a user) or belong to a team.
+// Access control is based on ownership and team membership.
+syntax = "proto3";
+
+package vio.v1;
+
+import "vio/v1/common.proto";
+import "vio/v1/branch.proto";
+
+// =============================================================================
+// Project Service
+// =============================================================================
+
+// ProjectService handles CRUD operations for design projects.
+//
+// All endpoints require authentication via access_token.
+// Users can only access projects they own or are team members of.
+service ProjectService {
+  // List all projects accessible to the current user.
+  //
+  // Returns projects owned by the user and projects from teams they belong to.
+  // Results are paginated and ordered by updated_at descending (newest first).
+  //
+  // Errors:
+  // - UNAUTHENTICATED: Invalid or missing access token
+  rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse);
+
+  // Get a single project with its branches and frames.
+  //
+  // Returns the full project details including all branches and top-level frames.
+  //
+  // Errors:
+  // - NOT_FOUND: Project does not exist
+  // - PERMISSION_DENIED: User does not have access to project
+  rpc GetProject(GetProjectRequest) returns (GetProjectResponse);
+
+  // Create a new project.
+  //
+  // Automatically creates:
+  // - A default "main" branch
+  // - An initial empty frame (artboard)
+  //
+  // The creating user becomes the owner unless team_id is specified.
+  //
+  // Errors:
+  // - INVALID_ARGUMENT: Missing required fields (name, owner_id)
+  // - PERMISSION_DENIED: User cannot create projects in specified team
+  rpc CreateProject(CreateProjectRequest) returns (CreateProjectResponse);
+
+  // Update project metadata.
+  //
+  // Only the project owner or team admins can update a project.
+  // Cannot change owner_id or team_id after creation.
+  //
+  // Errors:
+  // - NOT_FOUND: Project does not exist
+  // - PERMISSION_DENIED: User cannot modify this project
+  rpc UpdateProject(UpdateProjectRequest) returns (UpdateProjectResponse);
+
+  // Delete a project (soft delete).
+  //
+  // Marks the project as deleted but retains data for potential recovery.
+  // Only the project owner can delete a project.
+  //
+  // Errors:
+  // - NOT_FOUND: Project does not exist
+  // - PERMISSION_DENIED: User cannot delete this project
+  rpc DeleteProject(DeleteProjectRequest) returns (Empty);
+}
+
+// =============================================================================
+// Project Model
+// =============================================================================
+
+// A design project containing branches, frames, and shapes.
+//
+// Projects are the top-level organizational unit in Vio.
+// They support Git-like version control through branches and commits.
+message Project {
+  // Unique project identifier (UUID).
+  string id = 1;
+  // Project display name.
+  string name = 2;
+  // Optional description of the project's purpose.
+  optional string description = 3;
+  // User ID of the project owner.
+  string owner_id = 4;
+  // Team ID if this is a team project, null for personal projects.
+  optional string team_id = 5;
+  // Whether the project is publicly viewable.
+  // Public projects can be viewed by anyone but only edited by members.
+  bool is_public = 6;
+  // ID of the default branch (usually "main").
+  // This is the branch shown when opening the project.
+  optional string default_branch_id = 7;
+  // When the project was created.
+  Timestamp created_at = 8;
+  // When the project was last modified.
+  Timestamp updated_at = 9;
+}
+
+// =============================================================================
+// Frame Model
+// =============================================================================
+
+// A frame (artboard) within a project.
+//
+// Frames are fixed-size containers that hold shapes. They represent
+// different screens, pages, or components in a design.
+//
+// Frames are rendered with their own coordinate system - shapes inside
+// a frame have positions relative to the frame's origin.
+message Frame {
+  // Unique frame identifier (UUID).
+  string id = 1;
+  // Project this frame belongs to.
+  string project_id = 2;
+  // Frame display name (e.g., "Home Screen", "Login Page").
+  string name = 3;
+  // X position of frame's top-left corner on the canvas.
+  double x = 4;
+  // Y position of frame's top-left corner on the canvas.
+  double y = 5;
+  // Frame width in canvas units.
+  double width = 6;
+  // Frame height in canvas units.
+  double height = 7;
+  // Background color as hex string (e.g., "#FFFFFF").
+  // Null means transparent background.
+  optional string background_color = 8;
+  // Whether content outside frame bounds is clipped.
+  // When true, shapes extending past the frame edge are hidden.
+  bool clip_content = 9;
+  // Z-order for stacking multiple frames.
+  // Higher values render on top of lower values.
+  int32 sort_order = 10;
+}
+
+// =============================================================================
+// Request/Response Messages
+// =============================================================================
+
+// Request to list projects accessible to the current user.
+message ListProjectsRequest {
+  // Pagination parameters. If omitted, uses default page size.
+  optional PageToken page = 1;
+  // Filter to only projects from a specific team.
+  // Omit to include all accessible projects.
+  optional string team_id = 2;
+}
+
+// Response containing a list of projects.
+message ListProjectsResponse {
+  // Projects matching the request criteria.
+  repeated Project projects = 1;
+}
+
+// Request to get a single project by ID.
+message GetProjectRequest {
+  // ID of the project to retrieve.
+  string project_id = 1;
+}
+
+// Response containing project details.
+message GetProjectResponse {
+  // The requested project.
+  Project project = 1;
+  // All branches in the project.
+  repeated Branch branches = 2;
+  // All top-level frames in the project.
+  repeated Frame frames = 3;
+}
+
+// Request to create a new project.
+message CreateProjectRequest {
+  // Display name for the project.
+  string name = 1;
+  // Optional description.
+  optional string description = 2;
+  // User ID who will own the project.
+  string owner_id = 3;
+  // Team ID if this should be a team project.
+  optional string team_id = 4;
+}
+
+// Response after creating a project.
+message CreateProjectResponse {
+  // The newly created project with generated ID and timestamps.
+  Project project = 1;
+}
+
+// Request to update project metadata.
+message UpdateProjectRequest {
+  // ID of the project to update.
+  string project_id = 1;
+  // New name (omit to keep current).
+  optional string name = 2;
+  // New description (omit to keep current).
+  optional string description = 3;
+  // New visibility setting (omit to keep current).
+  optional bool is_public = 4;
+}
+
+// Response after updating a project.
+message UpdateProjectResponse {
+  // The updated project.
+  Project project = 1;
+}
+
+// Request to delete a project.
+message DeleteProjectRequest {
+  // ID of the project to delete.
+  string project_id = 1;
+}

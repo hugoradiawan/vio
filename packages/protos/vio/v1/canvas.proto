@@ -1,0 +1,391 @@
+// Vio Canvas Service
+//
+// This file defines the real-time canvas synchronization API.
+//
+// The canvas service handles:
+// 1. State retrieval: Get current canvas state for a branch
+// 2. Change synchronization: Sync local changes with server (last-write-wins)
+// 3. Real-time streaming: Receive updates when other users make changes
+// 4. Collaborative editing: Bidirectional streaming for presence and edits
+//
+// Sync Strategy:
+// - Client maintains local state and tracks pending operations
+// - Changes are synced periodically (e.g., every 5 seconds)
+// - Server uses last-write-wins for conflict resolution
+// - If client version is stale, server returns full state refresh
+//
+// Real-time Collaboration:
+// - Users subscribe to a branch via StreamUpdates or Collaborate
+// - Server broadcasts shape changes, cursor positions, selections
+// - Presence system tracks active users and their actions
+//
+// See: apps/client/lib/src/core/repositories/canvas_repository.dart
+syntax = "proto3";
+
+package vio.v1;
+
+import "vio/v1/shape.proto";
+
+// =============================================================================
+// Canvas Service
+// =============================================================================
+
+// CanvasService handles canvas state synchronization and real-time collaboration.
+//
+// This is the primary service for design editing. It manages the live
+// canvas state, syncs changes across clients, and provides presence features.
+service CanvasService {
+  // Get current canvas state for a branch.
+  //
+  // Returns all shapes and the current version number.
+  // Use this when opening a project or recovering from disconnect.
+  //
+  // Errors:
+  // - NOT_FOUND: Project or branch does not exist
+  // - PERMISSION_DENIED: User cannot access project
+  rpc GetCanvasState(GetCanvasStateRequest) returns (GetCanvasStateResponse);
+
+  // Sync local changes to server.
+  //
+  // Sends pending operations (creates, updates, deletes) to server.
+  // Server applies changes and returns new version number.
+  //
+  // If local_version doesn't match server, returns full state refresh
+  // (last-write-wins - server version always wins on conflict).
+  //
+  // Errors:
+  // - NOT_FOUND: Project or branch does not exist
+  // - PERMISSION_DENIED: User cannot modify project
+  rpc SyncChanges(SyncChangesRequest) returns (SyncChangesResponse);
+
+  // Subscribe to real-time updates (server-sent events).
+  //
+  // Client subscribes and receives CanvasUpdate messages when:
+  // - Other users create/update/delete shapes
+  // - Users join or leave the editing session
+  // - Cursors move or selections change
+  //
+  // Connection is kept open until client disconnects.
+  //
+  // Errors:
+  // - NOT_FOUND: Project or branch does not exist
+  // - PERMISSION_DENIED: User cannot access project
+  rpc StreamUpdates(StreamUpdatesRequest) returns (stream CanvasUpdate);
+
+  // Bidirectional streaming for collaborative editing.
+  //
+  // Full duplex connection for real-time collaboration:
+  // - Client sends: operations, cursor positions, selection changes
+  // - Server sends: operations from other users, presence updates
+  //
+  // Preferred over StreamUpdates + SyncChanges for lowest latency.
+  //
+  // Errors:
+  // - NOT_FOUND: Project or branch does not exist
+  // - PERMISSION_DENIED: User cannot access project
+  rpc Collaborate(stream CollaborateRequest) returns (stream CollaborateResponse);
+}
+
+// =============================================================================
+// Canvas State
+// =============================================================================
+
+// Complete canvas state for a branch.
+//
+// Contains all shapes and a version number for optimistic concurrency.
+message CanvasState {
+  // All shapes currently on the canvas.
+  repeated Shape shapes = 1;
+  // Version number (milliseconds since epoch).
+  // Used for conflict detection during sync.
+  int64 version = 2;
+  // ISO 8601 timestamp of last modification.
+  string last_modified = 3;
+}
+
+// =============================================================================
+// Sync Operations
+// =============================================================================
+
+// Type of operation being synced.
+enum OperationType {
+  // Default/unspecified - should not be used.
+  OPERATION_TYPE_UNSPECIFIED = 0;
+  // A new shape was created.
+  OPERATION_TYPE_CREATE = 1;
+  // An existing shape was modified.
+  OPERATION_TYPE_UPDATE = 2;
+  // A shape was deleted.
+  OPERATION_TYPE_DELETE = 3;
+}
+
+// A single shape operation to sync.
+//
+// Operations are queued locally and batched for sync.
+// Each operation has a timestamp for ordering.
+message SyncOperation {
+  // Type of operation.
+  OperationType type = 1;
+  // ID of the affected shape.
+  string shape_id = 2;
+  // Shape data (for create/update operations).
+  // Null for delete operations.
+  optional Shape shape = 3;
+  // ISO 8601 timestamp when operation occurred locally.
+  string timestamp = 4;
+}
+
+// =============================================================================
+// Presence & Collaboration
+// =============================================================================
+
+// Cursor position for a collaborator.
+//
+// Shows where other users are pointing/hovering on the canvas.
+message CursorPosition {
+  // User whose cursor this is.
+  string user_id = 1;
+  // User's display name.
+  string user_name = 2;
+  // Cursor color (hex, e.g., "#FF5733").
+  optional string user_color = 3;
+  // X position in canvas coordinates.
+  double x = 4;
+  // Y position in canvas coordinates.
+  double y = 5;
+}
+
+// Presence information for an active user.
+//
+// Shows who is currently viewing/editing the canvas.
+message UserPresence {
+  // User's unique identifier.
+  string user_id = 1;
+  // User's display name.
+  string user_name = 2;
+  // URL to user's avatar image.
+  optional string avatar_url = 3;
+  // User's assigned color for cursor/selection highlights.
+  optional string color = 4;
+  // User's current cursor position, if known.
+  optional CursorPosition cursor = 5;
+  // IDs of shapes the user currently has selected.
+  repeated string selected_shape_ids = 6;
+}
+
+// =============================================================================
+// Real-time Update Messages
+// =============================================================================
+
+// A real-time update from the server.
+//
+// Sent via StreamUpdates or Collaborate when something changes.
+// Uses oneof to distinguish update types.
+message CanvasUpdate {
+  // The type of update (exactly one will be set).
+  oneof update {
+    // A new shape was created by another user.
+    ShapeCreated shape_created = 1;
+    // A shape was modified by another user.
+    ShapeUpdated shape_updated = 2;
+    // A shape was deleted by another user.
+    ShapeDeleted shape_deleted = 3;
+    // A user joined the editing session.
+    UserJoined user_joined = 4;
+    // A user left the editing session.
+    UserLeft user_left = 5;
+    // A user's cursor moved.
+    CursorMoved cursor_moved = 6;
+    // A user's selection changed.
+    SelectionChanged selection_changed = 7;
+  }
+  // Canvas version after this update.
+  int64 version = 10;
+  // ISO 8601 timestamp of the update.
+  string timestamp = 11;
+}
+
+// Notification that a shape was created.
+message ShapeCreated {
+  // The newly created shape.
+  Shape shape = 1;
+  // User who created it.
+  string created_by = 2;
+}
+
+// Notification that a shape was updated.
+message ShapeUpdated {
+  // The updated shape (new state).
+  Shape shape = 1;
+  // User who made the update.
+  string updated_by = 2;
+}
+
+// Notification that a shape was deleted.
+message ShapeDeleted {
+  // ID of the deleted shape.
+  string shape_id = 1;
+  // User who deleted it.
+  string deleted_by = 2;
+}
+
+// Notification that a user joined the session.
+message UserJoined {
+  // Presence info for the joining user.
+  UserPresence user = 1;
+}
+
+// Notification that a user left the session.
+message UserLeft {
+  // ID of the user who left.
+  string user_id = 1;
+}
+
+// Notification that a cursor moved.
+message CursorMoved {
+  // New cursor position.
+  CursorPosition cursor = 1;
+}
+
+// Notification that a user's selection changed.
+message SelectionChanged {
+  // User whose selection changed.
+  string user_id = 1;
+  // IDs of currently selected shapes.
+  repeated string shape_ids = 2;
+}
+
+// =============================================================================
+// Request/Response Messages
+// =============================================================================
+
+// Request to get current canvas state.
+message GetCanvasStateRequest {
+  // Project containing the canvas.
+  string project_id = 1;
+  // Branch to get state for.
+  string branch_id = 2;
+}
+
+// Response containing canvas state.
+message GetCanvasStateResponse {
+  // Current canvas state.
+  CanvasState state = 1;
+}
+
+// Request to sync local changes.
+message SyncChangesRequest {
+  // Project being synced.
+  string project_id = 1;
+  // Branch being synced.
+  string branch_id = 2;
+  // Current shapes (for full sync fallback).
+  repeated Shape shapes = 3;
+  // Client's current version (for conflict detection).
+  int64 local_version = 4;
+  // Operations to apply.
+  repeated SyncOperation operations = 5;
+}
+
+// Response from sync operation.
+message SyncChangesResponse {
+  // Whether sync was successful.
+  bool success = 1;
+  // New server version after sync.
+  int64 server_version = 2;
+  // Error or status message.
+  optional string message = 3;
+  // Full shape list if client version was stale.
+  // Empty if client was up-to-date.
+  repeated Shape shapes = 4;
+}
+
+// Request to subscribe to updates.
+message StreamUpdatesRequest {
+  // Project to subscribe to.
+  string project_id = 1;
+  // Branch to subscribe to.
+  string branch_id = 2;
+  // User subscribing (for presence tracking).
+  string user_id = 3;
+}
+
+// =============================================================================
+// Collaborate Streaming Messages
+// =============================================================================
+
+// Client message in bidirectional Collaborate stream.
+message CollaborateRequest {
+  // Request type (exactly one will be set).
+  oneof request {
+    // Join a collaborative session.
+    JoinSession join = 1;
+    // Leave the session.
+    LeaveSession leave = 2;
+    // Send a shape operation.
+    SyncOperation operation = 3;
+    // Update cursor position.
+    CursorPosition cursor = 4;
+    // Update selection.
+    SelectionUpdate selection = 5;
+  }
+}
+
+// Request to join a collaborative editing session.
+message JoinSession {
+  // Project to join.
+  string project_id = 1;
+  // Branch to join.
+  string branch_id = 2;
+  // User joining.
+  string user_id = 3;
+  // User's display name.
+  string user_name = 4;
+  // User's cursor color preference.
+  optional string user_color = 5;
+}
+
+// Request to leave the session.
+message LeaveSession {
+  // User leaving.
+  string user_id = 1;
+}
+
+// Update to user's shape selection.
+message SelectionUpdate {
+  // User whose selection changed.
+  string user_id = 1;
+  // Currently selected shape IDs.
+  repeated string shape_ids = 2;
+}
+
+// Server message in bidirectional Collaborate stream.
+message CollaborateResponse {
+  // Response type (exactly one will be set).
+  oneof response {
+    // Confirmation of joining with initial state.
+    SessionJoined session_joined = 1;
+    // A canvas update (shape change, presence change, etc.).
+    CanvasUpdate update = 2;
+    // Acknowledgement of a sync operation.
+    SyncAck sync_ack = 3;
+  }
+}
+
+// Confirmation that user successfully joined the session.
+message SessionJoined {
+  // Current canvas state.
+  CanvasState initial_state = 1;
+  // Other users currently in the session.
+  repeated UserPresence active_users = 2;
+}
+
+// Acknowledgement of a sync operation.
+message SyncAck {
+  // Whether the operation was applied.
+  bool success = 1;
+  // New version after operation.
+  int64 version = 2;
+  // Error message if not successful.
+  optional string error = 3;
+}

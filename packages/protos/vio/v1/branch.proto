@@ -1,0 +1,203 @@
+// Vio Branch Service
+//
+// This file defines the branch management API for Git-like version control.
+//
+// Branches allow multiple parallel versions of a design to exist simultaneously.
+// Each branch has a "head" commit pointing to the latest version.
+//
+// Typical workflow:
+// 1. Project starts with a default "main" branch
+// 2. Create feature branches for experimental changes
+// 3. Commits are made on branches to save design snapshots
+// 4. Branches can be merged via Pull Requests (see commit.proto)
+//
+// See: PLAN.md Phase 3 for full version control specification.
+syntax = "proto3";
+
+package vio.v1;
+
+import "vio/v1/common.proto";
+import "vio/v1/commit.proto";
+
+// =============================================================================
+// Branch Service
+// =============================================================================
+
+// BranchService handles CRUD operations for version control branches.
+//
+// Branches are lightweight pointers to commits, similar to Git branches.
+// Creating a branch is fast - it just copies the head_commit_id from
+// the source branch.
+service BranchService {
+  // List all branches for a project.
+  //
+  // Returns branches ordered by updated_at descending.
+  // The default branch is always included first.
+  //
+  // Errors:
+  // - NOT_FOUND: Project does not exist
+  // - PERMISSION_DENIED: User cannot access project
+  rpc ListBranches(ListBranchesRequest) returns (ListBranchesResponse);
+
+  // Get a single branch with its head commit.
+  //
+  // Returns the branch metadata and optionally the head commit details.
+  //
+  // Errors:
+  // - NOT_FOUND: Branch or project does not exist
+  // - PERMISSION_DENIED: User cannot access project
+  rpc GetBranch(GetBranchRequest) returns (GetBranchResponse);
+
+  // Create a new branch.
+  //
+  // If source_branch_id is specified, the new branch starts from that
+  // branch's head commit. Otherwise, it starts empty.
+  //
+  // Errors:
+  // - NOT_FOUND: Project or source branch does not exist
+  // - ALREADY_EXISTS: Branch with this name already exists
+  // - PERMISSION_DENIED: User cannot modify project
+  rpc CreateBranch(CreateBranchRequest) returns (CreateBranchResponse);
+
+  // Update branch metadata.
+  //
+  // Can update name, description, and protection status.
+  // Cannot change head_commit_id directly - use commits for that.
+  //
+  // Errors:
+  // - NOT_FOUND: Branch does not exist
+  // - PERMISSION_DENIED: User cannot modify this branch
+  // - INVALID_ARGUMENT: Cannot rename default branch
+  rpc UpdateBranch(UpdateBranchRequest) returns (UpdateBranchResponse);
+
+  // Delete a branch.
+  //
+  // Cannot delete the default branch or protected branches.
+  // Deleting a branch does not delete its commits (they may be
+  // referenced by other branches or needed for history).
+  //
+  // Errors:
+  // - NOT_FOUND: Branch does not exist
+  // - FAILED_PRECONDITION: Cannot delete default or protected branch
+  // - PERMISSION_DENIED: User cannot modify project
+  rpc DeleteBranch(DeleteBranchRequest) returns (Empty);
+}
+
+// =============================================================================
+// Branch Model
+// =============================================================================
+
+// A version control branch within a project.
+//
+// Branches are named pointers to commits. The head_commit_id points to
+// the most recent commit on this branch.
+//
+// Branch names should be descriptive (e.g., "feature/new-header",
+// "experiment/dark-mode").
+message Branch {
+  // Unique branch identifier (UUID).
+  string id = 1;
+  // Project this branch belongs to.
+  string project_id = 2;
+  // Branch display name (e.g., "main", "feature/login-redesign").
+  string name = 3;
+  // Optional description of the branch's purpose.
+  optional string description = 4;
+  // ID of the most recent commit on this branch.
+  // Null for newly created branches with no commits.
+  optional string head_commit_id = 5;
+  // Whether this is the project's default branch.
+  // Only one branch per project can be default.
+  // The default branch is shown when opening the project.
+  bool is_default = 6;
+  // Whether this branch is protected from direct edits.
+  // Protected branches require Pull Requests for changes.
+  bool is_protected = 7;
+  // User ID who created this branch.
+  string created_by_id = 8;
+  // When the branch was created.
+  Timestamp created_at = 9;
+  // When the branch was last modified (metadata or head updated).
+  Timestamp updated_at = 10;
+}
+
+// =============================================================================
+// Request/Response Messages
+// =============================================================================
+
+// Request to list branches for a project.
+message ListBranchesRequest {
+  // ID of the project to list branches for.
+  string project_id = 1;
+}
+
+// Response containing branches.
+message ListBranchesResponse {
+  // All branches in the project.
+  repeated Branch branches = 1;
+}
+
+// Request to get a single branch.
+message GetBranchRequest {
+  // Project containing the branch.
+  string project_id = 1;
+  // ID of the branch to retrieve.
+  string branch_id = 2;
+}
+
+// Response containing branch details.
+message GetBranchResponse {
+  // The requested branch.
+  Branch branch = 1;
+  // The branch's head commit, if any.
+  optional Commit head_commit = 2;
+}
+
+// Request to create a new branch.
+message CreateBranchRequest {
+  // Project to create the branch in.
+  string project_id = 1;
+  // Name for the new branch.
+  string name = 2;
+  // Optional description.
+  optional string description = 3;
+  // Source branch to copy head_commit_id from.
+  // If omitted, creates a branch with no commits.
+  optional string source_branch_id = 4;
+  // User creating the branch.
+  string created_by_id = 5;
+}
+
+// Response after creating a branch.
+message CreateBranchResponse {
+  // The newly created branch.
+  Branch branch = 1;
+}
+
+// Request to update branch metadata.
+message UpdateBranchRequest {
+  // Project containing the branch.
+  string project_id = 1;
+  // ID of the branch to update.
+  string branch_id = 2;
+  // New name (omit to keep current).
+  optional string name = 3;
+  // New description (omit to keep current).
+  optional string description = 4;
+  // New protection status (omit to keep current).
+  optional bool is_protected = 5;
+}
+
+// Response after updating a branch.
+message UpdateBranchResponse {
+  // The updated branch.
+  Branch branch = 1;
+}
+
+// Request to delete a branch.
+message DeleteBranchRequest {
+  // Project containing the branch.
+  string project_id = 1;
+  // ID of the branch to delete.
+  string branch_id = 2;
+}

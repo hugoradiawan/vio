@@ -6,8 +6,8 @@ import 'package:vio_core/vio_core.dart';
 /// Configuration for snap behavior
 class SnapConfig {
   const SnapConfig({
-    this.pointSnapThreshold = 10.0,
-    this.distanceSnapThreshold = 20.0,
+    this.pointSnapThreshold = 3.0,
+    this.distanceSnapThreshold = 5.0,
     this.enabled = true,
     this.snapToFrameEdges = true,
     this.snapToFrameCenter = true,

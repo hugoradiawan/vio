@@ -69,6 +69,7 @@ class LayerTree extends StatelessWidget {
             isSelected: isSelected,
             isHovered: state.hoveredLayerId == node.shape.id ||
                 state.hoveredShapeId == node.shape.id,
+            isRowHovered: state.hoveredLayerId == node.shape.id,
           );
 
           return Draggable<_LayerDragPayload>(

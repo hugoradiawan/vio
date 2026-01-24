@@ -25,6 +25,7 @@ class LayerItem extends StatefulWidget {
     required this.hasChildren,
     required this.isSelected,
     required this.isHovered,
+    required this.isRowHovered,
     super.key,
   });
 
@@ -34,6 +35,7 @@ class LayerItem extends StatefulWidget {
   final bool hasChildren;
   final bool isSelected;
   final bool isHovered;
+  final bool isRowHovered;
 
   @override
   State<LayerItem> createState() => _LayerItemState();
@@ -107,6 +109,10 @@ class _LayerItemState extends State<LayerItem> {
   Widget build(BuildContext context) {
     final indent = widget.depth * 16.0;
 
+    final showControlsOnHover = widget.isRowHovered;
+    final showVisibilityControl = showControlsOnHover || widget.shape.hidden;
+    final showLockControl = showControlsOnHover || widget.shape.blocked;
+
     return MouseRegion(
       onEnter: (_) {
         context.read<CanvasBloc>().add(LayerHovered(widget.shape.id));
@@ -143,9 +149,9 @@ class _LayerItemState extends State<LayerItem> {
               // Name
               Expanded(child: _buildName()),
               // Visibility toggle
-              _buildVisibilityButton(),
+              _buildVisibilityButton(visible: showVisibilityControl),
               // Lock toggle
-              _buildLockButton(),
+              _buildLockButton(visible: showLockControl),
               const SizedBox(width: 4),
             ],
           ),
@@ -407,44 +413,62 @@ class _LayerItemState extends State<LayerItem> {
     );
   }
 
-  Widget _buildVisibilityButton() {
-    return SizedBox(
-      width: 24,
-      height: 24,
-      child: IconButton(
-        padding: EdgeInsets.zero,
-        iconSize: 14,
-        icon: Icon(
-          widget.shape.hidden ? Icons.visibility_off : Icons.visibility,
-          color: widget.shape.hidden
-              ? VioColors.textDisabled
-              : VioColors.textSecondary,
-        ),
-        onPressed: () {
-          context
-              .read<CanvasBloc>()
-              .add(ShapeVisibilityToggled(widget.shape.id));
-        },
+  Widget _fadeControl({required bool visible, required Widget child}) {
+    return IgnorePointer(
+      ignoring: !visible,
+      child: AnimatedOpacity(
+        opacity: visible ? 1.0 : 0.0,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        child: child,
       ),
     );
   }
 
-  Widget _buildLockButton() {
+  Widget _buildVisibilityButton({required bool visible}) {
     return SizedBox(
       width: 24,
       height: 24,
-      child: IconButton(
-        padding: EdgeInsets.zero,
-        iconSize: 14,
-        icon: Icon(
-          widget.shape.blocked ? Icons.lock : Icons.lock_open,
-          color: widget.shape.blocked
-              ? VioColors.warning
-              : VioColors.textSecondary,
+      child: _fadeControl(
+        visible: visible,
+        child: IconButton(
+          padding: EdgeInsets.zero,
+          iconSize: 14,
+          icon: Icon(
+            widget.shape.hidden ? Icons.visibility_off : Icons.visibility,
+            color: widget.shape.hidden
+                ? VioColors.textDisabled
+                : VioColors.textSecondary,
+          ),
+          onPressed: () {
+            context
+                .read<CanvasBloc>()
+                .add(ShapeVisibilityToggled(widget.shape.id));
+          },
         ),
-        onPressed: () {
-          context.read<CanvasBloc>().add(ShapeLockToggled(widget.shape.id));
-        },
+      ),
+    );
+  }
+
+  Widget _buildLockButton({required bool visible}) {
+    return SizedBox(
+      width: 24,
+      height: 24,
+      child: _fadeControl(
+        visible: visible,
+        child: IconButton(
+          padding: EdgeInsets.zero,
+          iconSize: 14,
+          icon: Icon(
+            widget.shape.blocked ? Icons.lock : Icons.lock_open,
+            color: widget.shape.blocked
+                ? VioColors.warning
+                : VioColors.textSecondary,
+          ),
+          onPressed: () {
+            context.read<CanvasBloc>().add(ShapeLockToggled(widget.shape.id));
+          },
+        ),
       ),
     );
   }

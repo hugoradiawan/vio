@@ -48,6 +48,10 @@ class WorkspaceState extends Equatable {
     this.activeTool = CanvasTool.select,
     this.isLeftPanelVisible = true,
     this.isRightPanelVisible = true,
+    this.isZenMode = false,
+    this.zenPreviousLeftPanelVisible = true,
+    this.zenPreviousRightPanelVisible = true,
+    this.zenPreviousShowRulers = true,
     this.zoom = 1.0,
     this.showGrid = false,
     this.snapToGrid = true,
@@ -70,6 +74,18 @@ class WorkspaceState extends Equatable {
 
   /// Whether the right panel (properties, design) is visible
   final bool isRightPanelVisible;
+
+  /// Whether "zen mode" is active (panels + rulers hidden).
+  final bool isZenMode;
+
+  /// Previous left panel visibility before entering zen mode.
+  final bool zenPreviousLeftPanelVisible;
+
+  /// Previous right panel visibility before entering zen mode.
+  final bool zenPreviousRightPanelVisible;
+
+  /// Previous rulers visibility before entering zen mode.
+  final bool zenPreviousShowRulers;
 
   /// Current zoom level (1.0 = 100%)
   final double zoom;
@@ -109,6 +125,10 @@ class WorkspaceState extends Equatable {
     CanvasTool? activeTool,
     bool? isLeftPanelVisible,
     bool? isRightPanelVisible,
+    bool? isZenMode,
+    bool? zenPreviousLeftPanelVisible,
+    bool? zenPreviousRightPanelVisible,
+    bool? zenPreviousShowRulers,
     double? zoom,
     bool? showGrid,
     bool? snapToGrid,
@@ -124,6 +144,13 @@ class WorkspaceState extends Equatable {
       activeTool: activeTool ?? this.activeTool,
       isLeftPanelVisible: isLeftPanelVisible ?? this.isLeftPanelVisible,
       isRightPanelVisible: isRightPanelVisible ?? this.isRightPanelVisible,
+      isZenMode: isZenMode ?? this.isZenMode,
+      zenPreviousLeftPanelVisible:
+        zenPreviousLeftPanelVisible ?? this.zenPreviousLeftPanelVisible,
+      zenPreviousRightPanelVisible:
+        zenPreviousRightPanelVisible ?? this.zenPreviousRightPanelVisible,
+      zenPreviousShowRulers:
+        zenPreviousShowRulers ?? this.zenPreviousShowRulers,
       zoom: zoom ?? this.zoom,
       showGrid: showGrid ?? this.showGrid,
       snapToGrid: snapToGrid ?? this.snapToGrid,
@@ -142,6 +169,10 @@ class WorkspaceState extends Equatable {
         activeTool,
         isLeftPanelVisible,
         isRightPanelVisible,
+      isZenMode,
+      zenPreviousLeftPanelVisible,
+      zenPreviousRightPanelVisible,
+      zenPreviousShowRulers,
         zoom,
         showGrid,
         snapToGrid,

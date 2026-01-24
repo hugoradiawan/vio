@@ -19,6 +19,7 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
     on<GridToggled>(_onGridToggled);
     on<SnapToGridToggled>(_onSnapToGridToggled);
     on<RulersToggled>(_onRulersToggled);
+    on<ZenModeToggled>(_onZenModeToggled);
     on<FrameToolPresetChanged>(_onFrameToolPresetChanged);
     on<LayersSearchToggled>(_onLayersSearchToggled);
     on<LayersSearchQueryChanged>(_onLayersSearchQueryChanged);
@@ -81,6 +82,37 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
     Emitter<WorkspaceState> emit,
   ) {
     emit(state.copyWith(showRulers: !state.showRulers));
+  }
+
+  void _onZenModeToggled(
+    ZenModeToggled event,
+    Emitter<WorkspaceState> emit,
+  ) {
+    if (!state.isZenMode) {
+      // Enter zen mode: hide panels + rulers and remember previous values.
+      emit(
+        state.copyWith(
+          isZenMode: true,
+          zenPreviousLeftPanelVisible: state.isLeftPanelVisible,
+          zenPreviousRightPanelVisible: state.isRightPanelVisible,
+          zenPreviousShowRulers: state.showRulers,
+          isLeftPanelVisible: false,
+          isRightPanelVisible: false,
+          showRulers: false,
+        ),
+      );
+      return;
+    }
+
+    // Exit zen mode: restore previous values.
+    emit(
+      state.copyWith(
+        isZenMode: false,
+        isLeftPanelVisible: state.zenPreviousLeftPanelVisible,
+        isRightPanelVisible: state.zenPreviousRightPanelVisible,
+        showRulers: state.zenPreviousShowRulers,
+      ),
+    );
   }
 
   void _onFrameToolPresetChanged(

@@ -58,6 +58,11 @@ class RulersToggled extends WorkspaceEvent {
   const RulersToggled();
 }
 
+/// Toggles "zen mode" (hide panels + rulers) with restore on exit.
+class ZenModeToggled extends WorkspaceEvent {
+  const ZenModeToggled();
+}
+
 /// Fired when the user changes the default frame preset (used when creating
 /// new frames with the Frame tool).
 class FrameToolPresetChanged extends WorkspaceEvent {

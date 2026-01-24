@@ -274,7 +274,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
 
       // Panel shortcuts
       const SingleActivator(LogicalKeyboardKey.backslash, control: true):
-          const _LeftPanelToggleIntent(),
+          const _ZenModeToggleIntent(),
       const SingleActivator(
         LogicalKeyboardKey.backslash,
         control: true,
@@ -285,12 +285,24 @@ class _WorkspacePageState extends State<WorkspacePage> {
           const _RightPanelToggleIntent(),
       // Some keyboards send intlBackslash scancode
       const SingleActivator(LogicalKeyboardKey.intlBackslash, control: true):
-          const _LeftPanelToggleIntent(),
+          const _ZenModeToggleIntent(),
       const SingleActivator(
         LogicalKeyboardKey.intlBackslash,
         control: true,
         shift: true,
       ): const _RightPanelToggleIntent(),
+
+      // Keep an explicit left-panel toggle as a fallback.
+      const SingleActivator(
+        LogicalKeyboardKey.backslash,
+        control: true,
+        alt: true,
+      ): const _LeftPanelToggleIntent(),
+      const SingleActivator(
+        LogicalKeyboardKey.intlBackslash,
+        control: true,
+        alt: true,
+      ): const _LeftPanelToggleIntent(),
 
       // Zoom shortcuts
       const SingleActivator(LogicalKeyboardKey.equal, control: true):
@@ -339,6 +351,12 @@ class _WorkspacePageState extends State<WorkspacePage> {
       _RulersToggleIntent: CallbackAction<_RulersToggleIntent>(
         onInvoke: (_) {
           workspaceBloc.add(const RulersToggled());
+          return null;
+        },
+      ),
+      _ZenModeToggleIntent: CallbackAction<_ZenModeToggleIntent>(
+        onInvoke: (_) {
+          workspaceBloc.add(const ZenModeToggled());
           return null;
         },
       ),
@@ -392,6 +410,10 @@ class _SnapToggleIntent extends Intent {
 
 class _RulersToggleIntent extends Intent {
   const _RulersToggleIntent();
+}
+
+class _ZenModeToggleIntent extends Intent {
+  const _ZenModeToggleIntent();
 }
 
 class _LeftPanelToggleIntent extends Intent {

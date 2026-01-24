@@ -31,6 +31,10 @@ enum _CanvasContextAction {
   sendToBack,
 }
 
+enum _RulerContextAction {
+  hideRulers,
+}
+
 /// Main canvas view with infinite pan/zoom capability
 class CanvasView extends StatefulWidget {
   const CanvasView({super.key});
@@ -653,9 +657,25 @@ class _CanvasViewState extends State<CanvasView> {
       _textFocusNode.unfocus();
     }
 
-    // Right click: select-under-cursor (Penpot-like), then show context menu.
+    // Right click: if clicking on a ruler, show ruler context menu.
+    // Otherwise, select-under-cursor (Penpot-like), then show canvas menu.
     final isRightClick = (event.buttons & kSecondaryButton) != 0;
     if (isRightClick) {
+      if (workspaceState.showRulers) {
+        const rulerThickness = 20.0;
+        final inRulerStrip = event.localPosition.dx <= rulerThickness ||
+            event.localPosition.dy <= rulerThickness;
+        if (inRulerStrip) {
+          unawaited(
+            _showRulerContextMenu(
+              context: context,
+              globalPosition: event.position,
+            ),
+          );
+          return;
+        }
+      }
+
       final canvasBloc = context.read<CanvasBloc>();
       final canvasState = canvasBloc.state;
 
@@ -896,6 +916,43 @@ class _CanvasViewState extends State<CanvasView> {
         break;
       case _CanvasContextAction.sendToBack:
         bloc.add(const SendToBackSelected());
+        break;
+    }
+  }
+
+  Future<void> _showRulerContextMenu({
+    required BuildContext context,
+    required Offset globalPosition,
+  }) async {
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+
+    const menuItemHeight = 34.0;
+    const menuItemPadding = EdgeInsets.symmetric(horizontal: 12);
+    const menuTextStyle = TextStyle(fontSize: 13);
+
+    final action = await showMenu<_RulerContextAction>(
+      context: context,
+      position: RelativeRect.fromRect(
+        Rect.fromLTWH(globalPosition.dx, globalPosition.dy, 0, 0),
+        Offset.zero & overlay.size,
+      ),
+      items: const <PopupMenuEntry<_RulerContextAction>>[
+        PopupMenuItem(
+          value: _RulerContextAction.hideRulers,
+          height: menuItemHeight,
+          padding: menuItemPadding,
+          textStyle: menuTextStyle,
+          child: Text('Hide rulers'),
+        ),
+      ],
+    );
+
+    if (action == null) return;
+    if (!context.mounted) return;
+
+    switch (action) {
+      case _RulerContextAction.hideRulers:
+        context.read<WorkspaceBloc>().add(const RulersToggled());
         break;
     }
   }

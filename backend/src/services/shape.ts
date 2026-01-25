@@ -8,10 +8,11 @@ import { ServerError, Status } from "nice-grpc";
 import { db } from "../db/index.js";
 import { shapes } from "../db/schema/index.js";
 import type {
+	Empty,
 	Fill,
 	Stroke,
-	Transform,
 	Timestamp,
+	Transform,
 } from "../gen/vio/v1/common.js";
 import {
 	StrokeAlignment,
@@ -30,7 +31,6 @@ import {
 	type ShapeServiceImplementation,
 	type UpdateShapeResponse,
 } from "../gen/vio/v1/shape.js";
-import type { Empty } from "../gen/vio/v1/common.js";
 
 /**
  * Convert a JavaScript Date to a protobuf Timestamp

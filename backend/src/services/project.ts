@@ -4,13 +4,13 @@ import { db, schema } from "../db";
 import type { Branch } from "../gen/vio/v1/branch.js";
 import type { Empty, Timestamp } from "../gen/vio/v1/common.js";
 import type {
-	CreateProjectResponse,
-	Frame,
-	GetProjectResponse,
-	ListProjectsResponse,
-	Project,
-	ProjectServiceImplementation,
-	UpdateProjectResponse,
+    CreateProjectResponse,
+    Frame,
+    GetProjectResponse,
+    ListProjectsResponse,
+    Project,
+    ProjectServiceImplementation,
+    UpdateProjectResponse,
 } from "../gen/vio/v1/project.js";
 
 function toProtoTimestamp(date: Date): Timestamp {

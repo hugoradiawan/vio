@@ -2,15 +2,15 @@
  * Auth service implementation for nice-grpc.
  */
 
-import { ServerError, Status } from "nice-grpc";
 import { nanoid } from "nanoid";
+import { ServerError, Status } from "nice-grpc";
 import type {
-	AuthServiceImplementation,
 	AuthResponse,
+	AuthServiceImplementation,
 	User,
 	ValidateTokenResponse,
 } from "../gen/vio/v1/auth.js";
-import type { Timestamp, Empty } from "../gen/vio/v1/common.js";
+import type { Empty, Timestamp } from "../gen/vio/v1/common.js";
 
 // ============================================================================
 // In-Memory User Store (replace with database in production)

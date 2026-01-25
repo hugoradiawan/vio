@@ -2,12 +2,12 @@ import { and, eq } from "drizzle-orm";
 import { ServerError, Status } from "nice-grpc";
 import { db, schema } from "../db";
 import type {
-	Branch,
-	BranchServiceImplementation,
-	CreateBranchResponse,
-	GetBranchResponse,
-	ListBranchesResponse,
-	UpdateBranchResponse,
+    Branch,
+    BranchServiceImplementation,
+    CreateBranchResponse,
+    GetBranchResponse,
+    ListBranchesResponse,
+    UpdateBranchResponse,
 } from "../gen/vio/v1/branch.js";
 import type { Commit } from "../gen/vio/v1/commit.js";
 import type { Empty, Timestamp } from "../gen/vio/v1/common.js";

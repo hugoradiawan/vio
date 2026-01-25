@@ -2,13 +2,13 @@ import { and, asc, desc, eq } from "drizzle-orm";
 import { ServerError, Status } from "nice-grpc";
 import { db, schema } from "../db";
 import type {
-	Commit,
-	CommitServiceImplementation,
-	CreateCommitResponse,
-	GetCommitResponse,
-	GetDiffResponse,
-	ListCommitsResponse,
-	Snapshot,
+    Commit,
+    CommitServiceImplementation,
+    CreateCommitResponse,
+    GetCommitResponse,
+    GetDiffResponse,
+    ListCommitsResponse,
+    Snapshot,
 } from "../gen/vio/v1/commit.js";
 import type { Timestamp } from "../gen/vio/v1/common.js";
 

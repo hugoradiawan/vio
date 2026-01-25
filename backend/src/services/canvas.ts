@@ -7,39 +7,39 @@ import { and, asc, eq } from "drizzle-orm";
 import { ServerError, Status } from "nice-grpc";
 import { db, schema } from "../db";
 import type {
-  CanvasServiceImplementation,
-  CanvasState,
-  CanvasUpdate,
-  CollaborateResponse,
-  CursorMoved,
-  CursorPosition,
-  GetCanvasStateResponse,
-  SelectionChanged,
-  SessionJoined,
-  ShapeCreated,
-  ShapeDeleted,
-  ShapeUpdated,
-  SyncAck,
-  SyncChangesResponse,
-  SyncOperation,
-  UserJoined,
-  UserLeft,
-  UserPresence,
+	CanvasServiceImplementation,
+	CanvasState,
+	CanvasUpdate,
+	CollaborateResponse,
+	CursorMoved,
+	CursorPosition,
+	GetCanvasStateResponse,
+	SelectionChanged,
+	SessionJoined,
+	ShapeCreated,
+	ShapeDeleted,
+	ShapeUpdated,
+	SyncAck,
+	SyncChangesResponse,
+	SyncOperation,
+	UserJoined,
+	UserLeft,
+	UserPresence,
 } from "../gen/vio/v1/canvas.js";
 import { OperationType } from "../gen/vio/v1/canvas.js";
 import type {
-  Fill,
-  Stroke,
-  Timestamp,
+	Fill,
+	Stroke,
+	Timestamp,
 } from "../gen/vio/v1/common.js";
 import {
-  StrokeAlignment,
-  StrokeCap,
-  StrokeJoin,
+	StrokeAlignment,
+	StrokeCap,
+	StrokeJoin,
 } from "../gen/vio/v1/common.js";
 import {
-  ShapeType,
-  type Shape,
+	ShapeType,
+	type Shape,
 } from "../gen/vio/v1/shape.js";
 
 // ============================================================================

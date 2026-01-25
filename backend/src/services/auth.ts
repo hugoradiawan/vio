@@ -1,13 +1,16 @@
-import type { ConnectRouter } from "@connectrpc/connect";
-import { Code, ConnectError } from "@connectrpc/connect";
+/**
+ * Auth service implementation for nice-grpc.
+ */
+
+import { ServerError, Status } from "nice-grpc";
 import { nanoid } from "nanoid";
-import { AuthService } from "../gen/vio/v1/auth_connect.js";
-import {
-    AuthResponse,
-    User,
-    ValidateTokenResponse,
-} from "../gen/vio/v1/auth_pb.js";
-import { Timestamp as ProtoTimestamp } from "../gen/vio/v1/common_pb.js";
+import type {
+	AuthServiceImplementation,
+	AuthResponse,
+	User,
+	ValidateTokenResponse,
+} from "../gen/vio/v1/auth.js";
+import type { Timestamp, Empty } from "../gen/vio/v1/common.js";
 
 // ============================================================================
 // In-Memory User Store (replace with database in production)
@@ -40,20 +43,20 @@ const REFRESH_TOKEN_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 // Helper Functions
 // ============================================================================
 
-function toProtoTimestamp(date: Date): ProtoTimestamp {
-	return new ProtoTimestamp({
+function toProtoTimestamp(date: Date): Timestamp {
+	return {
 		millis: BigInt(date.getTime()),
-	});
+	};
 }
 
 function toProtoUser(stored: StoredUser): User {
-	return new User({
+	return {
 		id: stored.id,
 		email: stored.email,
 		name: stored.name,
 		avatarUrl: stored.avatarUrl,
 		createdAt: toProtoTimestamp(stored.createdAt),
-	});
+	};
 }
 
 // Simple hash function (use bcrypt in production!)
@@ -92,193 +95,175 @@ function generateRefreshToken(userId: string): string {
 }
 
 // ============================================================================
-// Service Registration
+// Service Implementation
 // ============================================================================
 
-export function registerAuthService(router: ConnectRouter) {
-	router.service(AuthService, {
-		async register(req) {
-			// Validate input
-			if (!req.email || !req.password || !req.name) {
-				throw new ConnectError(
-					"Email, password, and name are required",
-					Code.InvalidArgument,
-				);
-			}
+export const authServiceImpl: AuthServiceImplementation = {
+	async register(req): Promise<AuthResponse> {
+		// Validate input
+		if (!req.email || !req.password || !req.name) {
+			throw new ServerError(
+				Status.INVALID_ARGUMENT,
+				"Email, password, and name are required",
+			);
+		}
 
-			if (req.password.length < 8) {
-				throw new ConnectError(
-					"Password must be at least 8 characters",
-					Code.InvalidArgument,
-				);
-			}
+		if (req.password.length < 8) {
+			throw new ServerError(
+				Status.INVALID_ARGUMENT,
+				"Password must be at least 8 characters",
+			);
+		}
 
-			// Check if email is already taken
-			if (usersByEmail.has(req.email.toLowerCase())) {
-				throw new ConnectError("Email already registered", Code.AlreadyExists);
-			}
+		// Check if email is already taken
+		if (usersByEmail.has(req.email.toLowerCase())) {
+			throw new ServerError(Status.ALREADY_EXISTS, "Email already registered");
+		}
 
-			// Create user
-			const userId = nanoid(21);
-			const passwordHash = await hashPassword(req.password);
-			const now = new Date();
+		// Create user
+		const userId = nanoid(21);
+		const passwordHash = await hashPassword(req.password);
+		const now = new Date();
 
-			const user: StoredUser = {
-				id: userId,
-				email: req.email.toLowerCase(),
-				name: req.name,
-				passwordHash,
-				createdAt: now,
-			};
+		const user: StoredUser = {
+			id: userId,
+			email: req.email.toLowerCase(),
+			name: req.name,
+			passwordHash,
+			createdAt: now,
+		};
 
-			users.set(userId, user);
-			usersByEmail.set(user.email, userId);
+		users.set(userId, user);
+		usersByEmail.set(user.email, userId);
 
-			// Generate tokens
-			const accessToken = generateAccessToken(userId);
-			const refreshToken = generateRefreshToken(userId);
+		// Generate tokens
+		const accessToken = generateAccessToken(userId);
+		const refreshToken = generateRefreshToken(userId);
 
-			console.log(`User registered: ${user.email} (${userId})`);
+		console.log(`User registered: ${user.email} (${userId})`);
 
-			return new AuthResponse({
-				user: toProtoUser(user),
-				accessToken,
-				refreshToken,
-				expiresIn: BigInt(Math.floor(ACCESS_TOKEN_DURATION / 1000)),
-			});
-		},
+		return {
+			user: toProtoUser(user),
+			accessToken,
+			refreshToken,
+			expiresIn: BigInt(Math.floor(ACCESS_TOKEN_DURATION / 1000)),
+		};
+	},
 
-		async login(req) {
-			// Validate input
-			if (!req.email || !req.password) {
-				throw new ConnectError(
-					"Email and password are required",
-					Code.InvalidArgument,
-				);
-			}
+	async login(req): Promise<AuthResponse> {
+		// Validate input
+		if (!req.email || !req.password) {
+			throw new ServerError(
+				Status.INVALID_ARGUMENT,
+				"Email and password are required",
+			);
+		}
 
-			// Find user
-			const userId = usersByEmail.get(req.email.toLowerCase());
-			if (!userId) {
-				throw new ConnectError(
-					"Invalid email or password",
-					Code.Unauthenticated,
-				);
-			}
+		// Find user
+		const userId = usersByEmail.get(req.email.toLowerCase());
+		if (!userId) {
+			throw new ServerError(Status.UNAUTHENTICATED, "Invalid email or password");
+		}
 
-			const user = users.get(userId);
-			if (!user) {
-				throw new ConnectError(
-					"Invalid email or password",
-					Code.Unauthenticated,
-				);
-			}
+		const user = users.get(userId);
+		if (!user) {
+			throw new ServerError(Status.UNAUTHENTICATED, "Invalid email or password");
+		}
 
-			// Verify password
-			const valid = await verifyPassword(req.password, user.passwordHash);
-			if (!valid) {
-				throw new ConnectError(
-					"Invalid email or password",
-					Code.Unauthenticated,
-				);
-			}
+		// Verify password
+		const valid = await verifyPassword(req.password, user.passwordHash);
+		if (!valid) {
+			throw new ServerError(Status.UNAUTHENTICATED, "Invalid email or password");
+		}
 
-			// Generate tokens
-			const accessToken = generateAccessToken(userId);
-			const refreshToken = generateRefreshToken(userId);
+		// Generate tokens
+		const accessToken = generateAccessToken(userId);
+		const refreshToken = generateRefreshToken(userId);
 
-			console.log(`User logged in: ${user.email}`);
+		console.log(`User logged in: ${user.email}`);
 
-			return new AuthResponse({
-				user: toProtoUser(user),
-				accessToken,
-				refreshToken,
-				expiresIn: BigInt(Math.floor(ACCESS_TOKEN_DURATION / 1000)),
-			});
-		},
+		return {
+			user: toProtoUser(user),
+			accessToken,
+			refreshToken,
+			expiresIn: BigInt(Math.floor(ACCESS_TOKEN_DURATION / 1000)),
+		};
+	},
 
-		async refreshToken(req) {
-			// Validate input
-			if (!req.refreshToken) {
-				throw new ConnectError(
-					"Refresh token is required",
-					Code.InvalidArgument,
-				);
-			}
+	async refreshToken(req): Promise<AuthResponse> {
+		// Validate input
+		if (!req.refreshToken) {
+			throw new ServerError(Status.INVALID_ARGUMENT, "Refresh token is required");
+		}
 
-			// Verify refresh token
-			const tokenData = refreshTokens.get(req.refreshToken);
-			if (!tokenData) {
-				throw new ConnectError("Invalid refresh token", Code.Unauthenticated);
-			}
+		// Verify refresh token
+		const tokenData = refreshTokens.get(req.refreshToken);
+		if (!tokenData) {
+			throw new ServerError(Status.UNAUTHENTICATED, "Invalid refresh token");
+		}
 
-			if (Date.now() > tokenData.expiresAt) {
-				refreshTokens.delete(req.refreshToken);
-				throw new ConnectError("Refresh token expired", Code.Unauthenticated);
-			}
-
-			const user = users.get(tokenData.userId);
-			if (!user) {
-				throw new ConnectError("User not found", Code.NotFound);
-			}
-
-			// Revoke old refresh token
+		if (Date.now() > tokenData.expiresAt) {
 			refreshTokens.delete(req.refreshToken);
+			throw new ServerError(Status.UNAUTHENTICATED, "Refresh token expired");
+		}
 
-			// Generate new tokens
-			const accessToken = generateAccessToken(user.id);
-			const refreshToken = generateRefreshToken(user.id);
+		const user = users.get(tokenData.userId);
+		if (!user) {
+			throw new ServerError(Status.NOT_FOUND, "User not found");
+		}
 
-			return new AuthResponse({
-				accessToken,
-				refreshToken,
-				expiresIn: BigInt(Math.floor(ACCESS_TOKEN_DURATION / 1000)),
-			});
-		},
+		// Revoke old refresh token
+		refreshTokens.delete(req.refreshToken);
 
-		async validateToken(req) {
-			// Validate input
-			if (!req.accessToken) {
-				throw new ConnectError(
-					"Access token is required",
-					Code.InvalidArgument,
-				);
-			}
+		// Generate new tokens
+		const accessToken = generateAccessToken(user.id);
+		const refreshToken = generateRefreshToken(user.id);
 
-			// Verify access token
-			const tokenData = accessTokens.get(req.accessToken);
-			if (!tokenData) {
-				return new ValidateTokenResponse({ valid: false });
-			}
+		return {
+			accessToken,
+			refreshToken,
+			expiresIn: BigInt(Math.floor(ACCESS_TOKEN_DURATION / 1000)),
+			user: undefined,
+		};
+	},
 
-			if (Date.now() > tokenData.expiresAt) {
-				accessTokens.delete(req.accessToken);
-				return new ValidateTokenResponse({ valid: false });
-			}
+	async validateToken(req): Promise<ValidateTokenResponse> {
+		// Validate input
+		if (!req.accessToken) {
+			throw new ServerError(Status.INVALID_ARGUMENT, "Access token is required");
+		}
 
-			const user = users.get(tokenData.userId);
-			if (!user) {
-				return new ValidateTokenResponse({ valid: false });
-			}
+		// Verify access token
+		const tokenData = accessTokens.get(req.accessToken);
+		if (!tokenData) {
+			return { valid: false, user: undefined };
+		}
 
-			return new ValidateTokenResponse({
-				valid: true,
-				user: toProtoUser(user),
-			});
-		},
+		if (Date.now() > tokenData.expiresAt) {
+			accessTokens.delete(req.accessToken);
+			return { valid: false, user: undefined };
+		}
 
-		async logout(req) {
-			// Revoke tokens
-			if (req.refreshToken) {
-				refreshTokens.delete(req.refreshToken);
-			}
+		const user = users.get(tokenData.userId);
+		if (!user) {
+			return { valid: false, user: undefined };
+		}
 
-			// Note: In the proto, LogoutRequest only has refreshToken field
-			// Access token invalidation would need to be handled by the auth header
-			return {};
-		},
-	});
-}
+		return {
+			valid: true,
+			user: toProtoUser(user),
+		};
+	},
+
+	async logout(req): Promise<Empty> {
+		// Revoke tokens
+		if (req.refreshToken) {
+			refreshTokens.delete(req.refreshToken);
+		}
+
+		return {};
+	},
+};
 
 // ============================================================================
 // Token Validation Middleware Helper

@@ -1,438 +1,500 @@
-import type { ConnectRouter } from "@connectrpc/connect";
-import { Code, ConnectError } from "@connectrpc/connect";
-import { and, asc, eq } from "drizzle-orm";
-import { db, schema } from "../db";
-import {
+/**
+ * Shape service implementation for Vio design tool.
+ * Handles CRUD operations for shapes on the canvas.
+ */
+
+import { and, eq } from "drizzle-orm";
+import { ServerError, Status } from "nice-grpc";
+import { db } from "../db/index.js";
+import { shapes } from "../db/schema/index.js";
+import type {
 	Fill,
-	Timestamp as ProtoTimestamp,
 	Stroke,
-	StrokeAlignment,
 	Transform,
-} from "../gen/vio/v1/common_pb.js";
-import { ShapeService } from "../gen/vio/v1/shape_connect.js";
+	Timestamp,
+} from "../gen/vio/v1/common.js";
 import {
-	BatchMutateResponse,
-	CreateShapeResponse,
-	GetShapeResponse,
-	ListShapesResponse,
-	Shape,
+	StrokeAlignment,
+	StrokeCap,
+	StrokeJoin,
+} from "../gen/vio/v1/common.js";
+import {
 	ShapeType,
-	UpdateShapeResponse,
-} from "../gen/vio/v1/shape_pb.js";
+	type BatchMutateRequest,
+	type BatchMutateResponse,
+	type CreateShapeRequest,
+	type CreateShapeResponse,
+	type GetShapeResponse,
+	type ListShapesResponse,
+	type Shape as ProtoShape,
+	type ShapeServiceImplementation,
+	type UpdateShapeResponse,
+} from "../gen/vio/v1/shape.js";
+import type { Empty } from "../gen/vio/v1/common.js";
 
-function toProtoTimestamp(date: Date): ProtoTimestamp {
-	return new ProtoTimestamp({
-		millis: BigInt(date.getTime()),
-	});
+/**
+ * Convert a JavaScript Date to a protobuf Timestamp
+ */
+function toProtoTimestamp(date: Date): Timestamp {
+  return { millis: BigInt(date.getTime()) };
 }
 
-// ============================================================================
-// Enum conversion helpers
-// ============================================================================
-
+/**
+ * Convert a string shape type to the protobuf ShapeType enum
+ */
 function stringToShapeType(type: string): ShapeType {
-	const mapping: Record<string, ShapeType> = {
-		rectangle: ShapeType.RECTANGLE,
-		ellipse: ShapeType.ELLIPSE,
-		path: ShapeType.PATH,
-		text: ShapeType.TEXT,
-		frame: ShapeType.FRAME,
-		group: ShapeType.GROUP,
-		image: ShapeType.IMAGE,
-		svg: ShapeType.SVG,
-		bool: ShapeType.BOOL,
-	};
-	return mapping[type.toLowerCase()] ?? ShapeType.UNSPECIFIED;
+  const typeMap: Record<string, ShapeType> = {
+    rectangle: ShapeType.SHAPE_TYPE_RECTANGLE,
+    ellipse: ShapeType.SHAPE_TYPE_ELLIPSE,
+    path: ShapeType.SHAPE_TYPE_PATH,
+    text: ShapeType.SHAPE_TYPE_TEXT,
+    frame: ShapeType.SHAPE_TYPE_FRAME,
+    group: ShapeType.SHAPE_TYPE_GROUP,
+    image: ShapeType.SHAPE_TYPE_IMAGE,
+    svg: ShapeType.SHAPE_TYPE_SVG,
+    bool: ShapeType.SHAPE_TYPE_BOOL,
+  };
+  return typeMap[type.toLowerCase()] ?? ShapeType.SHAPE_TYPE_UNSPECIFIED;
 }
 
-function stringToStrokeAlignment(alignment: string): StrokeAlignment {
-	const mapping: Record<string, StrokeAlignment> = {
-		center: StrokeAlignment.CENTER,
-		inside: StrokeAlignment.INSIDE,
-		outside: StrokeAlignment.OUTSIDE,
-	};
-	return mapping[alignment.toLowerCase()] ?? StrokeAlignment.CENTER;
+/**
+ * Convert a protobuf ShapeType enum to a string
+ */
+function shapeTypeToString(type: ShapeType): string {
+  const typeMap: Record<number, string> = {
+    [ShapeType.SHAPE_TYPE_UNSPECIFIED]: "rectangle",
+    [ShapeType.SHAPE_TYPE_RECTANGLE]: "rectangle",
+    [ShapeType.SHAPE_TYPE_ELLIPSE]: "ellipse",
+    [ShapeType.SHAPE_TYPE_PATH]: "path",
+    [ShapeType.SHAPE_TYPE_TEXT]: "text",
+    [ShapeType.SHAPE_TYPE_FRAME]: "frame",
+    [ShapeType.SHAPE_TYPE_GROUP]: "group",
+    [ShapeType.SHAPE_TYPE_IMAGE]: "image",
+    [ShapeType.SHAPE_TYPE_SVG]: "svg",
+    [ShapeType.SHAPE_TYPE_BOOL]: "bool",
+  };
+  return typeMap[type] ?? "rectangle";
 }
 
-interface DbFill {
-	color?: number;
-	opacity?: number;
+/**
+ * Convert a database shape row to a protobuf Shape message
+ */
+function toProtoShape(row: typeof shapes.$inferSelect): ProtoShape {
+  // Parse fills and strokes from JSON
+  const fillsJson = (row.fills as unknown[]) || [];
+  const strokesJson = (row.strokes as unknown[]) || [];
+
+  const protoFills: Fill[] = fillsJson.map((f: unknown) => {
+    const fill = f as Record<string, unknown>;
+    return {
+      color: (fill.color as number) ?? 0,
+      opacity: (fill.opacity as number) ?? 1.0,
+    };
+  });
+
+  const protoStrokes: Stroke[] = strokesJson.map((s: unknown) => {
+    const stroke = s as Record<string, unknown>;
+    return {
+      color: (stroke.color as number) ?? 0,
+      width: (stroke.width as number) ?? 1.0,
+      opacity: (stroke.opacity as number) ?? 1.0,
+      alignment: StrokeAlignment.STROKE_ALIGNMENT_CENTER,
+      cap: StrokeCap.STROKE_CAP_ROUND,
+      join: StrokeJoin.STROKE_JOIN_ROUND,
+    };
+  });
+
+  const transform: Transform = {
+    a: row.transformA,
+    b: row.transformB,
+    c: row.transformC,
+    d: row.transformD,
+    e: row.transformE,
+    f: row.transformF,
+  };
+
+  return {
+    id: row.id,
+    projectId: row.projectId,
+    frameId: row.frameId ?? undefined,
+    parentId: row.parentId ?? undefined,
+    type: stringToShapeType(row.type),
+    name: row.name,
+    transform,
+    x: row.x,
+    y: row.y,
+    width: row.width,
+    height: row.height,
+    rotation: row.rotation,
+    fills: protoFills,
+    strokes: protoStrokes,
+    opacity: row.opacity,
+    hidden: row.hidden,
+    blocked: row.blocked,
+    sortOrder: row.sortOrder,
+    properties: new Uint8Array(0),
+    createdAt: toProtoTimestamp(row.createdAt),
+    updatedAt: toProtoTimestamp(row.updatedAt),
+  };
 }
 
-interface DbStroke {
-	color?: number;
-	width?: number;
-	opacity?: number;
-	alignment?: string;
-}
+/**
+ * Default transform values
+ */
+const defaultTransform: Transform = {
+  a: 1, b: 0, c: 0, d: 1, e: 0, f: 0,
+};
 
-function toProtoShape(dbShape: typeof schema.shapes.$inferSelect): Shape {
-	return new Shape({
-		id: dbShape.id,
-		projectId: dbShape.projectId,
-		frameId: dbShape.frameId ?? undefined,
-		parentId: dbShape.parentId ?? undefined,
-		type: stringToShapeType(dbShape.type),
-		name: dbShape.name,
-		x: dbShape.x,
-		y: dbShape.y,
-		width: dbShape.width,
-		height: dbShape.height,
-		rotation: dbShape.rotation,
-		transform: new Transform({
-			a: dbShape.transformA,
-			b: dbShape.transformB,
-			c: dbShape.transformC,
-			d: dbShape.transformD,
-			e: dbShape.transformE,
-			f: dbShape.transformF,
-		}),
-		fills: ((dbShape.fills as DbFill[]) || []).map(
-			(f) =>
-				new Fill({
-					color: f.color ?? 0,
-					opacity: f.opacity ?? 1.0,
-				}),
-		),
-		strokes: ((dbShape.strokes as DbStroke[]) || []).map(
-			(st) =>
-				new Stroke({
-					color: st.color ?? 0,
-					width: st.width ?? 1.0,
-					opacity: st.opacity ?? 1.0,
-					alignment: stringToStrokeAlignment(st.alignment ?? "center"),
-				}),
-		),
-		opacity: dbShape.opacity,
-		hidden: dbShape.hidden,
-		blocked: dbShape.blocked,
-		sortOrder: dbShape.sortOrder,
-		properties: new TextEncoder().encode(JSON.stringify(dbShape.properties || {})),
-		createdAt: toProtoTimestamp(new Date(dbShape.createdAt)),
-		updatedAt: toProtoTimestamp(new Date(dbShape.updatedAt)),
-	});
-}
+/**
+ * Shape service implementation
+ */
+export const shapeServiceImpl: ShapeServiceImplementation = {
+  /**
+   * List all shapes in a project, optionally filtered by frame
+   */
+  async listShapes(req): Promise<ListShapesResponse> {
+    const whereConditions = [eq(shapes.projectId, req.projectId)];
+    
+    if (req.frameId) {
+      whereConditions.push(eq(shapes.frameId, req.frameId));
+    }
 
-export function registerShapeService(router: ConnectRouter) {
-	router.service(ShapeService, {
-		async listShapes(req) {
-			const whereClause = req.frameId
-				? and(
-						eq(schema.shapes.projectId, req.projectId),
-						eq(schema.shapes.frameId, req.frameId),
-					)
-				: eq(schema.shapes.projectId, req.projectId);
+    const rows = await db
+      .select()
+      .from(shapes)
+      .where(and(...whereConditions))
+      .orderBy(shapes.sortOrder);
 
-			const shapes = await db
-				.select()
-				.from(schema.shapes)
-				.where(whereClause)
-				.orderBy(asc(schema.shapes.sortOrder));
+    return {
+      shapes: rows.map(toProtoShape),
+    };
+  },
 
-			return new ListShapesResponse({
-				shapes: shapes.map(toProtoShape),
-			});
-		},
+  /**
+   * Get a single shape by ID
+   */
+  async getShape(req): Promise<GetShapeResponse> {
+    const [row] = await db
+      .select()
+      .from(shapes)
+      .where(eq(shapes.id, req.shapeId))
+      .limit(1);
 
-		async getShape(req) {
-			const shape = await db.query.shapes.findFirst({
-				where: and(
-					eq(schema.shapes.id, req.shapeId),
-					eq(schema.shapes.projectId, req.projectId),
-				),
-				with: {
-					children: true,
-				},
-			});
+    if (!row) {
+      throw new ServerError(Status.NOT_FOUND, `Shape not found: ${req.shapeId}`);
+    }
 
-			if (!shape) {
-				throw new ConnectError("Shape not found", Code.NotFound);
-			}
+    // Get children if it's a group or frame
+    const childRows = await db
+      .select()
+      .from(shapes)
+      .where(eq(shapes.parentId, req.shapeId))
+      .orderBy(shapes.sortOrder);
 
-			return new GetShapeResponse({
-				shape: toProtoShape(shape),
-				children: shape.children.map(toProtoShape),
-			});
-		},
+    return {
+      shape: toProtoShape(row),
+      children: childRows.map(toProtoShape),
+    };
+  },
 
-		async createShape(req) {
-			const [created] = await db
-				.insert(schema.shapes)
-				.values({
-					projectId: req.projectId,
-					frameId: req.frameId || null,
-					parentId: req.parentId || null,
-					type: req.type.toString(),
-					name: req.name,
-					x: req.x,
-					y: req.y,
-					width: req.width,
-					height: req.height,
-					rotation: req.rotation ?? 0,
-					transformA: req.transform?.a ?? 1,
-					transformB: req.transform?.b ?? 0,
-					transformC: req.transform?.c ?? 0,
-					transformD: req.transform?.d ?? 1,
-					transformE: req.transform?.e ?? 0,
-					transformF: req.transform?.f ?? 0,
-					fills: req.fills.map((f) => ({
-						color: f.color,
-						opacity: f.opacity,
-					})),
-					strokes: req.strokes.map((s) => ({
-						color: s.color,
-						width: s.width,
-						opacity: s.opacity,
-						alignment: s.alignment,
-					})),
-					opacity: req.opacity ?? 1.0,
-					hidden: false,
-					blocked: false,
-					sortOrder: req.sortOrder ?? 0,
-					properties: req.properties
-						? JSON.parse(new TextDecoder().decode(req.properties))
-						: {},
-				})
-				.returning();
+  /**
+   * Create a new shape
+   */
+  async createShape(req: CreateShapeRequest): Promise<CreateShapeResponse> {
+    const transform = req.transform ?? defaultTransform;
 
-			return new CreateShapeResponse({
-				shape: toProtoShape(created),
-			});
-		},
+    const fillsJson = req.fills.map((f: Fill) => ({
+      color: f.color,
+      opacity: f.opacity,
+    }));
 
-		async updateShape(req) {
-			const updateData: Record<string, unknown> = {
-				updatedAt: new Date(),
-			};
+    const strokesJson = req.strokes.map((s: Stroke) => ({
+      color: s.color,
+      width: s.width,
+      opacity: s.opacity,
+    }));
 
-			if (req.name !== undefined) updateData.name = req.name;
-			if (req.x !== undefined) updateData.x = req.x;
-			if (req.y !== undefined) updateData.y = req.y;
-			if (req.width !== undefined) updateData.width = req.width;
-			if (req.height !== undefined) updateData.height = req.height;
-			if (req.rotation !== undefined) updateData.rotation = req.rotation;
-			if (req.opacity !== undefined) updateData.opacity = req.opacity;
-			if (req.hidden !== undefined) updateData.hidden = req.hidden;
-			if (req.blocked !== undefined) updateData.blocked = req.blocked;
-			if (req.sortOrder !== undefined) updateData.sortOrder = req.sortOrder;
-			if (req.frameId !== undefined) updateData.frameId = req.frameId || null;
-			if (req.parentId !== undefined)
-				updateData.parentId = req.parentId || null;
+    const propertiesJson = req.properties && req.properties.length > 0
+      ? JSON.parse(new TextDecoder().decode(req.properties))
+      : {};
 
-			if (req.transform) {
-				updateData.transformA = req.transform.a;
-				updateData.transformB = req.transform.b;
-				updateData.transformC = req.transform.c;
-				updateData.transformD = req.transform.d;
-				updateData.transformE = req.transform.e;
-				updateData.transformF = req.transform.f;
-			}
+    const [created] = await db
+      .insert(shapes)
+      .values({
+        projectId: req.projectId,
+        frameId: req.frameId ?? null,
+        parentId: req.parentId ?? null,
+        type: shapeTypeToString(req.type),
+        name: req.name,
+        x: req.x,
+        y: req.y,
+        width: req.width,
+        height: req.height,
+        rotation: req.rotation ?? 0,
+        transformA: transform.a,
+        transformB: transform.b,
+        transformC: transform.c,
+        transformD: transform.d,
+        transformE: transform.e,
+        transformF: transform.f,
+        fills: fillsJson,
+        strokes: strokesJson,
+        opacity: req.opacity ?? 1.0,
+        hidden: false,
+        blocked: false,
+        properties: propertiesJson,
+        sortOrder: req.sortOrder ?? 0,
+      })
+      .returning();
 
-			if (req.fills.length > 0) {
-				updateData.fills = req.fills.map((f) => ({
-					color: f.color,
-					opacity: f.opacity,
-				}));
-			}
+    return {
+      shape: toProtoShape(created),
+    };
+  },
 
-			if (req.strokes.length > 0) {
-				updateData.strokes = req.strokes.map((s) => ({
-					color: s.color,
-					width: s.width,
-					opacity: s.opacity,
-					alignment: s.alignment,
-				}));
-			}
+  /**
+   * Update an existing shape
+   */
+  async updateShape(req): Promise<UpdateShapeResponse> {
+    // Build update object dynamically
+    const updateData: Record<string, unknown> = {
+      updatedAt: new Date(),
+    };
 
-			if (req.properties) {
-				updateData.properties = JSON.parse(
-					new TextDecoder().decode(req.properties),
-				);
-			}
+    // Only update fields that are provided
+    if (req.name !== undefined) updateData.name = req.name;
+    if (req.x !== undefined) updateData.x = req.x;
+    if (req.y !== undefined) updateData.y = req.y;
+    if (req.width !== undefined) updateData.width = req.width;
+    if (req.height !== undefined) updateData.height = req.height;
+    if (req.rotation !== undefined) updateData.rotation = req.rotation;
+    if (req.opacity !== undefined) updateData.opacity = req.opacity;
+    if (req.hidden !== undefined) updateData.hidden = req.hidden;
+    if (req.blocked !== undefined) updateData.blocked = req.blocked;
+    if (req.sortOrder !== undefined) updateData.sortOrder = req.sortOrder;
+    if (req.frameId !== undefined) updateData.frameId = req.frameId || null;
+    if (req.parentId !== undefined) updateData.parentId = req.parentId || null;
 
-			const [updated] = await db
-				.update(schema.shapes)
-				.set(updateData)
-				.where(
-					and(
-						eq(schema.shapes.id, req.shapeId),
-						eq(schema.shapes.projectId, req.projectId),
-					),
-				)
-				.returning();
+    if (req.transform) {
+      updateData.transformA = req.transform.a;
+      updateData.transformB = req.transform.b;
+      updateData.transformC = req.transform.c;
+      updateData.transformD = req.transform.d;
+      updateData.transformE = req.transform.e;
+      updateData.transformF = req.transform.f;
+    }
 
-			if (!updated) {
-				throw new ConnectError("Shape not found", Code.NotFound);
-			}
+    if (req.fills.length > 0) {
+      updateData.fills = req.fills.map((f: Fill) => ({
+        color: f.color,
+        opacity: f.opacity,
+      }));
+    }
 
-			return new UpdateShapeResponse({
-				shape: toProtoShape(updated),
-			});
-		},
+    if (req.strokes.length > 0) {
+      updateData.strokes = req.strokes.map((s: Stroke) => ({
+        color: s.color,
+        width: s.width,
+        opacity: s.opacity,
+      }));
+    }
 
-		async deleteShape(req) {
-			const [deleted] = await db
-				.delete(schema.shapes)
-				.where(
-					and(
-						eq(schema.shapes.id, req.shapeId),
-						eq(schema.shapes.projectId, req.projectId),
-					),
-				)
-				.returning();
+    if (req.properties && req.properties.length > 0) {
+      updateData.properties = JSON.parse(new TextDecoder().decode(req.properties));
+    }
 
-			if (!deleted) {
-				throw new ConnectError("Shape not found", Code.NotFound);
-			}
+    const [updated] = await db
+      .update(shapes)
+      .set(updateData)
+      .where(
+        and(
+          eq(shapes.id, req.shapeId),
+          eq(shapes.projectId, req.projectId)
+        )
+      )
+      .returning();
 
-			return {};
-		},
+    if (!updated) {
+      throw new ServerError(Status.NOT_FOUND, `Shape not found: ${req.shapeId}`);
+    }
 
-		async batchMutate(req) {
-			const createdShapes: Shape[] = [];
-			const updatedShapes: Shape[] = [];
-			const deletedIds: string[] = [];
+    return {
+      shape: toProtoShape(updated),
+    };
+  },
 
-			// Process creates
-			if (req.create.length > 0) {
-				for (const createReq of req.create) {
-					const [created] = await db
-						.insert(schema.shapes)
-						.values({
-							projectId: req.projectId,
-							frameId: createReq.frameId || null,
-							parentId: createReq.parentId || null,
-							type: createReq.type.toString(),
-							name: createReq.name,
-							x: createReq.x,
-							y: createReq.y,
-							width: createReq.width,
-							height: createReq.height,
-							rotation: createReq.rotation ?? 0,
-							transformA: createReq.transform?.a ?? 1,
-							transformB: createReq.transform?.b ?? 0,
-							transformC: createReq.transform?.c ?? 0,
-							transformD: createReq.transform?.d ?? 1,
-							transformE: createReq.transform?.e ?? 0,
-							transformF: createReq.transform?.f ?? 0,
-							fills: createReq.fills.map((f) => ({
-								color: f.color,
-								opacity: f.opacity,
-							})),
-							strokes: createReq.strokes.map((s) => ({
-								color: s.color,
-								width: s.width,
-								opacity: s.opacity,
-								alignment: s.alignment,
-							})),
-							opacity: createReq.opacity ?? 1.0,
-							hidden: false,
-							blocked: false,
-							sortOrder: createReq.sortOrder ?? 0,
-							properties: createReq.properties
-								? JSON.parse(new TextDecoder().decode(createReq.properties))
-								: {},
-						})
-						.returning();
+  /**
+   * Delete a shape
+   */
+  async deleteShape(req): Promise<Empty> {
+    const result = await db
+      .delete(shapes)
+      .where(
+        and(
+          eq(shapes.id, req.shapeId),
+          eq(shapes.projectId, req.projectId)
+        )
+      );
 
-					createdShapes.push(toProtoShape(created));
-				}
-			}
+    // Check if any row was deleted (result varies by driver)
+    if (!result) {
+      throw new ServerError(Status.NOT_FOUND, `Shape not found: ${req.shapeId}`);
+    }
 
-			// Process updates
-			for (const updateReq of req.update) {
-				const updateData: Record<string, unknown> = { updatedAt: new Date() };
+    return {};
+  },
 
-				if (updateReq.name !== undefined) updateData.name = updateReq.name;
-				if (updateReq.x !== undefined) updateData.x = updateReq.x;
-				if (updateReq.y !== undefined) updateData.y = updateReq.y;
-				if (updateReq.width !== undefined) updateData.width = updateReq.width;
-				if (updateReq.height !== undefined)
-					updateData.height = updateReq.height;
-				if (updateReq.rotation !== undefined)
-					updateData.rotation = updateReq.rotation;
-				if (updateReq.opacity !== undefined)
-					updateData.opacity = updateReq.opacity;
-				if (updateReq.hidden !== undefined)
-					updateData.hidden = updateReq.hidden;
-				if (updateReq.blocked !== undefined)
-					updateData.blocked = updateReq.blocked;
-				if (updateReq.sortOrder !== undefined)
-					updateData.sortOrder = updateReq.sortOrder;
-				if (updateReq.frameId !== undefined)
-					updateData.frameId = updateReq.frameId || null;
-				if (updateReq.parentId !== undefined)
-					updateData.parentId = updateReq.parentId || null;
+  /**
+   * Batch create, update, and delete shapes
+   */
+  async batchMutate(req: BatchMutateRequest): Promise<BatchMutateResponse> {
+    const createdShapes: ProtoShape[] = [];
+    const updatedShapes: ProtoShape[] = [];
+    const deletedIds: string[] = [];
 
-				if (updateReq.transform) {
-					updateData.transformA = updateReq.transform.a;
-					updateData.transformB = updateReq.transform.b;
-					updateData.transformC = updateReq.transform.c;
-					updateData.transformD = updateReq.transform.d;
-					updateData.transformE = updateReq.transform.e;
-					updateData.transformF = updateReq.transform.f;
-				}
+    // Process creates
+    for (const createReq of req.create) {
+      try {
+        const transform = createReq.transform ?? defaultTransform;
 
-				if (updateReq.fills.length > 0) {
-					updateData.fills = updateReq.fills.map((f) => ({
-						color: f.color,
-						opacity: f.opacity,
-					}));
-				}
+        const fillsJson = createReq.fills.map((f: Fill) => ({
+          color: f.color,
+          opacity: f.opacity,
+        }));
 
-				if (updateReq.strokes.length > 0) {
-					updateData.strokes = updateReq.strokes.map((s) => ({
-						color: s.color,
-						width: s.width,
-						opacity: s.opacity,
-						alignment: s.alignment,
-					}));
-				}
+        const strokesJson = createReq.strokes.map((s: Stroke) => ({
+          color: s.color,
+          width: s.width,
+          opacity: s.opacity,
+        }));
 
-				if (updateReq.properties) {
-					updateData.properties = JSON.parse(
-						new TextDecoder().decode(updateReq.properties),
-					);
-				}
+        const propertiesJson = createReq.properties && createReq.properties.length > 0
+          ? JSON.parse(new TextDecoder().decode(createReq.properties))
+          : {};
 
-				const [updated] = await db
-					.update(schema.shapes)
-					.set(updateData)
-					.where(
-						and(
-							eq(schema.shapes.id, updateReq.shapeId),
-							eq(schema.shapes.projectId, req.projectId),
-						),
-					)
-					.returning();
+        const [created] = await db
+          .insert(shapes)
+          .values({
+            projectId: req.projectId,
+            frameId: createReq.frameId ?? null,
+            parentId: createReq.parentId ?? null,
+            type: shapeTypeToString(createReq.type),
+            name: createReq.name,
+            x: createReq.x,
+            y: createReq.y,
+            width: createReq.width,
+            height: createReq.height,
+            rotation: createReq.rotation ?? 0,
+            transformA: transform.a,
+            transformB: transform.b,
+            transformC: transform.c,
+            transformD: transform.d,
+            transformE: transform.e,
+            transformF: transform.f,
+            fills: fillsJson,
+            strokes: strokesJson,
+            opacity: createReq.opacity ?? 1.0,
+            hidden: false,
+            blocked: false,
+            properties: propertiesJson,
+            sortOrder: createReq.sortOrder ?? 0,
+          })
+          .returning();
 
-				if (updated) {
-					updatedShapes.push(toProtoShape(updated));
-				}
-			}
+        createdShapes.push(toProtoShape(created));
+      } catch (error) {
+        console.error("Failed to create shape in batch:", error);
+      }
+    }
 
-			// Process deletes
-			for (const shapeId of req.deleteIds) {
-				const [deleted] = await db
-					.delete(schema.shapes)
-					.where(
-						and(
-							eq(schema.shapes.id, shapeId),
-							eq(schema.shapes.projectId, req.projectId),
-						),
-					)
-					.returning();
+    // Process updates
+    for (const updateReq of req.update) {
+      try {
+        const updateData: Record<string, unknown> = {
+          updatedAt: new Date(),
+        };
 
-				if (deleted) {
-					deletedIds.push(shapeId);
-				}
-			}
+        if (updateReq.name !== undefined) updateData.name = updateReq.name;
+        if (updateReq.x !== undefined) updateData.x = updateReq.x;
+        if (updateReq.y !== undefined) updateData.y = updateReq.y;
+        if (updateReq.width !== undefined) updateData.width = updateReq.width;
+        if (updateReq.height !== undefined) updateData.height = updateReq.height;
+        if (updateReq.rotation !== undefined) updateData.rotation = updateReq.rotation;
+        if (updateReq.opacity !== undefined) updateData.opacity = updateReq.opacity;
+        if (updateReq.hidden !== undefined) updateData.hidden = updateReq.hidden;
+        if (updateReq.blocked !== undefined) updateData.blocked = updateReq.blocked;
+        if (updateReq.sortOrder !== undefined) updateData.sortOrder = updateReq.sortOrder;
+        if (updateReq.frameId !== undefined) updateData.frameId = updateReq.frameId || null;
+        if (updateReq.parentId !== undefined) updateData.parentId = updateReq.parentId || null;
 
-			return new BatchMutateResponse({
-				created: createdShapes,
-				updated: updatedShapes,
-				deletedIds,
-			});
-		},
-	});
-}
+        if (updateReq.transform) {
+          updateData.transformA = updateReq.transform.a;
+          updateData.transformB = updateReq.transform.b;
+          updateData.transformC = updateReq.transform.c;
+          updateData.transformD = updateReq.transform.d;
+          updateData.transformE = updateReq.transform.e;
+          updateData.transformF = updateReq.transform.f;
+        }
+
+        if (updateReq.fills.length > 0) {
+          updateData.fills = updateReq.fills.map((f: Fill) => ({
+            color: f.color,
+            opacity: f.opacity,
+          }));
+        }
+
+        if (updateReq.strokes.length > 0) {
+          updateData.strokes = updateReq.strokes.map((s: Stroke) => ({
+            color: s.color,
+            width: s.width,
+            opacity: s.opacity,
+          }));
+        }
+
+        if (updateReq.properties && updateReq.properties.length > 0) {
+          updateData.properties = JSON.parse(new TextDecoder().decode(updateReq.properties));
+        }
+
+        const [updated] = await db
+          .update(shapes)
+          .set(updateData)
+          .where(
+            and(
+              eq(shapes.id, updateReq.shapeId),
+              eq(shapes.projectId, req.projectId)
+            )
+          )
+          .returning();
+
+        if (updated) {
+          updatedShapes.push(toProtoShape(updated));
+        }
+      } catch (error) {
+        console.error("Failed to update shape in batch:", error);
+      }
+    }
+
+    // Process deletes
+    for (const shapeId of req.deleteIds) {
+      try {
+        await db
+          .delete(shapes)
+          .where(
+            and(
+              eq(shapes.id, shapeId),
+              eq(shapes.projectId, req.projectId)
+            )
+          );
+        deletedIds.push(shapeId);
+      } catch (error) {
+        console.error("Failed to delete shape in batch:", error);
+      }
+    }
+
+    return {
+      created: createdShapes,
+      updated: updatedShapes,
+      deletedIds,
+    };
+  },
+};

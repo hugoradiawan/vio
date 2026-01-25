@@ -1,7 +1,8 @@
-export { registerAuthService, validateAccessToken } from "./auth.js";
-export { registerBranchService } from "./branch.js";
-export { registerCanvasService } from "./canvas.js";
-export { registerCommitService } from "./commit.js";
-export { registerProjectService } from "./project.js";
-export { registerShapeService } from "./shape.js";
+// Service implementations for nice-grpc
+export { authServiceImpl, validateAccessToken } from "./auth.js";
+export { branchServiceImpl } from "./branch.js";
+export { canvasServiceImpl } from "./canvas.js";
+export { commitServiceImpl } from "./commit.js";
+export { projectServiceImpl } from "./project.js";
+export { shapeServiceImpl } from "./shape.js";
 

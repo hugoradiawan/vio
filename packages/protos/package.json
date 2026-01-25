@@ -1,0 +1,7 @@
+{
+  "dependencies": {},
+  "devDependencies": {
+    "@bufbuild/buf": "^1.64.0",
+    "ts-proto": "^2.6.1"
+  }
+}

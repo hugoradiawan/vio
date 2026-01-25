@@ -2,13 +2,13 @@ import { and, asc, desc, eq } from "drizzle-orm";
 import { ServerError, Status } from "nice-grpc";
 import { db, schema } from "../db";
 import type {
-    Commit,
-    CommitServiceImplementation,
-    CreateCommitResponse,
-    GetCommitResponse,
-    GetDiffResponse,
-    ListCommitsResponse,
-    Snapshot,
+	Commit,
+	CommitServiceImplementation,
+	CreateCommitResponse,
+	GetCommitResponse,
+	GetDiffResponse,
+	ListCommitsResponse,
+	Snapshot,
 } from "../gen/vio/v1/commit.js";
 import type { Timestamp } from "../gen/vio/v1/common.js";
 
@@ -84,9 +84,7 @@ export const commitServiceImpl: CommitServiceImplementation = {
 
 		return {
 			commit: toProtoCommit(commit),
-			snapshot: commit.snapshot
-				? toProtoSnapshot(commit.snapshot)
-				: undefined,
+			snapshot: commit.snapshot ? toProtoSnapshot(commit.snapshot) : undefined,
 		};
 	},
 
@@ -199,9 +197,7 @@ export const commitServiceImpl: CommitServiceImplementation = {
 			const sourceShape = sourceShapes.get(id);
 			if (!sourceShape) {
 				addedShapeIds.push(id);
-			} else if (
-				JSON.stringify(sourceShape) !== JSON.stringify(targetShape)
-			) {
+			} else if (JSON.stringify(sourceShape) !== JSON.stringify(targetShape)) {
 				modifiedShapeIds.push(id);
 			}
 		}

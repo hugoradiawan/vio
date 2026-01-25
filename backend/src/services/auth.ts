@@ -162,18 +162,27 @@ export const authServiceImpl: AuthServiceImplementation = {
 		// Find user
 		const userId = usersByEmail.get(req.email.toLowerCase());
 		if (!userId) {
-			throw new ServerError(Status.UNAUTHENTICATED, "Invalid email or password");
+			throw new ServerError(
+				Status.UNAUTHENTICATED,
+				"Invalid email or password",
+			);
 		}
 
 		const user = users.get(userId);
 		if (!user) {
-			throw new ServerError(Status.UNAUTHENTICATED, "Invalid email or password");
+			throw new ServerError(
+				Status.UNAUTHENTICATED,
+				"Invalid email or password",
+			);
 		}
 
 		// Verify password
 		const valid = await verifyPassword(req.password, user.passwordHash);
 		if (!valid) {
-			throw new ServerError(Status.UNAUTHENTICATED, "Invalid email or password");
+			throw new ServerError(
+				Status.UNAUTHENTICATED,
+				"Invalid email or password",
+			);
 		}
 
 		// Generate tokens
@@ -193,7 +202,10 @@ export const authServiceImpl: AuthServiceImplementation = {
 	async refreshToken(req): Promise<AuthResponse> {
 		// Validate input
 		if (!req.refreshToken) {
-			throw new ServerError(Status.INVALID_ARGUMENT, "Refresh token is required");
+			throw new ServerError(
+				Status.INVALID_ARGUMENT,
+				"Refresh token is required",
+			);
 		}
 
 		// Verify refresh token
@@ -230,7 +242,10 @@ export const authServiceImpl: AuthServiceImplementation = {
 	async validateToken(req): Promise<ValidateTokenResponse> {
 		// Validate input
 		if (!req.accessToken) {
-			throw new ServerError(Status.INVALID_ARGUMENT, "Access token is required");
+			throw new ServerError(
+				Status.INVALID_ARGUMENT,
+				"Access token is required",
+			);
 		}
 
 		// Verify access token

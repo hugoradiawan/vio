@@ -2,12 +2,12 @@ import { and, eq } from "drizzle-orm";
 import { ServerError, Status } from "nice-grpc";
 import { db, schema } from "../db";
 import type {
-    Branch,
-    BranchServiceImplementation,
-    CreateBranchResponse,
-    GetBranchResponse,
-    ListBranchesResponse,
-    UpdateBranchResponse,
+	Branch,
+	BranchServiceImplementation,
+	CreateBranchResponse,
+	GetBranchResponse,
+	ListBranchesResponse,
+	UpdateBranchResponse,
 } from "../gen/vio/v1/branch.js";
 import type { Commit } from "../gen/vio/v1/commit.js";
 import type { Empty, Timestamp } from "../gen/vio/v1/common.js";
@@ -130,10 +130,8 @@ export const branchServiceImpl: BranchServiceImplementation = {
 		};
 
 		if (req.name) updateData.name = req.name;
-		if (req.description !== undefined)
-			updateData.description = req.description;
-		if (req.isProtected !== undefined)
-			updateData.isProtected = req.isProtected;
+		if (req.description !== undefined) updateData.description = req.description;
+		if (req.isProtected !== undefined) updateData.isProtected = req.isProtected;
 
 		const [updated] = await db
 			.update(schema.branches)

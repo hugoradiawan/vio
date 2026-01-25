@@ -4,13 +4,13 @@ import { db, schema } from "../db";
 import type { Branch } from "../gen/vio/v1/branch.js";
 import type { Empty, Timestamp } from "../gen/vio/v1/common.js";
 import type {
-    CreateProjectResponse,
-    Frame,
-    GetProjectResponse,
-    ListProjectsResponse,
-    Project,
-    ProjectServiceImplementation,
-    UpdateProjectResponse,
+	CreateProjectResponse,
+	Frame,
+	GetProjectResponse,
+	ListProjectsResponse,
+	Project,
+	ProjectServiceImplementation,
+	UpdateProjectResponse,
 } from "../gen/vio/v1/project.js";
 
 function toProtoTimestamp(date: Date): Timestamp {
@@ -148,8 +148,7 @@ export const projectServiceImpl: ProjectServiceImplementation = {
 		};
 
 		if (req.name) updateData.name = req.name;
-		if (req.description !== undefined)
-			updateData.description = req.description;
+		if (req.description !== undefined) updateData.description = req.description;
 		if (req.isPublic !== undefined) updateData.isPublic = req.isPublic;
 
 		const [updated] = await db

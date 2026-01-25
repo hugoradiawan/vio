@@ -6,7 +6,10 @@
  */
 
 import { createServer } from "nice-grpc";
-import { ServerReflection, ServerReflectionService } from "nice-grpc-server-reflection";
+import {
+	ServerReflection,
+	ServerReflectionService,
+} from "nice-grpc-server-reflection";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

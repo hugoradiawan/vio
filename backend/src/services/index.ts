@@ -5,4 +5,3 @@ export { canvasServiceImpl } from "./canvas.js";
 export { commitServiceImpl } from "./commit.js";
 export { projectServiceImpl } from "./project.js";
 export { shapeServiceImpl } from "./shape.js";
-

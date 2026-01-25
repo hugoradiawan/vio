@@ -44,8 +44,10 @@ class VersionControlState extends Equatable {
   final BranchComparisonDto? branchComparison;
   final List<ShapeChangeDto> uncommittedChanges;
   final Set<String> stagedShapeIds;
+
   /// Shapes at the last commit (base for comparison)
   final Map<String, Shape> baseShapes;
+
   /// Current canvas shapes (for change detection)
   final Map<String, Shape> currentShapes;
   final String? error;
@@ -84,7 +86,9 @@ class VersionControlState extends Equatable {
 
   /// Get open pull requests
   List<PullRequestDto> get openPullRequests {
-    return pullRequests.where((pr) => pr.status == PullRequestStatus.open).toList();
+    return pullRequests
+        .where((pr) => pr.status == PullRequestStatus.open)
+        .toList();
   }
 
   /// Check if operation is in progress

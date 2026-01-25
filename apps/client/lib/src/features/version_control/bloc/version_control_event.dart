@@ -147,7 +147,8 @@ class PullRequestCreateRequested extends VersionControlEvent {
   final String? description;
 
   @override
-  List<Object?> get props => [sourceBranchId, targetBranchId, title, description];
+  List<Object?> get props =>
+      [sourceBranchId, targetBranchId, title, description];
 }
 
 /// Select a pull request for viewing

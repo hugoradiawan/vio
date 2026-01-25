@@ -151,8 +151,8 @@ class VersionControlBloc
           if (commitResponse.hasSnapshot()) {
             final snapshotData = commitResponse.snapshot;
             if (snapshotData.data.isNotEmpty) {
-              final jsonData =
-                  jsonDecode(utf8.decode(snapshotData.data)) as Map<String, dynamic>;
+              final jsonData = jsonDecode(utf8.decode(snapshotData.data))
+                  as Map<String, dynamic>;
               final shapesJson = jsonData['shapes'] as List<dynamic>? ?? [];
               for (final shapeJson in shapesJson) {
                 try {
@@ -200,7 +200,8 @@ class VersionControlBloc
         '${uncommittedChanges.length} uncommitted changes',
       );
     } on GrpcError catch (e) {
-      VioLogger.error('VersionControlBloc: Failed to initialize - ${e.message}');
+      VioLogger.error(
+          'VersionControlBloc: Failed to initialize - ${e.message}',);
       emit(
         state.copyWith(
           status: VersionControlStatus.error,
@@ -267,7 +268,8 @@ class VersionControlBloc
 
       emit(state.copyWith(branches: branches));
     } on GrpcError catch (e) {
-      VioLogger.error('VersionControlBloc: Failed to refresh branches - ${e.message}');
+      VioLogger.error(
+          'VersionControlBloc: Failed to refresh branches - ${e.message}',);
     }
   }
 
@@ -275,10 +277,12 @@ class VersionControlBloc
     BranchSwitchRequested event,
     Emitter<VersionControlState> emit,
   ) async {
-    emit(state.copyWith(
-      status: VersionControlStatus.switching,
-      currentBranchId: event.branchId,
-    ),);
+    emit(
+      state.copyWith(
+        status: VersionControlStatus.switching,
+        currentBranchId: event.branchId,
+      ),
+    );
 
     // Refresh commits for the new branch
     add(const CommitsRefreshRequested());
@@ -393,7 +397,8 @@ class VersionControlBloc
 
       emit(state.copyWith(commits: commits));
     } on GrpcError catch (e) {
-      VioLogger.error('VersionControlBloc: Failed to refresh commits - ${e.message}');
+      VioLogger.error(
+          'VersionControlBloc: Failed to refresh commits - ${e.message}',);
     }
   }
 
@@ -403,7 +408,9 @@ class VersionControlBloc
   ) async {
     if (state.projectId == null ||
         state.currentBranchId == null ||
-        state.userId == null) return;
+        state.userId == null) {
+      return;
+    }
 
     emit(state.copyWith(status: VersionControlStatus.committing));
 
@@ -417,12 +424,14 @@ class VersionControlBloc
       );
 
       // After commit, current shapes become the new base (no uncommitted changes)
-      emit(state.copyWith(
-        stagedShapeIds: {},
-        baseShapes: state.currentShapes,
-        uncommittedChanges: [],
-        status: VersionControlStatus.ready,
-      ),);
+      emit(
+        state.copyWith(
+          stagedShapeIds: {},
+          baseShapes: state.currentShapes,
+          uncommittedChanges: [],
+          status: VersionControlStatus.ready,
+        ),
+      );
       add(const CommitsRefreshRequested());
 
       VioLogger.info('VersionControlBloc: Commit created, base shapes updated');
@@ -484,7 +493,9 @@ class VersionControlBloc
   ) async {
     if (state.projectId == null ||
         state.currentBranchId == null ||
-        state.userId == null) return;
+        state.userId == null) {
+      return;
+    }
 
     try {
       await _commitClient.revertCommit(
@@ -537,7 +548,8 @@ class VersionControlBloc
 
       emit(state.copyWith(pullRequests: prs));
     } on GrpcError catch (e) {
-      VioLogger.error('VersionControlBloc: Failed to refresh PRs - ${e.message}');
+      VioLogger.error(
+          'VersionControlBloc: Failed to refresh PRs - ${e.message}',);
     }
   }
 
@@ -606,10 +618,12 @@ class VersionControlBloc
           ..pullRequestId = event.pullRequestId,
       );
 
-      emit(state.copyWith(
-        status: VersionControlStatus.ready,
-        clearSelectedPullRequest: true,
-      ),);
+      emit(
+        state.copyWith(
+          status: VersionControlStatus.ready,
+          clearSelectedPullRequest: true,
+        ),
+      );
       add(const PullRequestsRefreshRequested());
       add(const BranchesRefreshRequested());
       add(const CommitsRefreshRequested());
@@ -648,7 +662,8 @@ class VersionControlBloc
     Emitter<VersionControlState> emit,
   ) async {
     // Conflict resolution requires complex UI - just log for now
-    VioLogger.warning('VersionControlBloc: Conflict resolution not yet implemented in UI');
+    VioLogger.warning(
+        'VersionControlBloc: Conflict resolution not yet implemented in UI',);
   }
 
   // ============================================================================

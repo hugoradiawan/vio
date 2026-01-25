@@ -110,7 +110,8 @@ class GrpcCanvasRepository {
         'GrpcCanvasRepository: Loaded ${_shapes.length} shapes (v$_localVersion)',
       );
     } on GrpcError catch (e) {
-      VioLogger.error('GrpcCanvasRepository: Failed to load canvas state - ${e.message}');
+      VioLogger.error(
+          'GrpcCanvasRepository: Failed to load canvas state - ${e.message}',);
       _updateSyncStatus(SyncStatus.error);
       rethrow;
     }
@@ -302,7 +303,8 @@ class _PendingOp {
   _PendingOp({
     required this.type,
     required this.shapeId,
-    required this.timestamp, this.shape,
+    required this.timestamp,
+    this.shape,
   });
 
   final SyncOperationType type;

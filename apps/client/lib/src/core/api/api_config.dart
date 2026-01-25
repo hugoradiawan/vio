@@ -52,7 +52,8 @@ class ApiEndpoints {
       '/projects/$projectId/branches/$branchId/sync';
 
   // Branch merge/compare endpoints
-  String mergeBranches(String projectId) => '/projects/$projectId/branches/merge';
+  String mergeBranches(String projectId) =>
+      '/projects/$projectId/branches/merge';
   String compareBranches(String projectId) =>
       '/projects/$projectId/branches/compare';
 

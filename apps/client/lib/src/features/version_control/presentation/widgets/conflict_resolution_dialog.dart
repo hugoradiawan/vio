@@ -8,7 +8,11 @@ import '../../../../core/api/dto.dart';
 /// Option B: Visual side-by-side shape preview
 class ConflictResolutionDialog extends StatefulWidget {
   const ConflictResolutionDialog({
-    required this.conflicts, required this.sourceBranchName, required this.targetBranchName, required this.onResolve, super.key,
+    required this.conflicts,
+    required this.sourceBranchName,
+    required this.targetBranchName,
+    required this.onResolve,
+    super.key,
   });
 
   final List<ShapeConflictDto> conflicts;

@@ -15,12 +15,12 @@ class ProtoConverter {
   /// Convert proto Shape to domain Shape
   static Shape shapeFromProto(pb_shape.Shape proto) {
     final shapeType = _shapeTypeFromProto(proto.type);
-    
+
     // Parse base properties
     final fills = proto.fills.map(_fillFromProto).toList();
     final strokes = proto.strokes.map(_strokeFromProto).toList();
-    final transform = proto.hasTransform() 
-        ? _transformFromProto(proto.transform) 
+    final transform = proto.hasTransform()
+        ? _transformFromProto(proto.transform)
         : Matrix2D.identity;
 
     switch (shapeType) {
@@ -280,20 +280,28 @@ class ProtoConverter {
     };
   }
 
-  static StrokeAlignment _strokeAlignmentFromProto(pb_common.StrokeAlignment proto) {
+  static StrokeAlignment _strokeAlignmentFromProto(
+      pb_common.StrokeAlignment proto,) {
     return switch (proto) {
-      pb_common.StrokeAlignment.STROKE_ALIGNMENT_INSIDE => StrokeAlignment.inside,
-      pb_common.StrokeAlignment.STROKE_ALIGNMENT_CENTER => StrokeAlignment.center,
-      pb_common.StrokeAlignment.STROKE_ALIGNMENT_OUTSIDE => StrokeAlignment.outside,
+      pb_common.StrokeAlignment.STROKE_ALIGNMENT_INSIDE =>
+        StrokeAlignment.inside,
+      pb_common.StrokeAlignment.STROKE_ALIGNMENT_CENTER =>
+        StrokeAlignment.center,
+      pb_common.StrokeAlignment.STROKE_ALIGNMENT_OUTSIDE =>
+        StrokeAlignment.outside,
       _ => StrokeAlignment.center,
     };
   }
 
-  static pb_common.StrokeAlignment _strokeAlignmentToProto(StrokeAlignment alignment) {
+  static pb_common.StrokeAlignment _strokeAlignmentToProto(
+      StrokeAlignment alignment,) {
     return switch (alignment) {
-      StrokeAlignment.inside => pb_common.StrokeAlignment.STROKE_ALIGNMENT_INSIDE,
-      StrokeAlignment.center => pb_common.StrokeAlignment.STROKE_ALIGNMENT_CENTER,
-      StrokeAlignment.outside => pb_common.StrokeAlignment.STROKE_ALIGNMENT_OUTSIDE,
+      StrokeAlignment.inside =>
+        pb_common.StrokeAlignment.STROKE_ALIGNMENT_INSIDE,
+      StrokeAlignment.center =>
+        pb_common.StrokeAlignment.STROKE_ALIGNMENT_CENTER,
+      StrokeAlignment.outside =>
+        pb_common.StrokeAlignment.STROKE_ALIGNMENT_OUTSIDE,
     };
   }
 

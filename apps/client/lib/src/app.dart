@@ -72,7 +72,7 @@ class _CanvasVersionControlBridge extends StatelessWidget {
       },
       listener: (context, canvasState) {
         final vcBloc = context.read<VersionControlBloc>();
-        
+
         // Always send current shapes when they change
         vcBloc.add(CanvasShapesChanged(shapes: canvasState.shapes));
         debugPrint(

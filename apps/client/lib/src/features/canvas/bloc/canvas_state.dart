@@ -384,9 +384,8 @@ class CanvasState extends Equatable {
     bool clearInitialRotationAngle = false,
   }) {
     final nextShapes = shapes ?? this.shapes;
-    final nextOrderedShapes = identical(nextShapes, this.shapes)
-      ? orderedShapes
-      : null;
+    final nextOrderedShapes =
+        identical(nextShapes, this.shapes) ? orderedShapes : null;
 
     return CanvasState(
       zoom: zoom ?? this.zoom,

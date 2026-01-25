@@ -14,9 +14,7 @@ void main() async {
   VioLogger.initialize();
 
   // Initialize service locator (gRPC services, repositories)
-  await ServiceLocator.instance.initialize(
-    
-  );
+  await ServiceLocator.instance.initialize();
 
   // Initialize HydratedBloc storage
   // Use web storage for web platform, otherwise use application documents directory

@@ -207,7 +207,8 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     }
     snapIndex.build();
 
-    _activeSnapDetector = SnapDetector(config: const SnapConfig(), index: snapIndex);
+    _activeSnapDetector =
+        SnapDetector(config: const SnapConfig(), index: snapIndex);
     _activeSnapExcludeIds = selectedIds;
     _lastSnapComputeAt = DateTime.fromMillisecondsSinceEpoch(0);
     _lastSnapDragOffset = Offset.zero;
@@ -2425,9 +2426,8 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     }
 
     final now = DateTime.now();
-    final shouldThrottle =
-        now.difference(_lastSnapComputeAt) < _snapThrottle &&
-            (dragOffset - _lastSnapDragOffset).distance < 0.5;
+    final shouldThrottle = now.difference(_lastSnapComputeAt) < _snapThrottle &&
+        (dragOffset - _lastSnapDragOffset).distance < 0.5;
     if (shouldThrottle) {
       return _lastSnapResult;
     }

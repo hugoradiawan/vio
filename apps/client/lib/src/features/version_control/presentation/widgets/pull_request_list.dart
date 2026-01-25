@@ -439,7 +439,8 @@ class _PullRequestDetailPanel extends StatelessWidget {
           Row(
             children: [
               _BranchChip(
-                  name: detail.pullRequest.sourceBranchName ?? 'Unknown',),
+                name: detail.pullRequest.sourceBranchName ?? 'Unknown',
+              ),
               const SizedBox(width: 8),
               const Icon(
                 Icons.arrow_forward,
@@ -448,7 +449,8 @@ class _PullRequestDetailPanel extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               _BranchChip(
-                  name: detail.pullRequest.targetBranchName ?? 'Unknown',),
+                name: detail.pullRequest.targetBranchName ?? 'Unknown',
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -651,7 +653,10 @@ class _MergeReady extends StatelessWidget {
 /// Dialog for creating a new pull request
 class CreatePullRequestDialog extends StatefulWidget {
   const CreatePullRequestDialog({
-    required this.branches, required this.currentBranchId, required this.onCreatePr, super.key,
+    required this.branches,
+    required this.currentBranchId,
+    required this.onCreatePr,
+    super.key,
   });
 
   final List<BranchDto> branches;
@@ -912,7 +917,10 @@ class _BranchSelector extends StatelessWidget {
 /// Dialog for merge confirmation
 class MergePullRequestDialog extends StatefulWidget {
   const MergePullRequestDialog({
-    required this.pullRequest, required this.isMergeable, required this.onMerge, super.key,
+    required this.pullRequest,
+    required this.isMergeable,
+    required this.onMerge,
+    super.key,
   });
 
   final PullRequestDto pullRequest;

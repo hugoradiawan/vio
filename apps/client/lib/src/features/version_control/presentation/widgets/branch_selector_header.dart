@@ -66,7 +66,9 @@ class BranchSelectorHeader extends StatelessWidget {
   }
 
   void _showCreateBranchDialog(
-      BuildContext context, VersionControlState state,) {
+    BuildContext context,
+    VersionControlState state,
+  ) {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => CreateBranchDialog(
@@ -399,7 +401,9 @@ class _BranchActionButtons extends StatelessWidget {
 /// Dialog for creating a new branch
 class CreateBranchDialog extends StatefulWidget {
   const CreateBranchDialog({
-    required this.currentBranchName, required this.onCreateBranch, super.key,
+    required this.currentBranchName,
+    required this.onCreateBranch,
+    super.key,
   });
 
   final String currentBranchName;

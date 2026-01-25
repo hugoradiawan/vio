@@ -930,7 +930,10 @@ class MergeStatusDto {
 /// Branch comparison result
 class BranchComparisonDto {
   BranchComparisonDto({
-    required this.commitsAhead, required this.commitsBehind, required this.canFastForward, this.baseBranch,
+    required this.commitsAhead,
+    required this.commitsBehind,
+    required this.canFastForward,
+    this.baseBranch,
     this.headBranch,
     this.baseBranchId,
     this.headBranchId,

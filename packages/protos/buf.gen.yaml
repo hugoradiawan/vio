@@ -19,3 +19,8 @@ plugins:
       - outputPartialMethods=false
       - outputClientImpl=false
       - importSuffix=.js
+  # Dart protobuf + gRPC generation
+  - local: protoc-gen-dart
+    out: ../../apps/client/lib/src/gen
+    opt:
+      - grpc

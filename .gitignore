@@ -89,3 +89,7 @@ coverage/
 # FVM Version Cache
 .fvm/
 /backend/src/gen
+
+# Reference repositories (not dependencies)
+/gitea/
+/apps/client/lib/src/gen

@@ -1,0 +1,738 @@
+import 'package:flutter/material.dart';
+import 'package:vio_core/vio_core.dart';
+import 'package:vio_ui_kit/vio_ui_kit.dart';
+
+import '../../../../core/api/dto.dart';
+
+/// Dialog for resolving merge conflicts with visual diff preview
+/// Option B: Visual side-by-side shape preview
+class ConflictResolutionDialog extends StatefulWidget {
+  const ConflictResolutionDialog({
+    required this.conflicts, required this.sourceBranchName, required this.targetBranchName, required this.onResolve, super.key,
+  });
+
+  final List<ShapeConflictDto> conflicts;
+  final String sourceBranchName;
+  final String targetBranchName;
+  final void Function(List<ConflictResolutionDto> resolutions) onResolve;
+
+  @override
+  State<ConflictResolutionDialog> createState() =>
+      _ConflictResolutionDialogState();
+}
+
+class _ConflictResolutionDialogState extends State<ConflictResolutionDialog> {
+  late Map<String, ConflictResolutionChoice> _resolutions;
+  int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize all resolutions to use source by default
+    _resolutions = {
+      for (final conflict in widget.conflicts)
+        conflict.shapeId: ConflictResolutionChoice.source,
+    };
+  }
+
+  bool get _allResolved => _resolutions.values.every(
+        (choice) =>
+            choice != ConflictResolutionChoice.source &&
+                choice != ConflictResolutionChoice.target ||
+            _resolutions.values.isNotEmpty,
+      );
+
+  ShapeConflictDto get _currentConflict => widget.conflicts[_currentIndex];
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: VioColors.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Container(
+        width: 800,
+        height: 600,
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header
+            _DialogHeader(
+              conflictCount: widget.conflicts.length,
+              currentIndex: _currentIndex,
+              onClose: () => Navigator.of(context).pop(),
+            ),
+            const SizedBox(height: 16),
+
+            // Navigation tabs
+            _ConflictNavigator(
+              conflicts: widget.conflicts,
+              currentIndex: _currentIndex,
+              resolutions: _resolutions,
+              onSelectConflict: (index) {
+                setState(() => _currentIndex = index);
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Main content - side by side diff
+            Expanded(
+              child: _ConflictDiffView(
+                conflict: _currentConflict,
+                sourceBranchName: widget.sourceBranchName,
+                targetBranchName: widget.targetBranchName,
+                resolution: _resolutions[_currentConflict.shapeId]!,
+                onResolutionChanged: (choice) {
+                  setState(() {
+                    _resolutions[_currentConflict.shapeId] = choice;
+                  });
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Footer with actions
+            _DialogFooter(
+              canResolve: _allResolved,
+              onCancel: () => Navigator.of(context).pop(),
+              onResolve: () {
+                final resolutions = widget.conflicts.map((conflict) {
+                  return ConflictResolutionDto(
+                    shapeId: conflict.shapeId,
+                    choice: _resolutions[conflict.shapeId]!,
+                  );
+                }).toList();
+                widget.onResolve(resolutions);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Dialog header with title and close button
+class _DialogHeader extends StatelessWidget {
+  const _DialogHeader({
+    required this.conflictCount,
+    required this.currentIndex,
+    required this.onClose,
+  });
+
+  final int conflictCount;
+  final int currentIndex;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Icon(
+          Icons.warning_amber,
+          color: VioColors.warning,
+          size: 24,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Resolve Conflicts',
+                style: TextStyle(
+                  color: VioColors.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(
+                '${currentIndex + 1} of $conflictCount conflict${conflictCount > 1 ? 's' : ''}',
+                style: const TextStyle(
+                  color: VioColors.textSecondary,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+        IconButton(
+          onPressed: onClose,
+          icon: const Icon(
+            Icons.close,
+            color: VioColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Conflict navigation tabs
+class _ConflictNavigator extends StatelessWidget {
+  const _ConflictNavigator({
+    required this.conflicts,
+    required this.currentIndex,
+    required this.resolutions,
+    required this.onSelectConflict,
+  });
+
+  final List<ShapeConflictDto> conflicts;
+  final int currentIndex;
+  final Map<String, ConflictResolutionChoice> resolutions;
+  final void Function(int index) onSelectConflict;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 40,
+      decoration: BoxDecoration(
+        color: VioColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.all(4),
+        itemCount: conflicts.length,
+        itemBuilder: (context, index) {
+          final conflict = conflicts[index];
+          final isSelected = index == currentIndex;
+          final isResolved = resolutions[conflict.shapeId] != null;
+
+          return Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: InkWell(
+              onTap: () => onSelectConflict(index),
+              borderRadius: BorderRadius.circular(6),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: isSelected ? VioColors.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      isResolved ? Icons.check_circle : Icons.radio_button_off,
+                      size: 14,
+                      color: isSelected
+                          ? Colors.white
+                          : isResolved
+                              ? VioColors.success
+                              : VioColors.textTertiary,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      conflict.shapeName,
+                      style: TextStyle(
+                        color:
+                            isSelected ? Colors.white : VioColors.textPrimary,
+                        fontSize: 12,
+                        fontWeight:
+                            isSelected ? FontWeight.w500 : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Main diff view with side-by-side comparison
+class _ConflictDiffView extends StatelessWidget {
+  const _ConflictDiffView({
+    required this.conflict,
+    required this.sourceBranchName,
+    required this.targetBranchName,
+    required this.resolution,
+    required this.onResolutionChanged,
+  });
+
+  final ShapeConflictDto conflict;
+  final String sourceBranchName;
+  final String targetBranchName;
+  final ConflictResolutionChoice resolution;
+  final void Function(ConflictResolutionChoice) onResolutionChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Source (incoming) version
+        Expanded(
+          child: _ShapeVersionPanel(
+            title: sourceBranchName,
+            subtitle: 'Incoming changes',
+            isSelected: resolution == ConflictResolutionChoice.source,
+            color: VioColors.primary,
+            shapeData: conflict.sourceShape,
+            propertyConflicts: conflict.propertyConflicts,
+            showSource: true,
+            onSelect: () =>
+                onResolutionChanged(ConflictResolutionChoice.source),
+          ),
+        ),
+        const SizedBox(width: 16),
+
+        // Target (current) version
+        Expanded(
+          child: _ShapeVersionPanel(
+            title: targetBranchName,
+            subtitle: 'Current version',
+            isSelected: resolution == ConflictResolutionChoice.target,
+            color: VioColors.warning,
+            shapeData: conflict.targetShape,
+            propertyConflicts: conflict.propertyConflicts,
+            showSource: false,
+            onSelect: () =>
+                onResolutionChanged(ConflictResolutionChoice.target),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Panel showing one version of the shape
+class _ShapeVersionPanel extends StatelessWidget {
+  const _ShapeVersionPanel({
+    required this.title,
+    required this.subtitle,
+    required this.isSelected,
+    required this.color,
+    required this.shapeData,
+    required this.propertyConflicts,
+    required this.showSource,
+    required this.onSelect,
+  });
+
+  final String title;
+  final String subtitle;
+  final bool isSelected;
+  final Color color;
+  final Shape? shapeData;
+  final List<PropertyConflictDto> propertyConflicts;
+  final bool showSource;
+  final VoidCallback onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onSelect,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        decoration: BoxDecoration(
+          color: VioColors.surfaceElevated,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? color : VioColors.border,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isSelected ? color.withAlpha(26) : Colors.transparent,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(10),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    isSelected ? Icons.check_circle : Icons.radio_button_off,
+                    size: 18,
+                    color: isSelected ? color : VioColors.textTertiary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            color: VioColors.textPrimary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          subtitle,
+                          style: const TextStyle(
+                            color: VioColors.textSecondary,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (isSelected)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        'SELECTED',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            // Shape preview
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: _ShapePreview(
+                  shapeData: shapeData,
+                  accentColor: color,
+                ),
+              ),
+            ),
+
+            // Property conflicts
+            if (propertyConflicts.isNotEmpty)
+              _PropertyConflictsList(
+                conflicts: propertyConflicts,
+                showSource: showSource,
+                accentColor: color,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Visual preview of a shape (simplified representation)
+class _ShapePreview extends StatelessWidget {
+  const _ShapePreview({
+    required this.shapeData,
+    required this.accentColor,
+  });
+
+  final Shape? shapeData;
+  final Color accentColor;
+
+  @override
+  Widget build(BuildContext context) {
+    if (shapeData == null) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.delete_outline,
+              size: 48,
+              color: VioColors.textTertiary,
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Shape deleted',
+              style: TextStyle(
+                color: VioColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final shape = shapeData!;
+    final type = shape.type.name;
+    final x = shape.x;
+    final y = shape.y;
+    final width = shape.width;
+    final height = shape.height;
+
+    // Get fill color
+    Color fillColor = accentColor.withAlpha(51);
+    if (shape.fills.isNotEmpty) {
+      fillColor = Color(shape.fills.first.color);
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: VioColors.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: VioColors.border),
+      ),
+      child: Stack(
+        children: [
+          // Grid background
+          CustomPaint(
+            size: Size.infinite,
+            painter: _GridPainter(),
+          ),
+
+          // Shape representation
+          Center(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Scale shape to fit preview
+                final scale =
+                    (constraints.maxWidth / (width + 40)).clamp(0.1, 2.0);
+                final scaledWidth = width * scale;
+                final scaledHeight = height * scale;
+
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Shape visualization
+                    Container(
+                      width: scaledWidth.clamp(40.0, constraints.maxWidth - 20),
+                      height:
+                          scaledHeight.clamp(40.0, constraints.maxHeight - 80),
+                      decoration: BoxDecoration(
+                        color: fillColor,
+                        borderRadius: type == 'rectangle'
+                            ? BorderRadius.circular(4)
+                            : null,
+                        shape: type == 'ellipse'
+                            ? BoxShape.circle
+                            : BoxShape.rectangle,
+                        border: Border.all(
+                          color: accentColor,
+                          width: 2,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          type.toUpperCase(),
+                          style: TextStyle(
+                            color: accentColor,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Dimensions
+                    Text(
+                      '${width.toStringAsFixed(0)} × ${height.toStringAsFixed(0)}',
+                      style: const TextStyle(
+                        color: VioColors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
+                    Text(
+                      'at (${x.toStringAsFixed(0)}, ${y.toStringAsFixed(0)})',
+                      style: const TextStyle(
+                        color: VioColors.textTertiary,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Grid painter for shape preview background
+class _GridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = VioColors.border.withAlpha(128)
+      ..strokeWidth = 0.5;
+
+    const gridSize = 20.0;
+
+    // Vertical lines
+    for (double x = 0; x < size.width; x += gridSize) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+
+    // Horizontal lines
+    for (double y = 0; y < size.height; y += gridSize) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// List of property-level conflicts
+class _PropertyConflictsList extends StatelessWidget {
+  const _PropertyConflictsList({
+    required this.conflicts,
+    required this.showSource,
+    required this.accentColor,
+  });
+
+  final List<PropertyConflictDto> conflicts;
+  final bool showSource;
+  final Color accentColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: const BoxDecoration(
+        color: VioColors.surface,
+        borderRadius: BorderRadius.vertical(
+          bottom: Radius.circular(10),
+        ),
+        border: Border(
+          top: BorderSide(color: VioColors.border),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'CONFLICTING PROPERTIES',
+            style: TextStyle(
+              color: VioColors.textTertiary,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ...conflicts.take(5).map((conflict) {
+            final value =
+                showSource ? conflict.sourceValue : conflict.targetValue;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: accentColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    conflict.propertyName,
+                    style: const TextStyle(
+                      color: VioColors.textSecondary,
+                      fontSize: 11,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Text(
+                    ':',
+                    style: TextStyle(
+                      color: VioColors.textTertiary,
+                      fontSize: 11,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      _formatValue(value),
+                      style: const TextStyle(
+                        color: VioColors.textPrimary,
+                        fontSize: 11,
+                        fontFamily: 'monospace',
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+          if (conflicts.length > 5)
+            Text(
+              '... and ${conflicts.length - 5} more',
+              style: const TextStyle(
+                color: VioColors.textTertiary,
+                fontSize: 10,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _formatValue(dynamic value) {
+    if (value == null) return 'null';
+    if (value is double) return value.toStringAsFixed(2);
+    if (value is Map || value is List) return value.toString().substring(0, 50);
+    return value.toString();
+  }
+}
+
+/// Dialog footer with action buttons
+class _DialogFooter extends StatelessWidget {
+  const _DialogFooter({
+    required this.canResolve,
+    required this.onCancel,
+    required this.onResolve,
+  });
+
+  final bool canResolve;
+  final VoidCallback onCancel;
+  final VoidCallback onResolve;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        OutlinedButton(
+          onPressed: onCancel,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: VioColors.textSecondary,
+            side: const BorderSide(color: VioColors.border),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: const Text('Cancel'),
+        ),
+        const SizedBox(width: 12),
+        ElevatedButton(
+          onPressed: canResolve ? onResolve : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: VioColors.primary,
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: VioColors.surfaceElevated,
+            disabledForegroundColor: VioColors.textTertiary,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: const Text('Apply Resolutions'),
+        ),
+      ],
+    );
+  }
+}

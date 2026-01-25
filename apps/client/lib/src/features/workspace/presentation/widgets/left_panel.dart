@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vio_client/src/features/canvas/bloc/canvas_bloc.dart';
+import 'package:vio_client/src/features/version_control/presentation/widgets/version_control_tab.dart';
 import 'package:vio_client/src/features/workspace/bloc/workspace_bloc.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
@@ -21,7 +22,7 @@ class _LeftPanelState extends State<LeftPanel>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -87,6 +88,16 @@ class _LeftPanelState extends State<LeftPanel>
                     tabs: const [
                       Tab(text: 'Layers'),
                       Tab(text: 'Assets'),
+                      Tab(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.merge, size: 14),
+                            SizedBox(width: 4),
+                            Text('VC'),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -100,6 +111,7 @@ class _LeftPanelState extends State<LeftPanel>
               children: const [
                 _LayersTab(),
                 _AssetsTab(),
+                VersionControlTab(),
               ],
             ),
           ),

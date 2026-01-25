@@ -41,6 +41,9 @@ dependencies:
   # Platform
   # window_manager: ^0.5.1
   path_provider: ^2.1.5
+  grpc: ^5.1.0
+  protobuf: ^6.0.0
+  fixnum: ^1.1.0  # Required by protobuf generated code for Int64
 
 dev_dependencies:
   flutter_test:

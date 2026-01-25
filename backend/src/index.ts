@@ -19,6 +19,7 @@ import { BranchServiceDefinition } from "./gen/vio/v1/branch.js";
 import { CanvasServiceDefinition } from "./gen/vio/v1/canvas.js";
 import { CommitServiceDefinition } from "./gen/vio/v1/commit.js";
 import { ProjectServiceDefinition } from "./gen/vio/v1/project.js";
+import { PullRequestServiceDefinition } from "./gen/vio/v1/pullrequest.js";
 import { ShapeServiceDefinition } from "./gen/vio/v1/shape.js";
 
 import {
@@ -27,6 +28,7 @@ import {
 	canvasServiceImpl,
 	commitServiceImpl,
 	projectServiceImpl,
+	pullRequestServiceImpl,
 	shapeServiceImpl,
 } from "./services/index.js";
 
@@ -59,6 +61,7 @@ server.add(BranchServiceDefinition, branchServiceImpl);
 server.add(CommitServiceDefinition, commitServiceImpl);
 server.add(ShapeServiceDefinition, shapeServiceImpl);
 server.add(CanvasServiceDefinition, canvasServiceImpl);
+server.add(PullRequestServiceDefinition, pullRequestServiceImpl);
 
 // Add server reflection for Postman/grpcurl discovery
 server.add(
@@ -70,6 +73,7 @@ server.add(
 		"vio.v1.CommitService",
 		"vio.v1.ShapeService",
 		"vio.v1.CanvasService",
+		"vio.v1.PullRequestService",
 	]),
 );
 
@@ -89,6 +93,7 @@ console.log(`
    - vio.v1.CommitService
    - vio.v1.ShapeService
    - vio.v1.CanvasService
+   - vio.v1.PullRequestService
 
    Server Reflection: Enabled ✓
    (Use Postman, grpcurl, or any gRPC client with reflection)

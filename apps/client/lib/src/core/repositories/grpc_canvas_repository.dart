@@ -1,25 +1,27 @@
 import 'dart:async';
 
+import 'package:fixnum/fixnum.dart';
+import 'package:grpc/grpc.dart';
 import 'package:vio_core/vio_core.dart';
 
-import '../api/api.dart';
-// Import SyncOperation and SyncOperationType directly since they're hidden from api.dart
-import '../api/dto.dart' show SyncOperation, SyncOperationType;
+import '../../gen/vio/v1/canvas.pb.dart' as pb;
+import '../../gen/vio/v1/canvas.pbgrpc.dart';
+import '../grpc/proto_converter.dart';
 
-/// Repository that manages canvas state with auto-sync to the backend
+/// Repository that manages canvas state with gRPC sync to the backend
 ///
 /// Implements last-write-wins conflict resolution strategy:
 /// - Local changes are immediately applied
-/// - Changes are periodically synced to server
+/// - Changes are periodically synced to server via gRPC
 /// - Server version always wins on conflict
-class CanvasRepository {
-  CanvasRepository({
-    required CanvasApiService canvasService,
+class GrpcCanvasRepository {
+  GrpcCanvasRepository({
+    required CanvasServiceClient canvasClient,
     Duration syncInterval = const Duration(seconds: 5),
-  })  : _canvasService = canvasService,
+  })  : _canvasClient = canvasClient,
         _syncInterval = syncInterval;
 
-  final CanvasApiService _canvasService;
+  final CanvasServiceClient _canvasClient;
   final Duration _syncInterval;
 
   // Project/Branch context
@@ -28,11 +30,11 @@ class CanvasRepository {
 
   // Local state
   final List<Shape> _shapes = [];
-  int _localVersion = 0;
+  Int64 _localVersion = Int64.ZERO;
   bool _isDirty = false;
 
   // Pending operations for sync
-  final List<SyncOperation> _pendingOperations = [];
+  final List<_PendingOp> _pendingOperations = [];
 
   // Sync timer
   Timer? _syncTimer;
@@ -80,21 +82,24 @@ class CanvasRepository {
     _syncStatusController.close();
   }
 
-  /// Load canvas state from server
+  /// Load canvas state from server via gRPC
   Future<void> _loadFromServer() async {
     if (_projectId == null || _branchId == null) return;
 
     _updateSyncStatus(SyncStatus.loading);
 
     try {
-      final canvasState = await _canvasService.getCanvasState(
-        _projectId!,
-        _branchId!,
-      );
+      final request = pb.GetCanvasStateRequest()
+        ..projectId = _projectId!
+        ..branchId = _branchId!;
+
+      final response = await _canvasClient.getCanvasState(request);
 
       _shapes.clear();
-      _shapes.addAll(canvasState.shapes);
-      _localVersion = canvasState.version ?? 0;
+      for (final protoShape in response.state.shapes) {
+        _shapes.add(ProtoConverter.shapeFromProto(protoShape));
+      }
+      _localVersion = response.state.version;
       _isDirty = false;
       _pendingOperations.clear();
 
@@ -102,10 +107,10 @@ class CanvasRepository {
       _updateSyncStatus(SyncStatus.synced);
 
       VioLogger.info(
-        'CanvasRepository: Loaded ${_shapes.length} shapes (v$_localVersion)',
+        'GrpcCanvasRepository: Loaded ${_shapes.length} shapes (v$_localVersion)',
       );
-    } on ApiException catch (e) {
-      VioLogger.error('CanvasRepository: Failed to load canvas state', e);
+    } on GrpcError catch (e) {
+      VioLogger.error('GrpcCanvasRepository: Failed to load canvas state - ${e.message}');
       _updateSyncStatus(SyncStatus.error);
       rethrow;
     }
@@ -117,7 +122,7 @@ class CanvasRepository {
     _isDirty = true;
 
     _pendingOperations.add(
-      SyncOperation(
+      _PendingOp(
         type: SyncOperationType.create,
         shapeId: shape.id,
         shape: shape,
@@ -134,7 +139,7 @@ class CanvasRepository {
     final index = _shapes.indexWhere((s) => s.id == shape.id);
     if (index == -1) {
       VioLogger.warning(
-        'CanvasRepository: Attempted to update non-existent shape: ${shape.id}',
+        'GrpcCanvasRepository: Attempted to update non-existent shape: ${shape.id}',
       );
       return;
     }
@@ -145,7 +150,7 @@ class CanvasRepository {
     // Remove any pending operations for this shape and add new one
     _pendingOperations.removeWhere((op) => op.shapeId == shape.id);
     _pendingOperations.add(
-      SyncOperation(
+      _PendingOp(
         type: SyncOperationType.update,
         shapeId: shape.id,
         shape: shape,
@@ -162,7 +167,7 @@ class CanvasRepository {
     final index = _shapes.indexWhere((s) => s.id == shapeId);
     if (index == -1) {
       VioLogger.warning(
-        'CanvasRepository: Attempted to delete non-existent shape: $shapeId',
+        'GrpcCanvasRepository: Attempted to delete non-existent shape: $shapeId',
       );
       return;
     }
@@ -173,7 +178,7 @@ class CanvasRepository {
     // Remove any pending operations for this shape and add delete
     _pendingOperations.removeWhere((op) => op.shapeId == shapeId);
     _pendingOperations.add(
-      SyncOperation(
+      _PendingOp(
         type: SyncOperationType.delete,
         shapeId: shapeId,
         timestamp: DateTime.now(),
@@ -206,52 +211,69 @@ class CanvasRepository {
     _syncTimer = Timer.periodic(_syncInterval, (_) => _syncToServer());
   }
 
-  /// Sync pending changes to server
+  /// Sync pending changes to server via gRPC
   Future<void> _syncToServer() async {
-    VioLogger.debug('CanvasRepository: Attempting to sync to server...');
     if (_projectId == null || _branchId == null) return;
     if (_isSyncing) return;
     if (_pendingOperations.isEmpty && !_isDirty) return;
+
+    VioLogger.debug(
+      'GrpcCanvasRepository: Syncing ${_pendingOperations.length} operations...',
+    );
 
     _isSyncing = true;
     _updateSyncStatus(SyncStatus.syncing);
 
     try {
-      final response = await _canvasService.syncCanvas(
-        projectId: _projectId!,
-        branchId: _branchId!,
-        shapes: _shapes,
-        localVersion: _localVersion,
-        operations: List.from(_pendingOperations),
-      );
+      final request = pb.SyncChangesRequest()
+        ..projectId = _projectId!
+        ..branchId = _branchId!
+        ..localVersion = _localVersion;
+
+      // Convert pending operations to proto
+      for (final op in _pendingOperations) {
+        request.operations.add(
+          ProtoConverter.syncOperationToProto(
+            op.type,
+            op.shapeId,
+            op.shape,
+            op.timestamp,
+            _projectId,
+          ),
+        );
+      }
+
+      final response = await _canvasClient.syncChanges(request);
 
       if (response.success) {
         _localVersion = response.serverVersion;
         _pendingOperations.clear();
         _isDirty = false;
 
-        // If server returned updated shapes (conflict resolution), apply them
-        if (response.shapes != null) {
+        // If server returned shapes (conflict resolution), apply them
+        if (response.shapes.isNotEmpty) {
           _shapes.clear();
-          _shapes.addAll(response.shapes!);
+          for (final protoShape in response.shapes) {
+            _shapes.add(ProtoConverter.shapeFromProto(protoShape));
+          }
           _shapesController.add(shapes);
 
           VioLogger.info(
-            'CanvasRepository: Server resolved conflicts, updated to v$_localVersion',
+            'GrpcCanvasRepository: Server resolved conflicts, updated to v$_localVersion',
           );
         }
 
         _updateSyncStatus(SyncStatus.synced);
 
         VioLogger.info(
-          'CanvasRepository: Synced successfully (v$_localVersion)',
+          'GrpcCanvasRepository: Synced successfully (v$_localVersion)',
         );
       } else {
-        VioLogger.warning('CanvasRepository: Sync failed: ${response.message}');
+        VioLogger.warning('GrpcCanvasRepository: Sync failed');
         _updateSyncStatus(SyncStatus.error);
       }
-    } on ApiException catch (e) {
-      VioLogger.error('CanvasRepository: Sync error', e);
+    } on GrpcError catch (e) {
+      VioLogger.error('GrpcCanvasRepository: Sync error - ${e.message}');
       _updateSyncStatus(SyncStatus.error);
     } finally {
       _isSyncing = false;
@@ -273,6 +295,20 @@ class CanvasRepository {
     _currentStatus = status;
     _syncStatusController.add(status);
   }
+}
+
+/// Internal pending operation class
+class _PendingOp {
+  _PendingOp({
+    required this.type,
+    required this.shapeId,
+    required this.timestamp, this.shape,
+  });
+
+  final SyncOperationType type;
+  final String shapeId;
+  final Shape? shape;
+  final DateTime timestamp;
 }
 
 /// Sync status states

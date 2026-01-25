@@ -535,3 +535,445 @@ class SyncOperation {
     };
   }
 }
+
+// ============================================================================
+// Version Control DTOs
+// ============================================================================
+
+/// Commit data transfer object
+class CommitDto {
+  CommitDto({
+    required this.id,
+    required this.projectId,
+    required this.branchId,
+    required this.message,
+    required this.authorId,
+    required this.snapshotId,
+    required this.createdAt,
+    this.parentId,
+    this.authorName,
+    this.authorEmail,
+  });
+
+  factory CommitDto.fromJson(Map<String, dynamic> json) {
+    return CommitDto(
+      id: json['id'] as String,
+      projectId: json['projectId'] as String,
+      branchId: json['branchId'] as String,
+      message: json['message'] as String,
+      authorId: json['authorId'] as String,
+      snapshotId: json['snapshotId'] as String,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      parentId: json['parentId'] as String?,
+      authorName: json['authorName'] as String?,
+      authorEmail: json['authorEmail'] as String?,
+    );
+  }
+
+  final String id;
+  final String projectId;
+  final String branchId;
+  final String message;
+  final String authorId;
+  final String snapshotId;
+  final DateTime createdAt;
+  final String? parentId;
+  final String? authorName;
+  final String? authorEmail;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'projectId': projectId,
+        'branchId': branchId,
+        'message': message,
+        'authorId': authorId,
+        'snapshotId': snapshotId,
+        'createdAt': createdAt.toIso8601String(),
+        if (parentId != null) 'parentId': parentId,
+        if (authorName != null) 'authorName': authorName,
+        if (authorEmail != null) 'authorEmail': authorEmail,
+      };
+}
+
+/// Pull request status enum
+enum PullRequestStatus { open, merged, closed }
+
+/// Pull request data transfer object
+class PullRequestDto {
+  PullRequestDto({
+    required this.id,
+    required this.projectId,
+    required this.sourceBranchId,
+    required this.targetBranchId,
+    required this.title,
+    required this.authorId,
+    required this.status,
+    required this.createdAt,
+    required this.updatedAt,
+    this.description,
+    this.reviewerIds = const [],
+    this.mergedAt,
+    this.closedAt,
+    this.sourceBranchName,
+    this.targetBranchName,
+  });
+
+  factory PullRequestDto.fromJson(Map<String, dynamic> json) {
+    return PullRequestDto(
+      id: json['id'] as String,
+      projectId: json['projectId'] as String,
+      sourceBranchId: json['sourceBranchId'] as String,
+      targetBranchId: json['targetBranchId'] as String,
+      title: json['title'] as String,
+      authorId: json['authorId'] as String,
+      status: _parsePRStatus(json['status'] as String),
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      description: json['description'] as String?,
+      reviewerIds: (json['reviewers'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
+      mergedAt: json['mergedAt'] != null
+          ? DateTime.parse(json['mergedAt'] as String)
+          : null,
+      closedAt: json['closedAt'] != null
+          ? DateTime.parse(json['closedAt'] as String)
+          : null,
+      sourceBranchName: json['sourceBranchName'] as String?,
+      targetBranchName: json['targetBranchName'] as String?,
+    );
+  }
+
+  static PullRequestStatus _parsePRStatus(String status) {
+    switch (status) {
+      case 'merged':
+        return PullRequestStatus.merged;
+      case 'closed':
+        return PullRequestStatus.closed;
+      case 'open':
+      default:
+        return PullRequestStatus.open;
+    }
+  }
+
+  final String id;
+  final String projectId;
+  final String sourceBranchId;
+  final String targetBranchId;
+  final String title;
+  final String? description;
+  final String authorId;
+  final PullRequestStatus status;
+  final List<String> reviewerIds;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final DateTime? mergedAt;
+  final DateTime? closedAt;
+  final String? sourceBranchName;
+  final String? targetBranchName;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'projectId': projectId,
+        'sourceBranchId': sourceBranchId,
+        'targetBranchId': targetBranchId,
+        'title': title,
+        'description': description,
+        'authorId': authorId,
+        'status': status.name,
+        'reviewers': reviewerIds,
+        'createdAt': createdAt.toIso8601String(),
+        'updatedAt': updatedAt.toIso8601String(),
+        if (mergedAt != null) 'mergedAt': mergedAt!.toIso8601String(),
+        if (closedAt != null) 'closedAt': closedAt!.toIso8601String(),
+      };
+}
+
+/// Pull request detail with additional context (branches, conflicts, etc.)
+class PullRequestDetailDto {
+  PullRequestDetailDto({
+    required this.pullRequest,
+    this.sourceBranch,
+    this.targetBranch,
+    this.mergeable = false,
+    this.conflicts = const [],
+    this.diffStats,
+  });
+
+  final PullRequestDto pullRequest;
+  final BranchDto? sourceBranch;
+  final BranchDto? targetBranch;
+  final bool mergeable;
+  final List<ShapeConflictDto> conflicts;
+  final DiffStatsDto? diffStats;
+
+  bool get hasConflicts => conflicts.isNotEmpty;
+}
+
+/// Diff statistics
+class DiffStatsDto {
+  DiffStatsDto({
+    this.shapesAdded = 0,
+    this.shapesModified = 0,
+    this.shapesDeleted = 0,
+  });
+
+  final int shapesAdded;
+  final int shapesModified;
+  final int shapesDeleted;
+}
+
+/// Merge strategy enum
+enum MergeStrategy { fastForward, mergeCommit, squash }
+
+/// Shape change type for diff visualization
+enum ShapeChangeType { added, modified, deleted }
+
+/// Individual shape change in a diff
+class ShapeChangeDto {
+  ShapeChangeDto({
+    required this.shapeId,
+    required this.shapeName,
+    required this.changeType,
+    this.beforeShape,
+    this.afterShape,
+    this.changedProperties = const [],
+  });
+
+  factory ShapeChangeDto.fromJson(Map<String, dynamic> json) {
+    return ShapeChangeDto(
+      shapeId: json['shapeId'] as String,
+      shapeName: json['shapeName'] as String,
+      changeType: _parseChangeType(json['changeType'] as String),
+      beforeShape: json['beforeShape'] != null
+          ? ShapeFactory.fromJson(json['beforeShape'] as Map<String, dynamic>)
+          : null,
+      afterShape: json['afterShape'] != null
+          ? ShapeFactory.fromJson(json['afterShape'] as Map<String, dynamic>)
+          : null,
+      changedProperties: (json['changedProperties'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
+    );
+  }
+
+  static ShapeChangeType _parseChangeType(String type) {
+    switch (type) {
+      case 'added':
+        return ShapeChangeType.added;
+      case 'deleted':
+        return ShapeChangeType.deleted;
+      case 'modified':
+      default:
+        return ShapeChangeType.modified;
+    }
+  }
+
+  final String shapeId;
+  final String shapeName;
+  final ShapeChangeType changeType;
+  final Shape? beforeShape;
+  final Shape? afterShape;
+  final List<String> changedProperties;
+}
+
+/// Diff result between two commits or branches
+class DiffResultDto {
+  DiffResultDto({
+    required this.changes,
+    required this.addedCount,
+    required this.modifiedCount,
+    required this.deletedCount,
+  });
+
+  factory DiffResultDto.fromJson(Map<String, dynamic> json) {
+    return DiffResultDto(
+      changes: (json['changes'] as List<dynamic>?)
+              ?.map((e) => ShapeChangeDto.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      addedCount: (json['addedCount'] as num?)?.toInt() ?? 0,
+      modifiedCount: (json['modifiedCount'] as num?)?.toInt() ?? 0,
+      deletedCount: (json['deletedCount'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  final List<ShapeChangeDto> changes;
+  final int addedCount;
+  final int modifiedCount;
+  final int deletedCount;
+
+  int get totalChanges => addedCount + modifiedCount + deletedCount;
+}
+
+/// Property-level conflict information
+class PropertyConflictDto {
+  PropertyConflictDto({
+    required this.propertyName,
+    required this.baseValue,
+    required this.sourceValue,
+    required this.targetValue,
+  });
+
+  factory PropertyConflictDto.fromJson(Map<String, dynamic> json) {
+    return PropertyConflictDto(
+      propertyName: json['propertyName'] as String,
+      baseValue: json['baseValue'],
+      sourceValue: json['sourceValue'],
+      targetValue: json['targetValue'],
+    );
+  }
+
+  final String propertyName;
+  final dynamic baseValue;
+  final dynamic sourceValue;
+  final dynamic targetValue;
+}
+
+/// Shape-level conflict with property details
+class ShapeConflictDto {
+  ShapeConflictDto({
+    required this.shapeId,
+    required this.shapeName,
+    required this.propertyConflicts,
+    this.baseShape,
+    this.sourceShape,
+    this.targetShape,
+  });
+
+  factory ShapeConflictDto.fromJson(Map<String, dynamic> json) {
+    return ShapeConflictDto(
+      shapeId: json['shapeId'] as String,
+      shapeName: json['shapeName'] as String,
+      propertyConflicts: (json['propertyConflicts'] as List<dynamic>?)
+              ?.map(
+                (e) => PropertyConflictDto.fromJson(e as Map<String, dynamic>),
+              )
+              .toList() ??
+          [],
+      baseShape: json['baseShape'] != null
+          ? ShapeFactory.fromJson(json['baseShape'] as Map<String, dynamic>)
+          : null,
+      sourceShape: json['sourceShape'] != null
+          ? ShapeFactory.fromJson(json['sourceShape'] as Map<String, dynamic>)
+          : null,
+      targetShape: json['targetShape'] != null
+          ? ShapeFactory.fromJson(json['targetShape'] as Map<String, dynamic>)
+          : null,
+    );
+  }
+
+  final String shapeId;
+  final String shapeName;
+  final List<PropertyConflictDto> propertyConflicts;
+  final Shape? baseShape;
+  final Shape? sourceShape;
+  final Shape? targetShape;
+}
+
+/// Conflict resolution choice
+enum ConflictResolutionChoice { source, target, custom }
+
+/// Individual conflict resolution
+class ConflictResolutionDto {
+  ConflictResolutionDto({
+    required this.shapeId,
+    required this.choice,
+    this.resolvedShape,
+  });
+
+  final String shapeId;
+  final ConflictResolutionChoice choice;
+  final Shape? resolvedShape;
+
+  Map<String, dynamic> toJson() => {
+        'shapeId': shapeId,
+        'choice': choice.name.toUpperCase(),
+        if (resolvedShape != null) 'resolvedShape': resolvedShape!.toJson(),
+      };
+}
+
+/// Merge status check result
+class MergeStatusDto {
+  MergeStatusDto({
+    required this.mergeable,
+    required this.conflicts,
+    required this.commitsAhead,
+    required this.commitsBehind,
+    this.reason,
+  });
+
+  factory MergeStatusDto.fromJson(Map<String, dynamic> json) {
+    return MergeStatusDto(
+      mergeable: json['mergeable'] as bool,
+      conflicts: (json['conflicts'] as List<dynamic>?)
+              ?.map((e) => ShapeConflictDto.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      commitsAhead: (json['commitsAhead'] as num?)?.toInt() ?? 0,
+      commitsBehind: (json['commitsBehind'] as num?)?.toInt() ?? 0,
+      reason: json['reason'] as String?,
+    );
+  }
+
+  final bool mergeable;
+  final List<ShapeConflictDto> conflicts;
+  final int commitsAhead;
+  final int commitsBehind;
+  final String? reason;
+
+  bool get hasConflicts => conflicts.isNotEmpty;
+}
+
+/// Branch comparison result
+class BranchComparisonDto {
+  BranchComparisonDto({
+    required this.commitsAhead, required this.commitsBehind, required this.canFastForward, this.baseBranch,
+    this.headBranch,
+    this.baseBranchId,
+    this.headBranchId,
+    this.diff,
+    this.conflicts = const [],
+  });
+
+  factory BranchComparisonDto.fromJson(Map<String, dynamic> json) {
+    return BranchComparisonDto(
+      baseBranch: json['baseBranch'] != null
+          ? BranchDto.fromJson(json['baseBranch'] as Map<String, dynamic>)
+          : null,
+      headBranch: json['headBranch'] != null
+          ? BranchDto.fromJson(json['headBranch'] as Map<String, dynamic>)
+          : null,
+      baseBranchId: json['baseBranchId'] as String?,
+      headBranchId: json['headBranchId'] as String?,
+      commitsAhead: (json['commitsAhead'] as num?)?.toInt() ?? 0,
+      commitsBehind: (json['commitsBehind'] as num?)?.toInt() ?? 0,
+      diff: json['diff'] != null
+          ? DiffResultDto.fromJson(json['diff'] as Map<String, dynamic>)
+          : null,
+      conflicts: (json['conflicts'] as List<dynamic>?)
+              ?.map((e) => ShapeConflictDto.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      canFastForward: json['canFastForward'] as bool? ?? false,
+    );
+  }
+
+  /// Full branch objects (optional, used by REST API)
+  final BranchDto? baseBranch;
+  final BranchDto? headBranch;
+
+  /// Branch IDs (optional, used by gRPC)
+  final String? baseBranchId;
+  final String? headBranchId;
+
+  final int commitsAhead;
+  final int commitsBehind;
+  final DiffResultDto? diff;
+  final List<ShapeConflictDto> conflicts;
+  final bool canFastForward;
+
+  bool get hasConflicts => conflicts.isNotEmpty;
+}

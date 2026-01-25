@@ -69,4 +69,70 @@ class BranchApiService {
   Future<void> deleteBranch(String projectId, String branchId) async {
     await _client.delete<void>(ApiConfig.endpoints.branch(projectId, branchId));
   }
+
+  /// Merge branches directly (without PR)
+  Future<MergeBranchResultDto> mergeBranches({
+    required String projectId,
+    required String sourceBranchId,
+    required String targetBranchId,
+    required String mergedById,
+    MergeStrategy strategy = MergeStrategy.mergeCommit,
+    String? commitMessage,
+  }) async {
+    final response = await _client.post<Map<String, dynamic>>(
+      ApiConfig.endpoints.mergeBranches(projectId),
+      data: {
+        'sourceBranchId': sourceBranchId,
+        'targetBranchId': targetBranchId,
+        'mergedById': mergedById,
+        'strategy': strategy.name.toUpperCase(),
+        if (commitMessage != null) 'commitMessage': commitMessage,
+      },
+    );
+    return MergeBranchResultDto.fromJson(response.data!);
+  }
+
+  /// Compare two branches (ahead/behind, conflicts)
+  Future<BranchComparisonDto> compareBranches({
+    required String projectId,
+    required String baseBranchId,
+    required String headBranchId,
+  }) async {
+    final response = await _client.get<Map<String, dynamic>>(
+      ApiConfig.endpoints.compareBranches(projectId),
+      queryParameters: {
+        'baseBranchId': baseBranchId,
+        'headBranchId': headBranchId,
+      },
+    );
+    return BranchComparisonDto.fromJson(response.data!);
+  }
+}
+
+/// Result of merging branches
+class MergeBranchResultDto {
+  MergeBranchResultDto({
+    required this.success,
+    required this.targetBranch,
+    this.mergeCommit,
+    this.message,
+  });
+
+  factory MergeBranchResultDto.fromJson(Map<String, dynamic> json) {
+    return MergeBranchResultDto(
+      success: json['success'] as bool? ?? true,
+      targetBranch: BranchDto.fromJson(
+        json['targetBranch'] as Map<String, dynamic>,
+      ),
+      mergeCommit: json['mergeCommit'] != null
+          ? CommitDto.fromJson(json['mergeCommit'] as Map<String, dynamic>)
+          : null,
+      message: json['message'] as String?,
+    );
+  }
+
+  final bool success;
+  final BranchDto targetBranch;
+  final CommitDto? mergeCommit;
+  final String? message;
 }

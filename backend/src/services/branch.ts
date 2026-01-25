@@ -4,13 +4,28 @@ import { db, schema } from "../db";
 import type {
 	Branch,
 	BranchServiceImplementation,
+	CompareBranchesResponse,
 	CreateBranchResponse,
 	GetBranchResponse,
 	ListBranchesResponse,
+	MergeBranchesResponse,
 	UpdateBranchResponse,
 } from "../gen/vio/v1/branch.js";
 import type { Commit } from "../gen/vio/v1/commit.js";
-import type { Empty, Timestamp } from "../gen/vio/v1/common.js";
+import {
+	MergeStrategy,
+	type Empty,
+	type Timestamp,
+} from "../gen/vio/v1/common.js";
+import {
+	canFastForward,
+	countCommitsDivergence,
+	createMergeCommit,
+	findCommonAncestor,
+	getSnapshotData,
+	performFastForward,
+	performThreeWayMerge,
+} from "./merge.js";
 
 function toProtoTimestamp(date: Date): Timestamp {
 	return {
@@ -185,5 +200,203 @@ export const branchServiceImpl: BranchServiceImplementation = {
 			.where(eq(schema.branches.id, req.branchId));
 
 		return {};
+	},
+
+	async mergeBranches(req): Promise<MergeBranchesResponse> {
+		const {
+			projectId,
+			sourceBranchId,
+			targetBranchId,
+			strategy,
+			mergedById,
+			commitMessage,
+		} = req;
+
+		// Verify both branches exist and belong to the project
+		const sourceBranch = await db.query.branches.findFirst({
+			where: and(
+				eq(schema.branches.id, sourceBranchId),
+				eq(schema.branches.projectId, projectId),
+			),
+			with: { headCommit: true },
+		});
+
+		const targetBranch = await db.query.branches.findFirst({
+			where: and(
+				eq(schema.branches.id, targetBranchId),
+				eq(schema.branches.projectId, projectId),
+			),
+			with: { headCommit: true },
+		});
+
+		if (!sourceBranch || !targetBranch) {
+			throw new ServerError(Status.NOT_FOUND, "Branch not found");
+		}
+
+		if (!sourceBranch.headCommitId) {
+			throw new ServerError(
+				Status.FAILED_PRECONDITION,
+				"Source branch has no commits",
+			);
+		}
+
+		// Check for fast-forward possibility
+		const isFastForward = await canFastForward(sourceBranchId, targetBranchId);
+
+		// Handle fast-forward strategy
+		if (strategy === MergeStrategy.MERGE_STRATEGY_FAST_FORWARD) {
+			if (!isFastForward) {
+				throw new ServerError(
+					Status.FAILED_PRECONDITION,
+					"Fast-forward merge not possible, branches have diverged",
+				);
+			}
+
+			await performFastForward(targetBranchId, sourceBranch.headCommitId);
+
+			// Get updated branch
+			const updatedBranch = await db.query.branches.findFirst({
+				where: eq(schema.branches.id, targetBranchId),
+			});
+
+			if (!updatedBranch) {
+				throw new ServerError(Status.INTERNAL, "Branch not found after update");
+			}
+
+			return {
+				targetBranch: toProtoBranch(updatedBranch),
+				mergeCommit: undefined,
+				wasFastForward: true,
+			};
+		}
+
+		// Perform actual merge
+		// Get snapshots for three-way merge
+		const commonAncestor = await findCommonAncestor(
+			sourceBranchId,
+			targetBranchId,
+		);
+
+		const baseSnapshot = commonAncestor?.snapshotId
+			? await getSnapshotData(commonAncestor.snapshotId)
+			: null;
+
+		const sourceSnapshot = sourceBranch.headCommit
+			? await getSnapshotData(sourceBranch.headCommit.snapshotId)
+			: null;
+		const targetSnapshot = targetBranch.headCommit
+			? await getSnapshotData(targetBranch.headCommit.snapshotId)
+			: { shapes: [] };
+
+		if (!sourceSnapshot) {
+			throw new ServerError(Status.INTERNAL, "Source snapshot not found");
+		}
+
+		// Perform three-way merge
+		const mergeResult = performThreeWayMerge(
+			baseSnapshot,
+			sourceSnapshot,
+			targetSnapshot ?? { shapes: [] },
+		);
+
+		if (!mergeResult.success) {
+			throw new ServerError(
+				Status.FAILED_PRECONDITION,
+				`Merge has conflicts: ${mergeResult.conflicts.length} shape(s) with conflicting changes`,
+			);
+		}
+
+		// Create merge commit
+		const mergeMessage =
+			commitMessage ||
+			`Merge branch '${sourceBranch.name}' into '${targetBranch.name}'`;
+		const mergeCommit = await createMergeCommit(
+			projectId,
+			targetBranchId,
+			mergeResult.mergedShapes,
+			mergedById,
+			mergeMessage,
+		);
+
+		// Get updated branch
+		const updatedBranch = await db.query.branches.findFirst({
+			where: eq(schema.branches.id, targetBranchId),
+		});
+
+		if (!updatedBranch) {
+			throw new ServerError(Status.INTERNAL, "Branch not found after update");
+		}
+
+		return {
+			targetBranch: toProtoBranch(updatedBranch),
+			mergeCommit: toProtoCommit(mergeCommit),
+			wasFastForward: false,
+		};
+	},
+
+	async compareBranches(req): Promise<CompareBranchesResponse> {
+		const { projectId, baseBranchId, headBranchId } = req;
+
+		// Verify branches exist
+		const baseBranch = await db.query.branches.findFirst({
+			where: and(
+				eq(schema.branches.id, baseBranchId),
+				eq(schema.branches.projectId, projectId),
+			),
+			with: { headCommit: true },
+		});
+
+		const headBranch = await db.query.branches.findFirst({
+			where: and(
+				eq(schema.branches.id, headBranchId),
+				eq(schema.branches.projectId, projectId),
+			),
+			with: { headCommit: true },
+		});
+
+		if (!baseBranch || !headBranch) {
+			throw new ServerError(Status.NOT_FOUND, "Branch not found");
+		}
+
+		// Find common ancestor
+		const commonAncestor = await findCommonAncestor(
+			baseBranchId,
+			headBranchId,
+		);
+
+		// Count commits ahead/behind
+		const { ahead, behind } = await countCommitsDivergence(
+			baseBranchId,
+			headBranchId,
+		);
+
+		// Get snapshots for diff calculation
+		const baseSnapshot = commonAncestor?.snapshotId
+			? await getSnapshotData(commonAncestor.snapshotId)
+			: null;
+
+		const headSnapshot = headBranch.headCommit
+			? await getSnapshotData(headBranch.headCommit.snapshotId)
+			: { shapes: [] };
+
+		const baseHeadSnapshot = baseBranch.headCommit
+			? await getSnapshotData(baseBranch.headCommit.snapshotId)
+			: { shapes: [] };
+
+		// Perform merge simulation to detect conflicts
+		const mergeResult = performThreeWayMerge(
+			baseSnapshot,
+			headSnapshot ?? { shapes: [] },
+			baseHeadSnapshot ?? { shapes: [] },
+		);
+
+		return {
+			commonAncestorId: commonAncestor?.id,
+			commitsAhead: ahead,
+			commitsBehind: behind,
+			diff: mergeResult.diff,
+			mergeable: mergeResult.success,
+			conflicts: mergeResult.conflicts,
+		};
 	},
 };

@@ -1,15 +1,15 @@
 import { relations } from "drizzle-orm";
 import {
-	boolean,
-	doublePrecision,
-	index,
-	integer,
-	jsonb,
-	pgTable,
-	text,
-	timestamp,
-	uuid,
-	varchar,
+    boolean,
+    doublePrecision,
+    index,
+    integer,
+    jsonb,
+    pgTable,
+    text,
+    timestamp,
+    uuid,
+    varchar,
 } from "drizzle-orm/pg-core";
 
 // ============================================================================
@@ -140,9 +140,9 @@ export const shapes = pgTable(
 		projectId: uuid("project_id")
 			.notNull()
 			.references(() => projects.id, { onDelete: "cascade" }),
-		frameId: uuid("frame_id").references(() => frames.id, {
-			onDelete: "cascade",
-		}),
+		// frameId references another shape with type='frame', not the frames table
+		// This is a soft reference to support the flat shape hierarchy
+		frameId: uuid("frame_id"),
 		parentId: uuid("parent_id"),
 		type: varchar("type", { length: 50 }).notNull(), // rectangle, ellipse, path, text, etc.
 		name: text("name").notNull(),

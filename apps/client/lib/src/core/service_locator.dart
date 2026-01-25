@@ -1,9 +1,15 @@
-import 'api/api.dart';
+import '../gen/vio/v1/branch.pbgrpc.dart';
+import '../gen/vio/v1/canvas.pbgrpc.dart';
+import '../gen/vio/v1/commit.pbgrpc.dart';
+import '../gen/vio/v1/project.pbgrpc.dart';
+import '../gen/vio/v1/pullrequest.pbgrpc.dart';
+import '../gen/vio/v1/shape.pbgrpc.dart';
+import 'grpc/grpc.dart';
 import 'repositories/repositories.dart';
 
-/// Service locator for API services
+/// Service locator for gRPC services
 ///
-/// Provides singleton instances of API services throughout the app.
+/// Provides singleton instances of gRPC service clients throughout the app.
 /// Initialize in main() before runApp().
 class ServiceLocator {
   ServiceLocator._();
@@ -11,55 +17,88 @@ class ServiceLocator {
   static ServiceLocator? _instance;
   static ServiceLocator get instance => _instance ??= ServiceLocator._();
 
-  late final ApiClient _apiClient;
-  late final ProjectApiService _projectService;
-  late final BranchApiService _branchService;
-  late final CanvasApiService _canvasService;
-  late final CanvasRepository _canvasRepository;
+  late final GrpcClient _grpcClient;
+  late final ProjectServiceClient _projectService;
+  late final BranchServiceClient _branchService;
+  late final CanvasServiceClient _canvasService;
+  late final CommitServiceClient _commitService;
+  late final PullRequestServiceClient _pullRequestService;
+  late final ShapeServiceClient _shapeService;
+  late final GrpcCanvasRepository _canvasRepository;
 
   bool _initialized = false;
 
   /// Initialize all services
-  void initialize() {
+  Future<void> initialize({
+    String host = 'localhost',
+    int port = 4000,
+  }) async {
     if (_initialized) return;
 
-    _apiClient = ApiClient(baseUrl: ApiConfig.baseUrl);
-    _projectService = ProjectApiService(apiClient: _apiClient);
-    _branchService = BranchApiService(apiClient: _apiClient);
-    _canvasService = CanvasApiService(apiClient: _apiClient);
-    _canvasRepository = CanvasRepository(canvasService: _canvasService);
+    // Initialize gRPC client (singleton)
+    _grpcClient = GrpcClient.instance;
+    _grpcClient.initialize(host: host, port: port);
+
+    // Get gRPC service clients
+    _projectService = _grpcClient.projectClient;
+    _branchService = _grpcClient.branchClient;
+    _canvasService = _grpcClient.canvasClient;
+    _commitService = _grpcClient.commitClient;
+    _pullRequestService = _grpcClient.pullRequestClient;
+    _shapeService = _grpcClient.shapeClient;
+
+    // Create repositories
+    _canvasRepository = GrpcCanvasRepository(canvasClient: _canvasService);
 
     _initialized = true;
   }
 
-  /// Get the API client
-  ApiClient get apiClient {
+  /// Get the gRPC client
+  GrpcClient get grpcClient {
     _ensureInitialized();
-    return _apiClient;
+    return _grpcClient;
   }
 
-  /// Get the project API service
-  ProjectApiService get projectService {
+  /// Get the project gRPC service client
+  ProjectServiceClient get projectService {
     _ensureInitialized();
     return _projectService;
   }
 
-  /// Get the branch API service
-  BranchApiService get branchService {
+  /// Get the branch gRPC service client
+  BranchServiceClient get branchService {
     _ensureInitialized();
     return _branchService;
   }
 
-  /// Get the canvas API service
-  CanvasApiService get canvasService {
+  /// Get the canvas gRPC service client
+  CanvasServiceClient get canvasService {
     _ensureInitialized();
     return _canvasService;
   }
 
+  /// Get the shape gRPC service client
+  ShapeServiceClient get shapeService {
+    _ensureInitialized();
+    return _shapeService;
+  }
+
   /// Get the canvas repository
-  CanvasRepository get canvasRepository {
+  GrpcCanvasRepository get canvasRepository {
     _ensureInitialized();
     return _canvasRepository;
+  }
+
+  /// Get the commit gRPC service client
+  CommitServiceClient get commitService {
+    _ensureInitialized();
+    return _commitService;
+  }
+
+  /// Get the pull request gRPC service client
+  PullRequestServiceClient get pullRequestService {
+    _ensureInitialized();
+    return _pullRequestService;
   }
 
   void _ensureInitialized() {
@@ -71,9 +110,10 @@ class ServiceLocator {
   }
 
   /// Dispose all services (call on app shutdown)
-  void dispose() {
+  Future<void> dispose() async {
     if (_initialized) {
       _canvasRepository.dispose();
+      await _grpcClient.shutdown();
     }
   }
 }

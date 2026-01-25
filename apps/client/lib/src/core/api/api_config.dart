@@ -50,4 +50,34 @@ class ApiEndpoints {
   // Sync endpoint (for auto-sync operations)
   String sync(String projectId, String branchId) =>
       '/projects/$projectId/branches/$branchId/sync';
+
+  // Branch merge/compare endpoints
+  String mergeBranches(String projectId) => '/projects/$projectId/branches/merge';
+  String compareBranches(String projectId) =>
+      '/projects/$projectId/branches/compare';
+
+  // Pull Request endpoints
+  String pullRequests(String projectId) => '/projects/$projectId/pull-requests';
+  String pullRequest(String projectId, String prId) =>
+      '/projects/$projectId/pull-requests/$prId';
+  String mergePullRequest(String projectId, String prId) =>
+      '/projects/$projectId/pull-requests/$prId/merge';
+  String closePullRequest(String projectId, String prId) =>
+      '/projects/$projectId/pull-requests/$prId/close';
+  String reopenPullRequest(String projectId, String prId) =>
+      '/projects/$projectId/pull-requests/$prId/reopen';
+  String checkMergeStatus(String projectId, String prId) =>
+      '/projects/$projectId/pull-requests/$prId/merge-status';
+  String resolveConflicts(String projectId, String prId) =>
+      '/projects/$projectId/pull-requests/$prId/resolve-conflicts';
+
+  // Commit operations
+  String checkoutCommit(String projectId, String branchId, String commitId) =>
+      '/projects/$projectId/branches/$branchId/commits/$commitId/checkout';
+  String revertCommit(String projectId, String branchId, String commitId) =>
+      '/projects/$projectId/branches/$branchId/commits/$commitId/revert';
+  String cherryPick(String projectId, String branchId, String commitId) =>
+      '/projects/$projectId/branches/$branchId/commits/$commitId/cherry-pick';
+  String commitDiff(String projectId, String branchId, String commitId) =>
+      '/projects/$projectId/branches/$branchId/commits/$commitId/diff';
 }

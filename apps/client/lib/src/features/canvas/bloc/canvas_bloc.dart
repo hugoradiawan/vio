@@ -44,7 +44,7 @@ const _maxUndoHistory = 50;
 /// - Manual undo/redo stack for shape changes
 /// - Server sync for persistence
 class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
-  CanvasBloc({CanvasRepository? repository})
+  CanvasBloc({GrpcCanvasRepository? repository})
       : _repository = repository,
         super(CanvasState(shapes: _createTestShapes())) {
     // Initialize undo stack with initial shapes
@@ -169,7 +169,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
   }
 
   /// Repository for server communication (optional for offline mode)
-  final CanvasRepository? _repository;
+  final GrpcCanvasRepository? _repository;
 
   /// Manual undo stack - stores snapshots of shapes map
   final List<Map<String, Shape>> _undoStack = [];
@@ -3127,7 +3127,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     Emitter<CanvasState> emit,
   ) async {
     if (_repository == null) {
-      VioLogger.warning('CanvasRepository not available for sync');
+      VioLogger.warning('GrpcCanvasRepository not available for sync');
       return;
     }
 

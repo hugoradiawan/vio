@@ -2,15 +2,23 @@ import { and, asc, desc, eq } from "drizzle-orm";
 import { ServerError, Status } from "nice-grpc";
 import { db, schema } from "../db";
 import type {
-	Commit,
-	CommitServiceImplementation,
-	CreateCommitResponse,
-	GetCommitResponse,
-	GetDiffResponse,
-	ListCommitsResponse,
-	Snapshot,
+    CheckoutCommitResponse,
+    CherryPickResponse,
+    Commit,
+    CommitServiceImplementation,
+    CreateCommitResponse,
+    GetCommitResponse,
+    GetDiffResponse,
+    ListCommitsResponse,
+    RevertCommitResponse,
+    Snapshot,
 } from "../gen/vio/v1/commit.js";
 import type { Timestamp } from "../gen/vio/v1/common.js";
+import {
+    getSnapshotData,
+    performThreeWayMerge,
+    type SnapshotData
+} from "./merge.js";
 
 function toProtoTimestamp(date: Date): Timestamp {
 	return {
@@ -225,6 +233,295 @@ export const commitServiceImpl: CommitServiceImplementation = {
 				removedShapeIds,
 				modifiedShapeIds,
 			},
+		};
+	},
+
+	async checkoutCommit(req): Promise<CheckoutCommitResponse> {
+		const { projectId, branchId, commitId, authorId } = req;
+
+		// Verify commit exists and belongs to project
+		const commit = await db.query.commits.findFirst({
+			where: and(
+				eq(schema.commits.id, commitId),
+				eq(schema.commits.projectId, projectId),
+			),
+			with: { snapshot: true },
+		});
+
+		if (!commit) {
+			throw new ServerError(Status.NOT_FOUND, "Commit not found");
+		}
+
+		// Verify branch exists
+		const branch = await db.query.branches.findFirst({
+			where: and(
+				eq(schema.branches.id, branchId),
+				eq(schema.branches.projectId, projectId),
+			),
+		});
+
+		if (!branch) {
+			throw new ServerError(Status.NOT_FOUND, "Branch not found");
+		}
+
+		// Get snapshot data from the target commit
+		const snapshotData = commit.snapshot?.data as SnapshotData | undefined;
+		if (!snapshotData) {
+			throw new ServerError(Status.INTERNAL, "Commit snapshot not found");
+		}
+
+		// Create a new snapshot with the same data
+		const [newSnapshot] = await db
+			.insert(schema.snapshots)
+			.values({
+				projectId,
+				data: snapshotData,
+			})
+			.returning();
+
+		// Create a new commit for the checkout
+		const [newCommit] = await db
+			.insert(schema.commits)
+			.values({
+				projectId,
+				branchId,
+				parentId: branch.headCommitId,
+				message: `Checkout to commit: ${commit.message}`,
+				authorId,
+				snapshotId: newSnapshot.id,
+			})
+			.returning();
+
+		// Update branch head
+		await db
+			.update(schema.branches)
+			.set({
+				headCommitId: newCommit.id,
+				updatedAt: new Date(),
+			})
+			.where(eq(schema.branches.id, branchId));
+
+		return {
+			commit: toProtoCommit(newCommit),
+			restoredFrom: toProtoCommit(commit),
+		};
+	},
+
+	async revertCommit(req): Promise<RevertCommitResponse> {
+		const { projectId, branchId, commitId, authorId, message } = req;
+
+		// Verify commit exists
+		const commitToRevert = await db.query.commits.findFirst({
+			where: and(
+				eq(schema.commits.id, commitId),
+				eq(schema.commits.projectId, projectId),
+			),
+		});
+
+		if (!commitToRevert) {
+			throw new ServerError(Status.NOT_FOUND, "Commit to revert not found");
+		}
+
+		// Get parent commit to revert to
+		if (!commitToRevert.parentId) {
+			throw new ServerError(
+				Status.FAILED_PRECONDITION,
+				"Cannot revert the initial commit",
+			);
+		}
+
+		const parentCommit = await db.query.commits.findFirst({
+			where: eq(schema.commits.id, commitToRevert.parentId),
+			with: { snapshot: true },
+		});
+
+		if (!parentCommit?.snapshot) {
+			throw new ServerError(
+				Status.INTERNAL,
+				"Parent commit snapshot not found",
+			);
+		}
+
+		// Get branch
+		const branch = await db.query.branches.findFirst({
+			where: and(
+				eq(schema.branches.id, branchId),
+				eq(schema.branches.projectId, projectId),
+			),
+			with: { headCommit: { with: { snapshot: true } } },
+		});
+
+		if (!branch) {
+			throw new ServerError(Status.NOT_FOUND, "Branch not found");
+		}
+
+		// Get current branch state and parent state for three-way merge
+		const currentSnapshot = branch.headCommit?.snapshot?.data as
+			| SnapshotData
+			| undefined;
+		const parentSnapshot = parentCommit.snapshot.data as SnapshotData;
+		const revertSnapshot = await getSnapshotData(commitToRevert.snapshotId);
+
+		if (!currentSnapshot || !revertSnapshot) {
+			throw new ServerError(Status.INTERNAL, "Snapshot data not found");
+		}
+
+		// Perform three-way merge:
+		// - Base: the commit we're reverting
+		// - Source: the parent of that commit (the state we want to go back to)
+		// - Target: current branch state (to preserve other changes made since)
+		const mergeResult = performThreeWayMerge(
+			revertSnapshot, // base - the commit being reverted
+			parentSnapshot, // source - state before the reverted commit
+			currentSnapshot, // target - current state
+		);
+
+		if (!mergeResult.success) {
+			throw new ServerError(
+				Status.FAILED_PRECONDITION,
+				`Revert has conflicts: ${mergeResult.conflicts.length} shape(s) with conflicting changes`,
+			);
+		}
+
+		// Create new snapshot with reverted data
+		const [newSnapshot] = await db
+			.insert(schema.snapshots)
+			.values({
+				projectId,
+				data: { shapes: mergeResult.mergedShapes, version: 1 },
+			})
+			.returning();
+
+		// Create revert commit
+		const revertMessage = message || `Revert "${commitToRevert.message}"`;
+		const [revertCommit] = await db
+			.insert(schema.commits)
+			.values({
+				projectId,
+				branchId,
+				parentId: branch.headCommitId,
+				message: revertMessage,
+				authorId,
+				snapshotId: newSnapshot.id,
+			})
+			.returning();
+
+		// Update branch head
+		await db
+			.update(schema.branches)
+			.set({
+				headCommitId: revertCommit.id,
+				updatedAt: new Date(),
+			})
+			.where(eq(schema.branches.id, branchId));
+
+		return {
+			revertCommit: toProtoCommit(revertCommit),
+			revertedCommit: toProtoCommit(commitToRevert),
+		};
+	},
+
+	async cherryPick(req): Promise<CherryPickResponse> {
+		const { projectId, targetBranchId, commitId, authorId, message } = req;
+
+		// Verify commit exists
+		const commitToPick = await db.query.commits.findFirst({
+			where: and(
+				eq(schema.commits.id, commitId),
+				eq(schema.commits.projectId, projectId),
+			),
+			with: { snapshot: true },
+		});
+
+		if (!commitToPick?.snapshot) {
+			throw new ServerError(
+				Status.NOT_FOUND,
+				"Commit to cherry-pick not found",
+			);
+		}
+
+		// Get parent of the commit to pick (to compute the diff/changes introduced)
+		const parentCommit = commitToPick.parentId
+			? await db.query.commits.findFirst({
+					where: eq(schema.commits.id, commitToPick.parentId),
+					with: { snapshot: true },
+				})
+			: null;
+
+		// Get target branch
+		const targetBranch = await db.query.branches.findFirst({
+			where: and(
+				eq(schema.branches.id, targetBranchId),
+				eq(schema.branches.projectId, projectId),
+			),
+			with: { headCommit: { with: { snapshot: true } } },
+		});
+
+		if (!targetBranch) {
+			throw new ServerError(Status.NOT_FOUND, "Target branch not found");
+		}
+
+		// Three-way merge:
+		// - Base: parent of the commit being picked (or empty if no parent)
+		// - Source: the commit being picked (changes we want to apply)
+		// - Target: current target branch state
+		const baseSnapshot = parentCommit?.snapshot?.data
+			? (parentCommit.snapshot.data as SnapshotData)
+			: { shapes: [] };
+
+		const pickSnapshot = commitToPick.snapshot.data as SnapshotData;
+		const targetSnapshot = targetBranch.headCommit?.snapshot?.data
+			? (targetBranch.headCommit.snapshot.data as SnapshotData)
+			: { shapes: [] };
+
+		const mergeResult = performThreeWayMerge(
+			baseSnapshot, // base - state before the picked commit
+			pickSnapshot, // source - state after the picked commit (changes to apply)
+			targetSnapshot, // target - current target branch state
+		);
+
+		if (!mergeResult.success) {
+			throw new ServerError(
+				Status.FAILED_PRECONDITION,
+				`Cherry-pick has conflicts: ${mergeResult.conflicts.length} shape(s) with conflicting changes`,
+			);
+		}
+
+		// Create new snapshot
+		const [newSnapshot] = await db
+			.insert(schema.snapshots)
+			.values({
+				projectId,
+				data: { shapes: mergeResult.mergedShapes, version: 1 },
+			})
+			.returning();
+
+		// Create cherry-pick commit
+		const pickMessage = message || `Cherry-pick: ${commitToPick.message}`;
+		const [newCommit] = await db
+			.insert(schema.commits)
+			.values({
+				projectId,
+				branchId: targetBranchId,
+				parentId: targetBranch.headCommitId,
+				message: pickMessage,
+				authorId,
+				snapshotId: newSnapshot.id,
+			})
+			.returning();
+
+		// Update target branch head
+		await db
+			.update(schema.branches)
+			.set({
+				headCommitId: newCommit.id,
+				updatedAt: new Date(),
+			})
+			.where(eq(schema.branches.id, targetBranchId));
+
+		return {
+			newCommit: toProtoCommit(newCommit),
+			sourceCommit: toProtoCommit(commitToPick),
 		};
 	},
 };

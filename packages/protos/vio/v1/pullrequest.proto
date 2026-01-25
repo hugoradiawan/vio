@@ -1,0 +1,356 @@
+// Vio Pull Request Service
+//
+// This file defines the pull request API for design review and merge workflow.
+//
+// Pull Requests (PRs) allow proposing changes from one branch to another,
+// similar to GitHub/GitLab pull/merge requests but for design files.
+//
+// Workflow:
+// 1. Developer creates a feature branch and makes design changes
+// 2. Developer opens a PR from feature branch to target (e.g., main)
+// 3. Reviewers examine the diff and leave feedback
+// 4. Once approved, the PR is merged using the chosen strategy
+// 5. Conflicts are detected and resolved at property-level
+//
+// See: PLAN.md Phase 3 for full version control specification.
+// Reference: gitea/models/issues/pull.go for status lifecycle
+syntax = "proto3";
+
+package vio.v1;
+
+import "vio/v1/common.proto";
+import "vio/v1/commit.proto";
+
+// =============================================================================
+// Pull Request Service
+// =============================================================================
+
+// PullRequestService handles design review and merge workflows.
+//
+// This service manages the lifecycle of pull requests from creation
+// through review to merge or closure.
+service PullRequestService {
+  // List pull requests for a project.
+  //
+  // Returns PRs ordered by updated_at descending.
+  // Can filter by status (open, merged, closed).
+  //
+  // Errors:
+  // - NOT_FOUND: Project does not exist
+  // - PERMISSION_DENIED: User cannot access project
+  rpc ListPullRequests(ListPullRequestsRequest) returns (ListPullRequestsResponse);
+
+  // Get a single pull request with details.
+  //
+  // Returns the PR metadata, diff summary, and conflict information.
+  //
+  // Errors:
+  // - NOT_FOUND: Pull request does not exist
+  // - PERMISSION_DENIED: User cannot access project
+  rpc GetPullRequest(GetPullRequestRequest) returns (GetPullRequestResponse);
+
+  // Create a new pull request.
+  //
+  // Proposes merging changes from source branch into target branch.
+  // Automatically detects conflicts between branches.
+  //
+  // Errors:
+  // - NOT_FOUND: Project or branches do not exist
+  // - ALREADY_EXISTS: PR already exists for these branches
+  // - INVALID_ARGUMENT: Source and target branch are the same
+  // - PERMISSION_DENIED: User cannot create PR
+  rpc CreatePullRequest(CreatePullRequestRequest) returns (CreatePullRequestResponse);
+
+  // Update pull request metadata.
+  //
+  // Can update title, description, and reviewers.
+  // Cannot change source/target branches after creation.
+  //
+  // Errors:
+  // - NOT_FOUND: Pull request does not exist
+  // - PERMISSION_DENIED: User cannot modify this PR
+  rpc UpdatePullRequest(UpdatePullRequestRequest) returns (UpdatePullRequestResponse);
+
+  // Merge a pull request.
+  //
+  // Combines changes from source branch into target branch.
+  // Supports multiple merge strategies.
+  // Updates target branch head to the merge commit.
+  //
+  // Errors:
+  // - NOT_FOUND: Pull request does not exist
+  // - FAILED_PRECONDITION: PR has unresolved conflicts
+  // - FAILED_PRECONDITION: PR is not open
+  // - PERMISSION_DENIED: User cannot merge into target branch
+  rpc MergePullRequest(MergePullRequestRequest) returns (MergePullRequestResponse);
+
+  // Close a pull request without merging.
+  //
+  // Marks the PR as closed. Can be reopened later if needed.
+  //
+  // Errors:
+  // - NOT_FOUND: Pull request does not exist
+  // - PERMISSION_DENIED: User cannot close this PR
+  rpc ClosePullRequest(ClosePullRequestRequest) returns (ClosePullRequestResponse);
+
+  // Reopen a closed pull request.
+  //
+  // Errors:
+  // - NOT_FOUND: Pull request does not exist
+  // - FAILED_PRECONDITION: PR is merged and cannot be reopened
+  // - PERMISSION_DENIED: User cannot reopen this PR
+  rpc ReopenPullRequest(ReopenPullRequestRequest) returns (ReopenPullRequestResponse);
+
+  // Check if a pull request can be merged.
+  //
+  // Returns merge status including whether there are conflicts.
+  // Does not actually perform the merge.
+  //
+  // Errors:
+  // - NOT_FOUND: Pull request does not exist
+  rpc CheckMergeStatus(CheckMergeStatusRequest) returns (CheckMergeStatusResponse);
+
+  // Resolve conflicts in a pull request.
+  //
+  // Accepts resolution decisions for conflicting shapes.
+  // After all conflicts are resolved, the PR becomes mergeable.
+  //
+  // Errors:
+  // - NOT_FOUND: Pull request does not exist
+  // - INVALID_ARGUMENT: Invalid resolution for a conflict
+  rpc ResolveConflicts(ResolveConflictsRequest) returns (ResolveConflictsResponse);
+}
+
+// =============================================================================
+// Pull Request Model
+// =============================================================================
+
+// Status of a pull request in its lifecycle.
+enum PullRequestStatus {
+  // Default/unspecified - should not be used.
+  PULL_REQUEST_STATUS_UNSPECIFIED = 0;
+  // PR is open and can be reviewed/merged.
+  PULL_REQUEST_STATUS_OPEN = 1;
+  // PR has been merged into target branch.
+  PULL_REQUEST_STATUS_MERGED = 2;
+  // PR was closed without merging.
+  PULL_REQUEST_STATUS_CLOSED = 3;
+}
+
+// A pull request proposing to merge one branch into another.
+message PullRequest {
+  // Unique PR identifier (UUID).
+  string id = 1;
+  // Project this PR belongs to.
+  string project_id = 2;
+  // Branch containing the proposed changes.
+  string source_branch_id = 3;
+  // Branch to merge changes into.
+  string target_branch_id = 4;
+  // Short title describing the changes.
+  string title = 5;
+  // Detailed description of what changed and why.
+  optional string description = 6;
+  // Current status of the PR.
+  PullRequestStatus status = 7;
+  // User who created the PR.
+  string author_id = 8;
+  // Users requested to review this PR.
+  repeated string reviewer_ids = 9;
+  // When the PR was created.
+  Timestamp created_at = 10;
+  // When the PR was last updated.
+  Timestamp updated_at = 11;
+  // When the PR was merged (if status is MERGED).
+  optional Timestamp merged_at = 12;
+  // When the PR was closed (if status is CLOSED).
+  optional Timestamp closed_at = 13;
+  // User who merged the PR (if merged).
+  optional string merged_by_id = 14;
+  // Commit created by the merge (if merged).
+  optional string merge_commit_id = 15;
+}
+
+// =============================================================================
+// Request/Response Messages
+// =============================================================================
+
+// Request to list pull requests.
+message ListPullRequestsRequest {
+  // Project to list PRs for.
+  string project_id = 1;
+  // Optional: filter by status.
+  optional PullRequestStatus status = 2;
+  // Optional: filter by author.
+  optional string author_id = 3;
+  // Pagination.
+  optional PageToken page = 4;
+}
+
+// Response containing pull requests.
+message ListPullRequestsResponse {
+  // PRs matching the filters, newest first.
+  repeated PullRequest pull_requests = 1;
+}
+
+// Request to get a single pull request.
+message GetPullRequestRequest {
+  // Project containing the PR.
+  string project_id = 1;
+  // ID of the PR to retrieve.
+  string pull_request_id = 2;
+}
+
+// Response containing PR details.
+message GetPullRequestResponse {
+  // The requested pull request.
+  PullRequest pull_request = 1;
+  // Diff between source and target branches.
+  DiffResult diff = 2;
+  // Any conflicts that need resolution.
+  repeated ShapeConflict conflicts = 3;
+  // Whether the PR can currently be merged.
+  bool mergeable = 4;
+}
+
+// Request to create a pull request.
+message CreatePullRequestRequest {
+  // Project to create PR in.
+  string project_id = 1;
+  // Branch with the proposed changes.
+  string source_branch_id = 2;
+  // Branch to merge into.
+  string target_branch_id = 3;
+  // Title for the PR.
+  string title = 4;
+  // Optional description.
+  optional string description = 5;
+  // User creating the PR.
+  string author_id = 6;
+  // Optional reviewers to request.
+  repeated string reviewer_ids = 7;
+}
+
+// Response after creating a PR.
+message CreatePullRequestResponse {
+  // The newly created pull request.
+  PullRequest pull_request = 1;
+  // Initial diff between branches.
+  DiffResult diff = 2;
+  // Any conflicts detected.
+  repeated ShapeConflict conflicts = 3;
+}
+
+// Request to update PR metadata.
+message UpdatePullRequestRequest {
+  // Project containing the PR.
+  string project_id = 1;
+  // ID of the PR to update.
+  string pull_request_id = 2;
+  // New title (omit to keep current).
+  optional string title = 3;
+  // New description (omit to keep current).
+  optional string description = 4;
+  // Replace reviewer list (omit to keep current).
+  repeated string reviewer_ids = 5;
+}
+
+// Response after updating a PR.
+message UpdatePullRequestResponse {
+  // The updated pull request.
+  PullRequest pull_request = 1;
+}
+
+// Request to merge a PR.
+message MergePullRequestRequest {
+  // Project containing the PR.
+  string project_id = 1;
+  // ID of the PR to merge.
+  string pull_request_id = 2;
+  // User performing the merge.
+  string merged_by_id = 3;
+  // Merge strategy to use.
+  MergeStrategy strategy = 4;
+  // Commit message for the merge commit.
+  optional string commit_message = 5;
+}
+
+// Response after merging a PR.
+message MergePullRequestResponse {
+  // The merged pull request (status = MERGED).
+  PullRequest pull_request = 1;
+  // The merge commit created.
+  Commit merge_commit = 2;
+}
+
+// Request to close a PR without merging.
+message ClosePullRequestRequest {
+  // Project containing the PR.
+  string project_id = 1;
+  // ID of the PR to close.
+  string pull_request_id = 2;
+}
+
+// Response after closing a PR.
+message ClosePullRequestResponse {
+  // The closed pull request.
+  PullRequest pull_request = 1;
+}
+
+// Request to reopen a closed PR.
+message ReopenPullRequestRequest {
+  // Project containing the PR.
+  string project_id = 1;
+  // ID of the PR to reopen.
+  string pull_request_id = 2;
+}
+
+// Response after reopening a PR.
+message ReopenPullRequestResponse {
+  // The reopened pull request.
+  PullRequest pull_request = 1;
+}
+
+// Request to check merge status.
+message CheckMergeStatusRequest {
+  // Project containing the PR.
+  string project_id = 1;
+  // ID of the PR to check.
+  string pull_request_id = 2;
+}
+
+// Response with merge status.
+message CheckMergeStatusResponse {
+  // Whether the PR can be merged now.
+  bool mergeable = 1;
+  // If not mergeable, the reason why.
+  optional string reason = 2;
+  // Conflicts that need resolution.
+  repeated ShapeConflict conflicts = 3;
+  // Number of commits in source branch not in target.
+  int32 commits_ahead = 4;
+  // Number of commits in target branch not in source.
+  int32 commits_behind = 5;
+}
+
+// Request to resolve conflicts.
+message ResolveConflictsRequest {
+  // Project containing the PR.
+  string project_id = 1;
+  // ID of the PR with conflicts.
+  string pull_request_id = 2;
+  // Resolution decisions for each conflict.
+  repeated ConflictResolution resolutions = 3;
+  // User resolving the conflicts.
+  string resolved_by_id = 4;
+}
+
+// Response after resolving conflicts.
+message ResolveConflictsResponse {
+  // Updated pull request.
+  PullRequest pull_request = 1;
+  // Remaining conflicts (should be empty if all resolved).
+  repeated ShapeConflict remaining_conflicts = 2;
+  // Whether the PR is now mergeable.
+  bool mergeable = 3;
+}

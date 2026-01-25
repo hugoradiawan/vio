@@ -5,6 +5,85 @@
 
 ---
 
+## 2026-01-26
+
+### Session: Git-like Version Control Implementation
+
+| Date | Task | Status | Notes/Blockers |
+|------|------|--------|----------------|
+| 2026-01-26 | Clone Gitea as reference implementation | ✅ Completed | Shallow clone with depth=1 |
+| 2026-01-26 | Add gitea/ to .gitignore | ✅ Completed | |
+| 2026-01-26 | Define proto RPCs for version control | ✅ Completed | branch.proto, commit.proto, pullrequest.proto, common.proto |
+| 2026-01-26 | Regenerate TypeScript from protos | ✅ Completed | ts-proto codegen |
+| 2026-01-26 | Create merge.ts utility | ✅ Completed | Property-level three-way merge with conflict detection |
+| 2026-01-26 | Extend BranchService with merge operations | ✅ Completed | mergeBranches, compareBranches |
+| 2026-01-26 | Extend CommitService with checkout/revert | ✅ Completed | checkoutCommit, revertCommit, cherryPick |
+| 2026-01-26 | Implement PullRequestService | ✅ Completed | 10 RPCs for full PR workflow |
+| 2026-01-26 | Fix lint and type errors | ✅ Completed | Non-null assertions, import fixes, response type fixes |
+
+### Changes Made
+
+#### packages/protos/vio/v1/
+- `branch.proto` - Added MergeBranchesRequest/Response, CompareBranchesRequest/Response
+- `commit.proto` - Added CheckoutCommitRequest/Response, RevertCommitRequest/Response, CherryPickRequest/Response
+- `pullrequest.proto` - New file with 10 RPCs for full PR lifecycle
+- `common.proto` - Added ShapeConflict, PropertyConflict, ConflictResolution, ConflictChoice
+
+#### backend/src/services/
+- `merge.ts` - **New file** - Core merge utilities:
+  - `findCommonAncestor()` - Find common ancestor commit for two branches
+  - `performThreeWayMerge()` - Property-level three-way merge with conflict detection
+  - `canFastForward()` - Check if fast-forward merge is possible
+  - `countCommitsDivergence()` - Count commits ahead/behind between branches
+  - `createMergeCommit()` - Create merge commit with merged snapshot
+  - `performFastForward()` - Execute fast-forward merge
+  - `getSnapshotData()` - Helper to fetch snapshot data
+
+- `branch.ts` - Extended with:
+  - `mergeBranches()` - Merge source into target with auto/fast-forward strategy
+  - `compareBranches()` - Compare two branches for ahead/behind counts
+
+- `commit.ts` - Extended with:
+  - `checkoutCommit()` - Create new branch from specific commit
+  - `revertCommit()` - Create revert commit undoing changes
+  - `cherryPick()` - Apply commit changes to another branch
+
+- `pullrequest.ts` - **New file** - Full PR service:
+  - `listPullRequests()` - List PRs with filtering by status
+  - `getPullRequest()` - Get single PR with branch and commit details
+  - `createPullRequest()` - Create new PR between branches
+  - `updatePullRequest()` - Update PR title/description
+  - `mergePullRequest()` - Execute merge (auto strategy)
+  - `closePullRequest()` - Close PR without merging
+  - `reopenPullRequest()` - Reopen closed PR
+  - `listReviewers()` - List PR reviewers
+  - `checkMergeStatus()` - Check if PR is mergeable with conflict detection
+  - `resolveConflicts()` - Apply conflict resolutions
+
+- `index.ts` - Added exports for new services
+
+#### backend/src/
+- `index.ts` - Registered PullRequestService with gRPC server
+
+### Key Design Decisions
+
+1. **Property-level Merge (Option B)**: Conflicts detected at property level, not shape level.
+   - More granular conflict detection
+   - Allows partial auto-merges (e.g., position changes merge with color changes)
+
+2. **Three-way Merge Algorithm**:
+   - Find common ancestor commit
+   - Compare base→source and base→target changes
+   - Only conflict when same property changed differently on both sides
+
+3. **Merge Strategies**:
+   - Auto: Three-way merge with conflict detection
+   - Fast-forward: If target is ancestor of source, just update pointer
+
+4. **PR Status Flow**: open → merged OR open → closed → open (reopen)
+
+---
+
 ## 2026-01-24
 
 ### Session: Editor UX + Web Performance

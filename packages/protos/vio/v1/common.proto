@@ -191,3 +191,74 @@ message Timestamp {
 //
 // Used for operations like DeleteProject, Logout, etc.
 message Empty {}
+
+// =============================================================================
+// Merge & Conflict Types (shared by branch and pullrequest services)
+// =============================================================================
+
+// Merge strategy for combining branches.
+// Reference: gitea/services/pull/merge.go
+enum MergeStrategy {
+  // Default/unspecified - server chooses (typically MERGE_COMMIT).
+  MERGE_STRATEGY_UNSPECIFIED = 0;
+  // Create a merge commit with all changes.
+  // Preserves full history of both branches.
+  MERGE_STRATEGY_MERGE_COMMIT = 1;
+  // Squash all source commits into a single commit on target.
+  // Creates cleaner history but loses individual commit info.
+  MERGE_STRATEGY_SQUASH = 2;
+  // Fast-forward target to source head (only if target is ancestor).
+  // No merge commit created. Fails if branches have diverged.
+  MERGE_STRATEGY_FAST_FORWARD = 3;
+}
+
+// A conflict between branches on a specific shape.
+//
+// Conflicts occur when the same shape property was modified in both
+// branches since their common ancestor.
+message ShapeConflict {
+  // ID of the shape with conflicting changes.
+  string shape_id = 1;
+  // Name of the shape for display purposes.
+  string shape_name = 2;
+  // Type of the shape (rectangle, ellipse, etc.).
+  string shape_type = 3;
+  // Properties that conflict (both branches modified).
+  repeated PropertyConflict property_conflicts = 4;
+}
+
+// A conflict on a specific property of a shape.
+message PropertyConflict {
+  // Name of the property (e.g., "x", "width", "fills").
+  string property_name = 1;
+  // Value in the common ancestor (base).
+  string base_value = 2;
+  // Value in the source branch (theirs).
+  string source_value = 3;
+  // Value in the target branch (ours).
+  string target_value = 4;
+}
+
+// Resolution for a single property conflict.
+message ConflictResolution {
+  // ID of the shape.
+  string shape_id = 1;
+  // Name of the property being resolved.
+  string property_name = 2;
+  // Which version to use.
+  ResolutionChoice choice = 3;
+  // Custom value (only used if choice is CUSTOM).
+  optional string custom_value = 4;
+}
+
+// How to resolve a conflict.
+enum ResolutionChoice {
+  // Default/unspecified.
+  RESOLUTION_CHOICE_UNSPECIFIED = 0;
+  // Use the value from source branch (incoming changes).
+  RESOLUTION_CHOICE_SOURCE = 1;
+  // Keep the value from target branch (existing).
+  RESOLUTION_CHOICE_TARGET = 2;
+  // Use a custom value provided by the user.
+  RESOLUTION_CHOICE_CUSTOM = 3;
+}

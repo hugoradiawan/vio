@@ -72,6 +72,40 @@ service CommitService {
   // - NOT_FOUND: One or both commits do not exist
   // - PERMISSION_DENIED: User cannot access project
   rpc GetDiff(GetDiffRequest) returns (GetDiffResponse);
+
+  // Checkout a specific commit.
+  //
+  // Restores the canvas state to a previous commit's snapshot.
+  // Creates a new commit on the branch capturing this restored state.
+  // This is a "soft checkout" that creates history, not detached HEAD.
+  //
+  // Errors:
+  // - NOT_FOUND: Commit does not exist
+  // - FAILED_PRECONDITION: Branch is protected
+  // - PERMISSION_DENIED: User cannot modify branch
+  rpc CheckoutCommit(CheckoutCommitRequest) returns (CheckoutCommitResponse);
+
+  // Revert a commit.
+  //
+  // Creates a new commit that undoes the changes made by the specified commit.
+  // Calculates inverse operations and applies them to current state.
+  //
+  // Errors:
+  // - NOT_FOUND: Commit does not exist
+  // - FAILED_PRECONDITION: Cannot revert (conflicts with later changes)
+  // - PERMISSION_DENIED: User cannot modify branch
+  rpc RevertCommit(RevertCommitRequest) returns (RevertCommitResponse);
+
+  // Cherry-pick a commit onto another branch.
+  //
+  // Applies the changes from a specific commit to the current branch.
+  // Creates a new commit with the same changes but new parent.
+  //
+  // Errors:
+  // - NOT_FOUND: Commit or branch does not exist
+  // - FAILED_PRECONDITION: Conflicts with current branch state
+  // - PERMISSION_DENIED: User cannot modify target branch
+  rpc CherryPick(CherryPickRequest) returns (CherryPickResponse);
 }
 
 // =============================================================================
@@ -230,4 +264,74 @@ message DiffResult {
   repeated string removed_shape_ids = 2;
   // IDs of shapes that exist in both but have different properties.
   repeated string modified_shape_ids = 3;
+}
+
+// =============================================================================
+// Checkout/Revert/CherryPick Request/Response
+// =============================================================================
+
+// Request to checkout (restore) a specific commit.
+message CheckoutCommitRequest {
+  // Project containing the commit.
+  string project_id = 1;
+  // Branch to update with the restored state.
+  string branch_id = 2;
+  // Commit to restore canvas state from.
+  string commit_id = 3;
+  // User performing the checkout.
+  string author_id = 4;
+  // Optional message for the checkout commit.
+  optional string message = 5;
+}
+
+// Response after checking out a commit.
+message CheckoutCommitResponse {
+  // The new commit created with the restored state.
+  Commit commit = 1;
+  // The commit that was checked out (source of restored state).
+  Commit restored_from = 2;
+}
+
+// Request to revert a commit's changes.
+message RevertCommitRequest {
+  // Project containing the commit.
+  string project_id = 1;
+  // Branch to apply the revert to.
+  string branch_id = 2;
+  // Commit to revert (undo its changes).
+  string commit_id = 3;
+  // User performing the revert.
+  string author_id = 4;
+  // Optional custom message (default: "Revert <original message>").
+  optional string message = 5;
+}
+
+// Response after reverting a commit.
+message RevertCommitResponse {
+  // The new commit that undoes the reverted changes.
+  Commit revert_commit = 1;
+  // The commit that was reverted.
+  Commit reverted_commit = 2;
+}
+
+// Request to cherry-pick a commit.
+message CherryPickRequest {
+  // Project containing the commit.
+  string project_id = 1;
+  // Branch to apply the cherry-picked changes to.
+  string target_branch_id = 2;
+  // Commit to cherry-pick.
+  string commit_id = 3;
+  // User performing the cherry-pick.
+  string author_id = 4;
+  // Optional custom message (default: original commit message).
+  optional string message = 5;
+}
+
+// Response after cherry-picking a commit.
+message CherryPickResponse {
+  // The new commit created on the target branch.
+  Commit new_commit = 1;
+  // The original commit that was cherry-picked.
+  Commit source_commit = 2;
 }

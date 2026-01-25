@@ -162,25 +162,32 @@ Recreate the core functionality of Penpot (Open Source Design & Prototyping Tool
 - [x] Create `branches` table (pointer to commit hash)
 - [x] Create `commits` table (snapshot of shape tree DAG)
 - [x] Create `pull_requests` table
-- [ ] Implement commit hash generation
+- [x] Define proto RPCs for version control operations
 
 ### 3.2 Branch Operations
 - [x] Create branch from commit
 - [ ] Switch between branches (UI)
 - [x] Delete branch
 - [x] List branches for project
+- [x] Merge branches (fast-forward and three-way)
+- [x] Compare branches (ahead/behind)
 
 ### 3.3 Commit Operations
 - [ ] Stage changes (diff current vs last commit)
 - [x] Create commit with message
 - [ ] View commit history (log)
-- [ ] Checkout specific commit
+- [x] Checkout specific commit (creates branch)
+- [x] Revert commit (creates inverse commit)
+- [x] Cherry-pick commit (apply to another branch)
 
 ### 3.4 Merge Operations
-- [ ] Create Pull Request (source → target branch)
-- [ ] Implement Last-Write-Wins conflict resolution
-- [ ] Merge PR into target branch
-- [ ] Close/Cancel PR
+- [x] Create Pull Request (source → target branch)
+- [x] Implement property-level three-way merge with conflict detection
+- [x] Merge PR into target branch
+- [x] Close/Cancel PR
+- [x] Reopen closed PR
+- [x] Check merge status with conflict details
+- [x] Resolve conflicts interactively
 
 ### 3.5 Frontend VC UI
 - [ ] Branch selector dropdown

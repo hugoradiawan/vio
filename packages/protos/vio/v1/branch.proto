@@ -81,6 +81,26 @@ service BranchService {
   // - FAILED_PRECONDITION: Cannot delete default or protected branch
   // - PERMISSION_DENIED: User cannot modify project
   rpc DeleteBranch(DeleteBranchRequest) returns (Empty);
+
+  // Merge one branch into another directly (without PR).
+  //
+  // Used for fast merges when review is not required.
+  // Creates a merge commit on the target branch.
+  //
+  // Errors:
+  // - NOT_FOUND: Branches do not exist
+  // - FAILED_PRECONDITION: Branches have conflicts
+  // - PERMISSION_DENIED: User cannot modify target branch
+  rpc MergeBranches(MergeBranchesRequest) returns (MergeBranchesResponse);
+
+  // Compare two branches to see their divergence.
+  //
+  // Returns the diff and any conflicts between branches.
+  // Useful before creating a PR or direct merge.
+  //
+  // Errors:
+  // - NOT_FOUND: Branches do not exist
+  rpc CompareBranches(CompareBranchesRequest) returns (CompareBranchesResponse);
 }
 
 // =============================================================================
@@ -200,4 +220,60 @@ message DeleteBranchRequest {
   string project_id = 1;
   // ID of the branch to delete.
   string branch_id = 2;
+}
+
+// =============================================================================
+// Merge Request/Response Messages
+// =============================================================================
+
+// Request to merge source branch into target branch.
+message MergeBranchesRequest {
+  // Project containing the branches.
+  string project_id = 1;
+  // Branch with changes to merge.
+  string source_branch_id = 2;
+  // Branch to merge into.
+  string target_branch_id = 3;
+  // User performing the merge.
+  string merged_by_id = 4;
+  // Merge strategy to use.
+  MergeStrategy strategy = 5;
+  // Commit message for the merge commit.
+  optional string commit_message = 6;
+}
+
+// Response after merging branches.
+message MergeBranchesResponse {
+  // The updated target branch.
+  Branch target_branch = 1;
+  // The merge commit created (if not fast-forward).
+  optional Commit merge_commit = 2;
+  // Whether the merge was a fast-forward.
+  bool was_fast_forward = 3;
+}
+
+// Request to compare two branches.
+message CompareBranchesRequest {
+  // Project containing the branches.
+  string project_id = 1;
+  // Base branch (older/target).
+  string base_branch_id = 2;
+  // Head branch (newer/source).
+  string head_branch_id = 3;
+}
+
+// Response with branch comparison.
+message CompareBranchesResponse {
+  // Common ancestor commit ID.
+  optional string common_ancestor_id = 1;
+  // Commits in head not in base.
+  int32 commits_ahead = 2;
+  // Commits in base not in head.
+  int32 commits_behind = 3;
+  // Diff of changes.
+  DiffResult diff = 4;
+  // Whether branches can be merged without conflicts.
+  bool mergeable = 5;
+  // Conflicts if not mergeable (property-level).
+  repeated ShapeConflict conflicts = 6;
 }

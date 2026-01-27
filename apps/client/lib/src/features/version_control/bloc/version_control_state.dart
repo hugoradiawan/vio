@@ -28,6 +28,8 @@ class VersionControlState extends Equatable {
     this.stagedShapeIds = const {},
     this.baseShapes = const {},
     this.currentShapes = const {},
+    this.pendingSwitchBranchId,
+    this.pendingDeleteBranchId,
     this.error,
     this.isPolling = false,
   });
@@ -50,6 +52,12 @@ class VersionControlState extends Equatable {
 
   /// Current canvas shapes (for change detection)
   final Map<String, Shape> currentShapes;
+
+  /// Branch ID pending switch confirmation (when uncommitted changes exist)
+  final String? pendingSwitchBranchId;
+
+  /// Branch ID pending delete confirmation
+  final String? pendingDeleteBranchId;
   final String? error;
   final bool isPolling;
 
@@ -116,6 +124,10 @@ class VersionControlState extends Equatable {
     Set<String>? stagedShapeIds,
     Map<String, Shape>? baseShapes,
     Map<String, Shape>? currentShapes,
+    String? pendingSwitchBranchId,
+    bool clearPendingSwitchBranchId = false,
+    String? pendingDeleteBranchId,
+    bool clearPendingDeleteBranchId = false,
     String? error,
     bool clearError = false,
     bool? isPolling,
@@ -141,6 +153,12 @@ class VersionControlState extends Equatable {
       stagedShapeIds: stagedShapeIds ?? this.stagedShapeIds,
       baseShapes: baseShapes ?? this.baseShapes,
       currentShapes: currentShapes ?? this.currentShapes,
+      pendingSwitchBranchId: clearPendingSwitchBranchId
+          ? null
+          : (pendingSwitchBranchId ?? this.pendingSwitchBranchId),
+      pendingDeleteBranchId: clearPendingDeleteBranchId
+          ? null
+          : (pendingDeleteBranchId ?? this.pendingDeleteBranchId),
       error: clearError ? null : (error ?? this.error),
       isPolling: isPolling ?? this.isPolling,
     );
@@ -162,6 +180,8 @@ class VersionControlState extends Equatable {
         stagedShapeIds,
         baseShapes,
         currentShapes,
+        pendingSwitchBranchId,
+        pendingDeleteBranchId,
         error,
         isPolling,
       ];

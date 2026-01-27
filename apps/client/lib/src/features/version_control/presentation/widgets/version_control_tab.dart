@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../bloc/version_control_bloc.dart';
+import 'branch_list_panel.dart';
 import 'commit_history_list.dart';
 import 'commit_panel.dart';
 
@@ -43,24 +44,52 @@ class VersionControlTab extends StatelessWidget {
         return Column(
           children: [
             // Commit panel (collapsible)
-            const CommitPanel(),
+            _CollapsibleSection(
+              title: 'Commit',
+              trailing: state.hasUncommittedChanges
+                  ? Text(
+                      '${state.uncommittedChanges.length} change${state.uncommittedChanges.length == 1 ? '' : 's'}',
+                      style: const TextStyle(
+                        color: VioColors.textTertiary,
+                        fontSize: 11,
+                      ),
+                    )
+                  : null,
+              child: const CommitPanel(),
+            ),
 
-            // Divider with "History" label
-            _SectionHeader(
-              title: 'History',
-              trailing: _RefreshButton(
-                isLoading: state.status == VersionControlStatus.loading,
-                onRefresh: () {
-                  context
-                      .read<VersionControlBloc>()
-                      .add(const CommitsRefreshRequested());
-                },
+            // Branches section (collapsible)
+            _CollapsibleSection(
+              title: 'Branches',
+              initiallyExpanded: false,
+              trailing: Text(
+                '${state.branches.length}',
+                style: const TextStyle(
+                  color: VioColors.textTertiary,
+                  fontSize: 11,
+                ),
+              ),
+              child: const SizedBox(
+                height: 200, // Fixed height for branch list
+                child: BranchListPanel(),
               ),
             ),
 
-            // Commit history list
-            const Expanded(
-              child: CommitHistoryList(),
+            // History section (collapsible, takes remaining space)
+            Expanded(
+              child: _CollapsibleSection(
+                title: 'History',
+                expandContent: true,
+                trailing: _RefreshButton(
+                  isLoading: state.status == VersionControlStatus.loading,
+                  onRefresh: () {
+                    context
+                        .read<VersionControlBloc>()
+                        .add(const CommitsRefreshRequested());
+                  },
+                ),
+                child: const CommitHistoryList(),
+              ),
             ),
           ],
         );
@@ -198,45 +227,6 @@ class _ErrorState extends StatelessWidget {
   }
 }
 
-/// Section header with title and optional trailing widget
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({
-    required this.title,
-    this.trailing,
-  });
-
-  final String title;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: const BoxDecoration(
-        color: VioColors.surface,
-        border: Border(
-          bottom: BorderSide(color: VioColors.border),
-        ),
-      ),
-      child: Row(
-        children: [
-          Text(
-            title.toUpperCase(),
-            style: const TextStyle(
-              color: VioColors.textTertiary,
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1,
-            ),
-          ),
-          const Spacer(),
-          if (trailing != null) trailing!,
-        ],
-      ),
-    );
-  }
-}
-
 /// Refresh button with loading state
 class _RefreshButton extends StatelessWidget {
   const _RefreshButton({
@@ -272,6 +262,83 @@ class _RefreshButton extends StatelessWidget {
                 ),
         ),
       ),
+    );
+  }
+}
+
+/// Collapsible section with header and content
+class _CollapsibleSection extends StatefulWidget {
+  const _CollapsibleSection({
+    required this.title,
+    required this.child,
+    this.trailing,
+    this.initiallyExpanded = true,
+    this.expandContent = false,
+  });
+
+  final String title;
+  final Widget child;
+  final Widget? trailing;
+  final bool initiallyExpanded;
+  /// If true, wraps the content in Expanded when visible (for use inside Column with Expanded parent)
+  final bool expandContent;
+
+  @override
+  State<_CollapsibleSection> createState() => _CollapsibleSectionState();
+}
+
+class _CollapsibleSectionState extends State<_CollapsibleSection> {
+  late bool _isExpanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _isExpanded = widget.initiallyExpanded;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Header
+        InkWell(
+          onTap: () => setState(() => _isExpanded = !_isExpanded),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: const BoxDecoration(
+              color: VioColors.surface,
+              border: Border(
+                bottom: BorderSide(color: VioColors.border),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  _isExpanded ? Icons.expand_more : Icons.chevron_right,
+                  size: 16,
+                  color: VioColors.textTertiary,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  widget.title.toUpperCase(),
+                  style: const TextStyle(
+                    color: VioColors.textTertiary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const Spacer(),
+                if (widget.trailing != null) widget.trailing!,
+              ],
+            ),
+          ),
+        ),
+        // Content
+        if (_isExpanded)
+          widget.expandContent ? Expanded(child: widget.child) : widget.child,
+      ],
     );
   }
 }

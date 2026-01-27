@@ -33,8 +33,12 @@ class VersionControlBloc
     on<VersionControlPollingStopped>(_onPollingStopped);
     on<BranchesRefreshRequested>(_onBranchesRefresh);
     on<BranchSwitchRequested>(_onBranchSwitch);
+    on<BranchSwitchConfirmed>(_onBranchSwitchConfirmed);
+    on<BranchSwitchCanceled>(_onBranchSwitchCanceled);
     on<BranchCreateRequested>(_onBranchCreate);
     on<BranchDeleteRequested>(_onBranchDelete);
+    on<BranchDeleteConfirmed>(_onBranchDeleteConfirmed);
+    on<BranchDeleteCanceled>(_onBranchDeleteCanceled);
     on<CommitsRefreshRequested>(_onCommitsRefresh);
     on<CommitCreateRequested>(_onCommitCreate);
     on<CommitCheckoutRequested>(_onCommitCheckout);
@@ -277,17 +281,140 @@ class VersionControlBloc
     BranchSwitchRequested event,
     Emitter<VersionControlState> emit,
   ) async {
+    // Skip if already on this branch
+    if (event.branchId == state.currentBranchId) return;
+
+    // Check for uncommitted changes (unless forcing discard)
+    if (!event.forceDiscard && state.hasUncommittedChanges) {
+      // Set pending switch - UI will show confirmation dialog
+      emit(state.copyWith(pendingSwitchBranchId: event.branchId));
+      return;
+    }
+
+    // Proceed with branch switch
+    await _executeBranchSwitch(event.branchId, emit);
+  }
+
+  /// Confirm branch switch after user acknowledges discarding changes
+  Future<void> _onBranchSwitchConfirmed(
+    BranchSwitchConfirmed event,
+    Emitter<VersionControlState> emit,
+  ) async {
+    final pendingBranchId = state.pendingSwitchBranchId;
+    if (pendingBranchId == null) return;
+
+    // Clear pending state first
+    emit(state.copyWith(clearPendingSwitchBranchId: true));
+
+    // Execute the switch
+    await _executeBranchSwitch(pendingBranchId, emit);
+  }
+
+  /// Cancel pending branch switch
+  void _onBranchSwitchCanceled(
+    BranchSwitchCanceled event,
+    Emitter<VersionControlState> emit,
+  ) {
+    emit(state.copyWith(clearPendingSwitchBranchId: true));
+  }
+
+  /// Execute the actual branch switch - loads shapes from the new branch
+  Future<void> _executeBranchSwitch(
+    String branchId,
+    Emitter<VersionControlState> emit,
+  ) async {
     emit(
       state.copyWith(
         status: VersionControlStatus.switching,
-        currentBranchId: event.branchId,
+        currentBranchId: branchId,
+        clearPendingSwitchBranchId: true,
       ),
     );
 
-    // Refresh commits for the new branch
-    add(const CommitsRefreshRequested());
+    try {
+      // Get the new branch info to find its head commit
+      final branchResponse = await _branchClient.getBranch(
+        branch_pb.GetBranchRequest()
+          ..projectId = state.projectId!
+          ..branchId = branchId,
+      );
 
-    emit(state.copyWith(status: VersionControlStatus.ready));
+      final headCommitId = branchResponse.branch.headCommitId;
+
+      if (headCommitId.isNotEmpty) {
+        // Load the commit which includes the snapshot
+        final commitResponse = await _commitClient.getCommit(
+          commit_pb.GetCommitRequest()
+            ..projectId = state.projectId!
+            ..commitId = headCommitId,
+        );
+
+        // Parse shapes from snapshot (included in GetCommitResponse)
+        final Map<String, Shape> newShapes = {};
+
+        if (commitResponse.hasSnapshot()) {
+          final snapshotBytes = commitResponse.snapshot.data;
+          if (snapshotBytes.isNotEmpty) {
+            try {
+              final snapshotData = utf8.decode(snapshotBytes);
+              final shapesJson = jsonDecode(snapshotData);
+              if (shapesJson is Map<String, dynamic>) {
+                for (final entry in shapesJson.entries) {
+                  if (entry.value is Map<String, dynamic>) {
+                    newShapes[entry.key] = Shape.fromJson(
+                      entry.value as Map<String, dynamic>,
+                    );
+                  }
+                }
+              }
+            } catch (e) {
+              VioLogger.error(
+                'VersionControlBloc: Failed to parse snapshot - $e',
+              );
+            }
+          }
+        }
+
+        // Update base shapes and clear staged state
+        emit(
+          state.copyWith(
+            baseShapes: newShapes,
+            currentShapes: newShapes,
+            uncommittedChanges: const [],
+            stagedShapeIds: const {},
+          ),
+        );
+
+        VioLogger.info(
+          'VersionControlBloc: Switched to branch, loaded ${newShapes.length} shapes',
+        );
+      } else {
+        // Empty branch - clear shapes
+        emit(
+          state.copyWith(
+            baseShapes: const {},
+            currentShapes: const {},
+            uncommittedChanges: const [],
+            stagedShapeIds: const {},
+          ),
+        );
+      }
+
+      // Refresh commits for the new branch
+      add(const CommitsRefreshRequested());
+
+      emit(state.copyWith(status: VersionControlStatus.ready));
+    } on GrpcError catch (e) {
+      VioLogger.error(
+        'VersionControlBloc: Failed to switch branch - ${e.message}',
+      );
+      emit(
+        state.copyWith(
+          status: VersionControlStatus.error,
+          error: e.message ?? 'Failed to switch branch',
+        ),
+      );
+    }
   }
 
   Future<void> _onBranchCreate(
@@ -320,11 +447,73 @@ class VersionControlBloc
   ) async {
     if (state.projectId == null) return;
 
+    // Check if branch is the current branch
+    if (event.branchId == state.currentBranchId) {
+      emit(
+        state.copyWith(error: 'Cannot delete the currently active branch'),
+      );
+      return;
+    }
+
+    // Check if branch is protected
+    final branch = state.branches.firstWhere(
+      (b) => b.id == event.branchId,
+      orElse: () => state.branches.first,
+    );
+    if (branch.isProtected) {
+      emit(state.copyWith(error: 'Cannot delete a protected branch'));
+      return;
+    }
+
+    // Check if branch is default
+    if (branch.isDefault) {
+      emit(state.copyWith(error: 'Cannot delete the default branch'));
+      return;
+    }
+
+    // If not forcing, show confirmation
+    if (!event.forceDelete) {
+      emit(state.copyWith(pendingDeleteBranchId: event.branchId));
+      return;
+    }
+
+    // Execute the delete
+    await _executeBranchDelete(event.branchId, emit);
+  }
+
+  /// Confirm branch deletion
+  Future<void> _onBranchDeleteConfirmed(
+    BranchDeleteConfirmed event,
+    Emitter<VersionControlState> emit,
+  ) async {
+    final pendingBranchId = state.pendingDeleteBranchId;
+    if (pendingBranchId == null) return;
+
+    // Clear pending state first
+    emit(state.copyWith(clearPendingDeleteBranchId: true));
+
+    // Execute the delete
+    await _executeBranchDelete(pendingBranchId, emit);
+  }
+
+  /// Cancel pending branch deletion
+  void _onBranchDeleteCanceled(
+    BranchDeleteCanceled event,
+    Emitter<VersionControlState> emit,
+  ) {
+    emit(state.copyWith(clearPendingDeleteBranchId: true));
+  }
+
+  /// Execute the actual branch deletion
+  Future<void> _executeBranchDelete(
+    String branchId,
+    Emitter<VersionControlState> emit,
+  ) async {
     try {
       await _branchClient.deleteBranch(
         branch_pb.DeleteBranchRequest()
           ..projectId = state.projectId!
-          ..branchId = event.branchId,
+          ..branchId = branchId,
       );
 
       add(const BranchesRefreshRequested());

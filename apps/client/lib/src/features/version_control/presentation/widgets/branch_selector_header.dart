@@ -12,7 +12,43 @@ class BranchSelectorHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<VersionControlBloc, VersionControlState>(
+    return BlocConsumer<VersionControlBloc, VersionControlState>(
+      listenWhen: (previous, current) =>
+          previous.pendingSwitchBranchId != current.pendingSwitchBranchId ||
+          previous.pendingDeleteBranchId != current.pendingDeleteBranchId,
+      listener: (context, state) {
+        // Handle branch switch confirmation
+        if (state.pendingSwitchBranchId != null) {
+          final pendingBranch = state.branches.firstWhere(
+            (b) => b.id == state.pendingSwitchBranchId,
+            orElse: () => BranchDto(
+              id: state.pendingSwitchBranchId!,
+              name: 'branch',
+              projectId: state.projectId ?? '',
+              isDefault: false,
+              isProtected: false,
+              createdById: '',
+            ),
+          );
+          _showUncommittedChangesDialog(context, pendingBranch.name);
+        }
+
+        // Handle branch delete confirmation
+        if (state.pendingDeleteBranchId != null) {
+          final pendingBranch = state.branches.firstWhere(
+            (b) => b.id == state.pendingDeleteBranchId,
+            orElse: () => BranchDto(
+              id: state.pendingDeleteBranchId!,
+              name: 'branch',
+              projectId: state.projectId ?? '',
+              isDefault: false,
+              isProtected: false,
+              createdById: '',
+            ),
+          );
+          _showDeleteBranchDialog(context, pendingBranch);
+        }
+      },
       builder: (context, state) {
         final currentBranch = state.currentBranch;
         final isLoading = state.status == VersionControlStatus.loading ||
@@ -92,6 +128,173 @@ class BranchSelectorHeader extends StatelessWidget {
     context
         .read<VersionControlBloc>()
         .add(const PullRequestsRefreshRequested());
+  }
+
+  /// Show confirmation dialog when switching branches with uncommitted changes
+  void _showUncommittedChangesDialog(BuildContext context, String branchName) {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: VioColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: VioColors.border),
+        ),
+        title: const Row(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              color: VioColors.warning,
+              size: 24,
+            ),
+            SizedBox(width: 12),
+            Text(
+              'Uncommitted Changes',
+              style: TextStyle(
+                color: VioColors.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'You have uncommitted changes. What would you like to do before switching to "$branchName"?',
+          style: const TextStyle(
+            color: VioColors.textSecondary,
+            fontSize: 14,
+          ),
+        ),
+        actions: [
+          // Cancel button
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              context
+                  .read<VersionControlBloc>()
+                  .add(const BranchSwitchCanceled());
+            },
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: VioColors.textSecondary),
+            ),
+          ),
+          // Discard changes button
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              context
+                  .read<VersionControlBloc>()
+                  .add(const BranchSwitchConfirmed());
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: VioColors.error,
+            ),
+            child: const Text('Discard Changes'),
+          ),
+          // Commit first button (primary action)
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              context
+                  .read<VersionControlBloc>()
+                  .add(const BranchSwitchCanceled());
+              // TODO: Open commit dialog - for now user can commit manually
+              // and then switch branches
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: VioColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Commit First'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Show confirmation dialog before deleting a branch
+  void _showDeleteBranchDialog(BuildContext context, BranchDto branch) {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: VioColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: VioColors.border),
+        ),
+        title: const Row(
+          children: [
+            Icon(
+              Icons.delete_outline,
+              color: VioColors.error,
+              size: 24,
+            ),
+            SizedBox(width: 12),
+            Text(
+              'Delete Branch',
+              style: TextStyle(
+                color: VioColors.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Are you sure you want to delete the branch "${branch.name}"?',
+              style: const TextStyle(
+                color: VioColors.textSecondary,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'This action cannot be undone. All commits unique to this branch will be lost.',
+              style: TextStyle(
+                color: VioColors.textTertiary,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          // Cancel button
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              context
+                  .read<VersionControlBloc>()
+                  .add(const BranchDeleteCanceled());
+            },
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: VioColors.textSecondary),
+            ),
+          ),
+          // Delete button
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              context
+                  .read<VersionControlBloc>()
+                  .add(const BranchDeleteConfirmed());
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: VioColors.error,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete Branch'),
+          ),
+        ],
+      ),
+    );
   }
 }
 

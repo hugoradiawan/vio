@@ -45,12 +45,33 @@ class BranchesRefreshRequested extends VersionControlEvent {
 
 /// Switch to a different branch
 class BranchSwitchRequested extends VersionControlEvent {
-  const BranchSwitchRequested({required this.branchId});
+  const BranchSwitchRequested({
+    required this.branchId,
+    this.forceDiscard = false,
+  });
 
   final String branchId;
+  /// If true, discard uncommitted changes without prompting
+  final bool forceDiscard;
 
   @override
-  List<Object?> get props => [branchId];
+  List<Object?> get props => [branchId, forceDiscard];
+}
+
+/// Confirm branch switch (discard uncommitted changes)
+class BranchSwitchConfirmed extends VersionControlEvent {
+  const BranchSwitchConfirmed();
+
+  @override
+  List<Object?> get props => [];
+}
+
+/// Cancel pending branch switch
+class BranchSwitchCanceled extends VersionControlEvent {
+  const BranchSwitchCanceled();
+
+  @override
+  List<Object?> get props => [];
 }
 
 /// Create a new branch
@@ -69,14 +90,35 @@ class BranchCreateRequested extends VersionControlEvent {
   List<Object?> get props => [name, description, sourceBranchId];
 }
 
-/// Delete a branch
+/// Delete a branch (shows confirmation if needed)
 class BranchDeleteRequested extends VersionControlEvent {
-  const BranchDeleteRequested({required this.branchId});
+  const BranchDeleteRequested({
+    required this.branchId,
+    this.forceDelete = false,
+  });
 
   final String branchId;
+  /// If true, delete without confirmation
+  final bool forceDelete;
 
   @override
-  List<Object?> get props => [branchId];
+  List<Object?> get props => [branchId, forceDelete];
+}
+
+/// Confirm branch deletion after user acknowledges
+class BranchDeleteConfirmed extends VersionControlEvent {
+  const BranchDeleteConfirmed();
+
+  @override
+  List<Object?> get props => [];
+}
+
+/// Cancel pending branch deletion
+class BranchDeleteCanceled extends VersionControlEvent {
+  const BranchDeleteCanceled();
+
+  @override
+  List<Object?> get props => [];
 }
 
 /// Refresh commits for current branch

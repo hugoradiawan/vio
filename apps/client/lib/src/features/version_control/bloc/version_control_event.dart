@@ -51,6 +51,7 @@ class BranchSwitchRequested extends VersionControlEvent {
   });
 
   final String branchId;
+
   /// If true, discard uncommitted changes without prompting
   final bool forceDiscard;
 
@@ -98,6 +99,7 @@ class BranchDeleteRequested extends VersionControlEvent {
   });
 
   final String branchId;
+
   /// If true, delete without confirmation
   final bool forceDelete;
 

@@ -718,7 +718,8 @@ class _CreateBranchDialogState extends State<CreateBranchDialog> {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: VioColors.primary.withValues(alpha: 0.2),
+                                  color:
+                                      VioColors.primary.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: const Text(

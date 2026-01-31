@@ -393,6 +393,7 @@ class _CollapsibleSection extends StatefulWidget {
   final Widget child;
   final Widget? trailing;
   final bool initiallyExpanded;
+
   /// If true, wraps the content in Expanded when visible (for use inside Column with Expanded parent)
   final bool expandContent;
 

@@ -281,7 +281,8 @@ class ProtoConverter {
   }
 
   static StrokeAlignment _strokeAlignmentFromProto(
-      pb_common.StrokeAlignment proto,) {
+    pb_common.StrokeAlignment proto,
+  ) {
     return switch (proto) {
       pb_common.StrokeAlignment.STROKE_ALIGNMENT_INSIDE =>
         StrokeAlignment.inside,
@@ -294,7 +295,8 @@ class ProtoConverter {
   }
 
   static pb_common.StrokeAlignment _strokeAlignmentToProto(
-      StrokeAlignment alignment,) {
+    StrokeAlignment alignment,
+  ) {
     return switch (alignment) {
       StrokeAlignment.inside =>
         pb_common.StrokeAlignment.STROKE_ALIGNMENT_INSIDE,

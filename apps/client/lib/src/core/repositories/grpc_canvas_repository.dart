@@ -82,7 +82,8 @@ class GrpcCanvasRepository {
   /// This resumes normal auto-sync behavior
   void endBranchSwitch() {
     _isBranchSwitching = false;
-    VioLogger.info('GrpcCanvasRepository: Branch switch completed, resuming sync');
+    VioLogger.info(
+        'GrpcCanvasRepository: Branch switch completed, resuming sync',);
   }
 
   /// Set shapes from a snapshot during branch switch
@@ -191,7 +192,8 @@ class GrpcCanvasRepository {
       );
     } on GrpcError catch (e) {
       VioLogger.error(
-          'GrpcCanvasRepository: Failed to load canvas state - ${e.message}',);
+        'GrpcCanvasRepository: Failed to load canvas state - ${e.message}',
+      );
       _updateSyncStatus(SyncStatus.error);
       rethrow;
     }

@@ -103,11 +103,11 @@ class ShapeFactory {
   static Shape fromJson(Map<String, dynamic> json) {
     final type = _parseShapeType(json['type'] as String);
     final sortOrder = (json['sortOrder'] as num?)?.toInt() ?? 0;
-    
+
     VioLogger.debug(
       'ShapeFactory.fromJson: parsing shape ${json['id']} type=$type',
     );
-    
+
     // Support both formats for transform:
     // 1. Flat format: transformA, transformB, etc. (from DB shapes table)
     // 2. Nested format: transform: { a, b, c, d, e, f } (from some snapshots)
@@ -133,10 +133,10 @@ class ShapeFactory {
         f: (json['transformF'] as num?)?.toDouble() ?? 0.0,
       );
     }
-    
+
     final fills = _parseFills(json['fills']);
     final strokes = _parseStrokes(json['strokes']);
-    
+
     // Properties may be Map<dynamic, dynamic> from jsonDecode, need to convert
     final rawProperties = json['properties'];
     final properties = rawProperties != null

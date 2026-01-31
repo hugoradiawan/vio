@@ -513,7 +513,11 @@ class _BranchListItemState extends State<BranchListItem> {
             value: 'switch',
             child: Row(
               children: [
-                Icon(Icons.swap_horiz, size: 16, color: VioColors.textSecondary),
+                Icon(
+                  Icons.swap_horiz,
+                  size: 16,
+                  color: VioColors.textSecondary,
+                ),
                 SizedBox(width: 8),
                 Text('Switch to branch', style: TextStyle(fontSize: 13)),
               ],
@@ -524,7 +528,11 @@ class _BranchListItemState extends State<BranchListItem> {
             value: 'create_pr',
             child: Row(
               children: [
-                Icon(Icons.call_merge, size: 16, color: VioColors.textSecondary),
+                Icon(
+                  Icons.call_merge,
+                  size: 16,
+                  color: VioColors.textSecondary,
+                ),
                 SizedBox(width: 8),
                 Text('Create Pull Request', style: TextStyle(fontSize: 13)),
               ],
@@ -534,7 +542,11 @@ class _BranchListItemState extends State<BranchListItem> {
           value: 'compare',
           child: Row(
             children: [
-              Icon(Icons.compare_arrows, size: 16, color: VioColors.textSecondary),
+              Icon(
+                Icons.compare_arrows,
+                size: 16,
+                color: VioColors.textSecondary,
+              ),
               SizedBox(width: 8),
               Text('Compare with default', style: TextStyle(fontSize: 13)),
             ],

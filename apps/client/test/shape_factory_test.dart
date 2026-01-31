@@ -19,7 +19,9 @@ void main() {
         'transformD': 1.0,
         'transformE': 50.0,
         'transformF': 50.0,
-        'fills': [{'color': 0xFF3B82F6, 'opacity': 1.0}],
+        'fills': [
+          {'color': 0xFF3B82F6, 'opacity': 1.0},
+        ],
         'strokes': <dynamic>[],
         'opacity': 1.0,
         'hidden': false,
@@ -157,7 +159,9 @@ void main() {
         'transformD': 1,
         'transformE': 0,
         'transformF': 0,
-        'fills': [{'color': 0xFFFF0000, 'opacity': 1.0}],
+        'fills': [
+          {'color': 0xFFFF0000, 'opacity': 1.0},
+        ],
         'strokes': <dynamic>[],
         'opacity': 1.0,
         'hidden': false,

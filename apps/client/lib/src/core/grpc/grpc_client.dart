@@ -99,7 +99,8 @@ class GrpcClient {
     _initialized = true;
 
     debugPrint(
-        'gRPC client initialized: $effectiveHost:$effectivePort (TLS: $effectiveUseTls)',);
+      'gRPC client initialized: $effectiveHost:$effectivePort (TLS: $effectiveUseTls)',
+    );
   }
 
   void _ensureInitialized() {

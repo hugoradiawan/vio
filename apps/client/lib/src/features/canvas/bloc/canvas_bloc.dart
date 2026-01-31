@@ -46,8 +46,8 @@ const _maxUndoHistory = 50;
 class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
   CanvasBloc({GrpcCanvasRepository? repository})
       : _repository = repository,
-        super(CanvasState(shapes: _createTestShapes())) {
-    // Initialize undo stack with initial shapes
+        super(CanvasState()) {
+    // Initialize undo stack with initial shapes (empty)
     _undoStack.add(Map.from(state.shapes));
 
     on<CanvasInitialized>(_onInitialized);
@@ -64,6 +64,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     on<SelectionCleared>(_onSelectionCleared);
     on<ShapeAdded>(_onShapeAdded);
     on<ShapesAdded>(_onShapesAdded);
+    on<ShapesReplaced>(_onShapesReplaced);
     on<ShapeRemoved>(_onShapeRemoved);
     on<ShapesRemoved>(_onShapesRemoved);
     on<ShapeUpdated>(_onShapeUpdated);
@@ -314,109 +315,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     );
   }
 
-  /// Create test shapes for development
-  static Map<String, Shape> _createTestShapes() {
-    final shapes = <String, Shape>{};
-
-    // Frame (artboard)
-    const frame = FrameShape(
-      id: 'frame-1',
-      name: 'Frame 1',
-      x: 0,
-      y: 0,
-      frameWidth: 800,
-      frameHeight: 600,
-      fills: [ShapeFill(color: 0xFF2D2D2D)],
-      strokes: [ShapeStroke(color: 0xFF404040)],
-    );
-    shapes[frame.id] = frame;
-
-    // Blue rectangle
-    final rect1 = RectangleShape(
-      id: 'rect-1',
-      name: 'Rectangle 1',
-      x: 50,
-      y: 50,
-      rectWidth: 200,
-      rectHeight: 150,
-      sortOrder: 1,
-      r1: 8,
-      r2: 8,
-      r3: 8,
-      r4: 8,
-      fills: const [ShapeFill(color: 0xFF3B82F6)],
-      strokes: const [ShapeStroke(color: 0xFF1D4ED8, width: 2)],
-      frameId: frame.id,
-    );
-    shapes[rect1.id] = rect1;
-
-    // Green rectangle
-    final rect2 = RectangleShape(
-      id: 'rect-2',
-      name: 'Rectangle 2',
-      x: 300,
-      y: 100,
-      rectWidth: 180,
-      rectHeight: 120,
-      sortOrder: 2,
-      fills: const [ShapeFill(color: 0xFF22C55E)],
-      strokes: const [ShapeStroke(color: 0xFF16A34A, width: 2)],
-      frameId: frame.id,
-    );
-    shapes[rect2.id] = rect2;
-
-    // Red ellipse (center at 600,200 with semi-axes 80,60 means bounds: x=520, y=140, w=160, h=120)
-    final ellipse1 = EllipseShape(
-      id: 'ellipse-1',
-      name: 'Ellipse 1',
-      x: 520,
-      y: 140,
-      ellipseWidth: 160,
-      ellipseHeight: 120,
-      sortOrder: 3,
-      fills: const [ShapeFill(color: 0xFFEF4444)],
-      strokes: const [ShapeStroke(color: 0xFFDC2626, width: 2)],
-      frameId: frame.id,
-    );
-    shapes[ellipse1.id] = ellipse1;
-
-    // Yellow rectangle with no fill, just stroke
-    final rect3 = RectangleShape(
-      id: 'rect-3',
-      name: 'Rectangle 3',
-      x: 100,
-      y: 300,
-      rectWidth: 250,
-      rectHeight: 180,
-      sortOrder: 4,
-      strokes: const [
-        ShapeStroke(
-          color: 0xFFFACC15,
-          width: 3,
-          alignment: StrokeAlignment.inside,
-        ),
-      ],
-      frameId: frame.id,
-    );
-    shapes[rect3.id] = rect3;
-
-    // Purple circle (center at 550,400 with radius 70 means bounds: x=480, y=330, w=140, h=140)
-    final ellipse2 = EllipseShape(
-      id: 'ellipse-2',
-      name: 'Circle 1',
-      x: 480,
-      y: 330,
-      ellipseWidth: 140,
-      ellipseHeight: 140,
-      sortOrder: 5,
-      fills: const [ShapeFill(color: 0xFFA855F7)],
-      strokes: const [ShapeStroke(color: 0xFF9333EA, width: 2)],
-      frameId: frame.id,
-    );
-    shapes[ellipse2.id] = ellipse2;
-
-    return shapes;
-  }
+  // NOTE: Test shapes removed - canvas now starts empty and loads from version control
 
   void _onInitialized(
     CanvasInitialized event,
@@ -1862,6 +1761,35 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     }
     emit(state.copyWith(shapes: newShapes));
     _pushUndoState(newShapes);
+  }
+
+  /// Replace all shapes on canvas (e.g., from branch switch).
+  /// Does NOT push to undo stack since this is a sync operation.
+  void _onShapesReplaced(
+    ShapesReplaced event,
+    Emitter<CanvasState> emit,
+  ) {
+    // Clear undo/redo stacks since we're loading a new state
+    _undoStack.clear();
+    _redoStack.clear();
+    _undoStack.add(Map.from(event.shapes));
+
+    VioLogger.info(
+      'CanvasBloc: Shapes replaced from branch switch: ${event.shapes.length} shapes',
+    );
+
+    emit(
+      state.copyWith(
+        shapes: event.shapes,
+        selectedShapeIds: const [],
+        expandedLayerIds: const {},
+        interactionMode: InteractionMode.idle,
+        clearDragStart: true,
+        clearDragOffset: true,
+        clearSnap: true,
+        clearEditingTextShapeId: true,
+      ),
+    );
   }
 
   void _onShapeRemoved(

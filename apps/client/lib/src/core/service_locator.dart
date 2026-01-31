@@ -6,6 +6,7 @@ import '../gen/vio/v1/pullrequest.pbgrpc.dart';
 import '../gen/vio/v1/shape.pbgrpc.dart';
 import 'grpc/grpc.dart';
 import 'repositories/repositories.dart';
+import 'services/preferences_service.dart';
 
 /// Service locator for gRPC services
 ///
@@ -25,6 +26,7 @@ class ServiceLocator {
   late final PullRequestServiceClient _pullRequestService;
   late final ShapeServiceClient _shapeService;
   late final GrpcCanvasRepository _canvasRepository;
+  late final PreferencesService _preferencesService;
 
   bool _initialized = false;
 
@@ -34,6 +36,10 @@ class ServiceLocator {
     int port = 4000,
   }) async {
     if (_initialized) return;
+
+    // Initialize preferences service first (no dependencies)
+    _preferencesService = PreferencesService.instance;
+    await _preferencesService.initialize();
 
     // Initialize gRPC client (singleton)
     _grpcClient = GrpcClient.instance;
@@ -99,6 +105,12 @@ class ServiceLocator {
   PullRequestServiceClient get pullRequestService {
     _ensureInitialized();
     return _pullRequestService;
+  }
+
+  /// Get the preferences service
+  PreferencesService get preferencesService {
+    _ensureInitialized();
+    return _preferencesService;
   }
 
   void _ensureInitialized() {

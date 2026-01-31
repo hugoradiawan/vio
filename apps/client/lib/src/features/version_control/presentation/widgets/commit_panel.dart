@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
-import '../../../../core/api/dto.dart';
+import '../../../../core/core.dart';
 import '../../../canvas/bloc/canvas_bloc.dart';
 import '../../bloc/version_control_bloc.dart';
 
@@ -17,12 +17,38 @@ class CommitPanel extends StatefulWidget {
 class _CommitPanelState extends State<CommitPanel> {
   final _messageController = TextEditingController();
   final _focusNode = FocusNode();
+  bool _isSyncing = false;
 
   @override
   void dispose() {
     _messageController.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  /// Sync canvas changes to server, then create commit
+  Future<void> _syncAndCommit(BuildContext context) async {
+    final message = _messageController.text.trim();
+    if (message.isEmpty) return;
+
+    final vcBloc = context.read<VersionControlBloc>();
+
+    // First, sync any pending canvas changes to the server
+    setState(() => _isSyncing = true);
+
+    try {
+      // Sync directly via repository to ensure completion
+      final repository = ServiceLocator.instance.canvasRepository;
+      await repository.sync();
+
+      // Now create the commit (server will read from shapes table)
+      vcBloc.add(CommitCreateRequested(message: message));
+      _messageController.clear();
+    } finally {
+      if (mounted) {
+        setState(() => _isSyncing = false);
+      }
+    }
   }
 
   void _showDiscardConfirmation(BuildContext context, String shapeId) {
@@ -75,7 +101,7 @@ class _CommitPanelState extends State<CommitPanel> {
           switch (change.changeType) {
             case ShapeChangeType.added:
               // Remove the shape from canvas
-              canvasBloc.add(ShapeRemoved(shapeId));
+              canvasBloc.add(ShapeRemoved(shapeId: shapeId));
             case ShapeChangeType.modified:
               // Revert to base shape
               final baseShape = vcBloc.state.baseShapes[shapeId];
@@ -274,18 +300,8 @@ class _CommitPanelState extends State<CommitPanel> {
                     ),
                     elevation: 0,
                   ),
-                  onPressed: canCommit
-                      ? () {
-                          final message = _messageController.text.trim();
-                          if (message.isNotEmpty) {
-                            context.read<VersionControlBloc>().add(
-                                  CommitCreateRequested(message: message),
-                                );
-                            _messageController.clear();
-                          }
-                        }
-                      : null,
-                  child: isCommitting
+                  onPressed: canCommit ? () => _syncAndCommit(context) : null,
+                  child: isCommitting || _isSyncing
                       ? const SizedBox(
                           width: 16,
                           height: 16,

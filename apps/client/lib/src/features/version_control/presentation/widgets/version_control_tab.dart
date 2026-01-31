@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
+import '../../../../core/api/dto.dart' show BranchDto;
 import '../../bloc/version_control_bloc.dart';
 import 'branch_list_panel.dart';
 import 'commit_history_list.dart';
@@ -13,7 +14,43 @@ class VersionControlTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<VersionControlBloc, VersionControlState>(
+    return BlocConsumer<VersionControlBloc, VersionControlState>(
+      listenWhen: (previous, current) =>
+          previous.pendingSwitchBranchId != current.pendingSwitchBranchId ||
+          previous.pendingDeleteBranchId != current.pendingDeleteBranchId,
+      listener: (context, state) {
+        // Show branch switch confirmation dialog
+        if (state.pendingSwitchBranchId != null) {
+          final branch = state.branches.firstWhere(
+            (b) => b.id == state.pendingSwitchBranchId,
+            orElse: () => BranchDto(
+              id: state.pendingSwitchBranchId!,
+              projectId: state.projectId ?? '',
+              name: 'Unknown',
+              isDefault: false,
+              isProtected: false,
+              createdById: '',
+            ),
+          );
+          _showSwitchConfirmationDialog(context, branch);
+        }
+
+        // Show branch delete confirmation dialog
+        if (state.pendingDeleteBranchId != null) {
+          final branch = state.branches.firstWhere(
+            (b) => b.id == state.pendingDeleteBranchId,
+            orElse: () => BranchDto(
+              id: state.pendingDeleteBranchId!,
+              projectId: state.projectId ?? '',
+              name: 'Unknown',
+              isDefault: false,
+              isProtected: false,
+              createdById: '',
+            ),
+          );
+          _showDeleteConfirmationDialog(context, branch);
+        }
+      },
       builder: (context, state) {
         if (state.status == VersionControlStatus.initial) {
           return _InitialState();
@@ -94,6 +131,82 @@ class VersionControlTab extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+
+  void _showSwitchConfirmationDialog(BuildContext context, BranchDto branch) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: VioColors.surface,
+        title: const Text(
+          'Switch Branch?',
+          style: TextStyle(color: VioColors.textPrimary),
+        ),
+        content: Text(
+          'You have uncommitted changes. Switching to "${branch.name}" will discard them. Continue?',
+          style: const TextStyle(color: VioColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              context
+                  .read<VersionControlBloc>()
+                  .add(const BranchSwitchCanceled());
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              context
+                  .read<VersionControlBloc>()
+                  .add(const BranchSwitchConfirmed());
+            },
+            style: TextButton.styleFrom(foregroundColor: VioColors.warning),
+            child: const Text('Discard & Switch'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmationDialog(BuildContext context, BranchDto branch) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: VioColors.surface,
+        title: const Text(
+          'Delete Branch?',
+          style: TextStyle(color: VioColors.textPrimary),
+        ),
+        content: Text(
+          'Are you sure you want to delete the branch "${branch.name}"? This action cannot be undone.',
+          style: const TextStyle(color: VioColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              context
+                  .read<VersionControlBloc>()
+                  .add(const BranchDeleteCanceled());
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              context
+                  .read<VersionControlBloc>()
+                  .add(const BranchDeleteConfirmed());
+            },
+            style: TextButton.styleFrom(foregroundColor: VioColors.error),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
     );
   }
 }

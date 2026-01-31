@@ -304,12 +304,15 @@ class _BranchListPanelState extends State<BranchListPanel> {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => CreateBranchDialog(
-        currentBranchName: state.currentBranch?.name ?? 'main',
-        onCreateBranch: (name, description) {
+        branches: state.branches,
+        currentBranchId: state.currentBranchId,
+        hasUncommittedChanges: state.hasUncommittedChanges,
+        onCreateBranch: (name, description, sourceBranchId) {
           context.read<VersionControlBloc>().add(
                 BranchCreateRequested(
                   name: name,
                   description: description,
+                  sourceBranchId: sourceBranchId,
                 ),
               );
           Navigator.of(dialogContext).pop();

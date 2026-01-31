@@ -292,6 +292,96 @@ class GrpcCanvasRepository {
     await _loadFromServer();
   }
 
+  /// Restore working copy from a snapshot (for branch switching)
+  ///
+  /// This replaces all shapes in the database with shapes from the specified
+  /// snapshot, ensuring the working copy matches the target branch's state.
+  Future<void> restoreFromSnapshot(String snapshotId) async {
+    if (_projectId == null) {
+      throw StateError('Repository not initialized');
+    }
+
+    VioLogger.info(
+      'GrpcCanvasRepository: Restoring from snapshot $snapshotId',
+    );
+
+    _updateSyncStatus(SyncStatus.syncing);
+
+    try {
+      final request = pb.RestoreFromSnapshotRequest()
+        ..projectId = _projectId!
+        ..snapshotId = snapshotId;
+
+      final response = await _canvasClient.restoreFromSnapshot(request);
+
+      if (response.success) {
+        // Clear pending operations since we just restored from a clean state
+        _pendingOperations.clear();
+        _isDirty = false;
+
+        VioLogger.info(
+          'GrpcCanvasRepository: Restored ${response.shapeCount} shapes from snapshot',
+        );
+        _updateSyncStatus(SyncStatus.synced);
+      } else {
+        VioLogger.warning(
+          'GrpcCanvasRepository: Restore failed - ${response.message}',
+        );
+        _updateSyncStatus(SyncStatus.error);
+      }
+    } on GrpcError catch (e) {
+      VioLogger.error(
+        'GrpcCanvasRepository: Restore error - ${e.message}',
+      );
+      _updateSyncStatus(SyncStatus.error);
+      rethrow;
+    }
+  }
+
+  /// Clear working copy (for switching to empty branches)
+  ///
+  /// This removes all shapes from the database for the project.
+  /// Used when switching to an empty branch with no commits.
+  Future<void> clearWorkingCopy() async {
+    if (_projectId == null) {
+      throw StateError('Repository not initialized');
+    }
+
+    VioLogger.info('GrpcCanvasRepository: Clearing working copy');
+
+    _updateSyncStatus(SyncStatus.syncing);
+
+    try {
+      final request = pb.ClearWorkingCopyRequest()..projectId = _projectId!;
+
+      final response = await _canvasClient.clearWorkingCopy(request);
+
+      if (response.success) {
+        // Clear local state too
+        _shapes.clear();
+        _pendingOperations.clear();
+        _isDirty = false;
+        _shapesController.add(shapes);
+
+        VioLogger.info(
+          'GrpcCanvasRepository: Cleared ${response.deletedCount} shapes',
+        );
+        _updateSyncStatus(SyncStatus.synced);
+      } else {
+        VioLogger.warning(
+          'GrpcCanvasRepository: Clear failed - ${response.message}',
+        );
+        _updateSyncStatus(SyncStatus.error);
+      }
+    } on GrpcError catch (e) {
+      VioLogger.error(
+        'GrpcCanvasRepository: Clear error - ${e.message}',
+      );
+      _updateSyncStatus(SyncStatus.error);
+      rethrow;
+    }
+  }
+
   void _updateSyncStatus(SyncStatus status) {
     _currentStatus = status;
     _syncStatusController.add(status);

@@ -108,12 +108,15 @@ class BranchSelectorHeader extends StatelessWidget {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => CreateBranchDialog(
-        currentBranchName: state.currentBranch?.name ?? 'main',
-        onCreateBranch: (name, description) {
+        branches: state.branches,
+        currentBranchId: state.currentBranchId,
+        hasUncommittedChanges: state.hasUncommittedChanges,
+        onCreateBranch: (name, description, sourceBranchId) {
           context.read<VersionControlBloc>().add(
                 BranchCreateRequested(
                   name: name,
                   description: description,
+                  sourceBranchId: sourceBranchId,
                 ),
               );
           Navigator.of(dialogContext).pop();
@@ -604,13 +607,18 @@ class _BranchActionButtons extends StatelessWidget {
 /// Dialog for creating a new branch
 class CreateBranchDialog extends StatefulWidget {
   const CreateBranchDialog({
-    required this.currentBranchName,
+    required this.branches,
+    required this.currentBranchId,
+    required this.hasUncommittedChanges,
     required this.onCreateBranch,
     super.key,
   });
 
-  final String currentBranchName;
-  final void Function(String name, String? description) onCreateBranch;
+  final List<BranchDto> branches;
+  final String? currentBranchId;
+  final bool hasUncommittedChanges;
+  final void Function(String name, String? description, String sourceBranchId)
+      onCreateBranch;
 
   @override
   State<CreateBranchDialog> createState() => _CreateBranchDialogState();
@@ -620,6 +628,13 @@ class _CreateBranchDialogState extends State<CreateBranchDialog> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  late String _selectedSourceBranchId;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedSourceBranchId = widget.currentBranchId ?? '';
+  }
 
   @override
   void dispose() {
@@ -643,18 +658,125 @@ class _CreateBranchDialogState extends State<CreateBranchDialog> {
       content: Form(
         key: _formKey,
         child: SizedBox(
-          width: 300,
+          width: 340,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Creating branch from: ${widget.currentBranchName}',
-                style: const TextStyle(
+              // Source branch selector
+              const Text(
+                'Source branch',
+                style: TextStyle(
                   color: VioColors.textSecondary,
                   fontSize: 12,
                 ),
               ),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: VioColors.surfaceElevated,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: VioColors.border),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedSourceBranchId,
+                    isExpanded: true,
+                    dropdownColor: VioColors.surfaceElevated,
+                    style: const TextStyle(color: VioColors.textPrimary),
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down,
+                      color: VioColors.textSecondary,
+                    ),
+                    items: widget.branches.map((branch) {
+                      return DropdownMenuItem<String>(
+                        value: branch.id,
+                        child: Row(
+                          children: [
+                            Icon(
+                              branch.isDefault
+                                  ? Icons.star
+                                  : Icons.call_split_rounded,
+                              size: 14,
+                              color: branch.isDefault
+                                  ? VioColors.warning
+                                  : VioColors.textSecondary,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                branch.name,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (branch.id == widget.currentBranchId)
+                              Container(
+                                margin: const EdgeInsets.only(left: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: VioColors.primary.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  'current',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: VioColors.primary,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _selectedSourceBranchId = value);
+                      }
+                    },
+                  ),
+                ),
+              ),
+
+              // Warning about uncommitted changes
+              if (widget.hasUncommittedChanges &&
+                  _selectedSourceBranchId == widget.currentBranchId) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: VioColors.warning.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: VioColors.warning.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        size: 16,
+                        color: VioColors.warning,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Uncommitted changes will be carried over to the new branch.',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: VioColors.warning.withOpacity(0.9),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
               const SizedBox(height: 16),
               TextFormField(
                 controller: _nameController,
@@ -745,6 +867,7 @@ class _CreateBranchDialogState extends State<CreateBranchDialog> {
                 _descriptionController.text.trim().isEmpty
                     ? null
                     : _descriptionController.text.trim(),
+                _selectedSourceBranchId,
               );
             }
           },

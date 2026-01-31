@@ -276,32 +276,33 @@ class CommitHistoryList extends StatelessWidget {
 class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return SingleChildScrollView(
       child: Padding(
-        padding: EdgeInsets.all(24),
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
+            const Icon(
               Icons.history,
-              size: 48,
+              size: 32,
               color: VioColors.textTertiary,
             ),
-            SizedBox(height: 12),
-            Text(
+            const SizedBox(height: 8),
+            const Text(
               'No commits yet',
               style: TextStyle(
                 color: VioColors.textSecondary,
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
-              'Make changes and create your first commit',
+              'Make changes and commit',
               style: TextStyle(
-                color: VioColors.textTertiary,
-                fontSize: 12,
+                color: VioColors.textTertiary.withValues(alpha: 0.8),
+                fontSize: 11,
               ),
               textAlign: TextAlign.center,
             ),

@@ -7,31 +7,31 @@ import { and, asc, eq } from "drizzle-orm";
 import { ServerError, Status } from "nice-grpc";
 import { db, schema } from "../db";
 import type {
-	CanvasServiceImplementation,
-	CanvasState,
-	CanvasUpdate,
-	CollaborateResponse,
-	CursorMoved,
-	CursorPosition,
-	GetCanvasStateResponse,
-	SelectionChanged,
-	SessionJoined,
-	ShapeCreated,
-	ShapeDeleted,
-	ShapeUpdated,
-	SyncAck,
-	SyncChangesResponse,
-	SyncOperation,
-	UserJoined,
-	UserLeft,
-	UserPresence,
+    CanvasServiceImplementation,
+    CanvasState,
+    CanvasUpdate,
+    CollaborateResponse,
+    CursorMoved,
+    CursorPosition,
+    GetCanvasStateResponse,
+    SelectionChanged,
+    SessionJoined,
+    ShapeCreated,
+    ShapeDeleted,
+    ShapeUpdated,
+    SyncAck,
+    SyncChangesResponse,
+    SyncOperation,
+    UserJoined,
+    UserLeft,
+    UserPresence,
 } from "../gen/vio/v1/canvas.js";
 import { OperationType } from "../gen/vio/v1/canvas.js";
 import type { Fill, Stroke, Timestamp } from "../gen/vio/v1/common.js";
 import {
-	StrokeAlignment,
-	StrokeCap,
-	StrokeJoin,
+    StrokeAlignment,
+    StrokeCap,
+    StrokeJoin,
 } from "../gen/vio/v1/common.js";
 import { ShapeType, type Shape } from "../gen/vio/v1/shape.js";
 
@@ -910,5 +910,95 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 				broadcastUpdate(currentProjectId, currentBranchId, userLeftUpdate);
 			}
 		}
+	},
+
+	// Restore working copy from a snapshot (branch switch)
+	async restoreFromSnapshot(req) {
+		if (!req.projectId || !req.snapshotId) {
+			throw new ServerError(
+				Status.INVALID_ARGUMENT,
+				"Project ID and Snapshot ID are required",
+			);
+		}
+
+		// Get the snapshot
+		const snapshot = await db.query.snapshots.findFirst({
+			where: and(
+				eq(schema.snapshots.id, req.snapshotId),
+				eq(schema.snapshots.projectId, req.projectId),
+			),
+		});
+
+		if (!snapshot) {
+			throw new ServerError(Status.NOT_FOUND, "Snapshot not found");
+		}
+
+		// Parse shapes from snapshot
+		const snapshotData = snapshot.data as { shapes?: Array<Record<string, unknown>> };
+		const snapshotShapes = snapshotData.shapes ?? [];
+
+		// Delete all existing shapes for this project
+		await db
+			.delete(schema.shapes)
+			.where(eq(schema.shapes.projectId, req.projectId));
+
+		// Insert shapes from the snapshot
+		if (snapshotShapes.length > 0) {
+			const shapesToInsert = snapshotShapes.map((shape: Record<string, unknown>) => ({
+				id: shape.id as string,
+				projectId: req.projectId,
+				frameId: (shape.frameId as string) || null,
+				parentId: (shape.parentId as string) || null,
+				type: shape.type as string,
+				name: shape.name as string,
+				x: shape.x as number,
+				y: shape.y as number,
+				width: shape.width as number,
+				height: shape.height as number,
+				rotation: (shape.rotation as number) || 0,
+				transformA: (shape.transformA as number) ?? 1,
+				transformB: (shape.transformB as number) ?? 0,
+				transformC: (shape.transformC as number) ?? 0,
+				transformD: (shape.transformD as number) ?? 1,
+				transformE: (shape.transformE as number) ?? 0,
+				transformF: (shape.transformF as number) ?? 0,
+				fills: (shape.fills as Array<unknown>) || [],
+				strokes: (shape.strokes as Array<unknown>) || [],
+				opacity: (shape.opacity as number) ?? 1,
+				hidden: (shape.hidden as boolean) ?? false,
+				blocked: (shape.blocked as boolean) ?? false,
+				properties: (shape.properties as Record<string, unknown>) ?? {},
+				sortOrder: (shape.sortOrder as number) ?? 0,
+			}));
+
+			await db.insert(schema.shapes).values(shapesToInsert);
+		}
+
+		return {
+			success: true,
+			shapeCount: snapshotShapes.length,
+			message: `Restored ${snapshotShapes.length} shapes from snapshot`,
+		};
+	},
+
+	// Clear working copy (for empty branches)
+	async clearWorkingCopy(req) {
+		if (!req.projectId) {
+			throw new ServerError(
+				Status.INVALID_ARGUMENT,
+				"Project ID is required",
+			);
+		}
+
+		// Delete all shapes for this project
+		await db
+			.delete(schema.shapes)
+			.where(eq(schema.shapes.projectId, req.projectId));
+
+		return {
+			success: true,
+			deletedCount: 0, // We don't track exact count for simplicity
+			message: "Cleared working copy",
+		};
 	},
 };

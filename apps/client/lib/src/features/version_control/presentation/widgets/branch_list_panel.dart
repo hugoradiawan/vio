@@ -566,7 +566,7 @@ class _BranchListItemState extends State<BranchListItem> {
           ),
       ],
     ).then((value) {
-      if (value == null) return;
+      if (value == null || !context.mounted) return;
 
       switch (value) {
         case 'switch':

@@ -20,7 +20,7 @@ void main() {
         'transformE': 50.0,
         'transformF': 50.0,
         'fills': [{'color': 0xFF3B82F6, 'opacity': 1.0}],
-        'strokes': [],
+        'strokes': <dynamic>[],
         'opacity': 1.0,
         'hidden': false,
         'blocked': false,
@@ -39,7 +39,7 @@ void main() {
       expect(shape.transform.a, 1.0);
       expect(shape.transform.e, 50.0);
       expect(shape.transform.f, 50.0);
-      
+
       final rect = shape as RectangleShape;
       expect(rect.rectWidth, 200.0);
       expect(rect.rectHeight, 150.0);
@@ -63,14 +63,14 @@ void main() {
           'e': 25.0,
           'f': 25.0,
         },
-        'fills': [],
-        'strokes': [],
+        'fills': <dynamic>[],
+        'strokes': <dynamic>[],
         'opacity': 1.0,
         'hidden': false,
         'blocked': false,
         'rotation': 0.0,
         'sortOrder': 0,
-        'properties': {},
+        'properties': <String, dynamic>{},
       };
 
       final shape = ShapeFactory.fromJson(json);
@@ -91,14 +91,14 @@ void main() {
         'frameWidth': 800.0,
         'frameHeight': 600.0,
         'transform': {'a': 1, 'b': 0, 'c': 0, 'd': 1, 'e': 0, 'f': 0},
-        'fills': [],
-        'strokes': [],
+        'fills': <dynamic>[],
+        'strokes': <dynamic>[],
         'opacity': 1.0,
         'hidden': false,
         'blocked': false,
         'rotation': 0.0,
         'sortOrder': 0,
-        'properties': {},
+        'properties': <String, dynamic>{},
       };
 
       final shape = ShapeFactory.fromJson(json);
@@ -124,14 +124,14 @@ void main() {
         'transformD': 1,
         'transformE': 0,
         'transformF': 0,
-        'fills': [],
-        'strokes': [],
+        'fills': <dynamic>[],
+        'strokes': <dynamic>[],
         'opacity': 1.0,
         'hidden': false,
         'blocked': false,
         'rotation': 0.0,
         'sortOrder': 0,
-        'properties': {},
+        'properties': <String, dynamic>{},
       };
 
       final shape = ShapeFactory.fromJson(json);
@@ -158,13 +158,13 @@ void main() {
         'transformE': 0,
         'transformF': 0,
         'fills': [{'color': 0xFFFF0000, 'opacity': 1.0}],
-        'strokes': [],
+        'strokes': <dynamic>[],
         'opacity': 1.0,
         'hidden': false,
         'blocked': false,
         'rotation': 0.0,
         'sortOrder': 1,
-        'properties': {},
+        'properties': <String, dynamic>{},
       };
 
       final shape = ShapeFactory.fromJson(json);

@@ -718,7 +718,7 @@ class _CreateBranchDialogState extends State<CreateBranchDialog> {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: VioColors.primary.withOpacity(0.2),
+                                  color: VioColors.primary.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: const Text(
@@ -749,10 +749,10 @@ class _CreateBranchDialogState extends State<CreateBranchDialog> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: VioColors.warning.withOpacity(0.1),
+                    color: VioColors.warning.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: VioColors.warning.withOpacity(0.3),
+                      color: VioColors.warning.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
@@ -768,7 +768,7 @@ class _CreateBranchDialogState extends State<CreateBranchDialog> {
                           'Uncommitted changes will be carried over to the new branch.',
                           style: TextStyle(
                             fontSize: 11,
-                            color: VioColors.warning.withOpacity(0.9),
+                            color: VioColors.warning.withValues(alpha: 0.9),
                           ),
                         ),
                       ),

@@ -39,11 +39,14 @@ describe("Branch Switch Integration", () => {
 		projectId = project.id;
 
 		// Create main branch
-		const mainBranchResponse = await branchServiceImpl.createBranch({
-			projectId,
-			name: "main",
-			createdById: userId,
-		}, mockContext);
+		const mainBranchResponse = await branchServiceImpl.createBranch(
+			{
+				projectId,
+				name: "main",
+				createdById: userId,
+			},
+			mockContext,
+		);
 		mainBranchId = mainBranchResponse.branch!.id;
 
 		// Set as default branch
@@ -56,10 +59,18 @@ describe("Branch Switch Integration", () => {
 	afterAll(async () => {
 		// Cleanup: delete project and all related data
 		if (projectId) {
-			await db.delete(schema.shapes).where(eq(schema.shapes.projectId, projectId));
-			await db.delete(schema.commits).where(eq(schema.commits.projectId, projectId));
-			await db.delete(schema.snapshots).where(eq(schema.snapshots.projectId, projectId));
-			await db.delete(schema.branches).where(eq(schema.branches.projectId, projectId));
+			await db
+				.delete(schema.shapes)
+				.where(eq(schema.shapes.projectId, projectId));
+			await db
+				.delete(schema.commits)
+				.where(eq(schema.commits.projectId, projectId));
+			await db
+				.delete(schema.snapshots)
+				.where(eq(schema.snapshots.projectId, projectId));
+			await db
+				.delete(schema.branches)
+				.where(eq(schema.branches.projectId, projectId));
 			await db.delete(schema.projects).where(eq(schema.projects.id, projectId));
 		}
 	});
@@ -93,23 +104,29 @@ describe("Branch Switch Integration", () => {
 		]);
 
 		// Step 2: Create first commit on main branch
-		const commit1Response = await commitServiceImpl.createCommit({
-			projectId,
-			branchId: mainBranchId,
-			message: "Add two shapes on main",
-			authorId: userId,
-			snapshotData: new Uint8Array(), // Not used - server creates snapshot from DB shapes
-		}, mockContext);
+		const commit1Response = await commitServiceImpl.createCommit(
+			{
+				projectId,
+				branchId: mainBranchId,
+				message: "Add two shapes on main",
+				authorId: userId,
+				snapshotData: new Uint8Array(), // Not used - server creates snapshot from DB shapes
+			},
+			mockContext,
+		);
 		expect(commit1Response.commit?.id).toBeDefined();
 		const mainCommitId = commit1Response.commit!.id;
 
 		// Step 3: Create feature branch from main
-		const featureBranchResponse = await branchServiceImpl.createBranch({
-			projectId,
-			name: "feature/new-shapes",
-			sourceBranchId: mainBranchId,
-			createdById: userId,
-		}, mockContext);
+		const featureBranchResponse = await branchServiceImpl.createBranch(
+			{
+				projectId,
+				name: "feature/new-shapes",
+				sourceBranchId: mainBranchId,
+				createdById: userId,
+			},
+			mockContext,
+		);
 		featureBranchId = featureBranchResponse.branch!.id;
 
 		// Feature branch should have the same head commit as main (branched from it)
@@ -128,10 +145,13 @@ describe("Branch Switch Integration", () => {
 		expect(featureCommit?.snapshotId).toBeDefined();
 
 		// Restore working copy from feature branch's snapshot
-		const restoreResponse = await canvasServiceImpl.restoreFromSnapshot({
-			projectId,
-			snapshotId: featureCommit!.snapshotId,
-		}, mockContext);
+		const restoreResponse = await canvasServiceImpl.restoreFromSnapshot(
+			{
+				projectId,
+				snapshotId: featureCommit!.snapshotId,
+			},
+			mockContext,
+		);
 		expect(restoreResponse.success).toBe(true);
 		expect(restoreResponse.shapeCount).toBe(2);
 
@@ -149,13 +169,16 @@ describe("Branch Switch Integration", () => {
 		});
 
 		// Step 6: Commit on feature branch
-		const commit2Response = await commitServiceImpl.createCommit({
-			projectId,
-			branchId: featureBranchId,
-			message: "Add feature rectangle",
-			authorId: userId,
-			snapshotData: new Uint8Array(), // Not used - server creates snapshot from DB shapes
-		}, mockContext);
+		const commit2Response = await commitServiceImpl.createCommit(
+			{
+				projectId,
+				branchId: featureBranchId,
+				message: "Add feature rectangle",
+				authorId: userId,
+				snapshotData: new Uint8Array(), // Not used - server creates snapshot from DB shapes
+			},
+			mockContext,
+		);
 		expect(commit2Response.commit?.id).toBeDefined();
 		const featureCommitId = commit2Response.commit!.id;
 
@@ -167,10 +190,13 @@ describe("Branch Switch Integration", () => {
 			where: eq(schema.commits.id, mainBranch!.headCommitId!),
 		});
 
-		const restoreMainResponse = await canvasServiceImpl.restoreFromSnapshot({
-			projectId,
-			snapshotId: mainCommit!.snapshotId,
-		}, mockContext);
+		const restoreMainResponse = await canvasServiceImpl.restoreFromSnapshot(
+			{
+				projectId,
+				snapshotId: mainCommit!.snapshotId,
+			},
+			mockContext,
+		);
 		expect(restoreMainResponse.success).toBe(true);
 		expect(restoreMainResponse.shapeCount).toBe(2);
 
@@ -185,10 +211,13 @@ describe("Branch Switch Integration", () => {
 		);
 
 		// Step 8: getCanvasState should return main branch's shapes (from snapshot)
-		const canvasState = await canvasServiceImpl.getCanvasState({
-			projectId,
-			branchId: mainBranchId,
-		}, mockContext);
+		const canvasState = await canvasServiceImpl.getCanvasState(
+			{
+				projectId,
+				branchId: mainBranchId,
+			},
+			mockContext,
+		);
 		expect(canvasState.state?.shapes.length).toBe(2);
 
 		// Step 9: Switch back to feature - should have 3 shapes
@@ -199,10 +228,13 @@ describe("Branch Switch Integration", () => {
 			where: eq(schema.commits.id, updatedFeatureBranch!.headCommitId!),
 		});
 
-		const restoreFeatureResponse = await canvasServiceImpl.restoreFromSnapshot({
-			projectId,
-			snapshotId: updatedFeatureCommit!.snapshotId,
-		}, mockContext);
+		const restoreFeatureResponse = await canvasServiceImpl.restoreFromSnapshot(
+			{
+				projectId,
+				snapshotId: updatedFeatureCommit!.snapshotId,
+			},
+			mockContext,
+		);
 		expect(restoreFeatureResponse.success).toBe(true);
 		expect(restoreFeatureResponse.shapeCount).toBe(3);
 
@@ -214,27 +246,36 @@ describe("Branch Switch Integration", () => {
 		expect(shapesAfterFeatureSwitch.length).toBe(3);
 
 		// Step 10: getCanvasState on feature branch should return 3 shapes
-		const featureCanvasState = await canvasServiceImpl.getCanvasState({
-			projectId,
-			branchId: featureBranchId,
-		}, mockContext);
+		const featureCanvasState = await canvasServiceImpl.getCanvasState(
+			{
+				projectId,
+				branchId: featureBranchId,
+			},
+			mockContext,
+		);
 		expect(featureCanvasState.state?.shapes.length).toBe(3);
 	});
 
 	it("should return empty shapes for branch with no commits", async () => {
 		// Create an empty branch (no source, no commits)
-		const emptyBranchResponse = await branchServiceImpl.createBranch({
-			projectId,
-			name: "empty-branch",
-			createdById: userId,
-		}, mockContext);
+		const emptyBranchResponse = await branchServiceImpl.createBranch(
+			{
+				projectId,
+				name: "empty-branch",
+				createdById: userId,
+			},
+			mockContext,
+		);
 		const emptyBranchId = emptyBranchResponse.branch!.id;
 
 		// getCanvasState should return empty shapes
-		const canvasState = await canvasServiceImpl.getCanvasState({
-			projectId,
-			branchId: emptyBranchId,
-		}, mockContext);
+		const canvasState = await canvasServiceImpl.getCanvasState(
+			{
+				projectId,
+				branchId: emptyBranchId,
+			},
+			mockContext,
+		);
 		expect(canvasState.state?.shapes.length).toBe(0);
 	});
 });

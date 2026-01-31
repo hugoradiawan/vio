@@ -9,4 +9,3 @@ export { shapeServiceImpl } from "./shape.js";
 
 // Merge utilities
 export * from "./merge.js";
-

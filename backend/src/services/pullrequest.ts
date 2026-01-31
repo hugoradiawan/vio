@@ -12,28 +12,28 @@ import type { Branch } from "../gen/vio/v1/branch.js";
 import type { Commit } from "../gen/vio/v1/commit.js";
 import type { Timestamp } from "../gen/vio/v1/common.js";
 import {
-    PullRequestStatus,
-    type CheckMergeStatusResponse,
-    type ClosePullRequestResponse,
-    type CreatePullRequestResponse,
-    type GetPullRequestResponse,
-    type ListPullRequestsResponse,
-    type MergePullRequestResponse,
-    type PullRequest,
-    type PullRequestServiceImplementation,
-    type ReopenPullRequestResponse,
-    type ResolveConflictsResponse,
-    type UpdatePullRequestResponse,
+	PullRequestStatus,
+	type CheckMergeStatusResponse,
+	type ClosePullRequestResponse,
+	type CreatePullRequestResponse,
+	type GetPullRequestResponse,
+	type ListPullRequestsResponse,
+	type MergePullRequestResponse,
+	type PullRequest,
+	type PullRequestServiceImplementation,
+	type ReopenPullRequestResponse,
+	type ResolveConflictsResponse,
+	type UpdatePullRequestResponse,
 } from "../gen/vio/v1/pullrequest.js";
 import {
-    canFastForward,
-    countCommitsDivergence,
-    createMergeCommit,
-    findCommonAncestor,
-    getSnapshotData,
-    performFastForward,
-    performThreeWayMerge,
-    type SnapshotShape,
+	canFastForward,
+	countCommitsDivergence,
+	createMergeCommit,
+	findCommonAncestor,
+	getSnapshotData,
+	performFastForward,
+	performThreeWayMerge,
+	type SnapshotShape,
 } from "./merge.js";
 
 function toProtoTimestamp(date: Date): Timestamp {
@@ -115,7 +115,10 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 			eq(schema.pullRequests.projectId, projectId),
 		];
 
-		if (status !== undefined && status !== PullRequestStatus.PULL_REQUEST_STATUS_UNSPECIFIED) {
+		if (
+			status !== undefined &&
+			status !== PullRequestStatus.PULL_REQUEST_STATUS_UNSPECIFIED
+		) {
 			const dbStatus =
 				status === PullRequestStatus.PULL_REQUEST_STATUS_MERGED
 					? "merged"
@@ -284,7 +287,10 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 			with: { headCommit: { with: { snapshot: true } } },
 		});
 
-		const commonAncestor = await findCommonAncestor(sourceBranchId, targetBranchId);
+		const commonAncestor = await findCommonAncestor(
+			sourceBranchId,
+			targetBranchId,
+		);
 		const baseSnapshot = commonAncestor?.snapshotId
 			? await getSnapshotData(commonAncestor.snapshotId)
 			: null;
@@ -355,7 +361,8 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 	},
 
 	async mergePullRequest(req): Promise<MergePullRequestResponse> {
-		const { projectId, pullRequestId, strategy, mergedById, commitMessage } = req;
+		const { projectId, pullRequestId, strategy, mergedById, commitMessage } =
+			req;
 
 		const pr = await db.query.pullRequests.findFirst({
 			where: and(

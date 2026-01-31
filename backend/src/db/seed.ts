@@ -28,25 +28,25 @@ async function seed() {
 		// Clean up existing demo data first
 		console.log("🧹 Cleaning up existing demo data...");
 		const { eq } = await import("drizzle-orm");
-		
-		await db.delete(schema.commits).where(
-			eq(schema.commits.projectId, DEMO_PROJECT_ID),
-		);
-		await db.delete(schema.snapshots).where(
-			eq(schema.snapshots.projectId, DEMO_PROJECT_ID),
-		);
-		await db.delete(schema.shapes).where(
-			eq(schema.shapes.projectId, DEMO_PROJECT_ID),
-		);
-		await db.delete(schema.frames).where(
-			eq(schema.frames.projectId, DEMO_PROJECT_ID),
-		);
-		await db.delete(schema.branches).where(
-			eq(schema.branches.projectId, DEMO_PROJECT_ID),
-		);
-		await db.delete(schema.projects).where(
-			eq(schema.projects.id, DEMO_PROJECT_ID),
-		);
+
+		await db
+			.delete(schema.commits)
+			.where(eq(schema.commits.projectId, DEMO_PROJECT_ID));
+		await db
+			.delete(schema.snapshots)
+			.where(eq(schema.snapshots.projectId, DEMO_PROJECT_ID));
+		await db
+			.delete(schema.shapes)
+			.where(eq(schema.shapes.projectId, DEMO_PROJECT_ID));
+		await db
+			.delete(schema.frames)
+			.where(eq(schema.frames.projectId, DEMO_PROJECT_ID));
+		await db
+			.delete(schema.branches)
+			.where(eq(schema.branches.projectId, DEMO_PROJECT_ID));
+		await db
+			.delete(schema.projects)
+			.where(eq(schema.projects.id, DEMO_PROJECT_ID));
 
 		// Create demo project
 		console.log("📁 Creating demo project...");
@@ -218,22 +218,28 @@ async function seed() {
 			blocked: false,
 			rotation: 0,
 			// Shape-specific properties
-			...(s.type === "rectangle" ? { 
-				rectWidth: s.width, 
-				rectHeight: s.height,
-				r1: s.properties?.r1 || 0,
-				r2: s.properties?.r2 || 0,
-				r3: s.properties?.r3 || 0,
-				r4: s.properties?.r4 || 0,
-			} : {}),
-			...(s.type === "ellipse" ? { 
-				ellipseWidth: s.width, 
-				ellipseHeight: s.height 
-			} : {}),
-			...(s.type === "frame" ? { 
-				frameWidth: s.width, 
-				frameHeight: s.height 
-			} : {}),
+			...(s.type === "rectangle"
+				? {
+						rectWidth: s.width,
+						rectHeight: s.height,
+						r1: s.properties?.r1 || 0,
+						r2: s.properties?.r2 || 0,
+						r3: s.properties?.r3 || 0,
+						r4: s.properties?.r4 || 0,
+					}
+				: {}),
+			...(s.type === "ellipse"
+				? {
+						ellipseWidth: s.width,
+						ellipseHeight: s.height,
+					}
+				: {}),
+			...(s.type === "frame"
+				? {
+						frameWidth: s.width,
+						frameHeight: s.height,
+					}
+				: {}),
 		}));
 
 		// Store as object, not string - Drizzle/JSONB handles serialization
@@ -257,7 +263,8 @@ async function seed() {
 		});
 
 		// Update branch to point to the commit
-		await db.update(schema.branches)
+		await db
+			.update(schema.branches)
 			.set({ headCommitId: DEMO_COMMIT_ID })
 			.where(eq(schema.branches.id, DEMO_BRANCH_ID));
 

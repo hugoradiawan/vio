@@ -422,16 +422,20 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 				});
 
 				if (snapshot) {
-					const snapshotData = snapshot.data as { shapes?: Array<Record<string, unknown>> };
+					const snapshotData = snapshot.data as {
+						shapes?: Array<Record<string, unknown>>;
+					};
 					const snapshotShapes = snapshotData.shapes ?? [];
 
 					// Convert snapshot shapes to proto format
 					const protoShapes: Shape[] = snapshotShapes.map((shape) => {
 						// Parse fills and strokes from snapshot format
-						const fills: Fill[] = ((shape.fills as DbFill[]) || []).map((f) => ({
-							color: f.color ?? 0,
-							opacity: f.opacity ?? 1.0,
-						}));
+						const fills: Fill[] = ((shape.fills as DbFill[]) || []).map(
+							(f) => ({
+								color: f.color ?? 0,
+								opacity: f.opacity ?? 1.0,
+							}),
+						);
 
 						const strokes: Stroke[] = ((shape.strokes as DbStroke[]) || []).map(
 							(st) => ({
@@ -471,7 +475,9 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 							blocked: (shape.blocked as boolean) ?? false,
 							sortOrder: (shape.sortOrder as number) ?? 0,
 							properties: new TextEncoder().encode(
-								JSON.stringify((shape.properties as Record<string, unknown>) || {}),
+								JSON.stringify(
+									(shape.properties as Record<string, unknown>) || {},
+								),
 							),
 							createdAt: toProtoTimestamp(new Date()),
 							updatedAt: toProtoTimestamp(new Date()),
@@ -1021,7 +1027,9 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 		}
 
 		// Parse shapes from snapshot
-		const snapshotData = snapshot.data as { shapes?: Array<Record<string, unknown>> };
+		const snapshotData = snapshot.data as {
+			shapes?: Array<Record<string, unknown>>;
+		};
 		const snapshotShapes = snapshotData.shapes ?? [];
 
 		// Use a transaction to ensure atomicity
@@ -1034,32 +1042,34 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 
 			// Insert shapes from the snapshot
 			if (snapshotShapes.length > 0) {
-				const shapesToInsert = snapshotShapes.map((shape: Record<string, unknown>) => ({
-					id: shape.id as string,
-					projectId: req.projectId,
-					frameId: (shape.frameId as string) || null,
-					parentId: (shape.parentId as string) || null,
-					type: shape.type as string,
-					name: shape.name as string,
-					x: shape.x as number,
-					y: shape.y as number,
-					width: shape.width as number,
-					height: shape.height as number,
-					rotation: (shape.rotation as number) || 0,
-					transformA: (shape.transformA as number) ?? 1,
-					transformB: (shape.transformB as number) ?? 0,
-					transformC: (shape.transformC as number) ?? 0,
-					transformD: (shape.transformD as number) ?? 1,
-					transformE: (shape.transformE as number) ?? 0,
-					transformF: (shape.transformF as number) ?? 0,
-					fills: (shape.fills as Array<unknown>) || [],
-					strokes: (shape.strokes as Array<unknown>) || [],
-					opacity: (shape.opacity as number) ?? 1,
-					hidden: (shape.hidden as boolean) ?? false,
-					blocked: (shape.blocked as boolean) ?? false,
-					properties: (shape.properties as Record<string, unknown>) ?? {},
-					sortOrder: (shape.sortOrder as number) ?? 0,
-				}));
+				const shapesToInsert = snapshotShapes.map(
+					(shape: Record<string, unknown>) => ({
+						id: shape.id as string,
+						projectId: req.projectId,
+						frameId: (shape.frameId as string) || null,
+						parentId: (shape.parentId as string) || null,
+						type: shape.type as string,
+						name: shape.name as string,
+						x: shape.x as number,
+						y: shape.y as number,
+						width: shape.width as number,
+						height: shape.height as number,
+						rotation: (shape.rotation as number) || 0,
+						transformA: (shape.transformA as number) ?? 1,
+						transformB: (shape.transformB as number) ?? 0,
+						transformC: (shape.transformC as number) ?? 0,
+						transformD: (shape.transformD as number) ?? 1,
+						transformE: (shape.transformE as number) ?? 0,
+						transformF: (shape.transformF as number) ?? 0,
+						fills: (shape.fills as Array<unknown>) || [],
+						strokes: (shape.strokes as Array<unknown>) || [],
+						opacity: (shape.opacity as number) ?? 1,
+						hidden: (shape.hidden as boolean) ?? false,
+						blocked: (shape.blocked as boolean) ?? false,
+						properties: (shape.properties as Record<string, unknown>) ?? {},
+						sortOrder: (shape.sortOrder as number) ?? 0,
+					}),
+				);
 
 				await tx.insert(schema.shapes).values(shapesToInsert);
 			}
@@ -1075,10 +1085,7 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 	// Clear working copy (for empty branches)
 	async clearWorkingCopy(req) {
 		if (!req.projectId) {
-			throw new ServerError(
-				Status.INVALID_ARGUMENT,
-				"Project ID is required",
-			);
+			throw new ServerError(Status.INVALID_ARGUMENT, "Project ID is required");
 		}
 
 		// Delete all shapes for this project

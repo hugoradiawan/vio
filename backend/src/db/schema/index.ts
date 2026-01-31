@@ -1,15 +1,15 @@
 import { relations } from "drizzle-orm";
 import {
-    boolean,
-    doublePrecision,
-    index,
-    integer,
-    jsonb,
-    pgTable,
-    text,
-    timestamp,
-    uuid,
-    varchar,
+	boolean,
+	doublePrecision,
+	index,
+	integer,
+	jsonb,
+	pgTable,
+	text,
+	timestamp,
+	uuid,
+	varchar,
 } from "drizzle-orm/pg-core";
 
 // ============================================================================

@@ -104,6 +104,13 @@ class _CanvasVersionControlBridge extends StatelessWidget {
               '[Bridge] Branch loaded/switched, updating canvas with ${newShapes.length} shapes',
             );
 
+            // Log shape details for debugging
+            for (final shape in newShapes.values) {
+              debugPrint(
+                '[Bridge] Shape: ${shape.id} type=${shape.type} name=${shape.name}',
+              );
+            }
+
             // Use ShapesReplaced event for efficient bulk update
             canvasBloc.add(ShapesReplaced(newShapes));
           },

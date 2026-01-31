@@ -200,6 +200,15 @@ class VersionControlBloc
         }
       }
 
+      // CRITICAL: Initialize the canvas repository with project/branch context
+      // This enables sync operations to work (without projectId, _syncToServer silently returns)
+      final repository = ServiceLocator.instance.canvasRepository;
+      repository.setShapesFromSnapshot(
+        baseShapes.values.toList(),
+        projectId: event.projectId,
+        branchId: initialBranch.id,
+      );
+
       // Save the selected branch for next app startup
       await _prefsService.setLastBranchId(event.projectId, initialBranch.id);
 
@@ -343,6 +352,11 @@ class VersionControlBloc
     String branchId,
     Emitter<VersionControlState> emit,
   ) async {
+    // Signal repository to pause auto-sync during branch switch
+    // This prevents race conditions where auto-sync overwrites shapes
+    final repository = ServiceLocator.instance.canvasRepository;
+    repository.beginBranchSwitch();
+
     emit(
       state.copyWith(
         status: VersionControlStatus.switching,
@@ -387,7 +401,6 @@ class VersionControlBloc
         if (commitResponse.hasSnapshot() &&
             commitResponse.snapshot.id.isNotEmpty) {
           try {
-            final repository = ServiceLocator.instance.canvasRepository;
             await repository.restoreFromSnapshot(commitResponse.snapshot.id);
             VioLogger.info(
               'VersionControlBloc: Restored working copy from snapshot ${commitResponse.snapshot.id}',
@@ -406,32 +419,51 @@ class VersionControlBloc
 
         if (commitResponse.hasSnapshot()) {
           final snapshotBytes = commitResponse.snapshot.data;
+          VioLogger.debug(
+            'VersionControlBloc: Snapshot data length: ${snapshotBytes.length} bytes',
+          );
           if (snapshotBytes.isNotEmpty) {
             try {
               final jsonData = jsonDecode(utf8.decode(snapshotBytes))
                   as Map<String, dynamic>;
               final shapesJson = jsonData['shapes'] as List<dynamic>? ?? [];
+              VioLogger.debug(
+                'VersionControlBloc: Found ${shapesJson.length} shapes in snapshot JSON',
+              );
               for (final shapeJson in shapesJson) {
                 try {
                   final shape =
                       ShapeFactory.fromJson(shapeJson as Map<String, dynamic>);
                   newShapes[shape.id] = shape;
-                } catch (e) {
+                  VioLogger.debug(
+                    'VersionControlBloc: Successfully parsed shape ${shape.id} (${shape.type})',
+                  );
+                } catch (e, stackTrace) {
                   VioLogger.warning(
-                    'VersionControlBloc: Failed to parse shape from snapshot: $e',
+                    'VersionControlBloc: Failed to parse shape from snapshot: $e\n$stackTrace',
                   );
                 }
               }
               VioLogger.info(
                 'VersionControlBloc: Parsed ${newShapes.length} shapes from snapshot',
               );
-            } catch (e) {
+            } catch (e, stackTrace) {
               VioLogger.error(
-                'VersionControlBloc: Failed to parse snapshot - $e',
+                'VersionControlBloc: Failed to parse snapshot - $e\n$stackTrace',
               );
             }
           }
         }
+
+        // CRITICAL: Update repository's internal shapes list to match snapshot
+        // This ensures subsequent updateShape/deleteShape calls will work.
+        // Without this, the repository thinks no shapes exist and rejects updates.
+        // ALSO: We must set projectId so that _syncToServer will actually sync!
+        repository.setShapesFromSnapshot(
+          newShapes.values.toList(),
+          projectId: state.projectId!,
+          branchId: branchId,
+        );
 
         // Update base shapes and clear staged state
         emit(
@@ -454,7 +486,6 @@ class VersionControlBloc
 
         // Clear the working copy (shapes table) since there's no snapshot to restore from
         try {
-          final repository = ServiceLocator.instance.canvasRepository;
           await repository.clearWorkingCopy();
           VioLogger.info(
             'VersionControlBloc: Cleared working copy for empty branch',
@@ -465,6 +496,15 @@ class VersionControlBloc
           );
           // Continue anyway - shapes will still be cleared locally
         }
+
+        // CRITICAL: Update repository's internal shapes list to be empty
+        // This ensures the repository state matches the empty branch
+        // ALSO: We must set projectId so that _syncToServer will actually sync!
+        repository.setShapesFromSnapshot(
+          const [],
+          projectId: state.projectId!,
+          branchId: branchId,
+        );
 
         emit(
           state.copyWith(
@@ -479,8 +519,14 @@ class VersionControlBloc
       // Refresh commits for the new branch
       add(const CommitsRefreshRequested());
 
+      // Signal repository that branch switch is complete, resume auto-sync
+      repository.endBranchSwitch();
+
       emit(state.copyWith(status: VersionControlStatus.ready));
     } on GrpcError catch (e) {
+      // Signal repository that branch switch is complete (even on error)
+      repository.endBranchSwitch();
+
       VioLogger.error(
         'VersionControlBloc: Failed to switch branch - ${e.message}',
       );

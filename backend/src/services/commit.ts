@@ -1,19 +1,32 @@
+import { create } from "@bufbuild/protobuf";
+import type { ServiceImpl } from "@connectrpc/connect";
 import { and, asc, desc, eq } from "drizzle-orm";
-import { ServerError, Status } from "nice-grpc";
 import { db, schema } from "../db";
-import type {
-	CheckoutCommitResponse,
-	CherryPickResponse,
-	Commit,
-	CommitServiceImplementation,
-	CreateCommitResponse,
-	GetCommitResponse,
-	GetDiffResponse,
-	ListCommitsResponse,
-	RevertCommitResponse,
-	Snapshot,
-} from "../gen/vio/v1/commit.js";
-import type { Timestamp } from "../gen/vio/v1/common.js";
+import {
+	CheckoutCommitResponseSchema,
+	CherryPickResponseSchema,
+	CommitSchema,
+	CommitService,
+	CommitSummarySchema,
+	CreateCommitResponseSchema,
+	DiffResultSchema,
+	GetCommitResponseSchema,
+	GetDiffResponseSchema,
+	ListCommitsResponseSchema,
+	RevertCommitResponseSchema,
+	SnapshotSchema,
+	type CheckoutCommitResponse,
+	type CherryPickResponse,
+	type Commit,
+	type CreateCommitResponse,
+	type GetCommitResponse,
+	type GetDiffResponse,
+	type ListCommitsResponse,
+	type RevertCommitResponse,
+	type Snapshot,
+} from "../gen/vio/v1/commit_pb.js";
+import { TimestampSchema, type Timestamp } from "../gen/vio/v1/common_pb.js";
+import { failedPrecondition, internal, notFound } from "./errors.js";
 import {
 	getSnapshotData,
 	performThreeWayMerge,
@@ -21,13 +34,13 @@ import {
 } from "./merge.js";
 
 function toProtoTimestamp(date: Date): Timestamp {
-	return {
+	return create(TimestampSchema, {
 		millis: BigInt(date.getTime()),
-	};
+	});
 }
 
 function toProtoCommit(dbCommit: typeof schema.commits.$inferSelect): Commit {
-	return {
+	return create(CommitSchema, {
 		id: dbCommit.id,
 		projectId: dbCommit.projectId,
 		branchId: dbCommit.branchId,
@@ -36,21 +49,21 @@ function toProtoCommit(dbCommit: typeof schema.commits.$inferSelect): Commit {
 		authorId: dbCommit.authorId,
 		snapshotId: dbCommit.snapshotId,
 		createdAt: toProtoTimestamp(new Date(dbCommit.createdAt)),
-	};
+	});
 }
 
 function toProtoSnapshot(
 	dbSnapshot: typeof schema.snapshots.$inferSelect,
 ): Snapshot {
-	return {
+	return create(SnapshotSchema, {
 		id: dbSnapshot.id,
 		projectId: dbSnapshot.projectId,
 		data: new TextEncoder().encode(JSON.stringify(dbSnapshot.data)),
 		createdAt: toProtoTimestamp(new Date(dbSnapshot.createdAt)),
-	};
+	});
 }
 
-export const commitServiceImpl: CommitServiceImplementation = {
+export const commitServiceImpl: ServiceImpl<typeof CommitService> = {
 	async listCommits(req): Promise<ListCommitsResponse> {
 		// Build where clause - branchId is optional
 		const whereClause = req.branchId
@@ -70,9 +83,9 @@ export const commitServiceImpl: CommitServiceImplementation = {
 			.orderBy(desc(schema.commits.createdAt))
 			.limit(pageSize);
 
-		return {
+		return create(ListCommitsResponseSchema, {
 			commits: commits.map(toProtoCommit),
-		};
+		});
 	},
 
 	async getCommit(req): Promise<GetCommitResponse> {
@@ -87,13 +100,13 @@ export const commitServiceImpl: CommitServiceImplementation = {
 		});
 
 		if (!commit) {
-			throw new ServerError(Status.NOT_FOUND, "Commit not found");
+			throw notFound( "Commit not found");
 		}
 
-		return {
+		return create(GetCommitResponseSchema, {
 			commit: toProtoCommit(commit),
 			snapshot: commit.snapshot ? toProtoSnapshot(commit.snapshot) : undefined,
-		};
+		});
 	},
 
 	async createCommit(req): Promise<CreateCommitResponse> {
@@ -113,7 +126,7 @@ export const commitServiceImpl: CommitServiceImplementation = {
 		});
 
 		if (!branch) {
-			throw new ServerError(Status.NOT_FOUND, "Branch not found");
+			throw notFound( "Branch not found");
 		}
 
 		// Create snapshot
@@ -147,9 +160,9 @@ export const commitServiceImpl: CommitServiceImplementation = {
 			})
 			.where(eq(schema.branches.id, req.branchId));
 
-		return {
+		return create(CreateCommitResponseSchema, {
 			commit: toProtoCommit(commit),
-		};
+		});
 	},
 
 	async getDiff(req): Promise<GetDiffResponse> {
@@ -166,7 +179,7 @@ export const commitServiceImpl: CommitServiceImplementation = {
 		]);
 
 		if (!sourceCommit || !targetCommit) {
-			throw new ServerError(Status.NOT_FOUND, "Commit not found");
+			throw notFound( "Commit not found");
 		}
 
 		// Get shapes from both snapshots
@@ -217,23 +230,23 @@ export const commitServiceImpl: CommitServiceImplementation = {
 			}
 		}
 
-		return {
-			source: {
+		return create(GetDiffResponseSchema, {
+			source: create(CommitSummarySchema, {
 				id: sourceCommit.id,
 				message: sourceCommit.message,
 				createdAt: toProtoTimestamp(new Date(sourceCommit.createdAt)),
-			},
-			target: {
+			}),
+			target: create(CommitSummarySchema, {
 				id: targetCommit.id,
 				message: targetCommit.message,
 				createdAt: toProtoTimestamp(new Date(targetCommit.createdAt)),
-			},
-			diff: {
+			}),
+			diff: create(DiffResultSchema, {
 				addedShapeIds,
 				removedShapeIds,
 				modifiedShapeIds,
-			},
-		};
+			}),
+		});
 	},
 
 	async checkoutCommit(req): Promise<CheckoutCommitResponse> {
@@ -249,7 +262,7 @@ export const commitServiceImpl: CommitServiceImplementation = {
 		});
 
 		if (!commit) {
-			throw new ServerError(Status.NOT_FOUND, "Commit not found");
+			throw notFound( "Commit not found");
 		}
 
 		// Verify branch exists
@@ -261,13 +274,13 @@ export const commitServiceImpl: CommitServiceImplementation = {
 		});
 
 		if (!branch) {
-			throw new ServerError(Status.NOT_FOUND, "Branch not found");
+			throw notFound( "Branch not found");
 		}
 
 		// Get snapshot data from the target commit
 		const snapshotData = commit.snapshot?.data as SnapshotData | undefined;
 		if (!snapshotData) {
-			throw new ServerError(Status.INTERNAL, "Commit snapshot not found");
+			throw internal( "Commit snapshot not found");
 		}
 
 		// Create a new snapshot with the same data
@@ -301,10 +314,10 @@ export const commitServiceImpl: CommitServiceImplementation = {
 			})
 			.where(eq(schema.branches.id, branchId));
 
-		return {
+		return create(CheckoutCommitResponseSchema, {
 			commit: toProtoCommit(newCommit),
 			restoredFrom: toProtoCommit(commit),
-		};
+		});
 	},
 
 	async revertCommit(req): Promise<RevertCommitResponse> {
@@ -319,15 +332,12 @@ export const commitServiceImpl: CommitServiceImplementation = {
 		});
 
 		if (!commitToRevert) {
-			throw new ServerError(Status.NOT_FOUND, "Commit to revert not found");
+			throw notFound( "Commit to revert not found");
 		}
 
 		// Get parent commit to revert to
 		if (!commitToRevert.parentId) {
-			throw new ServerError(
-				Status.FAILED_PRECONDITION,
-				"Cannot revert the initial commit",
-			);
+			throw failedPrecondition("Cannot revert the initial commit");
 		}
 
 		const parentCommit = await db.query.commits.findFirst({
@@ -336,10 +346,7 @@ export const commitServiceImpl: CommitServiceImplementation = {
 		});
 
 		if (!parentCommit?.snapshot) {
-			throw new ServerError(
-				Status.INTERNAL,
-				"Parent commit snapshot not found",
-			);
+			throw internal("Parent commit snapshot not found");
 		}
 
 		// Get branch
@@ -352,7 +359,7 @@ export const commitServiceImpl: CommitServiceImplementation = {
 		});
 
 		if (!branch) {
-			throw new ServerError(Status.NOT_FOUND, "Branch not found");
+			throw notFound( "Branch not found");
 		}
 
 		// Get current branch state and parent state for three-way merge
@@ -363,7 +370,7 @@ export const commitServiceImpl: CommitServiceImplementation = {
 		const revertSnapshot = await getSnapshotData(commitToRevert.snapshotId);
 
 		if (!currentSnapshot || !revertSnapshot) {
-			throw new ServerError(Status.INTERNAL, "Snapshot data not found");
+			throw internal( "Snapshot data not found");
 		}
 
 		// Perform three-way merge:
@@ -377,8 +384,7 @@ export const commitServiceImpl: CommitServiceImplementation = {
 		);
 
 		if (!mergeResult.success) {
-			throw new ServerError(
-				Status.FAILED_PRECONDITION,
+			throw failedPrecondition(
 				`Revert has conflicts: ${mergeResult.conflicts.length} shape(s) with conflicting changes`,
 			);
 		}
@@ -415,10 +421,10 @@ export const commitServiceImpl: CommitServiceImplementation = {
 			})
 			.where(eq(schema.branches.id, branchId));
 
-		return {
+		return create(RevertCommitResponseSchema, {
 			revertCommit: toProtoCommit(revertCommit),
 			revertedCommit: toProtoCommit(commitToRevert),
-		};
+		});
 	},
 
 	async cherryPick(req): Promise<CherryPickResponse> {
@@ -434,10 +440,7 @@ export const commitServiceImpl: CommitServiceImplementation = {
 		});
 
 		if (!commitToPick?.snapshot) {
-			throw new ServerError(
-				Status.NOT_FOUND,
-				"Commit to cherry-pick not found",
-			);
+			throw notFound("Commit to cherry-pick not found");
 		}
 
 		// Get parent of the commit to pick (to compute the diff/changes introduced)
@@ -458,7 +461,7 @@ export const commitServiceImpl: CommitServiceImplementation = {
 		});
 
 		if (!targetBranch) {
-			throw new ServerError(Status.NOT_FOUND, "Target branch not found");
+			throw notFound( "Target branch not found");
 		}
 
 		// Three-way merge:
@@ -481,8 +484,7 @@ export const commitServiceImpl: CommitServiceImplementation = {
 		);
 
 		if (!mergeResult.success) {
-			throw new ServerError(
-				Status.FAILED_PRECONDITION,
+			throw failedPrecondition(
 				`Cherry-pick has conflicts: ${mergeResult.conflicts.length} shape(s) with conflicting changes`,
 			);
 		}
@@ -519,9 +521,9 @@ export const commitServiceImpl: CommitServiceImplementation = {
 			})
 			.where(eq(schema.branches.id, targetBranchId));
 
-		return {
+		return create(CherryPickResponseSchema, {
 			newCommit: toProtoCommit(newCommit),
 			sourceCommit: toProtoCommit(commitToPick),
-		};
+		});
 	},
 };

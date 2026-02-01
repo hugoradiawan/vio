@@ -5,14 +5,24 @@
  * Reference: gitea/services/pull/pull.go for PR lifecycle patterns.
  */
 
+import { create } from "@bufbuild/protobuf";
+import type { ServiceImpl } from "@connectrpc/connect";
 import { and, desc, eq } from "drizzle-orm";
-import { ServerError, Status } from "nice-grpc";
 import { db, schema } from "../db";
-import type { Branch } from "../gen/vio/v1/branch.js";
-import type { Commit } from "../gen/vio/v1/commit.js";
-import type { Timestamp } from "../gen/vio/v1/common.js";
+import { BranchSchema, type Branch } from "../gen/vio/v1/branch_pb.js";
+import { CommitSchema, type Commit } from "../gen/vio/v1/commit_pb.js";
+import { TimestampSchema, type Timestamp } from "../gen/vio/v1/common_pb.js";
 import {
-	PullRequestStatus,
+	CheckMergeStatusResponseSchema,
+	ClosePullRequestResponseSchema,
+	CreatePullRequestResponseSchema,
+	GetPullRequestResponseSchema,
+	ListPullRequestsResponseSchema,
+	MergePullRequestResponseSchema,
+	PullRequestSchema, PullRequestService, PullRequestStatus,
+	ReopenPullRequestResponseSchema,
+	ResolveConflictsResponseSchema,
+	UpdatePullRequestResponseSchema,
 	type CheckMergeStatusResponse,
 	type ClosePullRequestResponse,
 	type CreatePullRequestResponse,
@@ -20,11 +30,11 @@ import {
 	type ListPullRequestsResponse,
 	type MergePullRequestResponse,
 	type PullRequest,
-	type PullRequestServiceImplementation,
 	type ReopenPullRequestResponse,
 	type ResolveConflictsResponse,
-	type UpdatePullRequestResponse,
-} from "../gen/vio/v1/pullrequest.js";
+	type UpdatePullRequestResponse
+} from "../gen/vio/v1/pullrequest_pb.js";
+import { alreadyExists, failedPrecondition, internal, invalidArgument, notFound } from "./errors.js";
 import {
 	canFastForward,
 	countCommitsDivergence,
@@ -37,9 +47,9 @@ import {
 } from "./merge.js";
 
 function toProtoTimestamp(date: Date): Timestamp {
-	return {
+	return create(TimestampSchema, {
 		millis: BigInt(date.getTime()),
-	};
+	});
 }
 
 function toProtoPullRequest(
@@ -48,16 +58,16 @@ function toProtoPullRequest(
 	let status: PullRequestStatus;
 	switch (dbPR.status) {
 		case "merged":
-			status = PullRequestStatus.PULL_REQUEST_STATUS_MERGED;
+			status = PullRequestStatus.MERGED;
 			break;
 		case "closed":
-			status = PullRequestStatus.PULL_REQUEST_STATUS_CLOSED;
+			status = PullRequestStatus.CLOSED;
 			break;
 		default:
-			status = PullRequestStatus.PULL_REQUEST_STATUS_OPEN;
+			status = PullRequestStatus.OPEN;
 	}
 
-	return {
+	return create(PullRequestSchema, {
 		id: dbPR.id,
 		projectId: dbPR.projectId,
 		sourceBranchId: dbPR.sourceBranchId,
@@ -75,11 +85,11 @@ function toProtoPullRequest(
 		closedAt: dbPR.closedAt
 			? toProtoTimestamp(new Date(dbPR.closedAt))
 			: undefined,
-	};
+	});
 }
 
 function toProtoBranch(dbBranch: typeof schema.branches.$inferSelect): Branch {
-	return {
+	return create(BranchSchema, {
 		id: dbBranch.id,
 		projectId: dbBranch.projectId,
 		name: dbBranch.name,
@@ -90,11 +100,11 @@ function toProtoBranch(dbBranch: typeof schema.branches.$inferSelect): Branch {
 		createdById: dbBranch.createdById,
 		createdAt: toProtoTimestamp(new Date(dbBranch.createdAt)),
 		updatedAt: toProtoTimestamp(new Date(dbBranch.updatedAt)),
-	};
+	});
 }
 
 function toProtoCommit(dbCommit: typeof schema.commits.$inferSelect): Commit {
-	return {
+	return create(CommitSchema, {
 		id: dbCommit.id,
 		projectId: dbCommit.projectId,
 		branchId: dbCommit.branchId,
@@ -103,10 +113,10 @@ function toProtoCommit(dbCommit: typeof schema.commits.$inferSelect): Commit {
 		authorId: dbCommit.authorId,
 		snapshotId: dbCommit.snapshotId,
 		createdAt: toProtoTimestamp(new Date(dbCommit.createdAt)),
-	};
+	});
 }
 
-export const pullRequestServiceImpl: PullRequestServiceImplementation = {
+export const pullRequestServiceImpl: ServiceImpl<typeof PullRequestService> = {
 	async listPullRequests(req): Promise<ListPullRequestsResponse> {
 		const { projectId, status, authorId, page } = req;
 
@@ -117,12 +127,12 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 
 		if (
 			status !== undefined &&
-			status !== PullRequestStatus.PULL_REQUEST_STATUS_UNSPECIFIED
+			status !== PullRequestStatus.UNSPECIFIED
 		) {
 			const dbStatus =
-				status === PullRequestStatus.PULL_REQUEST_STATUS_MERGED
+				status === PullRequestStatus.MERGED
 					? "merged"
-					: status === PullRequestStatus.PULL_REQUEST_STATUS_CLOSED
+					: status === PullRequestStatus.CLOSED
 						? "closed"
 						: "open";
 			conditions.push(eq(schema.pullRequests.status, dbStatus));
@@ -141,9 +151,9 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 			.orderBy(desc(schema.pullRequests.createdAt))
 			.limit(pageSize);
 
-		return {
+		return create(ListPullRequestsResponseSchema, {
 			pullRequests: pullRequests.map(toProtoPullRequest),
-		};
+		});
 	},
 
 	async getPullRequest(req): Promise<GetPullRequestResponse> {
@@ -157,7 +167,7 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 		});
 
 		if (!pr) {
-			throw new ServerError(Status.NOT_FOUND, "Pull request not found");
+			throw notFound( "Pull request not found");
 		}
 
 		// Get branches with snapshots for diff/merge calculation
@@ -199,12 +209,12 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 			targetSnapshot,
 		);
 
-		return {
+		return create(GetPullRequestResponseSchema, {
 			pullRequest: toProtoPullRequest(pr),
 			diff: mergeResult.diff,
 			conflicts: mergeResult.conflicts,
 			mergeable: mergeResult.success,
-		};
+		});
 	},
 
 	async createPullRequest(req): Promise<CreatePullRequestResponse> {
@@ -234,14 +244,11 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 		});
 
 		if (!sourceBranch || !targetBranch) {
-			throw new ServerError(Status.NOT_FOUND, "Branch not found");
+			throw notFound( "Branch not found");
 		}
 
 		if (sourceBranchId === targetBranchId) {
-			throw new ServerError(
-				Status.INVALID_ARGUMENT,
-				"Source and target branches must be different",
-			);
+			throw invalidArgument("Source and target branches must be different");
 		}
 
 		// Check for existing open PR with same source/target
@@ -255,10 +262,7 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 		});
 
 		if (existingPR) {
-			throw new ServerError(
-				Status.ALREADY_EXISTS,
-				"An open pull request already exists for these branches",
-			);
+			throw alreadyExists("An open pull request already exists for these branches");
 		}
 
 		// Create PR
@@ -313,11 +317,11 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 			targetSnapshot,
 		);
 
-		return {
+		return create(CreatePullRequestResponseSchema, {
 			pullRequest: toProtoPullRequest(pr),
 			diff: mergeResult.diff,
 			conflicts: mergeResult.conflicts,
-		};
+		});
 	},
 
 	async updatePullRequest(req): Promise<UpdatePullRequestResponse> {
@@ -331,14 +335,11 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 		});
 
 		if (!pr) {
-			throw new ServerError(Status.NOT_FOUND, "Pull request not found");
+			throw notFound( "Pull request not found");
 		}
 
 		if (pr.status !== "open") {
-			throw new ServerError(
-				Status.FAILED_PRECONDITION,
-				"Cannot update a closed or merged pull request",
-			);
+			throw failedPrecondition("Cannot update a closed or merged pull request");
 		}
 
 		const updateData: Partial<typeof schema.pullRequests.$inferInsert> = {
@@ -355,9 +356,9 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 			.where(eq(schema.pullRequests.id, pullRequestId))
 			.returning();
 
-		return {
+		return create(UpdatePullRequestResponseSchema, {
 			pullRequest: toProtoPullRequest(updated),
-		};
+		});
 	},
 
 	async mergePullRequest(req): Promise<MergePullRequestResponse> {
@@ -372,14 +373,11 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 		});
 
 		if (!pr) {
-			throw new ServerError(Status.NOT_FOUND, "Pull request not found");
+			throw notFound( "Pull request not found");
 		}
 
 		if (pr.status !== "open") {
-			throw new ServerError(
-				Status.FAILED_PRECONDITION,
-				"Pull request is not open",
-			);
+			throw failedPrecondition("Pull request is not open");
 		}
 
 		// Get branches
@@ -394,14 +392,11 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 		});
 
 		if (!sourceBranch || !targetBranch) {
-			throw new ServerError(Status.INTERNAL, "Branch not found");
+			throw internal( "Branch not found");
 		}
 
 		if (!sourceBranch.headCommitId) {
-			throw new ServerError(
-				Status.FAILED_PRECONDITION,
-				"Source branch has no commits",
-			);
+			throw failedPrecondition("Source branch has no commits");
 		}
 
 		// Check for fast-forward possibility
@@ -443,8 +438,7 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 		);
 
 		if (!mergeResult.success) {
-			throw new ServerError(
-				Status.FAILED_PRECONDITION,
+			throw failedPrecondition(
 				`Merge has ${mergeResult.conflicts.length} conflict(s) that must be resolved`,
 			);
 		}
@@ -485,16 +479,13 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 		});
 
 		if (!updatedPR) {
-			throw new ServerError(
-				Status.INTERNAL,
-				"Pull request not found after update",
-			);
+			throw internal("Pull request not found after update");
 		}
 
-		return {
+		return create(MergePullRequestResponseSchema, {
 			pullRequest: toProtoPullRequest(updatedPR),
 			mergeCommit: mergeCommit ? toProtoCommit(mergeCommit) : undefined,
-		};
+		});
 	},
 
 	async closePullRequest(req): Promise<ClosePullRequestResponse> {
@@ -508,14 +499,11 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 		});
 
 		if (!pr) {
-			throw new ServerError(Status.NOT_FOUND, "Pull request not found");
+			throw notFound( "Pull request not found");
 		}
 
 		if (pr.status !== "open") {
-			throw new ServerError(
-				Status.FAILED_PRECONDITION,
-				"Pull request is not open",
-			);
+			throw failedPrecondition("Pull request is not open");
 		}
 
 		const now = new Date();
@@ -529,9 +517,9 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 			.where(eq(schema.pullRequests.id, pullRequestId))
 			.returning();
 
-		return {
+		return create(ClosePullRequestResponseSchema, {
 			pullRequest: toProtoPullRequest(updated),
-		};
+		});
 	},
 
 	async reopenPullRequest(req): Promise<ReopenPullRequestResponse> {
@@ -545,21 +533,15 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 		});
 
 		if (!pr) {
-			throw new ServerError(Status.NOT_FOUND, "Pull request not found");
+			throw notFound( "Pull request not found");
 		}
 
 		if (pr.status === "merged") {
-			throw new ServerError(
-				Status.FAILED_PRECONDITION,
-				"Cannot reopen a merged pull request",
-			);
+			throw failedPrecondition("Cannot reopen a merged pull request");
 		}
 
 		if (pr.status === "open") {
-			throw new ServerError(
-				Status.FAILED_PRECONDITION,
-				"Pull request is already open",
-			);
+			throw failedPrecondition("Pull request is already open");
 		}
 
 		const [updated] = await db
@@ -572,9 +554,9 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 			.where(eq(schema.pullRequests.id, pullRequestId))
 			.returning();
 
-		return {
+		return create(ReopenPullRequestResponseSchema, {
 			pullRequest: toProtoPullRequest(updated),
-		};
+		});
 	},
 
 	async checkMergeStatus(req): Promise<CheckMergeStatusResponse> {
@@ -588,7 +570,7 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 		});
 
 		if (!pr) {
-			throw new ServerError(Status.NOT_FOUND, "Pull request not found");
+			throw notFound( "Pull request not found");
 		}
 
 		// Count commits ahead/behind
@@ -598,7 +580,7 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 		);
 
 		if (pr.status !== "open") {
-			return {
+			return create(CheckMergeStatusResponseSchema, {
 				mergeable: false,
 				reason:
 					pr.status === "merged"
@@ -607,7 +589,7 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 				conflicts: [],
 				commitsAhead: ahead,
 				commitsBehind: behind,
-			};
+			});
 		}
 
 		// Get branches with snapshots
@@ -622,13 +604,13 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 		});
 
 		if (!sourceBranch || !targetBranch) {
-			return {
+			return create(CheckMergeStatusResponseSchema, {
 				mergeable: false,
 				reason: "Source or target branch not found",
 				conflicts: [],
 				commitsAhead: ahead,
 				commitsBehind: behind,
-			};
+			});
 		}
 
 		// Get snapshots and check for conflicts
@@ -660,21 +642,21 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 		);
 
 		if (mergeResult.success) {
-			return {
+			return create(CheckMergeStatusResponseSchema, {
 				mergeable: true,
 				conflicts: [],
 				commitsAhead: ahead,
 				commitsBehind: behind,
-			};
+			});
 		}
 
-		return {
+		return create(CheckMergeStatusResponseSchema, {
 			mergeable: false,
 			reason: `Has ${mergeResult.conflicts.length} conflict(s) that need resolution`,
 			conflicts: mergeResult.conflicts,
 			commitsAhead: ahead,
 			commitsBehind: behind,
-		};
+		});
 	},
 
 	async resolveConflicts(req): Promise<ResolveConflictsResponse> {
@@ -688,14 +670,11 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 		});
 
 		if (!pr) {
-			throw new ServerError(Status.NOT_FOUND, "Pull request not found");
+			throw notFound( "Pull request not found");
 		}
 
 		if (pr.status !== "open") {
-			throw new ServerError(
-				Status.FAILED_PRECONDITION,
-				"Pull request is not open",
-			);
+			throw failedPrecondition("Pull request is not open");
 		}
 
 		// Get branches with snapshots
@@ -710,7 +689,7 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 		});
 
 		if (!sourceBranch || !targetBranch) {
-			throw new ServerError(Status.INTERNAL, "Branch not found");
+			throw internal( "Branch not found");
 		}
 
 		// Get snapshots
@@ -843,10 +822,7 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 		});
 
 		if (!updatedPR) {
-			throw new ServerError(
-				Status.INTERNAL,
-				"Pull request not found after update",
-			);
+			throw internal("Pull request not found after update");
 		}
 
 		// Check if there are any remaining unresolved conflicts
@@ -859,10 +835,10 @@ export const pullRequestServiceImpl: PullRequestServiceImplementation = {
 			return !allResolved;
 		});
 
-		return {
+		return create(ResolveConflictsResponseSchema, {
 			pullRequest: toProtoPullRequest(updatedPR),
 			remainingConflicts,
 			mergeable: remainingConflicts.length === 0,
-		};
+		});
 	},
 };

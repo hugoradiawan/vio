@@ -1,28 +1,36 @@
+import { create } from "@bufbuild/protobuf";
+import type { ServiceImpl } from "@connectrpc/connect";
 import { eq } from "drizzle-orm";
-import { ServerError, Status } from "nice-grpc";
 import { db, schema } from "../db";
-import type { Branch } from "../gen/vio/v1/branch.js";
-import type { Empty, Timestamp } from "../gen/vio/v1/common.js";
-import type {
-	CreateProjectResponse,
-	Frame,
-	GetProjectResponse,
-	ListProjectsResponse,
-	Project,
-	ProjectServiceImplementation,
-	UpdateProjectResponse,
-} from "../gen/vio/v1/project.js";
+import { BranchSchema, type Branch } from "../gen/vio/v1/branch_pb.js";
+import { EmptySchema, TimestampSchema, type Empty, type Timestamp } from "../gen/vio/v1/common_pb.js";
+import {
+	CreateProjectResponseSchema,
+	FrameSchema,
+	GetProjectResponseSchema,
+	ListProjectsResponseSchema,
+	ProjectSchema,
+	ProjectService,
+	UpdateProjectResponseSchema,
+	type CreateProjectResponse,
+	type Frame,
+	type GetProjectResponse,
+	type ListProjectsResponse,
+	type Project,
+	type UpdateProjectResponse,
+} from "../gen/vio/v1/project_pb.js";
+import { notFound } from "./errors.js";
 
 function toProtoTimestamp(date: Date): Timestamp {
-	return {
+	return create(TimestampSchema, {
 		millis: BigInt(date.getTime()),
-	};
+	});
 }
 
 function toProtoProject(
 	dbProject: typeof schema.projects.$inferSelect,
 ): Project {
-	return {
+	return create(ProjectSchema, {
 		id: dbProject.id,
 		name: dbProject.name,
 		description: dbProject.description ?? undefined,
@@ -32,11 +40,11 @@ function toProtoProject(
 		defaultBranchId: dbProject.defaultBranchId ?? undefined,
 		createdAt: toProtoTimestamp(new Date(dbProject.createdAt)),
 		updatedAt: toProtoTimestamp(new Date(dbProject.updatedAt)),
-	};
+	});
 }
 
 function toProtoBranch(dbBranch: typeof schema.branches.$inferSelect): Branch {
-	return {
+	return create(BranchSchema, {
 		id: dbBranch.id,
 		projectId: dbBranch.projectId,
 		name: dbBranch.name,
@@ -47,11 +55,11 @@ function toProtoBranch(dbBranch: typeof schema.branches.$inferSelect): Branch {
 		createdById: dbBranch.createdById,
 		createdAt: toProtoTimestamp(new Date(dbBranch.createdAt)),
 		updatedAt: toProtoTimestamp(new Date(dbBranch.updatedAt)),
-	};
+	});
 }
 
 function toProtoFrame(dbFrame: typeof schema.frames.$inferSelect): Frame {
-	return {
+	return create(FrameSchema, {
 		id: dbFrame.id,
 		projectId: dbFrame.projectId,
 		name: dbFrame.name,
@@ -62,17 +70,17 @@ function toProtoFrame(dbFrame: typeof schema.frames.$inferSelect): Frame {
 		backgroundColor: dbFrame.backgroundColor ?? undefined,
 		clipContent: dbFrame.clipContent,
 		sortOrder: dbFrame.sortOrder,
-	};
+	});
 }
 
-export const projectServiceImpl: ProjectServiceImplementation = {
+export const projectServiceImpl: ServiceImpl<typeof ProjectService> = {
 	async listProjects(req): Promise<ListProjectsResponse> {
 		// In production, filter by ownerId from auth context
 		const projects = await db.select().from(schema.projects);
 
-		return {
+		return create(ListProjectsResponseSchema, {
 			projects: projects.map(toProtoProject),
-		};
+		});
 	},
 
 	async getProject(req): Promise<GetProjectResponse> {
@@ -85,14 +93,14 @@ export const projectServiceImpl: ProjectServiceImplementation = {
 		});
 
 		if (!project) {
-			throw new ServerError(Status.NOT_FOUND, "Project not found");
+			throw notFound("Project not found");
 		}
 
-		return {
+		return create(GetProjectResponseSchema, {
 			project: toProtoProject(project),
 			branches: project.branches.map(toProtoBranch),
 			frames: project.frames.map(toProtoFrame),
-		};
+		});
 	},
 
 	async createProject(req): Promise<CreateProjectResponse> {
@@ -134,12 +142,12 @@ export const projectServiceImpl: ProjectServiceImplementation = {
 			height: 600,
 		});
 
-		return {
+		return create(CreateProjectResponseSchema, {
 			project: toProtoProject({
 				...project,
 				defaultBranchId: mainBranch.id,
 			}),
-		};
+		});
 	},
 
 	async updateProject(req): Promise<UpdateProjectResponse> {
@@ -158,12 +166,12 @@ export const projectServiceImpl: ProjectServiceImplementation = {
 			.returning();
 
 		if (!updated) {
-			throw new ServerError(Status.NOT_FOUND, "Project not found");
+			throw notFound("Project not found");
 		}
 
-		return {
+		return create(UpdateProjectResponseSchema, {
 			project: toProtoProject(updated),
-		};
+		});
 	},
 
 	async deleteProject(req): Promise<Empty> {
@@ -174,10 +182,10 @@ export const projectServiceImpl: ProjectServiceImplementation = {
 			.returning();
 
 		if (!deleted) {
-			throw new ServerError(Status.NOT_FOUND, "Project not found");
+			throw notFound("Project not found");
 		}
 
 		// Return empty response
-		return {};
+		return create(EmptySchema, {});
 	},
 };

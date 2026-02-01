@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:grpc/grpc_or_grpcweb.dart';
+import 'package:grpc/grpc.dart';
 
 import '../../gen/vio/v1/auth.pbgrpc.dart';
 import '../../gen/vio/v1/branch.pbgrpc.dart';
@@ -55,7 +55,7 @@ class GrpcClient {
   /// Get the singleton instance
   static GrpcClient get instance => _instance ??= GrpcClient._();
 
-  GrpcOrGrpcWebClientChannel? _channel;
+  ClientChannel? _channel;
   bool _initialized = false;
 
   // Service clients
@@ -79,12 +79,16 @@ class GrpcClient {
     final effectivePort = port ?? GrpcConfig.port;
     final effectiveUseTls = useTls ?? GrpcConfig.useTls;
 
-    // Use GrpcOrGrpcWebClientChannel for cross-platform support
-    // On web, this uses gRPC-Web; on native platforms, it uses native gRPC
-    _channel = GrpcOrGrpcWebClientChannel.toSingleEndpoint(
-      host: effectiveHost,
+    // Use native gRPC ClientChannel for desktop platforms
+    // For development without TLS, use insecure channel
+    _channel = ClientChannel(
+      effectiveHost,
       port: effectivePort,
-      transportSecure: effectiveUseTls,
+      options: ChannelOptions(
+        credentials: effectiveUseTls
+            ? const ChannelCredentials.secure()
+            : const ChannelCredentials.insecure(),
+      ),
     );
 
     // Initialize all service clients

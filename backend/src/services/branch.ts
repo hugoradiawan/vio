@@ -1,22 +1,27 @@
+import { create } from "@bufbuild/protobuf";
+import type { ServiceImpl } from "@connectrpc/connect";
 import { and, eq } from "drizzle-orm";
-import { ServerError, Status } from "nice-grpc";
 import { db, schema } from "../db";
-import type {
-	Branch,
-	BranchServiceImplementation,
-	CompareBranchesResponse,
-	CreateBranchResponse,
-	GetBranchResponse,
-	ListBranchesResponse,
-	MergeBranchesResponse,
-	UpdateBranchResponse,
-} from "../gen/vio/v1/branch.js";
-import type { Commit } from "../gen/vio/v1/commit.js";
 import {
-	MergeStrategy,
-	type Empty,
-	type Timestamp,
-} from "../gen/vio/v1/common.js";
+	BranchSchema,
+	BranchService,
+	CompareBranchesResponseSchema,
+	CreateBranchResponseSchema,
+	GetBranchResponseSchema,
+	ListBranchesResponseSchema,
+	MergeBranchesResponseSchema,
+	UpdateBranchResponseSchema,
+	type Branch,
+	type CompareBranchesResponse,
+	type CreateBranchResponse,
+	type GetBranchResponse,
+	type ListBranchesResponse,
+	type MergeBranchesResponse,
+	type UpdateBranchResponse,
+} from "../gen/vio/v1/branch_pb.js";
+import { CommitSchema, type Commit } from "../gen/vio/v1/commit_pb.js";
+import { EmptySchema, MergeStrategy, TimestampSchema, type Empty, type Timestamp } from "../gen/vio/v1/common_pb.js";
+import { alreadyExists, failedPrecondition, internal, notFound } from "./errors.js";
 import {
 	canFastForward,
 	countCommitsDivergence,
@@ -28,13 +33,13 @@ import {
 } from "./merge.js";
 
 function toProtoTimestamp(date: Date): Timestamp {
-	return {
+	return create(TimestampSchema, {
 		millis: BigInt(date.getTime()),
-	};
+	});
 }
 
 function toProtoBranch(dbBranch: typeof schema.branches.$inferSelect): Branch {
-	return {
+	return create(BranchSchema, {
 		id: dbBranch.id,
 		projectId: dbBranch.projectId,
 		name: dbBranch.name,
@@ -45,11 +50,11 @@ function toProtoBranch(dbBranch: typeof schema.branches.$inferSelect): Branch {
 		createdById: dbBranch.createdById,
 		createdAt: toProtoTimestamp(new Date(dbBranch.createdAt)),
 		updatedAt: toProtoTimestamp(new Date(dbBranch.updatedAt)),
-	};
+	});
 }
 
 function toProtoCommit(dbCommit: typeof schema.commits.$inferSelect): Commit {
-	return {
+	return create(CommitSchema, {
 		id: dbCommit.id,
 		projectId: dbCommit.projectId,
 		branchId: dbCommit.branchId,
@@ -58,19 +63,19 @@ function toProtoCommit(dbCommit: typeof schema.commits.$inferSelect): Commit {
 		authorId: dbCommit.authorId,
 		snapshotId: dbCommit.snapshotId,
 		createdAt: toProtoTimestamp(new Date(dbCommit.createdAt)),
-	};
+	});
 }
 
-export const branchServiceImpl: BranchServiceImplementation = {
+export const branchServiceImpl: ServiceImpl<typeof BranchService> = {
 	async listBranches(req): Promise<ListBranchesResponse> {
 		const branches = await db
 			.select()
 			.from(schema.branches)
 			.where(eq(schema.branches.projectId, req.projectId));
 
-		return {
+		return create(ListBranchesResponseSchema, {
 			branches: branches.map(toProtoBranch),
-		};
+		});
 	},
 
 	async getBranch(req): Promise<GetBranchResponse> {
@@ -85,15 +90,15 @@ export const branchServiceImpl: BranchServiceImplementation = {
 		});
 
 		if (!branch) {
-			throw new ServerError(Status.NOT_FOUND, "Branch not found");
+			throw notFound("Branch not found");
 		}
 
-		return {
+		return create(GetBranchResponseSchema, {
 			branch: toProtoBranch(branch),
 			headCommit: branch.headCommit
 				? toProtoCommit(branch.headCommit)
 				: undefined,
-		};
+		});
 	},
 
 	async createBranch(req): Promise<CreateBranchResponse> {
@@ -106,10 +111,7 @@ export const branchServiceImpl: BranchServiceImplementation = {
 		});
 
 		if (existing) {
-			throw new ServerError(
-				Status.ALREADY_EXISTS,
-				"Branch with this name already exists",
-			);
+			throw alreadyExists("Branch with this name already exists");
 		}
 
 		// Get source branch to copy head commit
@@ -134,9 +136,9 @@ export const branchServiceImpl: BranchServiceImplementation = {
 			})
 			.returning();
 
-		return {
+		return create(CreateBranchResponseSchema, {
 			branch: toProtoBranch(branch),
-		};
+		});
 	},
 
 	async updateBranch(req): Promise<UpdateBranchResponse> {
@@ -160,12 +162,12 @@ export const branchServiceImpl: BranchServiceImplementation = {
 			.returning();
 
 		if (!updated) {
-			throw new ServerError(Status.NOT_FOUND, "Branch not found");
+			throw notFound("Branch not found");
 		}
 
-		return {
+		return create(UpdateBranchResponseSchema, {
 			branch: toProtoBranch(updated),
-		};
+		});
 	},
 
 	async deleteBranch(req): Promise<Empty> {
@@ -178,28 +180,22 @@ export const branchServiceImpl: BranchServiceImplementation = {
 		});
 
 		if (!branch) {
-			throw new ServerError(Status.NOT_FOUND, "Branch not found");
+			throw notFound("Branch not found");
 		}
 
 		if (branch.isDefault) {
-			throw new ServerError(
-				Status.FAILED_PRECONDITION,
-				"Cannot delete the default branch",
-			);
+			throw failedPrecondition("Cannot delete the default branch");
 		}
 
 		if (branch.isProtected) {
-			throw new ServerError(
-				Status.FAILED_PRECONDITION,
-				"Cannot delete a protected branch",
-			);
+			throw failedPrecondition("Cannot delete a protected branch");
 		}
 
 		await db
 			.delete(schema.branches)
 			.where(eq(schema.branches.id, req.branchId));
 
-		return {};
+		return create(EmptySchema, {});
 	},
 
 	async mergeBranches(req): Promise<MergeBranchesResponse> {
@@ -230,26 +226,20 @@ export const branchServiceImpl: BranchServiceImplementation = {
 		});
 
 		if (!sourceBranch || !targetBranch) {
-			throw new ServerError(Status.NOT_FOUND, "Branch not found");
+			throw notFound("Branch not found");
 		}
 
 		if (!sourceBranch.headCommitId) {
-			throw new ServerError(
-				Status.FAILED_PRECONDITION,
-				"Source branch has no commits",
-			);
+			throw failedPrecondition("Source branch has no commits");
 		}
 
 		// Check for fast-forward possibility
 		const isFastForward = await canFastForward(sourceBranchId, targetBranchId);
 
 		// Handle fast-forward strategy
-		if (strategy === MergeStrategy.MERGE_STRATEGY_FAST_FORWARD) {
+		if (strategy === MergeStrategy.FAST_FORWARD) {
 			if (!isFastForward) {
-				throw new ServerError(
-					Status.FAILED_PRECONDITION,
-					"Fast-forward merge not possible, branches have diverged",
-				);
+				throw failedPrecondition("Fast-forward merge not possible, branches have diverged");
 			}
 
 			await performFastForward(targetBranchId, sourceBranch.headCommitId);
@@ -260,14 +250,14 @@ export const branchServiceImpl: BranchServiceImplementation = {
 			});
 
 			if (!updatedBranch) {
-				throw new ServerError(Status.INTERNAL, "Branch not found after update");
+				throw internal("Branch not found after update");
 			}
 
-			return {
+			return create(MergeBranchesResponseSchema, {
 				targetBranch: toProtoBranch(updatedBranch),
 				mergeCommit: undefined,
 				wasFastForward: true,
-			};
+			});
 		}
 
 		// Perform actual merge
@@ -289,7 +279,7 @@ export const branchServiceImpl: BranchServiceImplementation = {
 			: { shapes: [] };
 
 		if (!sourceSnapshot) {
-			throw new ServerError(Status.INTERNAL, "Source snapshot not found");
+			throw internal("Source snapshot not found");
 		}
 
 		// Perform three-way merge
@@ -300,8 +290,7 @@ export const branchServiceImpl: BranchServiceImplementation = {
 		);
 
 		if (!mergeResult.success) {
-			throw new ServerError(
-				Status.FAILED_PRECONDITION,
+			throw failedPrecondition(
 				`Merge has conflicts: ${mergeResult.conflicts.length} shape(s) with conflicting changes`,
 			);
 		}
@@ -324,14 +313,14 @@ export const branchServiceImpl: BranchServiceImplementation = {
 		});
 
 		if (!updatedBranch) {
-			throw new ServerError(Status.INTERNAL, "Branch not found after update");
+			throw internal("Branch not found after update");
 		}
 
-		return {
+		return create(MergeBranchesResponseSchema, {
 			targetBranch: toProtoBranch(updatedBranch),
 			mergeCommit: toProtoCommit(mergeCommit),
 			wasFastForward: false,
-		};
+		});
 	},
 
 	async compareBranches(req): Promise<CompareBranchesResponse> {
@@ -355,7 +344,7 @@ export const branchServiceImpl: BranchServiceImplementation = {
 		});
 
 		if (!baseBranch || !headBranch) {
-			throw new ServerError(Status.NOT_FOUND, "Branch not found");
+			throw notFound("Branch not found");
 		}
 
 		// Find common ancestor
@@ -387,13 +376,13 @@ export const branchServiceImpl: BranchServiceImplementation = {
 			baseHeadSnapshot ?? { shapes: [] },
 		);
 
-		return {
+		return create(CompareBranchesResponseSchema, {
 			commonAncestorId: commonAncestor?.id,
 			commitsAhead: ahead,
 			commitsBehind: behind,
 			diff: mergeResult.diff,
 			mergeable: mergeResult.success,
 			conflicts: mergeResult.conflicts,
-		};
+		});
 	},
 };

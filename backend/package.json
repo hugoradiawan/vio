@@ -1,7 +1,7 @@
 {
   "name": "vio-backend",
-  "version": "0.3.0",
-  "description": "Vio Backend - Native gRPC Server with Git-like Version Control",
+  "version": "0.4.0",
+  "description": "Vio Backend - ConnectRPC Server with Git-like Version Control",
   "type": "module",
   "scripts": {
     "dev": "bun run --watch src/index.ts",
@@ -19,18 +19,17 @@
     "format": "bunx @biomejs/biome format --write ./src"
   },
   "dependencies": {
-    "@grpc/grpc-js": "^1.12.6",
-    "@grpc/reflection": "^1.0.4",
+    "@bufbuild/protobuf": "^2.0.0",
+    "@connectrpc/connect": "^2.0.0",
+    "@connectrpc/connect-node": "^2.0.0",
     "drizzle-orm": "^0.45.1",
-    "nanoid": "^5.0.9",
-    "nice-grpc": "^2.1.11",
-    "nice-grpc-server-reflection": "^3.0.3"
+    "nanoid": "^5.0.9"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@bufbuild/protoc-gen-es": "^2.0.0",
     "@types/bun": "^1.2.4",
     "drizzle-kit": "^0.30.5",
-    "ts-proto": "^2.6.1",
     "typescript": "^5.7.3"
   },
   "license": "MPL-2.0"

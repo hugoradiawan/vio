@@ -12,14 +12,18 @@
  * Reference: gitea/services/pull/merge.go for merge workflow patterns
  */
 
+import { create } from "@bufbuild/protobuf";
 import { eq } from "drizzle-orm";
 import { db, schema } from "../db";
-import type { DiffResult } from "../gen/vio/v1/commit.js";
-import type {
-	PropertyConflict,
-	ShapeConflict,
-	Timestamp,
-} from "../gen/vio/v1/common.js";
+import { DiffResultSchema, type DiffResult } from "../gen/vio/v1/commit_pb.js";
+import {
+	PropertyConflictSchema,
+	ShapeConflictSchema,
+	TimestampSchema,
+	type PropertyConflict,
+	type ShapeConflict,
+	type Timestamp,
+} from "../gen/vio/v1/common_pb.js";
 
 // Type alias for commit records from database
 type CommitRecord = typeof schema.commits.$inferSelect;
@@ -174,11 +178,11 @@ export function calculateDiff(
 		}
 	}
 
-	return {
+	return create(DiffResultSchema, {
 		addedShapeIds,
 		removedShapeIds,
 		modifiedShapeIds,
-	};
+	});
 }
 
 /**
@@ -208,12 +212,12 @@ function compareProperty(
 	}
 
 	// Conflict: both sides changed the same property differently
-	return {
+	return create(PropertyConflictSchema, {
 		propertyName,
 		baseValue: baseStr,
 		sourceValue: sourceStr,
 		targetValue: targetStr,
-	};
+	});
 }
 
 /**
@@ -365,12 +369,12 @@ export function performThreeWayMerge(
 		}
 
 		if (conflicts.length > 0) {
-			allConflicts.push({
+			allConflicts.push(create(ShapeConflictSchema, {
 				shapeId,
 				shapeName: mergedShape?.name ?? baseShape?.name ?? "Unknown",
 				shapeType: mergedShape?.type ?? baseShape?.type ?? "unknown",
 				propertyConflicts: conflicts,
-			});
+			}));
 		}
 	}
 
@@ -542,7 +546,7 @@ export async function performFastForward(
 
 // Helper to convert DB timestamp to proto Timestamp
 export function toProtoTimestamp(date: Date): Timestamp {
-	return {
+	return create(TimestampSchema, {
 		millis: BigInt(date.getTime()),
-	};
+	});
 }

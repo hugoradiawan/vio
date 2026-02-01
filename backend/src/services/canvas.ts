@@ -3,37 +3,28 @@
  * Handles canvas state, sync, and bidirectional streaming for presence.
  */
 
+import { create } from "@bufbuild/protobuf";
+import type { ServiceImpl } from "@connectrpc/connect";
 import { and, asc, eq } from "drizzle-orm";
-import { ServerError, Status } from "nice-grpc";
 import { db, schema } from "../db";
-import type {
-	CanvasServiceImplementation,
-	CanvasState,
-	CanvasUpdate,
-	CollaborateResponse,
-	CursorMoved,
-	CursorPosition,
-	GetCanvasStateResponse,
-	SelectionChanged,
-	SessionJoined,
-	ShapeCreated,
-	ShapeDeleted,
-	ShapeUpdated,
-	SyncAck,
-	SyncChangesResponse,
-	SyncOperation,
-	UserJoined,
-	UserLeft,
-	UserPresence,
-} from "../gen/vio/v1/canvas.js";
-import { OperationType } from "../gen/vio/v1/canvas.js";
-import type { Fill, Stroke, Timestamp } from "../gen/vio/v1/common.js";
 import {
+	CanvasService, CanvasStateSchema, CanvasUpdateSchema, ClearWorkingCopyResponseSchema, CollaborateResponseSchema, CursorMovedSchema, CursorPositionSchema, GetCanvasStateResponseSchema, OperationType, RestoreFromSnapshotResponseSchema, SelectionChangedSchema, SessionJoinedSchema, ShapeCreatedSchema, ShapeDeletedSchema, ShapeUpdatedSchema, SyncAckSchema, SyncChangesResponseSchema, UserJoinedSchema, UserLeftSchema, UserPresenceSchema, type CanvasUpdate, type CollaborateResponse, type CursorPosition, type GetCanvasStateResponse, type SyncChangesResponse,
+	type SyncOperation, type UserPresence
+} from "../gen/vio/v1/canvas_pb.js";
+import {
+	FillSchema,
 	StrokeAlignment,
 	StrokeCap,
 	StrokeJoin,
-} from "../gen/vio/v1/common.js";
-import { ShapeType, type Shape } from "../gen/vio/v1/shape.js";
+	StrokeSchema,
+	TimestampSchema,
+	TransformSchema,
+	type Fill,
+	type Stroke,
+	type Timestamp,
+} from "../gen/vio/v1/common_pb.js";
+import { ShapeSchema, ShapeType, type Shape } from "../gen/vio/v1/shape_pb.js";
+import { invalidArgument, notFound } from "./errors.js";
 
 // ============================================================================
 // Collaboration State (in-memory for now)
@@ -82,14 +73,14 @@ setInterval(() => {
 			collaborators.delete(id);
 
 			// Broadcast user left
-			const update: CanvasUpdate = {
+			const update = create(CanvasUpdateSchema, {
 				update: {
-					$case: "userLeft",
-					userLeft: { userId: id } as UserLeft,
+					case: "userLeft",
+					value: create(UserLeftSchema, { userId: id }),
 				},
 				version: BigInt(now),
 				timestamp: new Date(now).toISOString(),
-			};
+			});
 			broadcastUpdate(collab.projectId, collab.branchId, update);
 		}
 	}
@@ -101,38 +92,38 @@ setInterval(() => {
 
 function stringToShapeType(type: string): ShapeType {
 	const mapping: Record<string, ShapeType> = {
-		rectangle: ShapeType.SHAPE_TYPE_RECTANGLE,
-		ellipse: ShapeType.SHAPE_TYPE_ELLIPSE,
-		path: ShapeType.SHAPE_TYPE_PATH,
-		text: ShapeType.SHAPE_TYPE_TEXT,
-		frame: ShapeType.SHAPE_TYPE_FRAME,
-		group: ShapeType.SHAPE_TYPE_GROUP,
-		image: ShapeType.SHAPE_TYPE_IMAGE,
-		svg: ShapeType.SHAPE_TYPE_SVG,
-		bool: ShapeType.SHAPE_TYPE_BOOL,
+		rectangle: ShapeType.RECTANGLE,
+		ellipse: ShapeType.ELLIPSE,
+		path: ShapeType.PATH,
+		text: ShapeType.TEXT,
+		frame: ShapeType.FRAME,
+		group: ShapeType.GROUP,
+		image: ShapeType.IMAGE,
+		svg: ShapeType.SVG,
+		bool: ShapeType.BOOL,
 	};
-	return mapping[type.toLowerCase()] ?? ShapeType.SHAPE_TYPE_UNSPECIFIED;
+	return mapping[type.toLowerCase()] ?? ShapeType.UNSPECIFIED;
 }
 
 function shapeTypeToString(type: ShapeType): string {
 	switch (type) {
-		case ShapeType.SHAPE_TYPE_RECTANGLE:
+		case ShapeType.RECTANGLE:
 			return "rectangle";
-		case ShapeType.SHAPE_TYPE_ELLIPSE:
+		case ShapeType.ELLIPSE:
 			return "ellipse";
-		case ShapeType.SHAPE_TYPE_PATH:
+		case ShapeType.PATH:
 			return "path";
-		case ShapeType.SHAPE_TYPE_TEXT:
+		case ShapeType.TEXT:
 			return "text";
-		case ShapeType.SHAPE_TYPE_FRAME:
+		case ShapeType.FRAME:
 			return "frame";
-		case ShapeType.SHAPE_TYPE_GROUP:
+		case ShapeType.GROUP:
 			return "group";
-		case ShapeType.SHAPE_TYPE_IMAGE:
+		case ShapeType.IMAGE:
 			return "image";
-		case ShapeType.SHAPE_TYPE_SVG:
+		case ShapeType.SVG:
 			return "svg";
-		case ShapeType.SHAPE_TYPE_BOOL:
+		case ShapeType.BOOL:
 			return "bool";
 		default:
 			return "unspecified";
@@ -141,22 +132,22 @@ function shapeTypeToString(type: ShapeType): string {
 
 function stringToStrokeAlignment(alignment: string): StrokeAlignment {
 	const mapping: Record<string, StrokeAlignment> = {
-		center: StrokeAlignment.STROKE_ALIGNMENT_CENTER,
-		inside: StrokeAlignment.STROKE_ALIGNMENT_INSIDE,
-		outside: StrokeAlignment.STROKE_ALIGNMENT_OUTSIDE,
+		center: StrokeAlignment.CENTER,
+		inside: StrokeAlignment.INSIDE,
+		outside: StrokeAlignment.OUTSIDE,
 	};
 	return (
-		mapping[alignment.toLowerCase()] ?? StrokeAlignment.STROKE_ALIGNMENT_CENTER
+		mapping[alignment.toLowerCase()] ?? StrokeAlignment.CENTER
 	);
 }
 
 function strokeAlignmentToString(alignment: StrokeAlignment): string {
 	switch (alignment) {
-		case StrokeAlignment.STROKE_ALIGNMENT_CENTER:
+		case StrokeAlignment.CENTER:
 			return "center";
-		case StrokeAlignment.STROKE_ALIGNMENT_INSIDE:
+		case StrokeAlignment.INSIDE:
 			return "inside";
-		case StrokeAlignment.STROKE_ALIGNMENT_OUTSIDE:
+		case StrokeAlignment.OUTSIDE:
 			return "outside";
 		default:
 			return "center";
@@ -164,7 +155,7 @@ function strokeAlignmentToString(alignment: StrokeAlignment): string {
 }
 
 function toProtoTimestamp(date: Date): Timestamp {
-	return { millis: BigInt(date.getTime()) };
+	return create(TimestampSchema, { millis: BigInt(date.getTime()) });
 }
 
 interface DbFill {
@@ -180,23 +171,25 @@ interface DbStroke {
 }
 
 function toProtoShape(dbShape: typeof schema.shapes.$inferSelect): Shape {
-	const fills: Fill[] = ((dbShape.fills as DbFill[]) || []).map((f) => ({
-		color: f.color ?? 0,
-		opacity: f.opacity ?? 1.0,
-	}));
+	const fills: Fill[] = ((dbShape.fills as DbFill[]) || []).map((f) =>
+		create(FillSchema, {
+			color: f.color ?? 0,
+			opacity: f.opacity ?? 1.0,
+		}),
+	);
 
-	const strokes: Stroke[] = ((dbShape.strokes as DbStroke[]) || []).map(
-		(st) => ({
+	const strokes: Stroke[] = ((dbShape.strokes as DbStroke[]) || []).map((st) =>
+		create(StrokeSchema, {
 			color: st.color ?? 0,
 			width: st.width ?? 1.0,
 			opacity: st.opacity ?? 1.0,
 			alignment: stringToStrokeAlignment(st.alignment ?? "center"),
-			cap: StrokeCap.STROKE_CAP_ROUND,
-			join: StrokeJoin.STROKE_JOIN_ROUND,
+			cap: StrokeCap.ROUND,
+			join: StrokeJoin.ROUND,
 		}),
 	);
 
-	return {
+	return create(ShapeSchema, {
 		id: dbShape.id,
 		projectId: dbShape.projectId,
 		frameId: dbShape.frameId ?? undefined,
@@ -208,14 +201,14 @@ function toProtoShape(dbShape: typeof schema.shapes.$inferSelect): Shape {
 		width: dbShape.width,
 		height: dbShape.height,
 		rotation: dbShape.rotation,
-		transform: {
+		transform: create(TransformSchema, {
 			a: dbShape.transformA,
 			b: dbShape.transformB,
 			c: dbShape.transformC,
 			d: dbShape.transformD,
 			e: dbShape.transformE,
 			f: dbShape.transformF,
-		},
+		}),
 		fills,
 		strokes,
 		opacity: dbShape.opacity,
@@ -227,7 +220,7 @@ function toProtoShape(dbShape: typeof schema.shapes.$inferSelect): Shape {
 		),
 		createdAt: toProtoTimestamp(new Date(dbShape.createdAt)),
 		updatedAt: toProtoTimestamp(new Date(dbShape.updatedAt)),
-	};
+	});
 }
 
 async function processOperation(
@@ -237,7 +230,7 @@ async function processOperation(
 	try {
 		const opType = op.type;
 
-		if (opType === OperationType.OPERATION_TYPE_CREATE) {
+		if (opType === OperationType.CREATE) {
 			if (op.shape) {
 				const [created] = await db
 					.insert(schema.shapes)
@@ -281,14 +274,14 @@ async function processOperation(
 					.returning();
 				return toProtoShape(created);
 			}
-		} else if (opType === OperationType.OPERATION_TYPE_UPDATE) {
+		} else if (opType === OperationType.UPDATE) {
 			if (op.shape) {
 				const updateData: Record<string, unknown> = { updatedAt: new Date() };
 				if (op.shape.frameId !== undefined)
 					updateData.frameId = op.shape.frameId || null;
 				if (op.shape.parentId !== undefined)
 					updateData.parentId = op.shape.parentId || null;
-				if (op.shape.type !== ShapeType.SHAPE_TYPE_UNSPECIFIED)
+				if (op.shape.type !== ShapeType.UNSPECIFIED)
 					updateData.type = shapeTypeToString(op.shape.type);
 				if (op.shape.name) updateData.name = op.shape.name;
 				if (op.shape.x !== undefined) updateData.x = op.shape.x;
@@ -348,7 +341,7 @@ async function processOperation(
 					.returning();
 				return updated ? toProtoShape(updated) : null;
 			}
-		} else if (opType === OperationType.OPERATION_TYPE_DELETE) {
+		} else if (opType === OperationType.DELETE) {
 			await db
 				.delete(schema.shapes)
 				.where(
@@ -371,17 +364,14 @@ async function processOperation(
 // Service Implementation
 // ============================================================================
 
-export const canvasServiceImpl: CanvasServiceImplementation = {
+export const canvasServiceImpl: ServiceImpl<typeof CanvasService> = {
 	// Get current canvas state
 	// IMPORTANT: This now reads from the branch's head commit snapshot, NOT the
 	// shapes table directly. This ensures branch-consistent state and prevents
 	// race conditions during branch switching.
 	async getCanvasState(req): Promise<GetCanvasStateResponse> {
 		if (!req.projectId || !req.branchId) {
-			throw new ServerError(
-				Status.INVALID_ARGUMENT,
-				"Project ID and Branch ID are required",
-			);
+			throw invalidArgument("Project ID and Branch ID are required");
 		}
 
 		// Verify project exists
@@ -390,7 +380,7 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 		});
 
 		if (!project) {
-			throw new ServerError(Status.NOT_FOUND, "Project not found");
+			throw notFound( "Project not found");
 		}
 
 		// Get branch with head commit info
@@ -402,7 +392,7 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 		});
 
 		if (!branch) {
-			throw new ServerError(Status.NOT_FOUND, "Branch not found");
+			throw notFound( "Branch not found");
 		}
 
 		const version = branch.updatedAt
@@ -430,25 +420,26 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 					// Convert snapshot shapes to proto format
 					const protoShapes: Shape[] = snapshotShapes.map((shape) => {
 						// Parse fills and strokes from snapshot format
-						const fills: Fill[] = ((shape.fills as DbFill[]) || []).map(
-							(f) => ({
+						const fills: Fill[] = ((shape.fills as DbFill[]) || []).map((f) =>
+							create(FillSchema, {
 								color: f.color ?? 0,
 								opacity: f.opacity ?? 1.0,
 							}),
 						);
 
 						const strokes: Stroke[] = ((shape.strokes as DbStroke[]) || []).map(
-							(st) => ({
-								color: st.color ?? 0,
-								width: st.width ?? 1.0,
-								opacity: st.opacity ?? 1.0,
-								alignment: stringToStrokeAlignment(st.alignment ?? "center"),
-								cap: StrokeCap.STROKE_CAP_ROUND,
-								join: StrokeJoin.STROKE_JOIN_ROUND,
-							}),
+							(st) =>
+								create(StrokeSchema, {
+									color: st.color ?? 0,
+									width: st.width ?? 1.0,
+									opacity: st.opacity ?? 1.0,
+									alignment: stringToStrokeAlignment(st.alignment ?? "center"),
+									cap: StrokeCap.ROUND,
+									join: StrokeJoin.ROUND,
+								}),
 						);
 
-						return {
+						return create(ShapeSchema, {
 							id: shape.id as string,
 							projectId: req.projectId,
 							frameId: (shape.frameId as string) || undefined,
@@ -460,14 +451,14 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 							width: (shape.width as number) || 100,
 							height: (shape.height as number) || 100,
 							rotation: (shape.rotation as number) || 0,
-							transform: {
+							transform: create(TransformSchema, {
 								a: (shape.transformA as number) ?? 1,
 								b: (shape.transformB as number) ?? 0,
 								c: (shape.transformC as number) ?? 0,
 								d: (shape.transformD as number) ?? 1,
 								e: (shape.transformE as number) ?? 0,
 								f: (shape.transformF as number) ?? 0,
-							},
+							}),
 							fills,
 							strokes,
 							opacity: (shape.opacity as number) ?? 1,
@@ -481,41 +472,38 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 							),
 							createdAt: toProtoTimestamp(new Date()),
 							updatedAt: toProtoTimestamp(new Date()),
-						};
+						});
 					});
 
-					const state: CanvasState = {
+					const state = create(CanvasStateSchema, {
 						shapes: protoShapes,
 						version,
 						lastModified: branch.updatedAt
 							? new Date(branch.updatedAt).toISOString()
 							: new Date().toISOString(),
-					};
+					});
 
-					return { state };
+					return create(GetCanvasStateResponseSchema, { state });
 				}
 			}
 		}
 
 		// No head commit (empty branch) - return empty state
-		const state: CanvasState = {
+		const state = create(CanvasStateSchema, {
 			shapes: [],
 			version,
 			lastModified: branch.updatedAt
 				? new Date(branch.updatedAt).toISOString()
 				: new Date().toISOString(),
-		};
+		});
 
-		return { state };
+		return create(GetCanvasStateResponseSchema, { state });
 	},
 
 	// Sync changes from client
 	async syncChanges(req): Promise<SyncChangesResponse> {
 		if (!req.projectId || !req.branchId) {
-			throw new ServerError(
-				Status.INVALID_ARGUMENT,
-				"Project ID and Branch ID are required",
-			);
+			throw invalidArgument("Project ID and Branch ID are required");
 		}
 
 		// Get current server version
@@ -532,44 +520,44 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 			const now = Date.now();
 
 			// Broadcast the change to other subscribers
-			if (op.type === OperationType.OPERATION_TYPE_CREATE && shape) {
-				const update: CanvasUpdate = {
+			if (op.type === OperationType.CREATE && shape) {
+				const update = create(CanvasUpdateSchema, {
 					update: {
-						$case: "shapeCreated",
-						shapeCreated: {
+						case: "shapeCreated",
+						value: create(ShapeCreatedSchema, {
 							shape,
 							createdBy: "sync",
-						} as ShapeCreated,
+						}),
 					},
 					version: BigInt(now),
 					timestamp: new Date(now).toISOString(),
-				};
+				});
 				broadcastUpdate(req.projectId, req.branchId, update);
-			} else if (op.type === OperationType.OPERATION_TYPE_UPDATE && shape) {
-				const update: CanvasUpdate = {
+			} else if (op.type === OperationType.UPDATE && shape) {
+				const update = create(CanvasUpdateSchema, {
 					update: {
-						$case: "shapeUpdated",
-						shapeUpdated: {
+						case: "shapeUpdated",
+						value: create(ShapeUpdatedSchema, {
 							shape,
 							updatedBy: "sync",
-						} as ShapeUpdated,
+						}),
 					},
 					version: BigInt(now),
 					timestamp: new Date(now).toISOString(),
-				};
+				});
 				broadcastUpdate(req.projectId, req.branchId, update);
-			} else if (op.type === OperationType.OPERATION_TYPE_DELETE) {
-				const update: CanvasUpdate = {
+			} else if (op.type === OperationType.DELETE) {
+				const update = create(CanvasUpdateSchema, {
 					update: {
-						$case: "shapeDeleted",
-						shapeDeleted: {
+						case: "shapeDeleted",
+						value: create(ShapeDeletedSchema, {
 							shapeId: op.shapeId,
 							deletedBy: "sync",
-						} as ShapeDeleted,
+						}),
 					},
 					version: BigInt(now),
 					timestamp: new Date(now).toISOString(),
-				};
+				});
 				broadcastUpdate(req.projectId, req.branchId, update);
 			}
 		}
@@ -591,20 +579,20 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 				.where(eq(schema.shapes.projectId, req.projectId))
 				.orderBy(asc(schema.shapes.sortOrder));
 
-			return {
+			return create(SyncChangesResponseSchema, {
 				success: true,
 				serverVersion: newVersion,
 				shapes: updatedShapes.map(toProtoShape),
 				message: "Synced with server refresh",
-			};
+			});
 		}
 
-		return {
+		return create(SyncChangesResponseSchema, {
 			success: true,
 			serverVersion: newVersion,
 			shapes: [],
 			message: "Synced successfully",
-		};
+		});
 	},
 
 	// Server streaming: real-time updates
@@ -631,19 +619,19 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 
 		// Broadcast user joined
 		const now = Date.now();
-		const userJoinedUpdate: CanvasUpdate = {
+		const userJoinedUpdate = create(CanvasUpdateSchema, {
 			update: {
-				$case: "userJoined",
-				userJoined: {
-					user: {
+				case: "userJoined",
+				value: create(UserJoinedSchema, {
+					user: create(UserPresenceSchema, {
 						userId: req.userId,
 						userName: req.userId, // TODO: get from auth
-					} as UserPresence,
-				} as UserJoined,
+					}),
+				}),
 			},
 			version: BigInt(now),
 			timestamp: new Date(now).toISOString(),
-		};
+		});
 		broadcastUpdate(req.projectId, req.branchId, userJoinedUpdate);
 
 		try {
@@ -668,14 +656,14 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 
 			// Broadcast user left
 			const leftNow = Date.now();
-			const userLeftUpdate: CanvasUpdate = {
+			const userLeftUpdate = create(CanvasUpdateSchema, {
 				update: {
-					$case: "userLeft",
-					userLeft: { userId: req.userId } as UserLeft,
+					case: "userLeft",
+					value: create(UserLeftSchema, { userId: req.userId }),
 				},
 				version: BigInt(leftNow),
 				timestamp: new Date(leftNow).toISOString(),
-			};
+			});
 			broadcastUpdate(req.projectId, req.branchId, userLeftUpdate);
 		}
 	},
@@ -702,8 +690,8 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 		try {
 			for await (const msg of requests) {
 				// Handle join session - use oneof pattern
-				if (msg.request?.$case === "join") {
-					const join = msg.request.join;
+				if (msg.request?.case === "join") {
+					const join = msg.request.value;
 					currentProjectId = join.projectId;
 					currentBranchId = join.branchId;
 					currentUserId = join.userId;
@@ -748,78 +736,80 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 							collab.branchId === currentBranchId
 						) {
 							const cursor: CursorPosition | undefined = collab.cursor
-								? {
+								? create(CursorPositionSchema, {
 										userId: collab.userId,
 										userName: collab.userName,
 										x: collab.cursor.x,
 										y: collab.cursor.y,
-									}
+									})
 								: undefined;
-							activeUsers.push({
-								userId: collab.userId,
-								userName: collab.userName,
-								color: collab.color,
-								cursor,
-								selectedShapeIds: collab.selection,
-							});
+							activeUsers.push(
+								create(UserPresenceSchema, {
+									userId: collab.userId,
+									userName: collab.userName,
+									color: collab.color,
+									cursor,
+									selectedShapeIds: collab.selection,
+								}),
+							);
 						}
 					}
 
 					// Broadcast user joined
 					const joinNow = Date.now();
-					const userJoinedUpdate: CanvasUpdate = {
+					const userJoinedUpdate = create(CanvasUpdateSchema, {
 						update: {
-							$case: "userJoined",
-							userJoined: {
-								user: {
+							case: "userJoined",
+							value: create(UserJoinedSchema, {
+								user: create(UserPresenceSchema, {
 									userId: currentUserId,
 									userName: join.userName,
 									color: join.userColor,
-								},
-							} as UserJoined,
+								}),
+							}),
 						},
 						version: BigInt(joinNow),
 						timestamp: new Date(joinNow).toISOString(),
-					};
+					});
 					broadcastUpdate(currentProjectId, currentBranchId, userJoinedUpdate);
 
 					// Send initial state
-					const initialState: CanvasState = {
+					const initialState = create(CanvasStateSchema, {
 						shapes: shapes.map(toProtoShape),
 						version,
 						lastModified: branch?.updatedAt
 							? new Date(branch.updatedAt).toISOString()
 							: new Date().toISOString(),
-					};
+					});
 
-					const sessionJoined: SessionJoined = {
+					const sessionJoined = create(SessionJoinedSchema, {
 						initialState,
 						activeUsers,
-					};
+					});
 
-					yield {
+					yield create(CollaborateResponseSchema, {
 						response: {
-							$case: "sessionJoined",
-							sessionJoined,
+							case: "sessionJoined",
+							value: sessionJoined,
 						},
-					};
+					});
 					continue;
 				}
 
 				// Handle leave session
-				if (msg.request?.$case === "leave" && currentUserId) {
+				if (msg.request?.case === "leave" && currentUserId) {
 					collaborators.delete(currentUserId);
 
 					if (currentProjectId && currentBranchId) {
 						const leaveNow = Date.now();
-						const userLeftUpdate: CanvasUpdate = {
+						const userLeftUpdate = create(CanvasUpdateSchema, {
 							update: {
-								$case: "userLeft",
-								userLeft: { userId: currentUserId },
+								case: "userLeft",
+								value: create(UserLeftSchema, { userId: currentUserId }),
 							},
 							version: BigInt(leaveNow),
 							timestamp: new Date(leaveNow).toISOString(),
-						};
+						});
 						broadcastUpdate(currentProjectId, currentBranchId, userLeftUpdate);
 					}
 					continue;
@@ -834,65 +824,65 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 
 					// Handle cursor position updates
 					if (
-						msg.request?.$case === "cursor" &&
+						msg.request?.case === "cursor" &&
 						currentProjectId &&
 						currentBranchId
 					) {
-						const cursor = msg.request.cursor;
+						const cursor = msg.request.value;
 						collab.cursor = { x: cursor.x, y: cursor.y };
 
 						const cursorNow = Date.now();
-						const cursorPosition: CursorPosition = {
+						const cursorPosition = create(CursorPositionSchema, {
 							userId: currentUserId ?? "",
 							userName: collab.userName,
 							userColor: collab.color,
 							x: cursor.x,
 							y: cursor.y,
-						};
-						const cursorMoved: CursorMoved = { cursor: cursorPosition };
-						const cursorUpdate: CanvasUpdate = {
+						});
+						const cursorMoved = create(CursorMovedSchema, { cursor: cursorPosition });
+						const cursorUpdate = create(CanvasUpdateSchema, {
 							update: {
-								$case: "cursorMoved",
-								cursorMoved,
+								case: "cursorMoved",
+								value: cursorMoved,
 							},
 							version: BigInt(cursorNow),
 							timestamp: new Date(cursorNow).toISOString(),
-						};
+						});
 						broadcastUpdate(currentProjectId, currentBranchId, cursorUpdate);
 					}
 
 					// Handle selection updates
 					if (
-						msg.request?.$case === "selection" &&
+						msg.request?.case === "selection" &&
 						currentProjectId &&
 						currentBranchId
 					) {
-						const selection = msg.request.selection;
+						const selection = msg.request.value;
 						collab.selection = [...selection.shapeIds];
 
 						const selNow = Date.now();
-						const selectionChanged: SelectionChanged = {
+						const selectionChanged = create(SelectionChangedSchema, {
 							userId: currentUserId ?? "",
 							shapeIds: selection.shapeIds,
-						};
-						const selectionUpdate: CanvasUpdate = {
+						});
+						const selectionUpdate = create(CanvasUpdateSchema, {
 							update: {
-								$case: "selectionChanged",
-								selectionChanged,
+								case: "selectionChanged",
+								value: selectionChanged,
 							},
 							version: BigInt(selNow),
 							timestamp: new Date(selNow).toISOString(),
-						};
+						});
 						broadcastUpdate(currentProjectId, currentBranchId, selectionUpdate);
 					}
 
 					// Handle operations
 					if (
-						msg.request?.$case === "operation" &&
+						msg.request?.case === "operation" &&
 						currentProjectId &&
 						currentBranchId
 					) {
-						const operation = msg.request.operation;
+						const operation = msg.request.value;
 						const shape = await processOperation(operation, currentProjectId);
 
 						// Update version
@@ -904,67 +894,61 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 
 						// Broadcast the change
 						const opNow = Date.now();
-						if (
-							operation.type === OperationType.OPERATION_TYPE_CREATE &&
-							shape
-						) {
-							const shapeCreated: ShapeCreated = {
+						if (operation.type === OperationType.CREATE && shape) {
+							const shapeCreated = create(ShapeCreatedSchema, {
 								shape,
 								createdBy: currentUserId ?? "",
-							};
-							const createUpdate: CanvasUpdate = {
+							});
+							const createUpdate = create(CanvasUpdateSchema, {
 								update: {
-									$case: "shapeCreated",
-									shapeCreated,
+									case: "shapeCreated",
+									value: shapeCreated,
 								},
 								version: BigInt(opNow),
 								timestamp: new Date(opNow).toISOString(),
-							};
+							});
 							broadcastUpdate(currentProjectId, currentBranchId, createUpdate);
-						} else if (
-							operation.type === OperationType.OPERATION_TYPE_UPDATE &&
-							shape
-						) {
-							const shapeUpdated: ShapeUpdated = {
+						} else if (operation.type === OperationType.UPDATE && shape) {
+							const shapeUpdated = create(ShapeUpdatedSchema, {
 								shape,
 								updatedBy: currentUserId ?? "",
-							};
-							const updateMsg: CanvasUpdate = {
+							});
+							const updateMsg = create(CanvasUpdateSchema, {
 								update: {
-									$case: "shapeUpdated",
-									shapeUpdated,
+									case: "shapeUpdated",
+									value: shapeUpdated,
 								},
 								version: BigInt(opNow),
 								timestamp: new Date(opNow).toISOString(),
-							};
+							});
 							broadcastUpdate(currentProjectId, currentBranchId, updateMsg);
-						} else if (operation.type === OperationType.OPERATION_TYPE_DELETE) {
-							const shapeDeleted: ShapeDeleted = {
+						} else if (operation.type === OperationType.DELETE) {
+							const shapeDeleted = create(ShapeDeletedSchema, {
 								shapeId: operation.shapeId,
 								deletedBy: currentUserId ?? "",
-							};
-							const deleteUpdate: CanvasUpdate = {
+							});
+							const deleteUpdate = create(CanvasUpdateSchema, {
 								update: {
-									$case: "shapeDeleted",
-									shapeDeleted,
+									case: "shapeDeleted",
+									value: shapeDeleted,
 								},
 								version: BigInt(opNow),
 								timestamp: new Date(opNow).toISOString(),
-							};
+							});
 							broadcastUpdate(currentProjectId, currentBranchId, deleteUpdate);
 						}
 
 						// Send ack to the client
-						const syncAck: SyncAck = {
+						const syncAck = create(SyncAckSchema, {
 							success: true,
 							version: newVersion,
-						};
-						yield {
+						});
+						yield create(CollaborateResponseSchema, {
 							response: {
-								$case: "syncAck",
-								syncAck,
+								case: "syncAck",
+								value: syncAck,
 							},
-						};
+						});
 					}
 				}
 
@@ -972,12 +956,12 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 				while (updateQueue.length > 0) {
 					const update = updateQueue.shift();
 					if (update) {
-						yield {
+						yield create(CollaborateResponseSchema, {
 							response: {
-								$case: "update",
-								update,
+								case: "update",
+								value: update,
 							},
-						};
+						});
 					}
 				}
 			}
@@ -991,14 +975,14 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 			}
 			if (currentUserId && currentProjectId && currentBranchId) {
 				const finalNow = Date.now();
-				const userLeftUpdate: CanvasUpdate = {
+				const userLeftUpdate = create(CanvasUpdateSchema, {
 					update: {
-						$case: "userLeft",
-						userLeft: { userId: currentUserId },
+						case: "userLeft",
+						value: create(UserLeftSchema, { userId: currentUserId }),
 					},
 					version: BigInt(finalNow),
 					timestamp: new Date(finalNow).toISOString(),
-				};
+				});
 				broadcastUpdate(currentProjectId, currentBranchId, userLeftUpdate);
 			}
 		}
@@ -1008,10 +992,7 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 	// Uses a transaction to ensure atomicity - either all shapes are replaced or none
 	async restoreFromSnapshot(req) {
 		if (!req.projectId || !req.snapshotId) {
-			throw new ServerError(
-				Status.INVALID_ARGUMENT,
-				"Project ID and Snapshot ID are required",
-			);
+			throw invalidArgument("Project ID and Snapshot ID are required");
 		}
 
 		// Get the snapshot
@@ -1023,7 +1004,7 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 		});
 
 		if (!snapshot) {
-			throw new ServerError(Status.NOT_FOUND, "Snapshot not found");
+			throw notFound( "Snapshot not found");
 		}
 
 		// Parse shapes from snapshot
@@ -1075,17 +1056,17 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 			}
 		});
 
-		return {
+		return create(RestoreFromSnapshotResponseSchema, {
 			success: true,
 			shapeCount: snapshotShapes.length,
 			message: `Restored ${snapshotShapes.length} shapes from snapshot`,
-		};
+		});
 	},
 
 	// Clear working copy (for empty branches)
 	async clearWorkingCopy(req) {
 		if (!req.projectId) {
-			throw new ServerError(Status.INVALID_ARGUMENT, "Project ID is required");
+			throw invalidArgument( "Project ID is required");
 		}
 
 		// Delete all shapes for this project
@@ -1093,10 +1074,10 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 			.delete(schema.shapes)
 			.where(eq(schema.shapes.projectId, req.projectId));
 
-		return {
+		return create(ClearWorkingCopyResponseSchema, {
 			success: true,
 			deletedCount: 0, // We don't track exact count for simplicity
 			message: "Cleared working copy",
-		};
+		});
 	},
 };

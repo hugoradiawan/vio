@@ -1,16 +1,21 @@
 /**
- * Auth service implementation for nice-grpc.
+ * Auth service implementation for ConnectRPC.
  */
 
+import { create } from "@bufbuild/protobuf";
+import type { ServiceImpl } from "@connectrpc/connect";
 import { nanoid } from "nanoid";
-import { ServerError, Status } from "nice-grpc";
-import type {
-	AuthResponse,
-	AuthServiceImplementation,
-	User,
-	ValidateTokenResponse,
-} from "../gen/vio/v1/auth.js";
-import type { Empty, Timestamp } from "../gen/vio/v1/common.js";
+import {
+	AuthResponseSchema,
+	AuthService,
+	UserSchema,
+	ValidateTokenResponseSchema,
+	type AuthResponse,
+	type User,
+	type ValidateTokenResponse,
+} from "../gen/vio/v1/auth_pb.js";
+import { EmptySchema, TimestampSchema, type Empty, type Timestamp } from "../gen/vio/v1/common_pb.js";
+import { alreadyExists, invalidArgument, notFound, unauthenticated } from "./errors.js";
 
 // ============================================================================
 // In-Memory User Store (replace with database in production)
@@ -44,19 +49,19 @@ const REFRESH_TOKEN_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 // ============================================================================
 
 function toProtoTimestamp(date: Date): Timestamp {
-	return {
+	return create(TimestampSchema, {
 		millis: BigInt(date.getTime()),
-	};
+	});
 }
 
 function toProtoUser(stored: StoredUser): User {
-	return {
+	return create(UserSchema, {
 		id: stored.id,
 		email: stored.email,
 		name: stored.name,
 		avatarUrl: stored.avatarUrl,
 		createdAt: toProtoTimestamp(stored.createdAt),
-	};
+	});
 }
 
 // Simple hash function (use bcrypt in production!)
@@ -98,26 +103,20 @@ function generateRefreshToken(userId: string): string {
 // Service Implementation
 // ============================================================================
 
-export const authServiceImpl: AuthServiceImplementation = {
+export const authServiceImpl: ServiceImpl<typeof AuthService> = {
 	async register(req): Promise<AuthResponse> {
 		// Validate input
 		if (!req.email || !req.password || !req.name) {
-			throw new ServerError(
-				Status.INVALID_ARGUMENT,
-				"Email, password, and name are required",
-			);
+			throw invalidArgument("Email, password, and name are required");
 		}
 
 		if (req.password.length < 8) {
-			throw new ServerError(
-				Status.INVALID_ARGUMENT,
-				"Password must be at least 8 characters",
-			);
+			throw invalidArgument("Password must be at least 8 characters");
 		}
 
 		// Check if email is already taken
 		if (usersByEmail.has(req.email.toLowerCase())) {
-			throw new ServerError(Status.ALREADY_EXISTS, "Email already registered");
+			throw alreadyExists("Email already registered");
 		}
 
 		// Create user
@@ -142,47 +141,35 @@ export const authServiceImpl: AuthServiceImplementation = {
 
 		console.log(`User registered: ${user.email} (${userId})`);
 
-		return {
+		return create(AuthResponseSchema, {
 			user: toProtoUser(user),
 			accessToken,
 			refreshToken,
 			expiresIn: BigInt(Math.floor(ACCESS_TOKEN_DURATION / 1000)),
-		};
+		});
 	},
 
 	async login(req): Promise<AuthResponse> {
 		// Validate input
 		if (!req.email || !req.password) {
-			throw new ServerError(
-				Status.INVALID_ARGUMENT,
-				"Email and password are required",
-			);
+			throw invalidArgument("Email and password are required");
 		}
 
 		// Find user
 		const userId = usersByEmail.get(req.email.toLowerCase());
 		if (!userId) {
-			throw new ServerError(
-				Status.UNAUTHENTICATED,
-				"Invalid email or password",
-			);
+			throw unauthenticated("Invalid email or password");
 		}
 
 		const user = users.get(userId);
 		if (!user) {
-			throw new ServerError(
-				Status.UNAUTHENTICATED,
-				"Invalid email or password",
-			);
+			throw unauthenticated("Invalid email or password");
 		}
 
 		// Verify password
 		const valid = await verifyPassword(req.password, user.passwordHash);
 		if (!valid) {
-			throw new ServerError(
-				Status.UNAUTHENTICATED,
-				"Invalid email or password",
-			);
+			throw unauthenticated("Invalid email or password");
 		}
 
 		// Generate tokens
@@ -191,37 +178,34 @@ export const authServiceImpl: AuthServiceImplementation = {
 
 		console.log(`User logged in: ${user.email}`);
 
-		return {
+		return create(AuthResponseSchema, {
 			user: toProtoUser(user),
 			accessToken,
 			refreshToken,
 			expiresIn: BigInt(Math.floor(ACCESS_TOKEN_DURATION / 1000)),
-		};
+		});
 	},
 
 	async refreshToken(req): Promise<AuthResponse> {
 		// Validate input
 		if (!req.refreshToken) {
-			throw new ServerError(
-				Status.INVALID_ARGUMENT,
-				"Refresh token is required",
-			);
+			throw invalidArgument("Refresh token is required");
 		}
 
 		// Verify refresh token
 		const tokenData = refreshTokens.get(req.refreshToken);
 		if (!tokenData) {
-			throw new ServerError(Status.UNAUTHENTICATED, "Invalid refresh token");
+			throw unauthenticated("Invalid refresh token");
 		}
 
 		if (Date.now() > tokenData.expiresAt) {
 			refreshTokens.delete(req.refreshToken);
-			throw new ServerError(Status.UNAUTHENTICATED, "Refresh token expired");
+			throw unauthenticated("Refresh token expired");
 		}
 
 		const user = users.get(tokenData.userId);
 		if (!user) {
-			throw new ServerError(Status.NOT_FOUND, "User not found");
+			throw notFound("User not found");
 		}
 
 		// Revoke old refresh token
@@ -231,43 +215,40 @@ export const authServiceImpl: AuthServiceImplementation = {
 		const accessToken = generateAccessToken(user.id);
 		const refreshToken = generateRefreshToken(user.id);
 
-		return {
+		return create(AuthResponseSchema, {
 			accessToken,
 			refreshToken,
 			expiresIn: BigInt(Math.floor(ACCESS_TOKEN_DURATION / 1000)),
 			user: undefined,
-		};
+		});
 	},
 
 	async validateToken(req): Promise<ValidateTokenResponse> {
 		// Validate input
 		if (!req.accessToken) {
-			throw new ServerError(
-				Status.INVALID_ARGUMENT,
-				"Access token is required",
-			);
+			throw invalidArgument("Access token is required");
 		}
 
 		// Verify access token
 		const tokenData = accessTokens.get(req.accessToken);
 		if (!tokenData) {
-			return { valid: false, user: undefined };
+			return create(ValidateTokenResponseSchema, { valid: false, user: undefined });
 		}
 
 		if (Date.now() > tokenData.expiresAt) {
 			accessTokens.delete(req.accessToken);
-			return { valid: false, user: undefined };
+			return create(ValidateTokenResponseSchema, { valid: false, user: undefined });
 		}
 
 		const user = users.get(tokenData.userId);
 		if (!user) {
-			return { valid: false, user: undefined };
+			return create(ValidateTokenResponseSchema, { valid: false, user: undefined });
 		}
 
-		return {
+		return create(ValidateTokenResponseSchema, {
 			valid: true,
 			user: toProtoUser(user),
-		};
+		});
 	},
 
 	async logout(req): Promise<Empty> {
@@ -276,7 +257,7 @@ export const authServiceImpl: AuthServiceImplementation = {
 			refreshTokens.delete(req.refreshToken);
 		}
 
-		return {};
+		return create(EmptySchema, {});
 	},
 };
 

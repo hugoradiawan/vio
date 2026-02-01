@@ -3,24 +3,35 @@
  * Handles CRUD operations for shapes on the canvas.
  */
 
+import { create } from "@bufbuild/protobuf";
+import type { ServiceImpl } from "@connectrpc/connect";
 import { and, eq } from "drizzle-orm";
-import { ServerError, Status } from "nice-grpc";
 import { db } from "../db/index.js";
 import { shapes } from "../db/schema/index.js";
-import type {
-	Empty,
-	Fill,
-	Stroke,
-	Timestamp,
-	Transform,
-} from "../gen/vio/v1/common.js";
 import {
+	EmptySchema,
+	FillSchema,
 	StrokeAlignment,
 	StrokeCap,
 	StrokeJoin,
-} from "../gen/vio/v1/common.js";
+	StrokeSchema,
+	TimestampSchema,
+	TransformSchema,
+	type Empty,
+	type Fill,
+	type Stroke,
+	type Timestamp,
+	type Transform,
+} from "../gen/vio/v1/common_pb.js";
 import {
+	BatchMutateResponseSchema,
+	CreateShapeResponseSchema,
+	GetShapeResponseSchema,
+	ListShapesResponseSchema,
+	ShapeSchema,
+	ShapeService,
 	ShapeType,
+	UpdateShapeResponseSchema,
 	type BatchMutateRequest,
 	type BatchMutateResponse,
 	type CreateShapeRequest,
@@ -28,15 +39,15 @@ import {
 	type GetShapeResponse,
 	type ListShapesResponse,
 	type Shape as ProtoShape,
-	type ShapeServiceImplementation,
 	type UpdateShapeResponse,
-} from "../gen/vio/v1/shape.js";
+} from "../gen/vio/v1/shape_pb.js";
+import { notFound } from "./errors.js";
 
 /**
  * Convert a JavaScript Date to a protobuf Timestamp
  */
 function toProtoTimestamp(date: Date): Timestamp {
-	return { millis: BigInt(date.getTime()) };
+	return create(TimestampSchema, { millis: BigInt(date.getTime()) });
 }
 
 /**
@@ -44,17 +55,17 @@ function toProtoTimestamp(date: Date): Timestamp {
  */
 function stringToShapeType(type: string): ShapeType {
 	const typeMap: Record<string, ShapeType> = {
-		rectangle: ShapeType.SHAPE_TYPE_RECTANGLE,
-		ellipse: ShapeType.SHAPE_TYPE_ELLIPSE,
-		path: ShapeType.SHAPE_TYPE_PATH,
-		text: ShapeType.SHAPE_TYPE_TEXT,
-		frame: ShapeType.SHAPE_TYPE_FRAME,
-		group: ShapeType.SHAPE_TYPE_GROUP,
-		image: ShapeType.SHAPE_TYPE_IMAGE,
-		svg: ShapeType.SHAPE_TYPE_SVG,
-		bool: ShapeType.SHAPE_TYPE_BOOL,
+		rectangle: ShapeType.RECTANGLE,
+		ellipse: ShapeType.ELLIPSE,
+		path: ShapeType.PATH,
+		text: ShapeType.TEXT,
+		frame: ShapeType.FRAME,
+		group: ShapeType.GROUP,
+		image: ShapeType.IMAGE,
+		svg: ShapeType.SVG,
+		bool: ShapeType.BOOL,
 	};
-	return typeMap[type.toLowerCase()] ?? ShapeType.SHAPE_TYPE_UNSPECIFIED;
+	return typeMap[type.toLowerCase()] ?? ShapeType.UNSPECIFIED;
 }
 
 /**
@@ -62,16 +73,16 @@ function stringToShapeType(type: string): ShapeType {
  */
 function shapeTypeToString(type: ShapeType): string {
 	const typeMap: Record<number, string> = {
-		[ShapeType.SHAPE_TYPE_UNSPECIFIED]: "rectangle",
-		[ShapeType.SHAPE_TYPE_RECTANGLE]: "rectangle",
-		[ShapeType.SHAPE_TYPE_ELLIPSE]: "ellipse",
-		[ShapeType.SHAPE_TYPE_PATH]: "path",
-		[ShapeType.SHAPE_TYPE_TEXT]: "text",
-		[ShapeType.SHAPE_TYPE_FRAME]: "frame",
-		[ShapeType.SHAPE_TYPE_GROUP]: "group",
-		[ShapeType.SHAPE_TYPE_IMAGE]: "image",
-		[ShapeType.SHAPE_TYPE_SVG]: "svg",
-		[ShapeType.SHAPE_TYPE_BOOL]: "bool",
+		[ShapeType.UNSPECIFIED]: "rectangle",
+		[ShapeType.RECTANGLE]: "rectangle",
+		[ShapeType.ELLIPSE]: "ellipse",
+		[ShapeType.PATH]: "path",
+		[ShapeType.TEXT]: "text",
+		[ShapeType.FRAME]: "frame",
+		[ShapeType.GROUP]: "group",
+		[ShapeType.IMAGE]: "image",
+		[ShapeType.SVG]: "svg",
+		[ShapeType.BOOL]: "bool",
 	};
 	return typeMap[type] ?? "rectangle";
 }
@@ -86,34 +97,34 @@ function toProtoShape(row: typeof shapes.$inferSelect): ProtoShape {
 
 	const protoFills: Fill[] = fillsJson.map((f: unknown) => {
 		const fill = f as Record<string, unknown>;
-		return {
+		return create(FillSchema, {
 			color: (fill.color as number) ?? 0,
 			opacity: (fill.opacity as number) ?? 1.0,
-		};
+		});
 	});
 
 	const protoStrokes: Stroke[] = strokesJson.map((s: unknown) => {
 		const stroke = s as Record<string, unknown>;
-		return {
+		return create(StrokeSchema, {
 			color: (stroke.color as number) ?? 0,
 			width: (stroke.width as number) ?? 1.0,
 			opacity: (stroke.opacity as number) ?? 1.0,
-			alignment: StrokeAlignment.STROKE_ALIGNMENT_CENTER,
-			cap: StrokeCap.STROKE_CAP_ROUND,
-			join: StrokeJoin.STROKE_JOIN_ROUND,
-		};
+			alignment: StrokeAlignment.CENTER,
+			cap: StrokeCap.ROUND,
+			join: StrokeJoin.ROUND,
+		});
 	});
 
-	const transform: Transform = {
+	const transform: Transform = create(TransformSchema, {
 		a: row.transformA,
 		b: row.transformB,
 		c: row.transformC,
 		d: row.transformD,
 		e: row.transformE,
 		f: row.transformF,
-	};
+	});
 
-	return {
+	return create(ShapeSchema, {
 		id: row.id,
 		projectId: row.projectId,
 		frameId: row.frameId ?? undefined,
@@ -135,25 +146,25 @@ function toProtoShape(row: typeof shapes.$inferSelect): ProtoShape {
 		properties: new Uint8Array(0),
 		createdAt: toProtoTimestamp(row.createdAt),
 		updatedAt: toProtoTimestamp(row.updatedAt),
-	};
+	});
 }
 
 /**
  * Default transform values
  */
-const defaultTransform: Transform = {
+const defaultTransform: Transform = create(TransformSchema, {
 	a: 1,
 	b: 0,
 	c: 0,
 	d: 1,
 	e: 0,
 	f: 0,
-};
+});
 
 /**
  * Shape service implementation
  */
-export const shapeServiceImpl: ShapeServiceImplementation = {
+export const shapeServiceImpl: ServiceImpl<typeof ShapeService> = {
 	/**
 	 * List all shapes in a project, optionally filtered by frame
 	 */
@@ -170,9 +181,9 @@ export const shapeServiceImpl: ShapeServiceImplementation = {
 			.where(and(...whereConditions))
 			.orderBy(shapes.sortOrder);
 
-		return {
+		return create(ListShapesResponseSchema, {
 			shapes: rows.map(toProtoShape),
-		};
+		});
 	},
 
 	/**
@@ -186,10 +197,7 @@ export const shapeServiceImpl: ShapeServiceImplementation = {
 			.limit(1);
 
 		if (!row) {
-			throw new ServerError(
-				Status.NOT_FOUND,
-				`Shape not found: ${req.shapeId}`,
-			);
+			throw notFound(`Shape not found: ${req.shapeId}`);
 		}
 
 		// Get children if it's a group or frame
@@ -199,10 +207,10 @@ export const shapeServiceImpl: ShapeServiceImplementation = {
 			.where(eq(shapes.parentId, req.shapeId))
 			.orderBy(shapes.sortOrder);
 
-		return {
+		return create(GetShapeResponseSchema, {
 			shape: toProtoShape(row),
 			children: childRows.map(toProtoShape),
-		};
+		});
 	},
 
 	/**
@@ -256,9 +264,9 @@ export const shapeServiceImpl: ShapeServiceImplementation = {
 			})
 			.returning();
 
-		return {
+		return create(CreateShapeResponseSchema, {
 			shape: toProtoShape(created),
-		};
+		});
 	},
 
 	/**
@@ -323,15 +331,12 @@ export const shapeServiceImpl: ShapeServiceImplementation = {
 			.returning();
 
 		if (!updated) {
-			throw new ServerError(
-				Status.NOT_FOUND,
-				`Shape not found: ${req.shapeId}`,
-			);
+			throw notFound(`Shape not found: ${req.shapeId}`);
 		}
 
-		return {
+		return create(UpdateShapeResponseSchema, {
 			shape: toProtoShape(updated),
-		};
+		});
 	},
 
 	/**
@@ -346,13 +351,10 @@ export const shapeServiceImpl: ShapeServiceImplementation = {
 
 		// Check if any row was deleted (result varies by driver)
 		if (!result) {
-			throw new ServerError(
-				Status.NOT_FOUND,
-				`Shape not found: ${req.shapeId}`,
-			);
+			throw notFound(`Shape not found: ${req.shapeId}`);
 		}
 
-		return {};
+		return create(EmptySchema, {});
 	},
 
 	/**
@@ -510,10 +512,10 @@ export const shapeServiceImpl: ShapeServiceImplementation = {
 			}
 		}
 
-		return {
+		return create(BatchMutateResponseSchema, {
 			created: createdShapes,
 			updated: updatedShapes,
 			deletedIds,
-		};
+		});
 	},
 };

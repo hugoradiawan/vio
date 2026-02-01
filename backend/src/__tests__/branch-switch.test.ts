@@ -9,16 +9,20 @@
  * 5. Verify shapes are correctly loaded from the target branch's snapshot
  */
 
+import { create } from "@bufbuild/protobuf";
+import type { HandlerContext } from "@connectrpc/connect";
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { eq } from "drizzle-orm";
-import type { CallContext } from "nice-grpc";
 import { db, schema } from "../db";
+import { CreateBranchRequestSchema } from "../gen/vio/v1/branch_pb.js";
+import { GetCanvasStateRequestSchema, RestoreFromSnapshotRequestSchema } from "../gen/vio/v1/canvas_pb.js";
+import { CreateCommitRequestSchema } from "../gen/vio/v1/commit_pb.js";
 import { branchServiceImpl } from "../services/branch";
 import { canvasServiceImpl } from "../services/canvas";
 import { commitServiceImpl } from "../services/commit";
 
 // Mock CallContext for testing gRPC service implementations directly
-const mockContext = {} as CallContext;
+const mockContext = {} as HandlerContext;
 
 describe("Branch Switch Integration", () => {
 	let projectId: string;
@@ -40,14 +44,14 @@ describe("Branch Switch Integration", () => {
 
 		// Create main branch
 		const mainBranchResponse = await branchServiceImpl.createBranch(
-			{
+			create(CreateBranchRequestSchema, {
 				projectId,
 				name: "main",
 				createdById: userId,
-			},
+			}),
 			mockContext,
 		);
-		mainBranchId = mainBranchResponse.branch!.id;
+		mainBranchId = mainBranchResponse.branch?.id ?? "";
 
 		// Set as default branch
 		await db
@@ -105,13 +109,13 @@ describe("Branch Switch Integration", () => {
 
 		// Step 2: Create first commit on main branch
 		const commit1Response = await commitServiceImpl.createCommit(
-			{
+			create(CreateCommitRequestSchema, {
 				projectId,
 				branchId: mainBranchId,
 				message: "Add two shapes on main",
 				authorId: userId,
 				snapshotData: new Uint8Array(), // Not used - server creates snapshot from DB shapes
-			},
+			}),
 			mockContext,
 		);
 		expect(commit1Response.commit?.id).toBeDefined();
@@ -119,15 +123,15 @@ describe("Branch Switch Integration", () => {
 
 		// Step 3: Create feature branch from main
 		const featureBranchResponse = await branchServiceImpl.createBranch(
-			{
+			create(CreateBranchRequestSchema, {
 				projectId,
 				name: "feature/new-shapes",
 				sourceBranchId: mainBranchId,
 				createdById: userId,
-			},
+			}),
 			mockContext,
 		);
-		featureBranchId = featureBranchResponse.branch!.id;
+		featureBranchId = featureBranchResponse.branch?.id ?? "";
 
 		// Feature branch should have the same head commit as main (branched from it)
 		expect(featureBranchResponse.branch!.headCommitId).toBe(mainCommitId);
@@ -146,10 +150,10 @@ describe("Branch Switch Integration", () => {
 
 		// Restore working copy from feature branch's snapshot
 		const restoreResponse = await canvasServiceImpl.restoreFromSnapshot(
-			{
+			create(RestoreFromSnapshotRequestSchema, {
 				projectId,
 				snapshotId: featureCommit!.snapshotId,
-			},
+			}),
 			mockContext,
 		);
 		expect(restoreResponse.success).toBe(true);
@@ -170,13 +174,13 @@ describe("Branch Switch Integration", () => {
 
 		// Step 6: Commit on feature branch
 		const commit2Response = await commitServiceImpl.createCommit(
-			{
+			create(CreateCommitRequestSchema, {
 				projectId,
 				branchId: featureBranchId,
 				message: "Add feature rectangle",
 				authorId: userId,
 				snapshotData: new Uint8Array(), // Not used - server creates snapshot from DB shapes
-			},
+			}),
 			mockContext,
 		);
 		expect(commit2Response.commit?.id).toBeDefined();
@@ -191,10 +195,10 @@ describe("Branch Switch Integration", () => {
 		});
 
 		const restoreMainResponse = await canvasServiceImpl.restoreFromSnapshot(
-			{
+			create(RestoreFromSnapshotRequestSchema, {
 				projectId,
 				snapshotId: mainCommit!.snapshotId,
-			},
+			}),
 			mockContext,
 		);
 		expect(restoreMainResponse.success).toBe(true);
@@ -212,13 +216,13 @@ describe("Branch Switch Integration", () => {
 
 		// Step 8: getCanvasState should return main branch's shapes (from snapshot)
 		const canvasState = await canvasServiceImpl.getCanvasState(
-			{
+			create(GetCanvasStateRequestSchema, {
 				projectId,
 				branchId: mainBranchId,
-			},
+			}),
 			mockContext,
 		);
-		expect(canvasState.state?.shapes.length).toBe(2);
+		expect(canvasState.state?.shapes?.length).toBe(2);
 
 		// Step 9: Switch back to feature - should have 3 shapes
 		const updatedFeatureBranch = await db.query.branches.findFirst({
@@ -229,10 +233,10 @@ describe("Branch Switch Integration", () => {
 		});
 
 		const restoreFeatureResponse = await canvasServiceImpl.restoreFromSnapshot(
-			{
+			create(RestoreFromSnapshotRequestSchema, {
 				projectId,
 				snapshotId: updatedFeatureCommit!.snapshotId,
-			},
+			}),
 			mockContext,
 		);
 		expect(restoreFeatureResponse.success).toBe(true);
@@ -247,35 +251,35 @@ describe("Branch Switch Integration", () => {
 
 		// Step 10: getCanvasState on feature branch should return 3 shapes
 		const featureCanvasState = await canvasServiceImpl.getCanvasState(
-			{
+			create(GetCanvasStateRequestSchema, {
 				projectId,
 				branchId: featureBranchId,
-			},
+			}),
 			mockContext,
 		);
-		expect(featureCanvasState.state?.shapes.length).toBe(3);
+		expect(featureCanvasState.state?.shapes?.length).toBe(3);
 	});
 
 	it("should return empty shapes for branch with no commits", async () => {
 		// Create an empty branch (no source, no commits)
 		const emptyBranchResponse = await branchServiceImpl.createBranch(
-			{
+			create(CreateBranchRequestSchema, {
 				projectId,
 				name: "empty-branch",
 				createdById: userId,
-			},
+			}),
 			mockContext,
 		);
-		const emptyBranchId = emptyBranchResponse.branch!.id;
+		const emptyBranchId = emptyBranchResponse.branch?.id ?? "";
 
 		// getCanvasState should return empty shapes
 		const canvasState = await canvasServiceImpl.getCanvasState(
-			{
+			create(GetCanvasStateRequestSchema, {
 				projectId,
 				branchId: emptyBranchId,
-			},
+			}),
 			mockContext,
 		);
-		expect(canvasState.state?.shapes.length).toBe(0);
+		expect(canvasState.state?.shapes?.length).toBe(0);
 	});
 });

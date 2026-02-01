@@ -142,38 +142,7 @@ class _CommitPanelState extends State<CommitPanel> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.commit,
-                      size: 16,
-                      color: VioColors.textSecondary,
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Commit',
-                      style: TextStyle(
-                        color: VioColors.textPrimary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const Spacer(),
-                    if (uncommittedChanges.isNotEmpty)
-                      Text(
-                        '${uncommittedChanges.length} change${uncommittedChanges.length > 1 ? 's' : ''}',
-                        style: const TextStyle(
-                          color: VioColors.textSecondary,
-                          fontSize: 11,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-
+              const SizedBox(height: 12),
               // Changed files section
               if (uncommittedChanges.isNotEmpty) ...[
                 _ChangedFilesList(

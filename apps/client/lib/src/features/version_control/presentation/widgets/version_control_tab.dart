@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vio_client/src/features/version_control/presentation/presentation.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../../../core/api/dto.dart' show BranchDto;
 import '../../bloc/version_control_bloc.dart';
-import 'branch_list_panel.dart';
-import 'commit_history_list.dart';
-import 'commit_panel.dart';
 
 /// Main version control tab content for the left panel
 class VersionControlTab extends StatelessWidget {
@@ -99,16 +97,30 @@ class VersionControlTab extends StatelessWidget {
             _CollapsibleSection(
               title: 'Branches',
               initiallyExpanded: false,
-              trailing: Text(
-                '${state.branches.length}',
-                style: const TextStyle(
-                  color: VioColors.textTertiary,
-                  fontSize: 11,
-                ),
+              trailing: Row(
+                children: [
+                  Text(
+                    '${state.branches.length}',
+                    style: const TextStyle(
+                      color: VioColors.textTertiary,
+                      fontSize: 11,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: () => _showCreateBranchDialog(context, state),
+                    icon: const Icon(Icons.add),
+                    iconSize: 18,
+                    padding: const EdgeInsets.all(4),
+                    constraints: const BoxConstraints(),
+                    color: VioColors.textSecondary,
+                    tooltip: 'Create branch',
+                  ),
+                ],
               ),
-              child: const SizedBox(
-                height: 200, // Fixed height for branch list
-                child: BranchListPanel(),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 300),
+                child: const BranchListPanel(),
               ),
             ),
 
@@ -131,6 +143,30 @@ class VersionControlTab extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+
+    void _showCreateBranchDialog(
+    BuildContext context,
+    VersionControlState state,
+  ) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => CreateBranchDialog(
+        branches: state.branches,
+        currentBranchId: state.currentBranchId,
+        hasUncommittedChanges: state.hasUncommittedChanges,
+        onCreateBranch: (name, description, sourceBranchId) {
+          context.read<VersionControlBloc>().add(
+                BranchCreateRequested(
+                  name: name,
+                  description: description,
+                  sourceBranchId: sourceBranchId,
+                ),
+              );
+          Navigator.of(dialogContext).pop();
+        },
+      ),
     );
   }
 

@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:grpc/grpc.dart';
+import 'package:grpc/grpc_connection_interface.dart';
 
 import '../../gen/vio/v1/auth.pbgrpc.dart';
 import '../../gen/vio/v1/branch.pbgrpc.dart';
@@ -8,6 +8,7 @@ import '../../gen/vio/v1/commit.pbgrpc.dart';
 import '../../gen/vio/v1/project.pbgrpc.dart';
 import '../../gen/vio/v1/pullrequest.pbgrpc.dart';
 import '../../gen/vio/v1/shape.pbgrpc.dart';
+import 'grpc_channel.dart';
 
 /// gRPC client configuration
 class GrpcConfig {
@@ -16,8 +17,11 @@ class GrpcConfig {
   /// Host for gRPC server in development
   static const String devHost = 'localhost';
 
-  /// Port for gRPC server in development
+  /// Port for gRPC server in development (native HTTP/2)
   static const int devPort = 4000;
+
+  /// Port for gRPC-Web server in development (HTTP/1.1 for browsers)
+  static const int devWebPort = 4001;
 
   /// Host for gRPC server in production
   static const String prodHost = 'api.vio.app';
@@ -31,10 +35,12 @@ class GrpcConfig {
     return isProduction ? prodHost : devHost;
   }
 
-  /// Get appropriate port based on environment
+  /// Get appropriate port based on environment and platform
   static int get port {
     const isProduction = bool.fromEnvironment('dart.vm.product');
-    return isProduction ? prodPort : devPort;
+    if (isProduction) return prodPort;
+    // In development: web uses port 4001 (HTTP/1.1), native uses 4000 (HTTP/2)
+    return kIsWeb ? devWebPort : devPort;
   }
 
   /// Whether to use TLS
@@ -55,7 +61,7 @@ class GrpcClient {
   /// Get the singleton instance
   static GrpcClient get instance => _instance ??= GrpcClient._();
 
-  ClientChannel? _channel;
+  ClientChannelBase? _channel;
   bool _initialized = false;
 
   // Service clients
@@ -79,16 +85,13 @@ class GrpcClient {
     final effectivePort = port ?? GrpcConfig.port;
     final effectiveUseTls = useTls ?? GrpcConfig.useTls;
 
-    // Use native gRPC ClientChannel for desktop platforms
-    // For development without TLS, use insecure channel
-    _channel = ClientChannel(
-      effectiveHost,
+    // Use platform-specific channel factory
+    // - Web: GrpcWebClientChannel (gRPC-Web over HTTP/1.1)
+    // - Desktop/Mobile: ClientChannel (native gRPC over HTTP/2)
+    _channel = createGrpcChannel(
+      host: effectiveHost,
       port: effectivePort,
-      options: ChannelOptions(
-        credentials: effectiveUseTls
-            ? const ChannelCredentials.secure()
-            : const ChannelCredentials.insecure(),
-      ),
+      useTls: effectiveUseTls,
     );
 
     // Initialize all service clients
@@ -103,7 +106,7 @@ class GrpcClient {
     _initialized = true;
 
     debugPrint(
-      'gRPC client initialized: $effectiveHost:$effectivePort (TLS: $effectiveUseTls)',
+      'gRPC client initialized: $effectiveHost:$effectivePort (TLS: $effectiveUseTls) [kIsWeb: $kIsWeb]',
     );
   }
 

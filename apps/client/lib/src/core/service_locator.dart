@@ -32,10 +32,14 @@ class ServiceLocator {
 
   /// Initialize all services
   Future<void> initialize({
-    String host = 'localhost',
-    int port = 4000,
+    String? host,
+    int? port,
   }) async {
     if (_initialized) return;
+
+    // Use GrpcConfig defaults if not specified
+    final effectiveHost = host ?? GrpcConfig.host;
+    final effectivePort = port ?? GrpcConfig.port;
 
     // Initialize preferences service first (no dependencies)
     _preferencesService = PreferencesService.instance;
@@ -43,7 +47,7 @@ class ServiceLocator {
 
     // Initialize gRPC client (singleton)
     _grpcClient = GrpcClient.instance;
-    _grpcClient.initialize(host: host, port: port);
+    _grpcClient.initialize(host: effectiveHost, port: effectivePort);
 
     // Get gRPC service clients
     _projectService = _grpcClient.projectClient;

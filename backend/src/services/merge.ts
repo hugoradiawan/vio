@@ -16,9 +16,9 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "../db";
 import type { DiffResult } from "../gen/vio/v1/commit.js";
 import type {
-    PropertyConflict,
-    ShapeConflict,
-    Timestamp
+	PropertyConflict,
+	ShapeConflict,
+	Timestamp,
 } from "../gen/vio/v1/common.js";
 
 // Type alias for commit records from database

@@ -84,6 +84,27 @@ service CanvasService {
   // - NOT_FOUND: Project or branch does not exist
   // - PERMISSION_DENIED: User cannot access project
   rpc Collaborate(stream CollaborateRequest) returns (stream CollaborateResponse);
+
+  // Restore working copy from a snapshot (branch switch).
+  //
+  // Replaces all shapes in the working copy (shapes table) with shapes
+  // from the specified snapshot. Used when switching branches to ensure
+  // the working copy matches the target branch's state.
+  //
+  // Errors:
+  // - NOT_FOUND: Project or snapshot does not exist
+  // - PERMISSION_DENIED: User cannot modify project
+  rpc RestoreFromSnapshot(RestoreFromSnapshotRequest) returns (RestoreFromSnapshotResponse);
+
+  // Clear working copy (for empty branches).
+  //
+  // Removes all shapes from the working copy (shapes table) for a project.
+  // Used when switching to an empty branch with no commits.
+  //
+  // Errors:
+  // - NOT_FOUND: Project does not exist
+  // - PERMISSION_DENIED: User cannot modify project
+  rpc ClearWorkingCopy(ClearWorkingCopyRequest) returns (ClearWorkingCopyResponse);
 }
 
 // =============================================================================
@@ -388,4 +409,46 @@ message SyncAck {
   int64 version = 2;
   // Error message if not successful.
   optional string error = 3;
+}
+
+// =============================================================================
+// Restore From Snapshot (Branch Switch)
+// =============================================================================
+
+// Request to restore working copy from a snapshot.
+message RestoreFromSnapshotRequest {
+  // Project containing the canvas.
+  string project_id = 1;
+  // Snapshot to restore from.
+  string snapshot_id = 2;
+}
+
+// Response from restore operation.
+message RestoreFromSnapshotResponse {
+  // Whether restore was successful.
+  bool success = 1;
+  // Number of shapes restored.
+  int32 shape_count = 2;
+  // Error message if not successful.
+  optional string message = 3;
+}
+
+// =============================================================================
+// Clear Working Copy (Empty Branch Switch)
+// =============================================================================
+
+// Request to clear working copy.
+message ClearWorkingCopyRequest {
+  // Project to clear.
+  string project_id = 1;
+}
+
+// Response from clear operation.
+message ClearWorkingCopyResponse {
+  // Whether clear was successful.
+  bool success = 1;
+  // Number of shapes deleted.
+  int32 deleted_count = 2;
+  // Error message if not successful.
+  optional string message = 3;
 }

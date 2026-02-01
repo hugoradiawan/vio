@@ -2,22 +2,22 @@ import { and, asc, desc, eq } from "drizzle-orm";
 import { ServerError, Status } from "nice-grpc";
 import { db, schema } from "../db";
 import type {
-    CheckoutCommitResponse,
-    CherryPickResponse,
-    Commit,
-    CommitServiceImplementation,
-    CreateCommitResponse,
-    GetCommitResponse,
-    GetDiffResponse,
-    ListCommitsResponse,
-    RevertCommitResponse,
-    Snapshot,
+	CheckoutCommitResponse,
+	CherryPickResponse,
+	Commit,
+	CommitServiceImplementation,
+	CreateCommitResponse,
+	GetCommitResponse,
+	GetDiffResponse,
+	ListCommitsResponse,
+	RevertCommitResponse,
+	Snapshot,
 } from "../gen/vio/v1/commit.js";
 import type { Timestamp } from "../gen/vio/v1/common.js";
 import {
-    getSnapshotData,
-    performThreeWayMerge,
-    type SnapshotData
+	getSnapshotData,
+	performThreeWayMerge,
+	type SnapshotData,
 } from "./merge.js";
 
 function toProtoTimestamp(date: Date): Timestamp {

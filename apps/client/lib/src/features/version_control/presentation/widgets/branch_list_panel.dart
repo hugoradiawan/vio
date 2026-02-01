@@ -4,7 +4,6 @@ import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../../../core/api/dto.dart';
 import '../../bloc/version_control_bloc.dart';
-import 'branch_selector_header.dart';
 import 'branch_settings_dialog.dart';
 
 /// Panel showing all branches with management options
@@ -50,9 +49,7 @@ class _BranchListPanelState extends State<BranchListPanel> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header
-              _buildHeader(context, state),
-
+              const SizedBox(height: 12),
               // Search bar
               _buildSearchBar(),
 
@@ -72,62 +69,6 @@ class _BranchListPanelState extends State<BranchListPanel> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, VersionControlState state) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: VioColors.border),
-        ),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.account_tree,
-            size: 18,
-            color: VioColors.primary,
-          ),
-          const SizedBox(width: 8),
-          const Text(
-            'Branches',
-            style: TextStyle(
-              color: VioColors.textPrimary,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const Spacer(),
-          // Branch count
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: VioColors.surfaceElevated,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              '${state.branches.length}',
-              style: const TextStyle(
-                color: VioColors.textSecondary,
-                fontSize: 11,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          // Create branch button
-          IconButton(
-            onPressed: () => _showCreateBranchDialog(context, state),
-            icon: const Icon(Icons.add),
-            iconSize: 18,
-            padding: const EdgeInsets.all(4),
-            constraints: const BoxConstraints(),
-            color: VioColors.textSecondary,
-            tooltip: 'Create branch',
-          ),
-        ],
-      ),
     );
   }
 
@@ -295,27 +236,6 @@ class _BranchListPanelState extends State<BranchListPanel> {
     });
 
     return filtered;
-  }
-
-  void _showCreateBranchDialog(
-    BuildContext context,
-    VersionControlState state,
-  ) {
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => CreateBranchDialog(
-        currentBranchName: state.currentBranch?.name ?? 'main',
-        onCreateBranch: (name, description) {
-          context.read<VersionControlBloc>().add(
-                BranchCreateRequested(
-                  name: name,
-                  description: description,
-                ),
-              );
-          Navigator.of(dialogContext).pop();
-        },
-      ),
-    );
   }
 
   void _showCreatePRDialog(
@@ -510,7 +430,11 @@ class _BranchListItemState extends State<BranchListItem> {
             value: 'switch',
             child: Row(
               children: [
-                Icon(Icons.swap_horiz, size: 16, color: VioColors.textSecondary),
+                Icon(
+                  Icons.swap_horiz,
+                  size: 16,
+                  color: VioColors.textSecondary,
+                ),
                 SizedBox(width: 8),
                 Text('Switch to branch', style: TextStyle(fontSize: 13)),
               ],
@@ -521,7 +445,11 @@ class _BranchListItemState extends State<BranchListItem> {
             value: 'create_pr',
             child: Row(
               children: [
-                Icon(Icons.call_merge, size: 16, color: VioColors.textSecondary),
+                Icon(
+                  Icons.call_merge,
+                  size: 16,
+                  color: VioColors.textSecondary,
+                ),
                 SizedBox(width: 8),
                 Text('Create Pull Request', style: TextStyle(fontSize: 13)),
               ],
@@ -531,7 +459,11 @@ class _BranchListItemState extends State<BranchListItem> {
           value: 'compare',
           child: Row(
             children: [
-              Icon(Icons.compare_arrows, size: 16, color: VioColors.textSecondary),
+              Icon(
+                Icons.compare_arrows,
+                size: 16,
+                color: VioColors.textSecondary,
+              ),
               SizedBox(width: 8),
               Text('Compare with default', style: TextStyle(fontSize: 13)),
             ],
@@ -563,7 +495,7 @@ class _BranchListItemState extends State<BranchListItem> {
           ),
       ],
     ).then((value) {
-      if (value == null) return;
+      if (value == null || !context.mounted) return;
 
       switch (value) {
         case 'switch':

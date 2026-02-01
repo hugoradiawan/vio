@@ -65,6 +65,8 @@ class VersionControlBloc
       ServiceLocator.instance.commitService;
   PullRequestServiceClient get _prClient =>
       ServiceLocator.instance.pullRequestService;
+  PreferencesService get _prefsService =>
+      ServiceLocator.instance.preferencesService;
 
   /// Convert proto Timestamp to DateTime
   DateTime _timestampToDateTime(common_pb.Timestamp ts) {
@@ -113,17 +115,34 @@ class VersionControlBloc
           )
           .toList();
 
-      // Find default or first branch
-      final defaultBranch = branches.firstWhere(
+      // Try to restore last selected branch, fallback to default branch
+      final lastBranchId = _prefsService.getLastBranchId(event.projectId);
+      BranchDto? initialBranch;
+
+      if (lastBranchId != null) {
+        // Try to find the last selected branch
+        initialBranch = branches.cast<BranchDto?>().firstWhere(
+              (b) => b?.id == lastBranchId,
+              orElse: () => null,
+            );
+      }
+
+      // Fallback to default branch if last branch not found
+      initialBranch ??= branches.firstWhere(
         (b) => b.isDefault,
         orElse: () => branches.first,
       );
 
-      // Load commits for the current branch
+      VioLogger.info(
+        'VersionControlBloc: Initializing with branch "${initialBranch.name}" '
+        '(restored: ${lastBranchId != null && lastBranchId == initialBranch.id})',
+      );
+
+      // Load commits for the initial branch
       final commitsResponse = await _commitClient.listCommits(
         commit_pb.ListCommitsRequest()
           ..projectId = event.projectId
-          ..branchId = defaultBranch.id,
+          ..branchId = initialBranch.id,
       );
 
       final commits = commitsResponse.commits
@@ -143,13 +162,13 @@ class VersionControlBloc
 
       // Load base shapes from HEAD commit's snapshot (if any commits exist)
       final Map<String, Shape> baseShapes = {};
-      if (defaultBranch.headCommitId != null &&
-          defaultBranch.headCommitId!.isNotEmpty) {
+      if (initialBranch.headCommitId != null &&
+          initialBranch.headCommitId!.isNotEmpty) {
         try {
           final commitResponse = await _commitClient.getCommit(
             commit_pb.GetCommitRequest()
               ..projectId = event.projectId
-              ..commitId = defaultBranch.headCommitId!,
+              ..commitId = initialBranch.headCommitId!,
           );
 
           if (commitResponse.hasSnapshot()) {
@@ -181,19 +200,27 @@ class VersionControlBloc
         }
       }
 
-      // Compute uncommitted changes if canvas shapes are already loaded
-      final uncommittedChanges = state.currentShapes.isNotEmpty
-          ? _computeChanges(baseShapes, state.currentShapes)
-          : <ShapeChangeDto>[];
+      // CRITICAL: Initialize the canvas repository with project/branch context
+      // This enables sync operations to work (without projectId, _syncToServer silently returns)
+      final repository = ServiceLocator.instance.canvasRepository;
+      repository.setShapesFromSnapshot(
+        baseShapes.values.toList(),
+        projectId: event.projectId,
+        branchId: initialBranch.id,
+      );
+
+      // Save the selected branch for next app startup
+      await _prefsService.setLastBranchId(event.projectId, initialBranch.id);
 
       emit(
         state.copyWith(
           status: VersionControlStatus.ready,
           branches: branches,
-          currentBranchId: defaultBranch.id,
+          currentBranchId: initialBranch.id,
           commits: commits,
           baseShapes: baseShapes,
-          uncommittedChanges: uncommittedChanges,
+          currentShapes: baseShapes, // Start with no uncommitted changes
+          uncommittedChanges: const [], // baseShapes == currentShapes → no changes
           clearError: true,
         ),
       );
@@ -201,11 +228,12 @@ class VersionControlBloc
       VioLogger.info(
         'VersionControlBloc: Loaded ${branches.length} branches, '
         '${commits.length} commits, ${baseShapes.length} base shapes, '
-        '${uncommittedChanges.length} uncommitted changes',
+        '0 uncommitted changes (fresh load)',
       );
     } on GrpcError catch (e) {
       VioLogger.error(
-          'VersionControlBloc: Failed to initialize - ${e.message}',);
+        'VersionControlBloc: Failed to initialize - ${e.message}',
+      );
       emit(
         state.copyWith(
           status: VersionControlStatus.error,
@@ -273,7 +301,8 @@ class VersionControlBloc
       emit(state.copyWith(branches: branches));
     } on GrpcError catch (e) {
       VioLogger.error(
-          'VersionControlBloc: Failed to refresh branches - ${e.message}',);
+        'VersionControlBloc: Failed to refresh branches - ${e.message}',
+      );
     }
   }
 
@@ -323,6 +352,11 @@ class VersionControlBloc
     String branchId,
     Emitter<VersionControlState> emit,
   ) async {
+    // Signal repository to pause auto-sync during branch switch
+    // This prevents race conditions where auto-sync overwrites shapes
+    final repository = ServiceLocator.instance.canvasRepository;
+    repository.beginBranchSwitch();
+
     emit(
       state.copyWith(
         status: VersionControlStatus.switching,
@@ -330,6 +364,11 @@ class VersionControlBloc
         clearPendingSwitchBranchId: true,
       ),
     );
+
+    // Save the selected branch for next app startup
+    if (state.projectId != null) {
+      await _prefsService.setLastBranchId(state.projectId!, branchId);
+    }
 
     try {
       // Get the new branch info to find its head commit
@@ -340,6 +379,9 @@ class VersionControlBloc
       );
 
       final headCommitId = branchResponse.branch.headCommitId;
+      VioLogger.info(
+        'VersionControlBloc: Branch $branchId has headCommitId: "$headCommitId" (isEmpty: ${headCommitId.isEmpty})',
+      );
 
       if (headCommitId.isNotEmpty) {
         // Load the commit which includes the snapshot
@@ -349,31 +391,79 @@ class VersionControlBloc
             ..commitId = headCommitId,
         );
 
+        VioLogger.debug(
+          'VersionControlBloc: Got commit ${commitResponse.commit.id}, hasSnapshot: ${commitResponse.hasSnapshot()}, snapshotId: ${commitResponse.snapshot.id}',
+        );
+
+        // IMPORTANT: Restore the working copy (shapes table) from the snapshot
+        // This ensures the database has the correct shapes for this branch
+        // so that future commits capture the right state.
+        if (commitResponse.hasSnapshot() &&
+            commitResponse.snapshot.id.isNotEmpty) {
+          try {
+            await repository.restoreFromSnapshot(commitResponse.snapshot.id);
+            VioLogger.info(
+              'VersionControlBloc: Restored working copy from snapshot ${commitResponse.snapshot.id}',
+            );
+          } catch (e) {
+            VioLogger.error(
+              'VersionControlBloc: Failed to restore working copy - $e',
+            );
+            // Continue anyway - the client shapes will still be loaded from
+            // the snapshot, just the DB may be stale
+          }
+        }
+
         // Parse shapes from snapshot (included in GetCommitResponse)
         final Map<String, Shape> newShapes = {};
 
         if (commitResponse.hasSnapshot()) {
           final snapshotBytes = commitResponse.snapshot.data;
+          VioLogger.debug(
+            'VersionControlBloc: Snapshot data length: ${snapshotBytes.length} bytes',
+          );
           if (snapshotBytes.isNotEmpty) {
             try {
-              final snapshotData = utf8.decode(snapshotBytes);
-              final shapesJson = jsonDecode(snapshotData);
-              if (shapesJson is Map<String, dynamic>) {
-                for (final entry in shapesJson.entries) {
-                  if (entry.value is Map<String, dynamic>) {
-                    newShapes[entry.key] = Shape.fromJson(
-                      entry.value as Map<String, dynamic>,
-                    );
-                  }
+              final jsonData = jsonDecode(utf8.decode(snapshotBytes))
+                  as Map<String, dynamic>;
+              final shapesJson = jsonData['shapes'] as List<dynamic>? ?? [];
+              VioLogger.debug(
+                'VersionControlBloc: Found ${shapesJson.length} shapes in snapshot JSON',
+              );
+              for (final shapeJson in shapesJson) {
+                try {
+                  final shape =
+                      ShapeFactory.fromJson(shapeJson as Map<String, dynamic>);
+                  newShapes[shape.id] = shape;
+                  VioLogger.debug(
+                    'VersionControlBloc: Successfully parsed shape ${shape.id} (${shape.type})',
+                  );
+                } catch (e, stackTrace) {
+                  VioLogger.warning(
+                    'VersionControlBloc: Failed to parse shape from snapshot: $e\n$stackTrace',
+                  );
                 }
               }
-            } catch (e) {
+              VioLogger.info(
+                'VersionControlBloc: Parsed ${newShapes.length} shapes from snapshot',
+              );
+            } catch (e, stackTrace) {
               VioLogger.error(
-                'VersionControlBloc: Failed to parse snapshot - $e',
+                'VersionControlBloc: Failed to parse snapshot - $e\n$stackTrace',
               );
             }
           }
         }
+
+        // CRITICAL: Update repository's internal shapes list to match snapshot
+        // This ensures subsequent updateShape/deleteShape calls will work.
+        // Without this, the repository thinks no shapes exist and rejects updates.
+        // ALSO: We must set projectId so that _syncToServer will actually sync!
+        repository.setShapesFromSnapshot(
+          newShapes.values.toList(),
+          projectId: state.projectId!,
+          branchId: branchId,
+        );
 
         // Update base shapes and clear staged state
         emit(
@@ -389,7 +479,33 @@ class VersionControlBloc
           'VersionControlBloc: Switched to branch, loaded ${newShapes.length} shapes',
         );
       } else {
-        // Empty branch - clear shapes
+        // Empty branch - clear shapes and working copy
+        VioLogger.info(
+          'VersionControlBloc: Branch has no head commit, clearing working copy',
+        );
+
+        // Clear the working copy (shapes table) since there's no snapshot to restore from
+        try {
+          await repository.clearWorkingCopy();
+          VioLogger.info(
+            'VersionControlBloc: Cleared working copy for empty branch',
+          );
+        } catch (e) {
+          VioLogger.error(
+            'VersionControlBloc: Failed to clear working copy - $e',
+          );
+          // Continue anyway - shapes will still be cleared locally
+        }
+
+        // CRITICAL: Update repository's internal shapes list to be empty
+        // This ensures the repository state matches the empty branch
+        // ALSO: We must set projectId so that _syncToServer will actually sync!
+        repository.setShapesFromSnapshot(
+          const [],
+          projectId: state.projectId!,
+          branchId: branchId,
+        );
+
         emit(
           state.copyWith(
             baseShapes: const {},
@@ -403,8 +519,14 @@ class VersionControlBloc
       // Refresh commits for the new branch
       add(const CommitsRefreshRequested());
 
+      // Signal repository that branch switch is complete, resume auto-sync
+      repository.endBranchSwitch();
+
       emit(state.copyWith(status: VersionControlStatus.ready));
     } on GrpcError catch (e) {
+      // Signal repository that branch switch is complete (even on error)
+      repository.endBranchSwitch();
+
       VioLogger.error(
         'VersionControlBloc: Failed to switch branch - ${e.message}',
       );
@@ -423,6 +545,10 @@ class VersionControlBloc
   ) async {
     if (state.projectId == null || state.userId == null) return;
 
+    VioLogger.info(
+      'VersionControlBloc: Creating branch "${event.name}" from sourceBranchId: ${event.sourceBranchId}',
+    );
+
     try {
       final request = branch_pb.CreateBranchRequest()
         ..projectId = state.projectId!
@@ -433,9 +559,43 @@ class VersionControlBloc
         request.sourceBranchId = event.sourceBranchId!;
       }
 
-      await _branchClient.createBranch(request);
+      final response = await _branchClient.createBranch(request);
 
+      final newBranchId = response.branch.id;
+      final newHeadCommitId = response.branch.headCommitId;
+      VioLogger.info(
+        'VersionControlBloc: CreateBranch response - branchId: $newBranchId, headCommitId: "$newHeadCommitId"',
+      );
+
+      // Refresh branches list
       add(const BranchesRefreshRequested());
+
+      // If created from current branch, switch without reloading shapes (like git checkout -b)
+      // This preserves the working directory state including uncommitted changes
+      if (event.sourceBranchId == state.currentBranchId &&
+          newBranchId.isNotEmpty) {
+        VioLogger.info(
+          'VersionControlBloc: Created branch from current, switching without reload',
+        );
+        // Save the selected branch for next app startup
+        if (state.projectId != null) {
+          await _prefsService.setLastBranchId(state.projectId!, newBranchId);
+        }
+        // Just update current branch ID - keep shapes, base shapes, and uncommitted changes
+        emit(
+          state.copyWith(
+            currentBranchId: newBranchId,
+          ),
+        );
+        // Refresh commits for the new branch
+        add(const CommitsRefreshRequested());
+      } else if (newBranchId.isNotEmpty) {
+        // Created from a different branch - do full switch (which also saves preference)
+        VioLogger.info(
+          'VersionControlBloc: Created branch from different source, full switch',
+        );
+        add(BranchSwitchRequested(branchId: newBranchId, forceDiscard: true));
+      }
     } on GrpcError catch (e) {
       emit(state.copyWith(error: e.message ?? 'Failed to create branch'));
     }
@@ -587,7 +747,8 @@ class VersionControlBloc
       emit(state.copyWith(commits: commits));
     } on GrpcError catch (e) {
       VioLogger.error(
-          'VersionControlBloc: Failed to refresh commits - ${e.message}',);
+        'VersionControlBloc: Failed to refresh commits - ${e.message}',
+      );
     }
   }
 
@@ -604,6 +765,15 @@ class VersionControlBloc
     emit(state.copyWith(status: VersionControlStatus.committing));
 
     try {
+      // IMPORTANT: Sync pending shapes to the database BEFORE creating the commit.
+      // The backend reads shapes from the database when creating a snapshot,
+      // so any pending local changes must be persisted first.
+      final repository = ServiceLocator.instance.canvasRepository;
+      await repository.sync();
+      VioLogger.info(
+        'VersionControlBloc: Synced shapes to database before commit',
+      );
+
       await _commitClient.createCommit(
         commit_pb.CreateCommitRequest()
           ..projectId = state.projectId!
@@ -738,7 +908,8 @@ class VersionControlBloc
       emit(state.copyWith(pullRequests: prs));
     } on GrpcError catch (e) {
       VioLogger.error(
-          'VersionControlBloc: Failed to refresh PRs - ${e.message}',);
+        'VersionControlBloc: Failed to refresh PRs - ${e.message}',
+      );
     }
   }
 
@@ -852,7 +1023,8 @@ class VersionControlBloc
   ) async {
     // Conflict resolution requires complex UI - just log for now
     VioLogger.warning(
-        'VersionControlBloc: Conflict resolution not yet implemented in UI',);
+      'VersionControlBloc: Conflict resolution not yet implemented in UI',
+    );
   }
 
   // ============================================================================

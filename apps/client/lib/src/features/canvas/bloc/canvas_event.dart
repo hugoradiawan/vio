@@ -310,9 +310,20 @@ class ShapesAdded extends CanvasEvent {
   List<Object?> get props => [shapes];
 }
 
+/// Fired to replace all shapes on the canvas (e.g., from branch switch).
+/// Does NOT push to undo stack since this is a sync operation.
+class ShapesReplaced extends CanvasEvent {
+  const ShapesReplaced(this.shapes);
+
+  final Map<String, Shape> shapes;
+
+  @override
+  List<Object?> get props => [shapes];
+}
+
 /// Fired to remove a shape from the canvas
 class ShapeRemoved extends CanvasEvent {
-  const ShapeRemoved(this.shapeId);
+  const ShapeRemoved({required this.shapeId});
 
   final String shapeId;
 

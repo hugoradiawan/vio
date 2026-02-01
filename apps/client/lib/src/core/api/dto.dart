@@ -103,17 +103,45 @@ class ShapeFactory {
   static Shape fromJson(Map<String, dynamic> json) {
     final type = _parseShapeType(json['type'] as String);
     final sortOrder = (json['sortOrder'] as num?)?.toInt() ?? 0;
-    final transform = Matrix2D(
-      a: (json['transformA'] as num?)?.toDouble() ?? 1.0,
-      b: (json['transformB'] as num?)?.toDouble() ?? 0.0,
-      c: (json['transformC'] as num?)?.toDouble() ?? 0.0,
-      d: (json['transformD'] as num?)?.toDouble() ?? 1.0,
-      e: (json['transformE'] as num?)?.toDouble() ?? 0.0,
-      f: (json['transformF'] as num?)?.toDouble() ?? 0.0,
+
+    VioLogger.debug(
+      'ShapeFactory.fromJson: parsing shape ${json['id']} type=$type',
     );
+
+    // Support both formats for transform:
+    // 1. Flat format: transformA, transformB, etc. (from DB shapes table)
+    // 2. Nested format: transform: { a, b, c, d, e, f } (from some snapshots)
+    Matrix2D transform;
+    final rawTransform = json['transform'];
+    if (rawTransform != null && rawTransform is Map) {
+      final nestedTransform = Map<String, dynamic>.from(rawTransform);
+      transform = Matrix2D(
+        a: (nestedTransform['a'] as num?)?.toDouble() ?? 1.0,
+        b: (nestedTransform['b'] as num?)?.toDouble() ?? 0.0,
+        c: (nestedTransform['c'] as num?)?.toDouble() ?? 0.0,
+        d: (nestedTransform['d'] as num?)?.toDouble() ?? 1.0,
+        e: (nestedTransform['e'] as num?)?.toDouble() ?? 0.0,
+        f: (nestedTransform['f'] as num?)?.toDouble() ?? 0.0,
+      );
+    } else {
+      transform = Matrix2D(
+        a: (json['transformA'] as num?)?.toDouble() ?? 1.0,
+        b: (json['transformB'] as num?)?.toDouble() ?? 0.0,
+        c: (json['transformC'] as num?)?.toDouble() ?? 0.0,
+        d: (json['transformD'] as num?)?.toDouble() ?? 1.0,
+        e: (json['transformE'] as num?)?.toDouble() ?? 0.0,
+        f: (json['transformF'] as num?)?.toDouble() ?? 0.0,
+      );
+    }
+
     final fills = _parseFills(json['fills']);
     final strokes = _parseStrokes(json['strokes']);
-    final properties = json['properties'] as Map<String, dynamic>? ?? {};
+
+    // Properties may be Map<dynamic, dynamic> from jsonDecode, need to convert
+    final rawProperties = json['properties'];
+    final properties = rawProperties != null
+        ? Map<String, dynamic>.from(rawProperties as Map)
+        : <String, dynamic>{};
 
     // frameId can come from json directly or from properties (for shapes nested in frames)
     final frameId =
@@ -165,13 +193,20 @@ class ShapeFactory {
         );
 
       case ShapeType.frame:
+        // Support both width/height and frameWidth/frameHeight formats
+        final frameWidth = (json['frameWidth'] as num?)?.toDouble() ??
+            (json['width'] as num?)?.toDouble() ??
+            100.0;
+        final frameHeight = (json['frameHeight'] as num?)?.toDouble() ??
+            (json['height'] as num?)?.toDouble() ??
+            100.0;
         return FrameShape(
           id: json['id'] as String,
           name: json['name'] as String,
           x: (json['x'] as num).toDouble(),
           y: (json['y'] as num).toDouble(),
-          frameWidth: (json['width'] as num).toDouble(),
-          frameHeight: (json['height'] as num).toDouble(),
+          frameWidth: frameWidth,
+          frameHeight: frameHeight,
           parentId: json['parentId'] as String?,
           frameId: frameId,
           sortOrder: sortOrder,
@@ -213,8 +248,34 @@ class ShapeFactory {
           ),
         );
 
-      case ShapeType.path:
       case ShapeType.group:
+        // Support both groupWidth/groupHeight and width/height formats
+        final groupWidth = (json['groupWidth'] as num?)?.toDouble() ??
+            (json['width'] as num?)?.toDouble() ??
+            100.0;
+        final groupHeight = (json['groupHeight'] as num?)?.toDouble() ??
+            (json['height'] as num?)?.toDouble() ??
+            100.0;
+        return GroupShape(
+          id: json['id'] as String,
+          name: json['name'] as String,
+          x: (json['x'] as num).toDouble(),
+          y: (json['y'] as num).toDouble(),
+          groupWidth: groupWidth,
+          groupHeight: groupHeight,
+          parentId: json['parentId'] as String?,
+          frameId: frameId,
+          sortOrder: sortOrder,
+          transform: transform,
+          rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
+          fills: fills,
+          strokes: strokes,
+          opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
+          hidden: json['hidden'] as bool? ?? false,
+          blocked: json['blocked'] as bool? ?? false,
+        );
+
+      case ShapeType.path:
       case ShapeType.image:
       case ShapeType.svg:
       case ShapeType.bool:
@@ -235,12 +296,12 @@ class ShapeFactory {
     if (fillsJson is! List) return [];
 
     return fillsJson.map<ShapeFill>((f) {
-      final fill = f as Map<String, dynamic>;
+      final fill = Map<String, dynamic>.from(f as Map);
       return ShapeFill(
         color: fill['color'] as int,
         opacity: (fill['opacity'] as num?)?.toDouble() ?? 1.0,
         gradient: fill['gradient'] != null
-            ? _parseGradient(fill['gradient'] as Map<String, dynamic>)
+            ? _parseGradient(Map<String, dynamic>.from(fill['gradient'] as Map))
             : null,
       );
     }).toList();
@@ -251,7 +312,7 @@ class ShapeFactory {
     if (strokesJson is! List) return [];
 
     return strokesJson.map<ShapeStroke>((s) {
-      final stroke = s as Map<String, dynamic>;
+      final stroke = Map<String, dynamic>.from(s as Map);
       return ShapeStroke(
         color: stroke['color'] as int,
         width: (stroke['width'] as num?)?.toDouble() ?? 1.0,
@@ -270,7 +331,7 @@ class ShapeFactory {
         orElse: () => GradientType.linear,
       ),
       stops: (json['stops'] as List).map<GradientStop>((s) {
-        final stop = s as Map<String, dynamic>;
+        final stop = Map<String, dynamic>.from(s as Map);
         return GradientStop(
           color: stop['color'] as int,
           offset: (stop['offset'] as num).toDouble(),

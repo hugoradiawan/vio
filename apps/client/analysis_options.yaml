@@ -64,6 +64,11 @@ analyzer:
     - "**/*.g.dart"
     - "**/*.freezed.dart"
     - "**/*.config.dart"
+    - "**/*.pb.dart"
+    - "**/*.pbenum.dart"
+    - "**/*.pbjson.dart"
+    - "**/*.pbgrpc.dart"
+    - "lib/src/gen/**"
   errors:
     invalid_annotation_target: ignore
   language:

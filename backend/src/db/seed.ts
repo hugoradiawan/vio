@@ -10,6 +10,8 @@ const DEMO_PROJECT_ID = "00000000-0000-0000-0000-000000000001";
 const DEMO_BRANCH_ID = "00000000-0000-0000-0000-000000000002";
 const DEMO_USER_ID = "00000000-0000-0000-0000-000000000099";
 const DEMO_FRAME_ID = "00000000-0000-0000-0000-000000000010";
+const DEMO_COMMIT_ID = "00000000-0000-0000-0000-000000000003";
+const DEMO_SNAPSHOT_ID = "00000000-0000-0000-0000-000000000004";
 
 // Shape UUIDs (stable for easy Flutter integration)
 const SHAPE_FRAME_ID = "00000000-0000-0000-0001-000000000001";
@@ -25,34 +27,26 @@ async function seed() {
 	try {
 		// Clean up existing demo data first
 		console.log("🧹 Cleaning up existing demo data...");
-		await db.delete(schema.shapes).where(
-			// @ts-ignore - eq import issue
-			(await import("drizzle-orm")).eq(
-				schema.shapes.projectId,
-				DEMO_PROJECT_ID,
-			),
-		);
+		const { eq } = await import("drizzle-orm");
+
+		await db
+			.delete(schema.commits)
+			.where(eq(schema.commits.projectId, DEMO_PROJECT_ID));
+		await db
+			.delete(schema.snapshots)
+			.where(eq(schema.snapshots.projectId, DEMO_PROJECT_ID));
+		await db
+			.delete(schema.shapes)
+			.where(eq(schema.shapes.projectId, DEMO_PROJECT_ID));
 		await db
 			.delete(schema.frames)
-			.where(
-				(await import("drizzle-orm")).eq(
-					schema.frames.projectId,
-					DEMO_PROJECT_ID,
-				),
-			);
+			.where(eq(schema.frames.projectId, DEMO_PROJECT_ID));
 		await db
 			.delete(schema.branches)
-			.where(
-				(await import("drizzle-orm")).eq(
-					schema.branches.projectId,
-					DEMO_PROJECT_ID,
-				),
-			);
+			.where(eq(schema.branches.projectId, DEMO_PROJECT_ID));
 		await db
 			.delete(schema.projects)
-			.where(
-				(await import("drizzle-orm")).eq(schema.projects.id, DEMO_PROJECT_ID),
-			);
+			.where(eq(schema.projects.id, DEMO_PROJECT_ID));
 
 		// Create demo project
 		console.log("📁 Creating demo project...");
@@ -202,6 +196,77 @@ async function seed() {
 				properties: shape.properties,
 			});
 		}
+
+		// Create snapshot with shape data (required for version control)
+		console.log("📸 Creating initial snapshot...");
+		const snapshotShapes = shapesData.map((s) => ({
+			id: s.id,
+			name: s.name,
+			type: s.type,
+			x: s.x,
+			y: s.y,
+			width: s.width,
+			height: s.height,
+			fills: s.fills,
+			strokes: s.strokes,
+			frameId: s.properties?.frameId || null,
+			parentId: null,
+			sortOrder: 0,
+			transform: { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 },
+			opacity: 1,
+			hidden: false,
+			blocked: false,
+			rotation: 0,
+			// Shape-specific properties
+			...(s.type === "rectangle"
+				? {
+						rectWidth: s.width,
+						rectHeight: s.height,
+						r1: s.properties?.r1 || 0,
+						r2: s.properties?.r2 || 0,
+						r3: s.properties?.r3 || 0,
+						r4: s.properties?.r4 || 0,
+					}
+				: {}),
+			...(s.type === "ellipse"
+				? {
+						ellipseWidth: s.width,
+						ellipseHeight: s.height,
+					}
+				: {}),
+			...(s.type === "frame"
+				? {
+						frameWidth: s.width,
+						frameHeight: s.height,
+					}
+				: {}),
+		}));
+
+		// Store as object, not string - Drizzle/JSONB handles serialization
+		// and toProtoSnapshot will JSON.stringify it when sending to client
+		await db.insert(schema.snapshots).values({
+			id: DEMO_SNAPSHOT_ID,
+			projectId: DEMO_PROJECT_ID,
+			data: { shapes: snapshotShapes },
+		});
+
+		// Create initial commit
+		console.log("📝 Creating initial commit...");
+		await db.insert(schema.commits).values({
+			id: DEMO_COMMIT_ID,
+			projectId: DEMO_PROJECT_ID,
+			branchId: DEMO_BRANCH_ID,
+			parentId: null,
+			message: "Initial commit with demo shapes",
+			authorId: DEMO_USER_ID,
+			snapshotId: DEMO_SNAPSHOT_ID,
+		});
+
+		// Update branch to point to the commit
+		await db
+			.update(schema.branches)
+			.set({ headCommitId: DEMO_COMMIT_ID })
+			.where(eq(schema.branches.id, DEMO_BRANCH_ID));
 
 		console.log("✅ Seed completed successfully!");
 		console.log("");

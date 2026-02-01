@@ -373,6 +373,9 @@ async function processOperation(
 
 export const canvasServiceImpl: CanvasServiceImplementation = {
 	// Get current canvas state
+	// IMPORTANT: This now reads from the branch's head commit snapshot, NOT the
+	// shapes table directly. This ensures branch-consistent state and prevents
+	// race conditions during branch switching.
 	async getCanvasState(req): Promise<GetCanvasStateResponse> {
 		if (!req.projectId || !req.branchId) {
 			throw new ServerError(
@@ -390,26 +393,115 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 			throw new ServerError(Status.NOT_FOUND, "Project not found");
 		}
 
-		// Get shapes for project
-		const shapes = await db
-			.select()
-			.from(schema.shapes)
-			.where(eq(schema.shapes.projectId, req.projectId))
-			.orderBy(asc(schema.shapes.sortOrder));
-
-		// Get branch for version info
+		// Get branch with head commit info
 		const branch = await db.query.branches.findFirst({
-			where: eq(schema.branches.id, req.branchId),
+			where: and(
+				eq(schema.branches.id, req.branchId),
+				eq(schema.branches.projectId, req.projectId),
+			),
 		});
 
-		const version = branch?.updatedAt
+		if (!branch) {
+			throw new ServerError(Status.NOT_FOUND, "Branch not found");
+		}
+
+		const version = branch.updatedAt
 			? BigInt(new Date(branch.updatedAt).getTime())
 			: BigInt(Date.now());
 
+		// If branch has a head commit, load shapes from its snapshot
+		// This is the "committed state" - the source of truth for branch content
+		if (branch.headCommitId) {
+			const commit = await db.query.commits.findFirst({
+				where: eq(schema.commits.id, branch.headCommitId),
+			});
+
+			if (commit?.snapshotId) {
+				const snapshot = await db.query.snapshots.findFirst({
+					where: eq(schema.snapshots.id, commit.snapshotId),
+				});
+
+				if (snapshot) {
+					const snapshotData = snapshot.data as {
+						shapes?: Array<Record<string, unknown>>;
+					};
+					const snapshotShapes = snapshotData.shapes ?? [];
+
+					// Convert snapshot shapes to proto format
+					const protoShapes: Shape[] = snapshotShapes.map((shape) => {
+						// Parse fills and strokes from snapshot format
+						const fills: Fill[] = ((shape.fills as DbFill[]) || []).map(
+							(f) => ({
+								color: f.color ?? 0,
+								opacity: f.opacity ?? 1.0,
+							}),
+						);
+
+						const strokes: Stroke[] = ((shape.strokes as DbStroke[]) || []).map(
+							(st) => ({
+								color: st.color ?? 0,
+								width: st.width ?? 1.0,
+								opacity: st.opacity ?? 1.0,
+								alignment: stringToStrokeAlignment(st.alignment ?? "center"),
+								cap: StrokeCap.STROKE_CAP_ROUND,
+								join: StrokeJoin.STROKE_JOIN_ROUND,
+							}),
+						);
+
+						return {
+							id: shape.id as string,
+							projectId: req.projectId,
+							frameId: (shape.frameId as string) || undefined,
+							parentId: (shape.parentId as string) || undefined,
+							type: stringToShapeType((shape.type as string) || "rectangle"),
+							name: (shape.name as string) || "Shape",
+							x: (shape.x as number) || 0,
+							y: (shape.y as number) || 0,
+							width: (shape.width as number) || 100,
+							height: (shape.height as number) || 100,
+							rotation: (shape.rotation as number) || 0,
+							transform: {
+								a: (shape.transformA as number) ?? 1,
+								b: (shape.transformB as number) ?? 0,
+								c: (shape.transformC as number) ?? 0,
+								d: (shape.transformD as number) ?? 1,
+								e: (shape.transformE as number) ?? 0,
+								f: (shape.transformF as number) ?? 0,
+							},
+							fills,
+							strokes,
+							opacity: (shape.opacity as number) ?? 1,
+							hidden: (shape.hidden as boolean) ?? false,
+							blocked: (shape.blocked as boolean) ?? false,
+							sortOrder: (shape.sortOrder as number) ?? 0,
+							properties: new TextEncoder().encode(
+								JSON.stringify(
+									(shape.properties as Record<string, unknown>) || {},
+								),
+							),
+							createdAt: toProtoTimestamp(new Date()),
+							updatedAt: toProtoTimestamp(new Date()),
+						};
+					});
+
+					const state: CanvasState = {
+						shapes: protoShapes,
+						version,
+						lastModified: branch.updatedAt
+							? new Date(branch.updatedAt).toISOString()
+							: new Date().toISOString(),
+					};
+
+					return { state };
+				}
+			}
+		}
+
+		// No head commit (empty branch) - return empty state
 		const state: CanvasState = {
-			shapes: shapes.map(toProtoShape),
+			shapes: [],
 			version,
-			lastModified: branch?.updatedAt
+			lastModified: branch.updatedAt
 				? new Date(branch.updatedAt).toISOString()
 				: new Date().toISOString(),
 		};
@@ -910,5 +1002,101 @@ export const canvasServiceImpl: CanvasServiceImplementation = {
 				broadcastUpdate(currentProjectId, currentBranchId, userLeftUpdate);
 			}
 		}
+	},
+
+	// Restore working copy from a snapshot (branch switch)
+	// Uses a transaction to ensure atomicity - either all shapes are replaced or none
+	async restoreFromSnapshot(req) {
+		if (!req.projectId || !req.snapshotId) {
+			throw new ServerError(
+				Status.INVALID_ARGUMENT,
+				"Project ID and Snapshot ID are required",
+			);
+		}
+
+		// Get the snapshot
+		const snapshot = await db.query.snapshots.findFirst({
+			where: and(
+				eq(schema.snapshots.id, req.snapshotId),
+				eq(schema.snapshots.projectId, req.projectId),
+			),
+		});
+
+		if (!snapshot) {
+			throw new ServerError(Status.NOT_FOUND, "Snapshot not found");
+		}
+
+		// Parse shapes from snapshot
+		const snapshotData = snapshot.data as {
+			shapes?: Array<Record<string, unknown>>;
+		};
+		const snapshotShapes = snapshotData.shapes ?? [];
+
+		// Use a transaction to ensure atomicity
+		// This prevents partial state if the operation fails mid-way
+		await db.transaction(async (tx) => {
+			// Delete all existing shapes for this project
+			await tx
+				.delete(schema.shapes)
+				.where(eq(schema.shapes.projectId, req.projectId));
+
+			// Insert shapes from the snapshot
+			if (snapshotShapes.length > 0) {
+				const shapesToInsert = snapshotShapes.map(
+					(shape: Record<string, unknown>) => ({
+						id: shape.id as string,
+						projectId: req.projectId,
+						frameId: (shape.frameId as string) || null,
+						parentId: (shape.parentId as string) || null,
+						type: shape.type as string,
+						name: shape.name as string,
+						x: shape.x as number,
+						y: shape.y as number,
+						width: shape.width as number,
+						height: shape.height as number,
+						rotation: (shape.rotation as number) || 0,
+						transformA: (shape.transformA as number) ?? 1,
+						transformB: (shape.transformB as number) ?? 0,
+						transformC: (shape.transformC as number) ?? 0,
+						transformD: (shape.transformD as number) ?? 1,
+						transformE: (shape.transformE as number) ?? 0,
+						transformF: (shape.transformF as number) ?? 0,
+						fills: (shape.fills as Array<unknown>) || [],
+						strokes: (shape.strokes as Array<unknown>) || [],
+						opacity: (shape.opacity as number) ?? 1,
+						hidden: (shape.hidden as boolean) ?? false,
+						blocked: (shape.blocked as boolean) ?? false,
+						properties: (shape.properties as Record<string, unknown>) ?? {},
+						sortOrder: (shape.sortOrder as number) ?? 0,
+					}),
+				);
+
+				await tx.insert(schema.shapes).values(shapesToInsert);
+			}
+		});
+
+		return {
+			success: true,
+			shapeCount: snapshotShapes.length,
+			message: `Restored ${snapshotShapes.length} shapes from snapshot`,
+		};
+	},
+
+	// Clear working copy (for empty branches)
+	async clearWorkingCopy(req) {
+		if (!req.projectId) {
+			throw new ServerError(Status.INVALID_ARGUMENT, "Project ID is required");
+		}
+
+		// Delete all shapes for this project
+		await db
+			.delete(schema.shapes)
+			.where(eq(schema.shapes.projectId, req.projectId));
+
+		return {
+			success: true,
+			deletedCount: 0, // We don't track exact count for simplicity
+			message: "Cleared working copy",
+		};
 	},
 };

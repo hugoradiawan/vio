@@ -14,6 +14,10 @@ import '../grpc/proto_converter.dart';
 /// - Local changes are immediately applied
 /// - Changes are periodically synced to server via gRPC
 /// - Server version always wins on conflict
+///
+/// Branch switch protection:
+/// - Auto-sync is paused during branch switching operations
+/// - _loadFromServer is blocked while switching to prevent race conditions
 class GrpcCanvasRepository {
   GrpcCanvasRepository({
     required CanvasServiceClient canvasClient,
@@ -32,6 +36,10 @@ class GrpcCanvasRepository {
   final List<Shape> _shapes = [];
   Int64 _localVersion = Int64.ZERO;
   bool _isDirty = false;
+
+  // Branch switch protection - prevents auto-sync and load operations
+  // while a branch switch is in progress
+  bool _isBranchSwitching = false;
 
   // Pending operations for sync
   final List<_PendingOp> _pendingOperations = [];
@@ -60,6 +68,70 @@ class GrpcCanvasRepository {
   SyncStatus _currentStatus = SyncStatus.idle;
   SyncStatus get syncStatus => _currentStatus;
 
+  /// Whether a branch switch is in progress (blocks auto-sync and load)
+  bool get isBranchSwitching => _isBranchSwitching;
+
+  /// Signal that a branch switch is starting
+  /// This pauses auto-sync and blocks _loadFromServer until the switch completes
+  void beginBranchSwitch() {
+    _isBranchSwitching = true;
+    VioLogger.info('GrpcCanvasRepository: Branch switch started, pausing sync');
+  }
+
+  /// Signal that a branch switch has completed
+  /// This resumes normal auto-sync behavior
+  void endBranchSwitch() {
+    _isBranchSwitching = false;
+    VioLogger.info(
+        'GrpcCanvasRepository: Branch switch completed, resuming sync',);
+  }
+
+  /// Set shapes from a snapshot during branch switch
+  ///
+  /// This is called by VersionControlBloc when shapes are loaded from a
+  /// snapshot during branch switching. It updates the repository's internal
+  /// state to match the shapes from the snapshot, so that subsequent
+  /// updateShape/deleteShape calls will work correctly.
+  ///
+  /// IMPORTANT: This must be called after parsing shapes from snapshot,
+  /// otherwise the repository will think shapes don't exist and reject updates.
+  ///
+  /// Both projectId and branchId are required to enable sync operations.
+  /// Without projectId, _syncToServer will silently return without syncing.
+  void setShapesFromSnapshot(
+    List<Shape> newShapes, {
+    required String projectId,
+    required String branchId,
+  }) {
+    VioLogger.info(
+      'GrpcCanvasRepository: Setting ${newShapes.length} shapes from snapshot '
+      'for project $projectId, branch $branchId',
+    );
+
+    // Update project and branch context - BOTH are required for sync to work
+    _projectId = projectId;
+    _branchId = branchId;
+
+    // Replace internal shapes list
+    _shapes.clear();
+    _shapes.addAll(newShapes);
+
+    // Clear any pending operations since we're starting fresh from snapshot
+    _pendingOperations.clear();
+    _isDirty = false;
+
+    // Start auto-sync timer if not already running
+    _startSyncTimer();
+
+    // Notify listeners
+    _shapesController.add(shapes);
+    _updateSyncStatus(SyncStatus.synced);
+
+    VioLogger.debug(
+      'GrpcCanvasRepository: Shapes set from snapshot: ${_shapes.map((s) => s.id).toList()}',
+    );
+  }
+
   /// Initialize repository with a project and branch
   Future<void> initialize({
     required String projectId,
@@ -86,6 +158,15 @@ class GrpcCanvasRepository {
   Future<void> _loadFromServer() async {
     if (_projectId == null || _branchId == null) return;
 
+    // Skip loading if a branch switch is in progress - the VersionControlBloc
+    // will load shapes directly from the snapshot and dispatch ShapesReplaced
+    if (_isBranchSwitching) {
+      VioLogger.debug(
+        'GrpcCanvasRepository: Skipping _loadFromServer during branch switch',
+      );
+      return;
+    }
+
     _updateSyncStatus(SyncStatus.loading);
 
     try {
@@ -111,7 +192,8 @@ class GrpcCanvasRepository {
       );
     } on GrpcError catch (e) {
       VioLogger.error(
-          'GrpcCanvasRepository: Failed to load canvas state - ${e.message}',);
+        'GrpcCanvasRepository: Failed to load canvas state - ${e.message}',
+      );
       _updateSyncStatus(SyncStatus.error);
       rethrow;
     }
@@ -214,9 +296,22 @@ class GrpcCanvasRepository {
 
   /// Sync pending changes to server via gRPC
   Future<void> _syncToServer() async {
-    if (_projectId == null || _branchId == null) return;
+    if (_projectId == null || _branchId == null) {
+      VioLogger.warning(
+        'GrpcCanvasRepository: _syncToServer skipped - projectId=$_projectId, branchId=$_branchId',
+      );
+      return;
+    }
     if (_isSyncing) return;
     if (_pendingOperations.isEmpty && !_isDirty) return;
+
+    // Skip syncing during branch switch to prevent race conditions
+    if (_isBranchSwitching) {
+      VioLogger.debug(
+        'GrpcCanvasRepository: Skipping sync during branch switch',
+      );
+      return;
+    }
 
     VioLogger.debug(
       'GrpcCanvasRepository: Syncing ${_pendingOperations.length} operations...',
@@ -290,6 +385,96 @@ class GrpcCanvasRepository {
   Future<void> refresh() async {
     _pendingOperations.clear();
     await _loadFromServer();
+  }
+
+  /// Restore working copy from a snapshot (for branch switching)
+  ///
+  /// This replaces all shapes in the database with shapes from the specified
+  /// snapshot, ensuring the working copy matches the target branch's state.
+  Future<void> restoreFromSnapshot(String snapshotId) async {
+    if (_projectId == null) {
+      throw StateError('Repository not initialized');
+    }
+
+    VioLogger.info(
+      'GrpcCanvasRepository: Restoring from snapshot $snapshotId',
+    );
+
+    _updateSyncStatus(SyncStatus.syncing);
+
+    try {
+      final request = pb.RestoreFromSnapshotRequest()
+        ..projectId = _projectId!
+        ..snapshotId = snapshotId;
+
+      final response = await _canvasClient.restoreFromSnapshot(request);
+
+      if (response.success) {
+        // Clear pending operations since we just restored from a clean state
+        _pendingOperations.clear();
+        _isDirty = false;
+
+        VioLogger.info(
+          'GrpcCanvasRepository: Restored ${response.shapeCount} shapes from snapshot',
+        );
+        _updateSyncStatus(SyncStatus.synced);
+      } else {
+        VioLogger.warning(
+          'GrpcCanvasRepository: Restore failed - ${response.message}',
+        );
+        _updateSyncStatus(SyncStatus.error);
+      }
+    } on GrpcError catch (e) {
+      VioLogger.error(
+        'GrpcCanvasRepository: Restore error - ${e.message}',
+      );
+      _updateSyncStatus(SyncStatus.error);
+      rethrow;
+    }
+  }
+
+  /// Clear working copy (for switching to empty branches)
+  ///
+  /// This removes all shapes from the database for the project.
+  /// Used when switching to an empty branch with no commits.
+  Future<void> clearWorkingCopy() async {
+    if (_projectId == null) {
+      throw StateError('Repository not initialized');
+    }
+
+    VioLogger.info('GrpcCanvasRepository: Clearing working copy');
+
+    _updateSyncStatus(SyncStatus.syncing);
+
+    try {
+      final request = pb.ClearWorkingCopyRequest()..projectId = _projectId!;
+
+      final response = await _canvasClient.clearWorkingCopy(request);
+
+      if (response.success) {
+        // Clear local state too
+        _shapes.clear();
+        _pendingOperations.clear();
+        _isDirty = false;
+        _shapesController.add(shapes);
+
+        VioLogger.info(
+          'GrpcCanvasRepository: Cleared ${response.deletedCount} shapes',
+        );
+        _updateSyncStatus(SyncStatus.synced);
+      } else {
+        VioLogger.warning(
+          'GrpcCanvasRepository: Clear failed - ${response.message}',
+        );
+        _updateSyncStatus(SyncStatus.error);
+      }
+    } on GrpcError catch (e) {
+      VioLogger.error(
+        'GrpcCanvasRepository: Clear error - ${e.message}',
+      );
+      _updateSyncStatus(SyncStatus.error);
+      rethrow;
+    }
   }
 
   void _updateSyncStatus(SyncStatus status) {

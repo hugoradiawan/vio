@@ -359,10 +359,7 @@ export const branchServiceImpl: BranchServiceImplementation = {
 		}
 
 		// Find common ancestor
-		const commonAncestor = await findCommonAncestor(
-			baseBranchId,
-			headBranchId,
-		);
+		const commonAncestor = await findCommonAncestor(baseBranchId, headBranchId);
 
 		// Count commits ahead/behind
 		const { ahead, behind } = await countCommitsDivergence(

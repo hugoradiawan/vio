@@ -8,8 +8,33 @@ import type { ServiceImpl } from "@connectrpc/connect";
 import { and, asc, eq } from "drizzle-orm";
 import { db, schema } from "../db";
 import {
-	CanvasService, CanvasStateSchema, CanvasUpdateSchema, ClearWorkingCopyResponseSchema, CollaborateResponseSchema, CursorMovedSchema, CursorPositionSchema, GetCanvasStateResponseSchema, OperationType, RestoreFromSnapshotResponseSchema, SelectionChangedSchema, SessionJoinedSchema, ShapeCreatedSchema, ShapeDeletedSchema, ShapeUpdatedSchema, SyncAckSchema, SyncChangesResponseSchema, UserJoinedSchema, UserLeftSchema, UserPresenceSchema, type CanvasUpdate, type CollaborateResponse, type CursorPosition, type GetCanvasStateResponse, type SyncChangesResponse,
-	type SyncOperation, type UserPresence
+	CanvasService,
+	CanvasStateSchema,
+	CanvasUpdateSchema,
+	ClearWorkingCopyResponseSchema,
+	CollaborateResponseSchema,
+	CursorMovedSchema,
+	CursorPositionSchema,
+	GetCanvasStateResponseSchema,
+	OperationType,
+	RestoreFromSnapshotResponseSchema,
+	SelectionChangedSchema,
+	SessionJoinedSchema,
+	ShapeCreatedSchema,
+	ShapeDeletedSchema,
+	ShapeUpdatedSchema,
+	SyncAckSchema,
+	SyncChangesResponseSchema,
+	UserJoinedSchema,
+	UserLeftSchema,
+	UserPresenceSchema,
+	type CanvasUpdate,
+	type CollaborateResponse,
+	type CursorPosition,
+	type GetCanvasStateResponse,
+	type SyncChangesResponse,
+	type SyncOperation,
+	type UserPresence,
 } from "../gen/vio/v1/canvas_pb.js";
 import {
 	FillSchema,
@@ -136,9 +161,7 @@ function stringToStrokeAlignment(alignment: string): StrokeAlignment {
 		inside: StrokeAlignment.INSIDE,
 		outside: StrokeAlignment.OUTSIDE,
 	};
-	return (
-		mapping[alignment.toLowerCase()] ?? StrokeAlignment.CENTER
-	);
+	return mapping[alignment.toLowerCase()] ?? StrokeAlignment.CENTER;
 }
 
 function strokeAlignmentToString(alignment: StrokeAlignment): string {
@@ -380,7 +403,7 @@ export const canvasServiceImpl: ServiceImpl<typeof CanvasService> = {
 		});
 
 		if (!project) {
-			throw notFound( "Project not found");
+			throw notFound("Project not found");
 		}
 
 		// Get branch with head commit info
@@ -392,7 +415,7 @@ export const canvasServiceImpl: ServiceImpl<typeof CanvasService> = {
 		});
 
 		if (!branch) {
-			throw notFound( "Branch not found");
+			throw notFound("Branch not found");
 		}
 
 		const version = branch.updatedAt
@@ -839,7 +862,9 @@ export const canvasServiceImpl: ServiceImpl<typeof CanvasService> = {
 							x: cursor.x,
 							y: cursor.y,
 						});
-						const cursorMoved = create(CursorMovedSchema, { cursor: cursorPosition });
+						const cursorMoved = create(CursorMovedSchema, {
+							cursor: cursorPosition,
+						});
 						const cursorUpdate = create(CanvasUpdateSchema, {
 							update: {
 								case: "cursorMoved",
@@ -1004,7 +1029,7 @@ export const canvasServiceImpl: ServiceImpl<typeof CanvasService> = {
 		});
 
 		if (!snapshot) {
-			throw notFound( "Snapshot not found");
+			throw notFound("Snapshot not found");
 		}
 
 		// Parse shapes from snapshot
@@ -1066,7 +1091,7 @@ export const canvasServiceImpl: ServiceImpl<typeof CanvasService> = {
 	// Clear working copy (for empty branches)
 	async clearWorkingCopy(req) {
 		if (!req.projectId) {
-			throw invalidArgument( "Project ID is required");
+			throw invalidArgument("Project ID is required");
 		}
 
 		// Delete all shapes for this project

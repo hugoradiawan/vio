@@ -3,7 +3,12 @@ import type { ServiceImpl } from "@connectrpc/connect";
 import { eq } from "drizzle-orm";
 import { db, schema } from "../db";
 import { BranchSchema, type Branch } from "../gen/vio/v1/branch_pb.js";
-import { EmptySchema, TimestampSchema, type Empty, type Timestamp } from "../gen/vio/v1/common_pb.js";
+import {
+	EmptySchema,
+	TimestampSchema,
+	type Empty,
+	type Timestamp,
+} from "../gen/vio/v1/common_pb.js";
 import {
 	CreateProjectResponseSchema,
 	FrameSchema,

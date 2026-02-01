@@ -20,8 +20,19 @@ import {
 	type UpdateBranchResponse,
 } from "../gen/vio/v1/branch_pb.js";
 import { CommitSchema, type Commit } from "../gen/vio/v1/commit_pb.js";
-import { EmptySchema, MergeStrategy, TimestampSchema, type Empty, type Timestamp } from "../gen/vio/v1/common_pb.js";
-import { alreadyExists, failedPrecondition, internal, notFound } from "./errors.js";
+import {
+	EmptySchema,
+	MergeStrategy,
+	TimestampSchema,
+	type Empty,
+	type Timestamp,
+} from "../gen/vio/v1/common_pb.js";
+import {
+	alreadyExists,
+	failedPrecondition,
+	internal,
+	notFound,
+} from "./errors.js";
 import {
 	canFastForward,
 	countCommitsDivergence,
@@ -239,7 +250,9 @@ export const branchServiceImpl: ServiceImpl<typeof BranchService> = {
 		// Handle fast-forward strategy
 		if (strategy === MergeStrategy.FAST_FORWARD) {
 			if (!isFastForward) {
-				throw failedPrecondition("Fast-forward merge not possible, branches have diverged");
+				throw failedPrecondition(
+					"Fast-forward merge not possible, branches have diverged",
+				);
 			}
 
 			await performFastForward(targetBranchId, sourceBranch.headCommitId);

@@ -15,7 +15,10 @@ import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { eq } from "drizzle-orm";
 import { db, schema } from "../db";
 import { CreateBranchRequestSchema } from "../gen/vio/v1/branch_pb.js";
-import { GetCanvasStateRequestSchema, RestoreFromSnapshotRequestSchema } from "../gen/vio/v1/canvas_pb.js";
+import {
+	GetCanvasStateRequestSchema,
+	RestoreFromSnapshotRequestSchema,
+} from "../gen/vio/v1/canvas_pb.js";
 import { CreateCommitRequestSchema } from "../gen/vio/v1/commit_pb.js";
 import { branchServiceImpl } from "../services/branch";
 import { canvasServiceImpl } from "../services/canvas";

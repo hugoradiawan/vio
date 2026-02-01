@@ -369,12 +369,14 @@ export function performThreeWayMerge(
 		}
 
 		if (conflicts.length > 0) {
-			allConflicts.push(create(ShapeConflictSchema, {
-				shapeId,
-				shapeName: mergedShape?.name ?? baseShape?.name ?? "Unknown",
-				shapeType: mergedShape?.type ?? baseShape?.type ?? "unknown",
-				propertyConflicts: conflicts,
-			}));
+			allConflicts.push(
+				create(ShapeConflictSchema, {
+					shapeId,
+					shapeName: mergedShape?.name ?? baseShape?.name ?? "Unknown",
+					shapeType: mergedShape?.type ?? baseShape?.type ?? "unknown",
+					propertyConflicts: conflicts,
+				}),
+			);
 		}
 	}
 

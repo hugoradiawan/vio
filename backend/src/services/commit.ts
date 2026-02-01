@@ -100,7 +100,7 @@ export const commitServiceImpl: ServiceImpl<typeof CommitService> = {
 		});
 
 		if (!commit) {
-			throw notFound( "Commit not found");
+			throw notFound("Commit not found");
 		}
 
 		return create(GetCommitResponseSchema, {
@@ -126,7 +126,7 @@ export const commitServiceImpl: ServiceImpl<typeof CommitService> = {
 		});
 
 		if (!branch) {
-			throw notFound( "Branch not found");
+			throw notFound("Branch not found");
 		}
 
 		// Create snapshot
@@ -179,7 +179,7 @@ export const commitServiceImpl: ServiceImpl<typeof CommitService> = {
 		]);
 
 		if (!sourceCommit || !targetCommit) {
-			throw notFound( "Commit not found");
+			throw notFound("Commit not found");
 		}
 
 		// Get shapes from both snapshots
@@ -262,7 +262,7 @@ export const commitServiceImpl: ServiceImpl<typeof CommitService> = {
 		});
 
 		if (!commit) {
-			throw notFound( "Commit not found");
+			throw notFound("Commit not found");
 		}
 
 		// Verify branch exists
@@ -274,13 +274,13 @@ export const commitServiceImpl: ServiceImpl<typeof CommitService> = {
 		});
 
 		if (!branch) {
-			throw notFound( "Branch not found");
+			throw notFound("Branch not found");
 		}
 
 		// Get snapshot data from the target commit
 		const snapshotData = commit.snapshot?.data as SnapshotData | undefined;
 		if (!snapshotData) {
-			throw internal( "Commit snapshot not found");
+			throw internal("Commit snapshot not found");
 		}
 
 		// Create a new snapshot with the same data
@@ -332,7 +332,7 @@ export const commitServiceImpl: ServiceImpl<typeof CommitService> = {
 		});
 
 		if (!commitToRevert) {
-			throw notFound( "Commit to revert not found");
+			throw notFound("Commit to revert not found");
 		}
 
 		// Get parent commit to revert to
@@ -359,7 +359,7 @@ export const commitServiceImpl: ServiceImpl<typeof CommitService> = {
 		});
 
 		if (!branch) {
-			throw notFound( "Branch not found");
+			throw notFound("Branch not found");
 		}
 
 		// Get current branch state and parent state for three-way merge
@@ -370,7 +370,7 @@ export const commitServiceImpl: ServiceImpl<typeof CommitService> = {
 		const revertSnapshot = await getSnapshotData(commitToRevert.snapshotId);
 
 		if (!currentSnapshot || !revertSnapshot) {
-			throw internal( "Snapshot data not found");
+			throw internal("Snapshot data not found");
 		}
 
 		// Perform three-way merge:
@@ -461,7 +461,7 @@ export const commitServiceImpl: ServiceImpl<typeof CommitService> = {
 		});
 
 		if (!targetBranch) {
-			throw notFound( "Target branch not found");
+			throw notFound("Target branch not found");
 		}
 
 		// Three-way merge:

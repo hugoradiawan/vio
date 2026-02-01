@@ -19,7 +19,9 @@ import {
 	GetPullRequestResponseSchema,
 	ListPullRequestsResponseSchema,
 	MergePullRequestResponseSchema,
-	PullRequestSchema, PullRequestService, PullRequestStatus,
+	PullRequestSchema,
+	PullRequestService,
+	PullRequestStatus,
 	ReopenPullRequestResponseSchema,
 	ResolveConflictsResponseSchema,
 	UpdatePullRequestResponseSchema,
@@ -32,9 +34,15 @@ import {
 	type PullRequest,
 	type ReopenPullRequestResponse,
 	type ResolveConflictsResponse,
-	type UpdatePullRequestResponse
+	type UpdatePullRequestResponse,
 } from "../gen/vio/v1/pullrequest_pb.js";
-import { alreadyExists, failedPrecondition, internal, invalidArgument, notFound } from "./errors.js";
+import {
+	alreadyExists,
+	failedPrecondition,
+	internal,
+	invalidArgument,
+	notFound,
+} from "./errors.js";
 import {
 	canFastForward,
 	countCommitsDivergence,
@@ -125,10 +133,7 @@ export const pullRequestServiceImpl: ServiceImpl<typeof PullRequestService> = {
 			eq(schema.pullRequests.projectId, projectId),
 		];
 
-		if (
-			status !== undefined &&
-			status !== PullRequestStatus.UNSPECIFIED
-		) {
+		if (status !== undefined && status !== PullRequestStatus.UNSPECIFIED) {
 			const dbStatus =
 				status === PullRequestStatus.MERGED
 					? "merged"
@@ -167,7 +172,7 @@ export const pullRequestServiceImpl: ServiceImpl<typeof PullRequestService> = {
 		});
 
 		if (!pr) {
-			throw notFound( "Pull request not found");
+			throw notFound("Pull request not found");
 		}
 
 		// Get branches with snapshots for diff/merge calculation
@@ -244,7 +249,7 @@ export const pullRequestServiceImpl: ServiceImpl<typeof PullRequestService> = {
 		});
 
 		if (!sourceBranch || !targetBranch) {
-			throw notFound( "Branch not found");
+			throw notFound("Branch not found");
 		}
 
 		if (sourceBranchId === targetBranchId) {
@@ -262,7 +267,9 @@ export const pullRequestServiceImpl: ServiceImpl<typeof PullRequestService> = {
 		});
 
 		if (existingPR) {
-			throw alreadyExists("An open pull request already exists for these branches");
+			throw alreadyExists(
+				"An open pull request already exists for these branches",
+			);
 		}
 
 		// Create PR
@@ -335,7 +342,7 @@ export const pullRequestServiceImpl: ServiceImpl<typeof PullRequestService> = {
 		});
 
 		if (!pr) {
-			throw notFound( "Pull request not found");
+			throw notFound("Pull request not found");
 		}
 
 		if (pr.status !== "open") {
@@ -373,7 +380,7 @@ export const pullRequestServiceImpl: ServiceImpl<typeof PullRequestService> = {
 		});
 
 		if (!pr) {
-			throw notFound( "Pull request not found");
+			throw notFound("Pull request not found");
 		}
 
 		if (pr.status !== "open") {
@@ -392,7 +399,7 @@ export const pullRequestServiceImpl: ServiceImpl<typeof PullRequestService> = {
 		});
 
 		if (!sourceBranch || !targetBranch) {
-			throw internal( "Branch not found");
+			throw internal("Branch not found");
 		}
 
 		if (!sourceBranch.headCommitId) {
@@ -499,7 +506,7 @@ export const pullRequestServiceImpl: ServiceImpl<typeof PullRequestService> = {
 		});
 
 		if (!pr) {
-			throw notFound( "Pull request not found");
+			throw notFound("Pull request not found");
 		}
 
 		if (pr.status !== "open") {
@@ -533,7 +540,7 @@ export const pullRequestServiceImpl: ServiceImpl<typeof PullRequestService> = {
 		});
 
 		if (!pr) {
-			throw notFound( "Pull request not found");
+			throw notFound("Pull request not found");
 		}
 
 		if (pr.status === "merged") {
@@ -570,7 +577,7 @@ export const pullRequestServiceImpl: ServiceImpl<typeof PullRequestService> = {
 		});
 
 		if (!pr) {
-			throw notFound( "Pull request not found");
+			throw notFound("Pull request not found");
 		}
 
 		// Count commits ahead/behind
@@ -670,7 +677,7 @@ export const pullRequestServiceImpl: ServiceImpl<typeof PullRequestService> = {
 		});
 
 		if (!pr) {
-			throw notFound( "Pull request not found");
+			throw notFound("Pull request not found");
 		}
 
 		if (pr.status !== "open") {
@@ -689,7 +696,7 @@ export const pullRequestServiceImpl: ServiceImpl<typeof PullRequestService> = {
 		});
 
 		if (!sourceBranch || !targetBranch) {
-			throw internal( "Branch not found");
+			throw internal("Branch not found");
 		}
 
 		// Get snapshots

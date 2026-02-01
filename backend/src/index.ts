@@ -8,7 +8,10 @@
 import { type ConnectRouter } from "@connectrpc/connect";
 import { connectNodeAdapter } from "@connectrpc/connect-node";
 import { readFileSync } from "node:fs";
-import { createSecureServer as createHttp2SecureServer, createServer as createHttp2Server } from "node:http2";
+import {
+	createSecureServer as createHttp2SecureServer,
+	createServer as createHttp2Server,
+} from "node:http2";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -56,15 +59,17 @@ function createRoutes(router: ConnectRouter) {
 // In development, Flutter web uses random ports, so we allow any localhost origin
 function isAllowedOrigin(origin: string | undefined): boolean {
 	if (!origin) return true; // Allow requests without origin (curl, Postman)
-	
+
 	// Allow any localhost or 127.0.0.1 origin (any port)
-	if (origin.startsWith("http://localhost:") || 
+	if (
+		origin.startsWith("http://localhost:") ||
 		origin.startsWith("http://127.0.0.1:") ||
 		origin.startsWith("https://localhost:") ||
-		origin.startsWith("https://127.0.0.1:")) {
+		origin.startsWith("https://127.0.0.1:")
+	) {
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -79,7 +84,7 @@ const CONNECT_HEADERS = [
 
 function setCorsHeaders(
 	req: { headers: { origin?: string } },
-	res: { setHeader: (name: string, value: string) => void }
+	res: { setHeader: (name: string, value: string) => void },
 ) {
 	const origin = req.headers.origin;
 	if (isAllowedOrigin(origin)) {
@@ -88,7 +93,10 @@ function setCorsHeaders(
 	}
 	res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
 	res.setHeader("Access-Control-Allow-Headers", CONNECT_HEADERS.join(", "));
-	res.setHeader("Access-Control-Expose-Headers", "Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin");
+	res.setHeader(
+		"Access-Control-Expose-Headers",
+		"Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin",
+	);
 	res.setHeader("Access-Control-Max-Age", "86400"); // 24 hours
 }
 
@@ -102,7 +110,7 @@ const connectHandler = connectNodeAdapter({
 // Wrap handler with CORS support
 const handler = (
 	req: Parameters<typeof connectHandler>[0],
-	res: Parameters<typeof connectHandler>[1]
+	res: Parameters<typeof connectHandler>[1],
 ) => {
 	setCorsHeaders(req, res);
 
@@ -132,7 +140,7 @@ if (USE_TLS) {
 				key: readFileSync(keyPath),
 				allowHTTP1: true, // Allow HTTP/1.1 for Connect protocol
 			},
-			handler
+			handler,
 		);
 		server.listen(PORT, "0.0.0.0", () => {
 			console.log(`
@@ -166,21 +174,23 @@ if (USE_TLS) {
 	// Development mode: Run two servers
 	// - HTTP/2 on PORT (4000) for native gRPC from Desktop/Mobile
 	// - HTTP/1.1 on WEB_PORT (4001) for gRPC-Web from browsers
-	
+
 	const { createServer: createHttp1Server } = await import("node:http");
-	
+
 	// HTTP/2 server for native gRPC (Desktop/Mobile)
 	const http2Server = createHttp2Server(handler);
 	http2Server.listen(PORT, "0.0.0.0", () => {
-		console.log(`   ✓ HTTP/2 server on port ${PORT} (Desktop/Mobile - native gRPC)`);
+		console.log(
+			`   ✓ HTTP/2 server on port ${PORT} (Desktop/Mobile - native gRPC)`,
+		);
 	});
-	
+
 	// HTTP/1.1 server for gRPC-Web (browsers)
 	const http1Server = createHttp1Server(handler);
 	http1Server.listen(WEB_PORT, "0.0.0.0", () => {
 		console.log(`   ✓ HTTP/1.1 server on port ${WEB_PORT} (Web - gRPC-Web)`);
 	});
-	
+
 	console.log(`
 🎨 Vio Backend is running
 

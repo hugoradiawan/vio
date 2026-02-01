@@ -14,8 +14,18 @@ import {
 	type User,
 	type ValidateTokenResponse,
 } from "../gen/vio/v1/auth_pb.js";
-import { EmptySchema, TimestampSchema, type Empty, type Timestamp } from "../gen/vio/v1/common_pb.js";
-import { alreadyExists, invalidArgument, notFound, unauthenticated } from "./errors.js";
+import {
+	EmptySchema,
+	TimestampSchema,
+	type Empty,
+	type Timestamp,
+} from "../gen/vio/v1/common_pb.js";
+import {
+	alreadyExists,
+	invalidArgument,
+	notFound,
+	unauthenticated,
+} from "./errors.js";
 
 // ============================================================================
 // In-Memory User Store (replace with database in production)
@@ -232,17 +242,26 @@ export const authServiceImpl: ServiceImpl<typeof AuthService> = {
 		// Verify access token
 		const tokenData = accessTokens.get(req.accessToken);
 		if (!tokenData) {
-			return create(ValidateTokenResponseSchema, { valid: false, user: undefined });
+			return create(ValidateTokenResponseSchema, {
+				valid: false,
+				user: undefined,
+			});
 		}
 
 		if (Date.now() > tokenData.expiresAt) {
 			accessTokens.delete(req.accessToken);
-			return create(ValidateTokenResponseSchema, { valid: false, user: undefined });
+			return create(ValidateTokenResponseSchema, {
+				valid: false,
+				user: undefined,
+			});
 		}
 
 		const user = users.get(tokenData.userId);
 		if (!user) {
-			return create(ValidateTokenResponseSchema, { valid: false, user: undefined });
+			return create(ValidateTokenResponseSchema, {
+				valid: false,
+				user: undefined,
+			});
 		}
 
 		return create(ValidateTokenResponseSchema, {

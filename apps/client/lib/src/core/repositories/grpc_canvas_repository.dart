@@ -83,7 +83,8 @@ class GrpcCanvasRepository {
   void endBranchSwitch() {
     _isBranchSwitching = false;
     VioLogger.info(
-        'GrpcCanvasRepository: Branch switch completed, resuming sync',);
+      'GrpcCanvasRepository: Branch switch completed, resuming sync',
+    );
   }
 
   /// Set shapes from a snapshot during branch switch

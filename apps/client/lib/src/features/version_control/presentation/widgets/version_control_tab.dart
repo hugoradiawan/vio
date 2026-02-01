@@ -146,7 +146,7 @@ class VersionControlTab extends StatelessWidget {
     );
   }
 
-    void _showCreateBranchDialog(
+  void _showCreateBranchDialog(
     BuildContext context,
     VersionControlState state,
   ) {

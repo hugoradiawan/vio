@@ -652,7 +652,76 @@ class _MultipleSelectionPanel extends StatelessWidget {
   }
 
   void _alignShapes(BuildContext context, Alignment alignment) {
-    // TODO: Implement shape alignment
+    if (shapes.length < 2) return;
+
+    final bloc = context.read<CanvasBloc>();
+
+    // Calculate combined bounds of all selected shapes
+    double minX = double.infinity;
+    double minY = double.infinity;
+    double maxX = double.negativeInfinity;
+    double maxY = double.negativeInfinity;
+
+    for (final shape in shapes) {
+      final bounds = shape.bounds;
+      if (bounds.left < minX) minX = bounds.left;
+      if (bounds.top < minY) minY = bounds.top;
+      if (bounds.right > maxX) maxX = bounds.right;
+      if (bounds.bottom > maxY) maxY = bounds.bottom;
+    }
+
+    final selectionCenterX = (minX + maxX) / 2;
+    final selectionCenterY = (minY + maxY) / 2;
+
+    for (final shape in shapes) {
+      if (shape.blocked) continue;
+
+      final bounds = shape.bounds;
+      double newX = shape.x;
+      double newY = shape.y;
+
+      // Horizontal alignment
+      if (alignment == Alignment.centerLeft ||
+          alignment == Alignment.topLeft ||
+          alignment == Alignment.bottomLeft) {
+        // Align left edges
+        newX = minX;
+      } else if (alignment == Alignment.center ||
+          alignment == Alignment.topCenter ||
+          alignment == Alignment.bottomCenter) {
+        // Center horizontally
+        newX = selectionCenterX - bounds.width / 2;
+      } else if (alignment == Alignment.centerRight ||
+          alignment == Alignment.topRight ||
+          alignment == Alignment.bottomRight) {
+        // Align right edges
+        newX = maxX - bounds.width;
+      }
+
+      // Vertical alignment
+      if (alignment == Alignment.topLeft ||
+          alignment == Alignment.topCenter ||
+          alignment == Alignment.topRight) {
+        // Align top edges
+        newY = minY;
+      } else if (alignment == Alignment.centerLeft ||
+          alignment == Alignment.center ||
+          alignment == Alignment.centerRight) {
+        // Center vertically
+        newY = selectionCenterY - bounds.height / 2;
+      } else if (alignment == Alignment.bottomLeft ||
+          alignment == Alignment.bottomCenter ||
+          alignment == Alignment.bottomRight) {
+        // Align bottom edges
+        newY = maxY - bounds.height;
+      }
+
+      // Only update if position changed
+      if ((newX - shape.x).abs() > 0.001 || (newY - shape.y).abs() > 0.001) {
+        final movedShape = shape.moveBy(newX - shape.x, newY - shape.y);
+        bloc.add(ShapeUpdated(movedShape));
+      }
+    }
   }
 
   void _setAllOpacity(BuildContext context, double opacity) {

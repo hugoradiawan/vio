@@ -237,7 +237,7 @@ class ShapePainter {
     ShapeFill fill,
     Shape shape,
   ) {
-    if (fill.opacity <= 0) return;
+    if (fill.hidden || fill.opacity <= 0) return;
 
     final paint = Paint()..style = PaintingStyle.fill;
 
@@ -258,7 +258,7 @@ class ShapePainter {
     ShapeStroke stroke,
     Shape shape,
   ) {
-    if (stroke.opacity <= 0 || stroke.width <= 0) return;
+    if (stroke.hidden || stroke.opacity <= 0 || stroke.width <= 0) return;
 
     final paint = Paint()
       ..style = PaintingStyle.stroke

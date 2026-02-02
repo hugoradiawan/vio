@@ -68,12 +68,10 @@ class _FillItem extends StatelessWidget {
         children: [
           // Visibility toggle
           VioSvgIconButton(
-            assetPath: VioIcons.eye,
+            assetPath: fill.hidden ? VioIcons.eyeOff : VioIcons.eye,
             size: 14,
             buttonSize: 24,
-            onPressed: () {
-              // TODO: Toggle fill visibility
-            },
+            onPressed: () => _toggleFillVisibility(context),
           ),
           const SizedBox(width: VioSpacing.xs),
           // Color preview
@@ -163,11 +161,13 @@ class _FillItem extends StatelessWidget {
 
   void _updateFillOpacity(BuildContext context, double opacity) {
     final newFills = List<ShapeFill>.from(shape.fills);
-    newFills[index] = ShapeFill(
-      color: fill.color,
-      opacity: opacity,
-      gradient: fill.gradient,
-    );
+    newFills[index] = fill.copyWith(opacity: opacity);
+    _updateShape(context, newFills: newFills);
+  }
+
+  void _toggleFillVisibility(BuildContext context) {
+    final newFills = List<ShapeFill>.from(shape.fills);
+    newFills[index] = fill.copyWith(hidden: !fill.hidden);
     _updateShape(context, newFills: newFills);
   }
 
@@ -239,12 +239,10 @@ class _StrokeItem extends StatelessWidget {
             children: [
               // Visibility toggle
               VioSvgIconButton(
-                assetPath: VioIcons.eye,
+                assetPath: stroke.hidden ? VioIcons.eyeOff : VioIcons.eye,
                 size: 14,
                 buttonSize: 24,
-                onPressed: () {
-                  // TODO: Toggle stroke visibility
-                },
+                onPressed: () => _toggleStrokeVisibility(context),
               ),
               const SizedBox(width: VioSpacing.xs),
               // Color preview
@@ -399,6 +397,12 @@ class _StrokeItem extends StatelessWidget {
   void _updateStrokeOpacity(BuildContext context, double opacity) {
     final newStrokes = List<ShapeStroke>.from(shape.strokes);
     newStrokes[index] = stroke.copyWith(opacity: opacity);
+    _updateShape(context, newStrokes: newStrokes);
+  }
+
+  void _toggleStrokeVisibility(BuildContext context) {
+    final newStrokes = List<ShapeStroke>.from(shape.strokes);
+    newStrokes[index] = stroke.copyWith(hidden: !stroke.hidden);
     _updateShape(context, newStrokes: newStrokes);
   }
 

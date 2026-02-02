@@ -55,8 +55,24 @@ message Fill {
   uint32 color = 1;
   // Fill opacity from 0.0 (fully transparent) to 1.0 (fully opaque).
   double opacity = 2;
+  // Whether this fill is hidden (not rendered).
+  bool hidden = 3;
   // Optional gradient fill. When present, overrides solid color.
-  optional Gradient gradient = 3;
+  optional Gradient gradient = 4;
+  // Optional image fill for texture/pattern fills.
+  optional FillImage fill_image = 5;
+}
+
+// Image fill for texture or pattern fills.
+message FillImage {
+  // Reference ID to the image asset.
+  string id = 1;
+  // Image width in pixels.
+  optional double width = 2;
+  // Image height in pixels.
+  optional double height = 3;
+  // MIME type of the image (e.g., "image/png").
+  optional string mtype = 4;
 }
 
 // Gradient fill definition with multiple color stops.
@@ -112,12 +128,14 @@ message Stroke {
   double width = 2;
   // Stroke opacity from 0.0 (transparent) to 1.0 (opaque).
   double opacity = 3;
+  // Whether this stroke is hidden (not rendered).
+  bool hidden = 4;
   // Stroke position relative to the shape path.
-  StrokeAlignment alignment = 4;
+  StrokeAlignment alignment = 5;
   // Line cap style for stroke endpoints.
-  StrokeCap cap = 5;
+  StrokeCap cap = 6;
   // Line join style for stroke corners.
-  StrokeJoin join = 6;
+  StrokeJoin join = 7;
 }
 
 // Stroke alignment relative to the shape's path.
@@ -261,4 +279,127 @@ enum ResolutionChoice {
   RESOLUTION_CHOICE_TARGET = 2;
   // Use a custom value provided by the user.
   RESOLUTION_CHOICE_CUSTOM = 3;
+}
+
+// =============================================================================
+// Shape-Specific Properties
+// =============================================================================
+
+// Properties specific to rectangle shapes.
+//
+// Corner radii are applied in CSS order: top-left, top-right, bottom-right, bottom-left.
+// All radii default to 0 (sharp corners).
+message RectangleProperties {
+  // Top-left corner radius in canvas units.
+  double r1 = 1;
+  // Top-right corner radius in canvas units.
+  double r2 = 2;
+  // Bottom-right corner radius in canvas units.
+  double r3 = 3;
+  // Bottom-left corner radius in canvas units.
+  double r4 = 4;
+}
+
+// Properties specific to text shapes.
+//
+// Contains all typography settings for text rendering.
+message TextProperties {
+  // The text content to display.
+  string text = 1;
+  // Font size in canvas units (pixels at 100% zoom).
+  double font_size = 2;
+  // Font family name (e.g., "Inter", "Roboto").
+  // If not available, system default is used.
+  optional string font_family = 3;
+  // Font weight as numeric value (100-900).
+  // 400 = normal, 700 = bold.
+  optional int32 font_weight = 4;
+  // Text horizontal alignment within the text box.
+  TextAlign text_align = 5;
+  // Line height multiplier (1.0 = single spacing, 1.5 = 150%).
+  double line_height = 6;
+  // Letter spacing as percentage of font size.
+  double letter_spacing_percent = 7;
+}
+
+// Text horizontal alignment options.
+enum TextAlign {
+  // Default/unspecified - treated as LEFT.
+  TEXT_ALIGN_UNSPECIFIED = 0;
+  // Align text to the left edge.
+  TEXT_ALIGN_LEFT = 1;
+  // Center text horizontally.
+  TEXT_ALIGN_CENTER = 2;
+  // Align text to the right edge.
+  TEXT_ALIGN_RIGHT = 3;
+  // Justify text (stretch to fill width).
+  TEXT_ALIGN_JUSTIFY = 4;
+}
+
+// Properties specific to frame shapes (artboards).
+//
+// Frames are containers that can clip content and have auto-layout.
+message FrameProperties {
+  // Whether content outside frame bounds is clipped/hidden.
+  bool clip_content = 1;
+  // Background color (if different from fills).
+  optional uint32 background_color = 2;
+}
+
+// Properties specific to path shapes (vector graphics).
+//
+// Paths are defined by a series of path commands (move, line, curve, close).
+message PathProperties {
+  // SVG-like path data string (e.g., "M 0 0 L 100 100 Z").
+  string path_data = 1;
+  // Whether the path is closed (end connects to start).
+  bool closed = 2;
+}
+
+// Properties specific to image shapes.
+message ImageProperties {
+  // Reference ID to the uploaded image asset.
+  string asset_id = 1;
+  // Original image width in pixels.
+  double original_width = 2;
+  // Original image height in pixels.
+  double original_height = 3;
+  // How the image is scaled within its bounds.
+  ImageScaleMode scale_mode = 4;
+}
+
+// Image scaling mode within shape bounds.
+enum ImageScaleMode {
+  // Default/unspecified - treated as FILL.
+  IMAGE_SCALE_MODE_UNSPECIFIED = 0;
+  // Scale to fill bounds, cropping if necessary.
+  IMAGE_SCALE_MODE_FILL = 1;
+  // Scale to fit entirely within bounds, letterboxing if necessary.
+  IMAGE_SCALE_MODE_FIT = 2;
+  // Stretch to exactly match bounds (may distort).
+  IMAGE_SCALE_MODE_STRETCH = 3;
+  // Display at original size, cropping if larger than bounds.
+  IMAGE_SCALE_MODE_ORIGINAL = 4;
+}
+
+// Properties specific to boolean operation shapes.
+message BoolProperties {
+  // Type of boolean operation.
+  BoolOperation operation = 1;
+  // IDs of shapes involved in the boolean operation.
+  repeated string source_shape_ids = 2;
+}
+
+// Boolean operation types.
+enum BoolOperation {
+  // Default/unspecified.
+  BOOL_OPERATION_UNSPECIFIED = 0;
+  // Union: combine all shapes.
+  BOOL_OPERATION_UNION = 1;
+  // Subtract: remove second shape from first.
+  BOOL_OPERATION_SUBTRACT = 2;
+  // Intersect: keep only overlapping areas.
+  BOOL_OPERATION_INTERSECT = 3;
+  // Exclude: keep non-overlapping areas (XOR).
+  BOOL_OPERATION_EXCLUDE = 4;
 }

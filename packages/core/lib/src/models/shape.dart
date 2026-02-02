@@ -198,11 +198,13 @@ abstract class Shape extends Equatable {
       case ShapeType.group:
         return GroupShape.fromJson(json);
       case ShapeType.path:
+        return PathShape.fromJson(json);
       case ShapeType.image:
+        return ImageShape.fromJson(json);
       case ShapeType.svg:
+        return SvgShape.fromJson(json);
       case ShapeType.bool:
-        // TODO: Implement these shape types
-        throw UnimplementedError('Shape type $type not yet implemented');
+        return BoolShape.fromJson(json);
     }
   }
 
@@ -275,6 +277,7 @@ class ShapeFill extends Equatable {
   const ShapeFill({
     required this.color,
     this.opacity = 1.0,
+    this.hidden = false,
     this.gradient,
     this.fillImage,
   });
@@ -285,15 +288,36 @@ class ShapeFill extends Equatable {
   /// Fill opacity
   final double opacity;
 
+  /// Whether this fill is hidden
+  final bool hidden;
+
   /// Gradient fill (optional)
   final ShapeGradient? gradient;
 
   /// Image fill (optional)
   final ShapeFillImage? fillImage;
 
+  /// Create a copy with updated properties
+  ShapeFill copyWith({
+    int? color,
+    double? opacity,
+    bool? hidden,
+    ShapeGradient? gradient,
+    ShapeFillImage? fillImage,
+  }) {
+    return ShapeFill(
+      color: color ?? this.color,
+      opacity: opacity ?? this.opacity,
+      hidden: hidden ?? this.hidden,
+      gradient: gradient ?? this.gradient,
+      fillImage: fillImage ?? this.fillImage,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
         'color': color,
         'opacity': opacity,
+        'hidden': hidden,
         if (gradient != null) 'gradient': gradient!.toJson(),
         if (fillImage != null) 'fillImage': fillImage!.toJson(),
       };
@@ -301,6 +325,7 @@ class ShapeFill extends Equatable {
   factory ShapeFill.fromJson(Map<String, dynamic> json) => ShapeFill(
         color: json['color'] as int,
         opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
+        hidden: json['hidden'] as bool? ?? false,
         gradient: json['gradient'] != null
             ? ShapeGradient.fromJson(json['gradient'] as Map<String, dynamic>)
             : null,
@@ -310,7 +335,7 @@ class ShapeFill extends Equatable {
       );
 
   @override
-  List<Object?> get props => [color, opacity, gradient, fillImage];
+  List<Object?> get props => [color, opacity, hidden, gradient, fillImage];
 }
 
 /// Stroke style for shapes
@@ -319,6 +344,7 @@ class ShapeStroke extends Equatable {
     required this.color,
     this.width = 1.0,
     this.opacity = 1.0,
+    this.hidden = false,
     this.alignment = StrokeAlignment.center,
     this.cap = StrokeCap.round,
     this.join = StrokeJoin.round,
@@ -332,6 +358,9 @@ class ShapeStroke extends Equatable {
 
   /// Stroke opacity
   final double opacity;
+
+  /// Whether this stroke is hidden
+  final bool hidden;
 
   /// Stroke alignment (inside, center, outside)
   final StrokeAlignment alignment;
@@ -347,6 +376,7 @@ class ShapeStroke extends Equatable {
     int? color,
     double? width,
     double? opacity,
+    bool? hidden,
     StrokeAlignment? alignment,
     StrokeCap? cap,
     StrokeJoin? join,
@@ -355,6 +385,7 @@ class ShapeStroke extends Equatable {
       color: color ?? this.color,
       width: width ?? this.width,
       opacity: opacity ?? this.opacity,
+      hidden: hidden ?? this.hidden,
       alignment: alignment ?? this.alignment,
       cap: cap ?? this.cap,
       join: join ?? this.join,
@@ -365,6 +396,7 @@ class ShapeStroke extends Equatable {
         'color': color,
         'width': width,
         'opacity': opacity,
+        'hidden': hidden,
         'alignment': alignment.name,
         'cap': cap.name,
         'join': join.name,
@@ -374,6 +406,7 @@ class ShapeStroke extends Equatable {
         color: json['color'] as int,
         width: (json['width'] as num?)?.toDouble() ?? 1.0,
         opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
+        hidden: json['hidden'] as bool? ?? false,
         alignment: StrokeAlignment.values.firstWhere(
           (e) => e.name == json['alignment'],
           orElse: () => StrokeAlignment.center,
@@ -389,7 +422,8 @@ class ShapeStroke extends Equatable {
       );
 
   @override
-  List<Object?> get props => [color, width, opacity, alignment, cap, join];
+  List<Object?> get props =>
+      [color, width, opacity, hidden, alignment, cap, join];
 }
 
 /// Stroke alignment options

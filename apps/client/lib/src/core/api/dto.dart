@@ -36,6 +36,7 @@ extension ShapeDto on Shape {
     return {
       'color': fill.color,
       'opacity': fill.opacity,
+      'hidden': fill.hidden,
       if (fill.gradient != null) 'gradient': _gradientToJson(fill.gradient!),
     };
   }
@@ -45,6 +46,7 @@ extension ShapeDto on Shape {
       'color': stroke.color,
       'width': stroke.width,
       'opacity': stroke.opacity,
+      'hidden': stroke.hidden,
       'alignment': stroke.alignment.name,
       'cap': stroke.cap.name,
       'join': stroke.join.name,
@@ -276,11 +278,129 @@ class ShapeFactory {
         );
 
       case ShapeType.path:
+        final pathWidth = (json['pathWidth'] as num?)?.toDouble() ??
+            (json['width'] as num?)?.toDouble() ??
+            100.0;
+        final pathHeight = (json['pathHeight'] as num?)?.toDouble() ??
+            (json['height'] as num?)?.toDouble() ??
+            100.0;
+        return PathShape(
+          id: json['id'] as String,
+          name: json['name'] as String,
+          x: (json['x'] as num).toDouble(),
+          y: (json['y'] as num).toDouble(),
+          pathWidth: pathWidth,
+          pathHeight: pathHeight,
+          pathData: (properties['pathData'] as String?) ?? '',
+          closed: properties['closed'] as bool? ?? false,
+          parentId: json['parentId'] as String?,
+          frameId: frameId,
+          sortOrder: sortOrder,
+          transform: transform,
+          rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
+          fills: fills,
+          strokes: strokes,
+          opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
+          hidden: json['hidden'] as bool? ?? false,
+          blocked: json['blocked'] as bool? ?? false,
+        );
+
       case ShapeType.image:
+        final imageWidth = (json['imageWidth'] as num?)?.toDouble() ??
+            (json['width'] as num?)?.toDouble() ??
+            100.0;
+        final imageHeight = (json['imageHeight'] as num?)?.toDouble() ??
+            (json['height'] as num?)?.toDouble() ??
+            100.0;
+        return ImageShape(
+          id: json['id'] as String,
+          name: json['name'] as String,
+          x: (json['x'] as num).toDouble(),
+          y: (json['y'] as num).toDouble(),
+          imageWidth: imageWidth,
+          imageHeight: imageHeight,
+          assetId: (properties['assetId'] as String?) ?? '',
+          originalWidth:
+              (properties['originalWidth'] as num?)?.toDouble() ?? 0,
+          originalHeight:
+              (properties['originalHeight'] as num?)?.toDouble() ?? 0,
+          scaleMode: ImageScaleMode.values.firstWhere(
+            (e) => e.name == properties['scaleMode'],
+            orElse: () => ImageScaleMode.fill,
+          ),
+          parentId: json['parentId'] as String?,
+          frameId: frameId,
+          sortOrder: sortOrder,
+          transform: transform,
+          rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
+          fills: fills,
+          strokes: strokes,
+          opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
+          hidden: json['hidden'] as bool? ?? false,
+          blocked: json['blocked'] as bool? ?? false,
+        );
+
       case ShapeType.svg:
+        final svgWidth = (json['svgWidth'] as num?)?.toDouble() ??
+            (json['width'] as num?)?.toDouble() ??
+            100.0;
+        final svgHeight = (json['svgHeight'] as num?)?.toDouble() ??
+            (json['height'] as num?)?.toDouble() ??
+            100.0;
+        return SvgShape(
+          id: json['id'] as String,
+          name: json['name'] as String,
+          x: (json['x'] as num).toDouble(),
+          y: (json['y'] as num).toDouble(),
+          svgWidth: svgWidth,
+          svgHeight: svgHeight,
+          svgContent: (properties['svgContent'] as String?) ?? '',
+          viewBox: properties['viewBox'] as String?,
+          parentId: json['parentId'] as String?,
+          frameId: frameId,
+          sortOrder: sortOrder,
+          transform: transform,
+          rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
+          fills: fills,
+          strokes: strokes,
+          opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
+          hidden: json['hidden'] as bool? ?? false,
+          blocked: json['blocked'] as bool? ?? false,
+        );
+
       case ShapeType.bool:
-        // TODO: Implement other shape types as needed
-        throw UnimplementedError('Shape type $type not yet implemented');
+        final boolWidth = (json['boolWidth'] as num?)?.toDouble() ??
+            (json['width'] as num?)?.toDouble() ??
+            100.0;
+        final boolHeight = (json['boolHeight'] as num?)?.toDouble() ??
+            (json['height'] as num?)?.toDouble() ??
+            100.0;
+        return BoolShape(
+          id: json['id'] as String,
+          name: json['name'] as String,
+          x: (json['x'] as num).toDouble(),
+          y: (json['y'] as num).toDouble(),
+          boolWidth: boolWidth,
+          boolHeight: boolHeight,
+          operation: BoolOperation.values.firstWhere(
+            (e) => e.name == properties['operation'],
+            orElse: () => BoolOperation.union,
+          ),
+          sourceShapeIds: (properties['sourceShapeIds'] as List?)
+                  ?.map((e) => e as String)
+                  .toList() ??
+              const [],
+          parentId: json['parentId'] as String?,
+          frameId: frameId,
+          sortOrder: sortOrder,
+          transform: transform,
+          rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
+          fills: fills,
+          strokes: strokes,
+          opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
+          hidden: json['hidden'] as bool? ?? false,
+          blocked: json['blocked'] as bool? ?? false,
+        );
     }
   }
 
@@ -300,6 +420,7 @@ class ShapeFactory {
       return ShapeFill(
         color: fill['color'] as int,
         opacity: (fill['opacity'] as num?)?.toDouble() ?? 1.0,
+        hidden: fill['hidden'] as bool? ?? false,
         gradient: fill['gradient'] != null
             ? _parseGradient(Map<String, dynamic>.from(fill['gradient'] as Map))
             : null,
@@ -317,6 +438,7 @@ class ShapeFactory {
         color: stroke['color'] as int,
         width: (stroke['width'] as num?)?.toDouble() ?? 1.0,
         opacity: (stroke['opacity'] as num?)?.toDouble() ?? 1.0,
+        hidden: stroke['hidden'] as bool? ?? false,
         alignment: _parseStrokeAlignment(stroke['alignment'] as String?),
         cap: _parseStrokeCap(stroke['cap'] as String?),
         join: _parseStrokeJoin(stroke['join'] as String?),

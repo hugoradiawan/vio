@@ -12,12 +12,18 @@ import 'shape_properties.dart';
 
 /// Right panel containing properties inspector for selected shapes
 class RightPanel extends StatelessWidget {
-  const RightPanel({super.key});
+  const RightPanel({
+    required this.width,
+    super.key,
+  });
+
+  /// Width of the panel in logical pixels.
+  final double width;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 280,
+      width: width,
       decoration: const BoxDecoration(
         color: VioColors.surface1,
         border: Border(

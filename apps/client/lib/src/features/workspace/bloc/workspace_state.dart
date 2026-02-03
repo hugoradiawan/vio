@@ -41,6 +41,21 @@ enum WorkspaceStatus {
   error,
 }
 
+/// Panel width constraints
+class PanelConstraints {
+  PanelConstraints._();
+
+  /// Left panel constraints
+  static const double leftPanelMinWidth = 200.0;
+  static const double leftPanelMaxWidth = 400.0;
+  static const double leftPanelDefaultWidth = 260.0;
+
+  /// Right panel constraints
+  static const double rightPanelMinWidth = 200.0;
+  static const double rightPanelMaxWidth = 450.0;
+  static const double rightPanelDefaultWidth = 280.0;
+}
+
 /// Represents the complete state of the workspace UI
 class WorkspaceState extends Equatable {
   const WorkspaceState({
@@ -48,6 +63,8 @@ class WorkspaceState extends Equatable {
     this.activeTool = CanvasTool.select,
     this.isLeftPanelVisible = true,
     this.isRightPanelVisible = true,
+    this.leftPanelWidth = PanelConstraints.leftPanelDefaultWidth,
+    this.rightPanelWidth = PanelConstraints.rightPanelDefaultWidth,
     this.isZenMode = false,
     this.zenPreviousLeftPanelVisible = true,
     this.zenPreviousRightPanelVisible = true,
@@ -74,6 +91,12 @@ class WorkspaceState extends Equatable {
 
   /// Whether the right panel (properties, design) is visible
   final bool isRightPanelVisible;
+
+  /// Current width of the left panel in logical pixels
+  final double leftPanelWidth;
+
+  /// Current width of the right panel in logical pixels
+  final double rightPanelWidth;
 
   /// Whether "zen mode" is active (panels + rulers hidden).
   final bool isZenMode;
@@ -125,6 +148,8 @@ class WorkspaceState extends Equatable {
     CanvasTool? activeTool,
     bool? isLeftPanelVisible,
     bool? isRightPanelVisible,
+    double? leftPanelWidth,
+    double? rightPanelWidth,
     bool? isZenMode,
     bool? zenPreviousLeftPanelVisible,
     bool? zenPreviousRightPanelVisible,
@@ -144,6 +169,8 @@ class WorkspaceState extends Equatable {
       activeTool: activeTool ?? this.activeTool,
       isLeftPanelVisible: isLeftPanelVisible ?? this.isLeftPanelVisible,
       isRightPanelVisible: isRightPanelVisible ?? this.isRightPanelVisible,
+      leftPanelWidth: leftPanelWidth ?? this.leftPanelWidth,
+      rightPanelWidth: rightPanelWidth ?? this.rightPanelWidth,
       isZenMode: isZenMode ?? this.isZenMode,
       zenPreviousLeftPanelVisible:
           zenPreviousLeftPanelVisible ?? this.zenPreviousLeftPanelVisible,
@@ -169,6 +196,8 @@ class WorkspaceState extends Equatable {
         activeTool,
         isLeftPanelVisible,
         isRightPanelVisible,
+        leftPanelWidth,
+        rightPanelWidth,
         isZenMode,
         zenPreviousLeftPanelVisible,
         zenPreviousRightPanelVisible,

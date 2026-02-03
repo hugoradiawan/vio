@@ -9,7 +9,13 @@ import '../../../canvas/presentation/widgets/layer_tree.dart';
 
 /// Left panel containing layers tree and assets browser
 class LeftPanel extends StatefulWidget {
-  const LeftPanel({super.key});
+  const LeftPanel({
+    required this.width,
+    super.key,
+  });
+
+  /// Width of the panel in logical pixels.
+  final double width;
 
   @override
   State<LeftPanel> createState() => _LeftPanelState();
@@ -34,7 +40,7 @@ class _LeftPanelState extends State<LeftPanel>
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 260,
+      width: widget.width,
       decoration: const BoxDecoration(
         color: VioColors.surface1,
         border: Border(

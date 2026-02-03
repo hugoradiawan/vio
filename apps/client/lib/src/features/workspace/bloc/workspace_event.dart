@@ -94,3 +94,33 @@ class LayersSearchQueryChanged extends WorkspaceEvent {
 class LayersSearchCleared extends WorkspaceEvent {
   const LayersSearchCleared();
 }
+
+/// Fired when left panel width is changed via resize handle.
+class LeftPanelWidthChanged extends WorkspaceEvent {
+  const LeftPanelWidthChanged(this.width);
+
+  final double width;
+
+  @override
+  List<Object?> get props => [width];
+}
+
+/// Fired when right panel width is changed via resize handle.
+class RightPanelWidthChanged extends WorkspaceEvent {
+  const RightPanelWidthChanged(this.width);
+
+  final double width;
+
+  @override
+  List<Object?> get props => [width];
+}
+
+/// Reset left panel width to default.
+class LeftPanelWidthReset extends WorkspaceEvent {
+  const LeftPanelWidthReset();
+}
+
+/// Reset right panel width to default.
+class RightPanelWidthReset extends WorkspaceEvent {
+  const RightPanelWidthReset();
+}

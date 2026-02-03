@@ -24,6 +24,10 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
     on<LayersSearchToggled>(_onLayersSearchToggled);
     on<LayersSearchQueryChanged>(_onLayersSearchQueryChanged);
     on<LayersSearchCleared>(_onLayersSearchCleared);
+    on<LeftPanelWidthChanged>(_onLeftPanelWidthChanged);
+    on<RightPanelWidthChanged>(_onRightPanelWidthChanged);
+    on<LeftPanelWidthReset>(_onLeftPanelWidthReset);
+    on<RightPanelWidthReset>(_onRightPanelWidthReset);
   }
 
   Future<void> _onInitialized(
@@ -147,5 +151,45 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
     Emitter<WorkspaceState> emit,
   ) {
     emit(state.copyWith(isLayersSearchOpen: false, layersSearchQuery: ''));
+  }
+
+  void _onLeftPanelWidthChanged(
+    LeftPanelWidthChanged event,
+    Emitter<WorkspaceState> emit,
+  ) {
+    final clampedWidth = event.width.clamp(
+      PanelConstraints.leftPanelMinWidth,
+      PanelConstraints.leftPanelMaxWidth,
+    );
+    emit(state.copyWith(leftPanelWidth: clampedWidth));
+  }
+
+  void _onRightPanelWidthChanged(
+    RightPanelWidthChanged event,
+    Emitter<WorkspaceState> emit,
+  ) {
+    final clampedWidth = event.width.clamp(
+      PanelConstraints.rightPanelMinWidth,
+      PanelConstraints.rightPanelMaxWidth,
+    );
+    emit(state.copyWith(rightPanelWidth: clampedWidth));
+  }
+
+  void _onLeftPanelWidthReset(
+    LeftPanelWidthReset event,
+    Emitter<WorkspaceState> emit,
+  ) {
+    emit(state.copyWith(
+      leftPanelWidth: PanelConstraints.leftPanelDefaultWidth,
+    ),);
+  }
+
+  void _onRightPanelWidthReset(
+    RightPanelWidthReset event,
+    Emitter<WorkspaceState> emit,
+  ) {
+    emit(state.copyWith(
+      rightPanelWidth: PanelConstraints.rightPanelDefaultWidth,
+    ),);
   }
 }

@@ -7,6 +7,7 @@ import '../../canvas/bloc/canvas_bloc.dart';
 import '../../canvas/presentation/canvas_view.dart';
 import '../bloc/workspace_bloc.dart';
 import 'widgets/left_panel.dart';
+import 'widgets/resizable_panel_handle.dart';
 import 'widgets/right_panel.dart';
 
 /// Main workspace page containing:
@@ -104,8 +105,25 @@ class _WorkspacePageState extends State<WorkspacePage> {
                       Expanded(
                         child: Row(
                           children: [
-                            // Left panel (layers, assets)
-                            if (state.isLeftPanelVisible) const LeftPanel(),
+                            // Left panel (layers, assets) with resize handle
+                            if (state.isLeftPanelVisible) ...[
+                              LeftPanel(width: state.leftPanelWidth),
+                              ResizablePanelHandle(
+                                onDragUpdate: (delta) {
+                                  final bloc = context.read<WorkspaceBloc>();
+                                  final currentWidth =
+                                      bloc.state.leftPanelWidth;
+                                  bloc.add(
+                                    LeftPanelWidthChanged(currentWidth + delta),
+                                  );
+                                },
+                                onDoubleTap: () {
+                                  context.read<WorkspaceBloc>().add(
+                                        const LeftPanelWidthReset(),
+                                      );
+                                },
+                              ),
+                            ],
                             // Canvas area
                             Expanded(
                               child: Container(
@@ -130,8 +148,27 @@ class _WorkspacePageState extends State<WorkspacePage> {
                                 ),
                               ),
                             ),
-                            // Right panel (properties)
-                            if (state.isRightPanelVisible) const RightPanel(),
+                            // Right panel (properties) with resize handle
+                            if (state.isRightPanelVisible) ...[
+                              ResizablePanelHandle(
+                                isLeftSide: false,
+                                onDragUpdate: (delta) {
+                                  final bloc = context.read<WorkspaceBloc>();
+                                  final currentWidth =
+                                      bloc.state.rightPanelWidth;
+                                  // Dragging right makes panel narrower
+                                  bloc.add(
+                                    RightPanelWidthChanged(currentWidth - delta),
+                                  );
+                                },
+                                onDoubleTap: () {
+                                  context.read<WorkspaceBloc>().add(
+                                        const RightPanelWidthReset(),
+                                      );
+                                },
+                              ),
+                              RightPanel(width: state.rightPanelWidth),
+                            ],
                           ],
                         ),
                       ),

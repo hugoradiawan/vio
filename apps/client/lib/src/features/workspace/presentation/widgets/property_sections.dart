@@ -456,37 +456,77 @@ class ShadowSection extends StatelessWidget {
       padding: const EdgeInsets.all(VioSpacing.sm),
       child: Column(
         children: [
-          // Color row
+          // Header row: visibility, color, type dropdown, delete
           Row(
             children: [
               VioSvgIconButton(
                 assetPath: shadow.hidden ? VioIcons.eyeOff : VioIcons.eye,
                 size: 14,
                 buttonSize: 24,
-                onPressed: () {
-                  _toggleShadowVisibility(context);
-                },
+                onPressed: () => _toggleShadowVisibility(context),
               ),
               const SizedBox(width: VioSpacing.xs),
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: Color(shadow.color).withValues(alpha: shadow.opacity),
-                  borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-                  border: Border.all(color: VioColors.border),
+              // Color preview (tappable for color picker)
+              GestureDetector(
+                onTap: () => _showColorPicker(context),
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color:
+                        Color(shadow.color).withValues(alpha: shadow.opacity),
+                    borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
+                    border: Border.all(color: VioColors.border),
+                  ),
                 ),
               ),
               const SizedBox(width: VioSpacing.sm),
+              // Shadow type dropdown
               Expanded(
-                child: Text(
-                  shadow.style == ShadowStyle.dropShadow
-                      ? 'Drop Shadow'
-                      : 'Inner Shadow',
-                  style: VioTypography.caption.copyWith(
-                    color: VioColors.textPrimary,
+                child: Container(
+                  height: 28,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: VioSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: VioColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
+                    border: Border.all(color: VioColors.border),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<ShadowStyle>(
+                      value: shadow.style,
+                      isDense: true,
+                      isExpanded: true,
+                      style: VioTypography.caption.copyWith(
+                        color: VioColors.textPrimary,
+                      ),
+                      dropdownColor: VioColors.surfaceElevated,
+                      items: ShadowStyle.values.map((style) {
+                        return DropdownMenuItem(
+                          value: style,
+                          child: Text(
+                            style == ShadowStyle.dropShadow
+                                ? 'Drop Shadow'
+                                : 'Inner Shadow',
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (style) {
+                        if (style != null) {
+                          _updateShadowStyle(context, style);
+                        }
+                      },
+                    ),
                   ),
                 ),
+              ),
+              const SizedBox(width: VioSpacing.xs),
+              // Delete button
+              VioSvgIconButton(
+                assetPath: VioIcons.close,
+                size: 12,
+                buttonSize: 24,
+                onPressed: () => _removeShadow(context),
               ),
             ],
           ),
@@ -546,6 +586,32 @@ class ShadowSection extends StatelessWidget {
     );
   }
 
+  Future<void> _showColorPicker(BuildContext context) async {
+    final shadow = shape.shadow;
+    if (shadow == null) return;
+
+    final result = await VioColorPickerDialog.show(
+      context,
+      initialColor: shadow.color,
+      initialOpacity: shadow.opacity,
+    );
+    if (result != null && context.mounted) {
+      final newShadow = ShapeShadow(
+        id: shadow.id,
+        style: shadow.style,
+        color: result.color,
+        opacity: result.opacity,
+        offsetX: shadow.offsetX,
+        offsetY: shadow.offsetY,
+        blur: shadow.blur,
+        spread: shadow.spread,
+        hidden: shadow.hidden,
+      );
+      final bloc = context.read<CanvasBloc>();
+      bloc.add(ShapeUpdated(shape.copyWith(shadow: newShadow)));
+    }
+  }
+
   void _toggleShadowVisibility(BuildContext context) {
     final shadow = shape.shadow;
     if (shadow == null) return;
@@ -564,6 +630,31 @@ class ShadowSection extends StatelessWidget {
 
     final bloc = context.read<CanvasBloc>();
     bloc.add(ShapeUpdated(shape.copyWith(shadow: newShadow)));
+  }
+
+  void _updateShadowStyle(BuildContext context, ShadowStyle style) {
+    final shadow = shape.shadow;
+    if (shadow == null) return;
+
+    final newShadow = ShapeShadow(
+      id: shadow.id,
+      style: style,
+      color: shadow.color,
+      opacity: shadow.opacity,
+      offsetX: shadow.offsetX,
+      offsetY: shadow.offsetY,
+      blur: shadow.blur,
+      spread: shadow.spread,
+      hidden: shadow.hidden,
+    );
+
+    final bloc = context.read<CanvasBloc>();
+    bloc.add(ShapeUpdated(shape.copyWith(shadow: newShadow)));
+  }
+
+  void _removeShadow(BuildContext context) {
+    final bloc = context.read<CanvasBloc>();
+    bloc.add(ShapeUpdated(shape.copyWith()));
   }
 
   void _updateShadow(
@@ -1107,36 +1198,73 @@ class BlurSection extends StatelessWidget {
       padding: const EdgeInsets.all(VioSpacing.sm),
       child: Column(
         children: [
+          // Header row: visibility, type dropdown, delete
           Row(
             children: [
               VioSvgIconButton(
                 assetPath: blur.hidden ? VioIcons.eyeOff : VioIcons.eye,
                 size: 14,
                 buttonSize: 24,
-                onPressed: () {
-                  _toggleBlurVisibility(context);
-                },
+                onPressed: () => _toggleBlurVisibility(context),
               ),
               const SizedBox(width: VioSpacing.sm),
+              // Blur type dropdown
               Expanded(
-                child: Text(
-                  blur.type == BlurType.layer
-                      ? 'Layer Blur'
-                      : 'Background Blur',
-                  style: VioTypography.caption.copyWith(
-                    color: VioColors.textPrimary,
+                child: Container(
+                  height: 28,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: VioSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: VioColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
+                    border: Border.all(color: VioColors.border),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<BlurType>(
+                      value: blur.type,
+                      isDense: true,
+                      isExpanded: true,
+                      style: VioTypography.caption.copyWith(
+                        color: VioColors.textPrimary,
+                      ),
+                      dropdownColor: VioColors.surfaceElevated,
+                      items: BlurType.values.map((type) {
+                        return DropdownMenuItem(
+                          value: type,
+                          child: Text(
+                            type == BlurType.layer
+                                ? 'Layer Blur'
+                                : 'Background Blur',
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (type) {
+                        if (type != null) {
+                          _updateBlurType(context, type);
+                        }
+                      },
+                    ),
                   ),
                 ),
+              ),
+              const SizedBox(width: VioSpacing.xs),
+              // Delete button
+              VioSvgIconButton(
+                assetPath: VioIcons.close,
+                size: 12,
+                buttonSize: 24,
+                onPressed: () => _removeBlur(context),
               ),
             ],
           ),
           const SizedBox(height: VioSpacing.sm),
-          VioPropertySlider(
-            label: '',
+          // Value slider with label
+          VioNumericField(
+            label: 'Amount',
             value: blur.value,
-            onChanged: (value) {
-              _updateBlurValue(context, value);
-            },
+            min: 0,
+            max: 100,
+            onChanged: (value) => _updateBlurValue(context, value),
           ),
         ],
       ),
@@ -1148,6 +1276,7 @@ class BlurSection extends StatelessWidget {
     if (blur == null) return;
 
     final newBlur = ShapeBlur(
+      id: blur.id,
       type: blur.type,
       value: blur.value,
       hidden: !blur.hidden,
@@ -1157,11 +1286,32 @@ class BlurSection extends StatelessWidget {
     bloc.add(ShapeUpdated(shape.copyWith(blur: newBlur)));
   }
 
+  void _updateBlurType(BuildContext context, BlurType type) {
+    final blur = shape.blur;
+    if (blur == null) return;
+
+    final newBlur = ShapeBlur(
+      id: blur.id,
+      type: type,
+      value: blur.value,
+      hidden: blur.hidden,
+    );
+
+    final bloc = context.read<CanvasBloc>();
+    bloc.add(ShapeUpdated(shape.copyWith(blur: newBlur)));
+  }
+
+  void _removeBlur(BuildContext context) {
+    final bloc = context.read<CanvasBloc>();
+    bloc.add(ShapeUpdated(shape.copyWith()));
+  }
+
   void _updateBlurValue(BuildContext context, double value) {
     final blur = shape.blur;
     if (blur == null) return;
 
     final newBlur = ShapeBlur(
+      id: blur.id,
       type: blur.type,
       value: value,
       hidden: blur.hidden,

@@ -1187,7 +1187,9 @@ class VersionControlBloc
         base.opacity != current.opacity ||
         base.hidden != current.hidden ||
         base.blocked != current.blocked ||
-        base.name != current.name;
+        base.name != current.name ||
+        base.shadow != current.shadow ||
+        base.blur != current.blur;
   }
 
   /// Get list of changed property names for display
@@ -1204,6 +1206,8 @@ class VersionControlBloc
     if (base.hidden != current.hidden) changed.add('visibility');
     if (base.blocked != current.blocked) changed.add('locked');
     if (base.name != current.name) changed.add('name');
+    if (base.shadow != current.shadow) changed.add('shadow');
+    if (base.blur != current.blur) changed.add('blur');
     return changed;
   }
 

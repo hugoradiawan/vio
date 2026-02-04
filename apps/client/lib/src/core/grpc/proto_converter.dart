@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:typed_data';
+import 'dart:ui' show TextAlign;
+
 import 'package:vio_core/vio_core.dart';
 
 import '../../gen/vio/v1/canvas.pb.dart' as pb_canvas;
@@ -23,6 +27,11 @@ class ProtoConverter {
         ? _transformFromProto(proto.transform)
         : Matrix2D.identity;
 
+    // Parse type-specific properties from bytes
+    final props = _parseProperties(Uint8List.fromList(proto.properties));
+    final shadow = _parseShadow(props);
+    final blur = _parseBlur(props);
+
     switch (shapeType) {
       case ShapeType.rectangle:
         return RectangleShape(
@@ -42,7 +51,12 @@ class ProtoConverter {
           sortOrder: proto.sortOrder,
           frameId: proto.hasFrameId() ? proto.frameId : null,
           parentId: proto.hasParentId() ? proto.parentId : null,
-          // TODO: Parse r1-r4 from properties bytes
+          shadow: shadow,
+          blur: blur,
+          r1: (props['r1'] as num?)?.toDouble() ?? 0,
+          r2: (props['r2'] as num?)?.toDouble() ?? 0,
+          r3: (props['r3'] as num?)?.toDouble() ?? 0,
+          r4: (props['r4'] as num?)?.toDouble() ?? 0,
         );
       case ShapeType.ellipse:
         return EllipseShape(
@@ -62,6 +76,8 @@ class ProtoConverter {
           sortOrder: proto.sortOrder,
           frameId: proto.hasFrameId() ? proto.frameId : null,
           parentId: proto.hasParentId() ? proto.parentId : null,
+          shadow: shadow,
+          blur: blur,
         );
       case ShapeType.frame:
         return FrameShape(
@@ -81,6 +97,8 @@ class ProtoConverter {
           sortOrder: proto.sortOrder,
           frameId: proto.hasFrameId() ? proto.frameId : null,
           parentId: proto.hasParentId() ? proto.parentId : null,
+          shadow: shadow,
+          blur: blur,
         );
       case ShapeType.text:
         return TextShape(
@@ -90,7 +108,14 @@ class ProtoConverter {
           y: proto.y,
           textWidth: proto.width,
           textHeight: proto.height,
-          text: '', // TODO: Parse from properties
+          text: (props['text'] as String?) ?? '',
+          fontSize: (props['fontSize'] as num?)?.toDouble() ?? 16.0,
+          fontFamily: props['fontFamily'] as String?,
+          fontWeight: props['fontWeight'] as int?,
+          lineHeight: (props['lineHeight'] as num?)?.toDouble(),
+          letterSpacingPercent:
+              (props['letterSpacingPercent'] as num?)?.toDouble() ?? 0,
+          textAlign: _parseTextAlign(props['textAlign'] as String?),
           rotation: proto.rotation,
           transform: transform,
           fills: fills,
@@ -101,6 +126,8 @@ class ProtoConverter {
           sortOrder: proto.sortOrder,
           frameId: proto.hasFrameId() ? proto.frameId : null,
           parentId: proto.hasParentId() ? proto.parentId : null,
+          shadow: shadow,
+          blur: blur,
         );
       case ShapeType.group:
         return GroupShape(
@@ -120,6 +147,8 @@ class ProtoConverter {
           sortOrder: proto.sortOrder,
           frameId: proto.hasFrameId() ? proto.frameId : null,
           parentId: proto.hasParentId() ? proto.parentId : null,
+          shadow: shadow,
+          blur: blur,
         );
       default:
         // Fallback to rectangle for unsupported types
@@ -140,8 +169,24 @@ class ProtoConverter {
           sortOrder: proto.sortOrder,
           frameId: proto.hasFrameId() ? proto.frameId : null,
           parentId: proto.hasParentId() ? proto.parentId : null,
+          shadow: shadow,
+          blur: blur,
         );
     }
+  }
+
+  /// Parse TextAlign from string
+  static TextAlign _parseTextAlign(String? value) {
+    if (value == null) return TextAlign.left;
+    return switch (value) {
+      'left' => TextAlign.left,
+      'right' => TextAlign.right,
+      'center' => TextAlign.center,
+      'justify' => TextAlign.justify,
+      'start' => TextAlign.start,
+      'end' => TextAlign.end,
+      _ => TextAlign.left,
+    };
   }
 
   /// Convert domain Shape to proto Shape
@@ -176,7 +221,82 @@ class ProtoConverter {
     proto.fills.addAll(shape.fills.map(_fillToProto));
     proto.strokes.addAll(shape.strokes.map(_strokeToProto));
 
+    // Serialize type-specific properties including shadow/blur
+    proto.properties = _serializeProperties(shape);
+
     return proto;
+  }
+
+  /// Serialize shape-specific properties to JSON bytes
+  static Uint8List _serializeProperties(Shape shape) {
+    final props = <String, dynamic>{};
+
+    // Shadow
+    if (shape.shadow != null) {
+      props['shadow'] = shape.shadow!.toJson();
+    }
+
+    // Blur
+    if (shape.blur != null) {
+      props['blur'] = shape.blur!.toJson();
+    }
+
+    // Type-specific properties
+    if (shape is RectangleShape) {
+      props['r1'] = shape.r1;
+      props['r2'] = shape.r2;
+      props['r3'] = shape.r3;
+      props['r4'] = shape.r4;
+    } else if (shape is TextShape) {
+      props['text'] = shape.text;
+      props['fontSize'] = shape.fontSize;
+      if (shape.fontFamily != null) props['fontFamily'] = shape.fontFamily;
+      if (shape.fontWeight != null) props['fontWeight'] = shape.fontWeight;
+      if (shape.lineHeight != null) props['lineHeight'] = shape.lineHeight;
+      props['letterSpacingPercent'] = shape.letterSpacingPercent;
+      props['textAlign'] = shape.textAlign.name;
+    }
+
+    if (props.isEmpty) {
+      return Uint8List(0);
+    }
+
+    return Uint8List.fromList(utf8.encode(jsonEncode(props)));
+  }
+
+  /// Parse shape-specific properties from JSON bytes
+  static Map<String, dynamic> _parseProperties(Uint8List bytes) {
+    if (bytes.isEmpty) {
+      return {};
+    }
+    try {
+      final jsonStr = utf8.decode(bytes);
+      return jsonDecode(jsonStr) as Map<String, dynamic>;
+    } catch (_) {
+      return {};
+    }
+  }
+
+  /// Parse shadow from properties map
+  static ShapeShadow? _parseShadow(Map<String, dynamic> props) {
+    final shadowJson = props['shadow'];
+    if (shadowJson == null) return null;
+    try {
+      return ShapeShadow.fromJson(shadowJson as Map<String, dynamic>);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Parse blur from properties map
+  static ShapeBlur? _parseBlur(Map<String, dynamic> props) {
+    final blurJson = props['blur'];
+    if (blurJson == null) return null;
+    try {
+      return ShapeBlur.fromJson(blurJson as Map<String, dynamic>);
+    } catch (_) {
+      return null;
+    }
   }
 
   // ============================================================================

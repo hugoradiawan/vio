@@ -72,8 +72,8 @@ class PathShape extends Shape {
     bool? blocked,
     double? rotation,
     ShapeConstraints? constraints,
-    ShapeShadow? shadow,
-    ShapeBlur? blur,
+    Object? shadow = kUnset,
+    Object? blur = kUnset,
     double? x,
     double? y,
     double? pathWidth,
@@ -85,6 +85,10 @@ class PathShape extends Shape {
         identical(parentId, kUnset) ? this.parentId : parentId as String?;
     final resolvedFrameId =
         identical(frameId, kUnset) ? this.frameId : frameId as String?;
+    final resolvedShadow =
+        identical(shadow, kUnset) ? this.shadow : shadow as ShapeShadow?;
+    final resolvedBlur =
+        identical(blur, kUnset) ? this.blur : blur as ShapeBlur?;
 
     return PathShape(
       id: id ?? this.id,
@@ -102,8 +106,8 @@ class PathShape extends Shape {
       blocked: blocked ?? this.blocked,
       rotation: rotation ?? this.rotation,
       constraints: constraints ?? this.constraints,
-      shadow: shadow ?? this.shadow,
-      blur: blur ?? this.blur,
+      shadow: resolvedShadow,
+      blur: resolvedBlur,
       x: x ?? this.x,
       y: y ?? this.y,
       pathWidth: pathWidth ?? this.pathWidth,

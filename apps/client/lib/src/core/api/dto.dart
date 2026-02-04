@@ -149,6 +149,28 @@ class ShapeFactory {
     final frameId =
         json['frameId'] as String? ?? properties['frameId'] as String?;
 
+    // Parse shadow from properties
+    ShapeShadow? shadow;
+    final rawShadow = properties['shadow'];
+    if (rawShadow != null && rawShadow is Map) {
+      try {
+        shadow = ShapeShadow.fromJson(Map<String, dynamic>.from(rawShadow));
+      } catch (_) {
+        // Ignore malformed shadow data
+      }
+    }
+
+    // Parse blur from properties
+    ShapeBlur? blur;
+    final rawBlur = properties['blur'];
+    if (rawBlur != null && rawBlur is Map) {
+      try {
+        blur = ShapeBlur.fromJson(Map<String, dynamic>.from(rawBlur));
+      } catch (_) {
+        // Ignore malformed blur data
+      }
+    }
+
     switch (type) {
       case ShapeType.rectangle:
         return RectangleShape(
@@ -168,6 +190,8 @@ class ShapeFactory {
           opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
           hidden: json['hidden'] as bool? ?? false,
           blocked: json['blocked'] as bool? ?? false,
+          shadow: shadow,
+          blur: blur,
           r1: (properties['r1'] as num?)?.toDouble() ?? 0.0,
           r2: (properties['r2'] as num?)?.toDouble() ?? 0.0,
           r3: (properties['r3'] as num?)?.toDouble() ?? 0.0,
@@ -192,6 +216,8 @@ class ShapeFactory {
           opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
           hidden: json['hidden'] as bool? ?? false,
           blocked: json['blocked'] as bool? ?? false,
+          shadow: shadow,
+          blur: blur,
         );
 
       case ShapeType.frame:
@@ -219,6 +245,8 @@ class ShapeFactory {
           opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
           hidden: json['hidden'] as bool? ?? false,
           blocked: json['blocked'] as bool? ?? false,
+          shadow: shadow,
+          blur: blur,
           clipContent: properties['clipContent'] as bool? ?? true,
         );
 
@@ -248,6 +276,8 @@ class ShapeFactory {
             (TextAlign e) => e.name == (properties['textAlign'] as String?),
             orElse: () => TextAlign.left,
           ),
+          shadow: shadow,
+          blur: blur,
         );
 
       case ShapeType.group:
@@ -275,6 +305,8 @@ class ShapeFactory {
           opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
           hidden: json['hidden'] as bool? ?? false,
           blocked: json['blocked'] as bool? ?? false,
+          shadow: shadow,
+          blur: blur,
         );
 
       case ShapeType.path:
@@ -303,6 +335,8 @@ class ShapeFactory {
           opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
           hidden: json['hidden'] as bool? ?? false,
           blocked: json['blocked'] as bool? ?? false,
+          shadow: shadow,
+          blur: blur,
         );
 
       case ShapeType.image:
@@ -338,6 +372,8 @@ class ShapeFactory {
           opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
           hidden: json['hidden'] as bool? ?? false,
           blocked: json['blocked'] as bool? ?? false,
+          shadow: shadow,
+          blur: blur,
         );
 
       case ShapeType.svg:
@@ -366,6 +402,8 @@ class ShapeFactory {
           opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
           hidden: json['hidden'] as bool? ?? false,
           blocked: json['blocked'] as bool? ?? false,
+          shadow: shadow,
+          blur: blur,
         );
 
       case ShapeType.bool:
@@ -400,6 +438,8 @@ class ShapeFactory {
           opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
           hidden: json['hidden'] as bool? ?? false,
           blocked: json['blocked'] as bool? ?? false,
+          shadow: shadow,
+          blur: blur,
         );
     }
   }

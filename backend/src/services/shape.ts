@@ -9,37 +9,37 @@ import { and, eq } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { shapes } from "../db/schema/index.js";
 import {
-	EmptySchema,
-	FillSchema,
-	StrokeAlignment,
-	StrokeCap,
-	StrokeJoin,
-	StrokeSchema,
-	TimestampSchema,
-	TransformSchema,
-	type Empty,
-	type Fill,
-	type Stroke,
-	type Timestamp,
-	type Transform,
+    EmptySchema,
+    FillSchema,
+    StrokeAlignment,
+    StrokeCap,
+    StrokeJoin,
+    StrokeSchema,
+    TimestampSchema,
+    TransformSchema,
+    type Empty,
+    type Fill,
+    type Stroke,
+    type Timestamp,
+    type Transform,
 } from "../gen/vio/v1/common_pb.js";
 import {
-	BatchMutateResponseSchema,
-	CreateShapeResponseSchema,
-	GetShapeResponseSchema,
-	ListShapesResponseSchema,
-	ShapeSchema,
-	ShapeService,
-	ShapeType,
-	UpdateShapeResponseSchema,
-	type BatchMutateRequest,
-	type BatchMutateResponse,
-	type CreateShapeRequest,
-	type CreateShapeResponse,
-	type GetShapeResponse,
-	type ListShapesResponse,
-	type Shape as ProtoShape,
-	type UpdateShapeResponse,
+    BatchMutateResponseSchema,
+    CreateShapeResponseSchema,
+    GetShapeResponseSchema,
+    ListShapesResponseSchema,
+    ShapeSchema,
+    ShapeService,
+    ShapeType,
+    UpdateShapeResponseSchema,
+    type BatchMutateRequest,
+    type BatchMutateResponse,
+    type CreateShapeRequest,
+    type CreateShapeResponse,
+    type GetShapeResponse,
+    type ListShapesResponse,
+    type Shape as ProtoShape,
+    type UpdateShapeResponse,
 } from "../gen/vio/v1/shape_pb.js";
 import { notFound } from "./errors.js";
 
@@ -124,6 +124,13 @@ function toProtoShape(row: typeof shapes.$inferSelect): ProtoShape {
 		f: row.transformF,
 	});
 
+	// Convert properties JSONB to bytes
+	const propsJson = row.properties as Record<string, unknown>;
+	const propsBytes =
+		propsJson && Object.keys(propsJson).length > 0
+			? new TextEncoder().encode(JSON.stringify(propsJson))
+			: new Uint8Array(0);
+
 	return create(ShapeSchema, {
 		id: row.id,
 		projectId: row.projectId,
@@ -143,7 +150,7 @@ function toProtoShape(row: typeof shapes.$inferSelect): ProtoShape {
 		hidden: row.hidden,
 		blocked: row.blocked,
 		sortOrder: row.sortOrder,
-		properties: new Uint8Array(0),
+		properties: propsBytes,
 		createdAt: toProtoTimestamp(row.createdAt),
 		updatedAt: toProtoTimestamp(row.updatedAt),
 	});

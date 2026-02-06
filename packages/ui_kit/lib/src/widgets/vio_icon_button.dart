@@ -27,8 +27,7 @@ class VioIconButton extends StatelessWidget {
   final Color? color;
 
   const VioIconButton({
-    super.key,
-    required this.icon,
+    required this.icon, super.key,
     this.onPressed,
     this.variant = VioIconButtonVariant.ghost,
     this.size,
@@ -51,7 +50,7 @@ class VioIconButton extends StatelessWidget {
     );
 
     if (tooltip != null) {
-      button = Tooltip(message: tooltip!, child: button);
+      button = Tooltip(message: tooltip, child: button);
     }
 
     return button;

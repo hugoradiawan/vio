@@ -3089,7 +3089,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       );
 
       // Subscribe to sync status changes
-      _syncStatusSubscription?.cancel();
+      await _syncStatusSubscription?.cancel();
       _syncStatusSubscription = _repository.syncStatusStream.listen((status) {
         // Map repository SyncStatus to bloc SyncStatus
         final blocStatus = _mapSyncStatus(status);

@@ -210,14 +210,14 @@ class VioTheme {
       ),
 
       // Slider
-      sliderTheme: SliderThemeData(
+      sliderTheme: const SliderThemeData(
         activeTrackColor: VioColors.primary,
         inactiveTrackColor: VioColors.surfaceHigh,
         thumbColor: VioColors.primary,
         overlayColor: VioColors.primary30,
         trackHeight: 4,
-        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-        overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
+        thumbShape: RoundSliderThumbShape(enabledThumbRadius: 6),
+        overlayShape: RoundSliderOverlayShape(overlayRadius: 16),
       ),
 
       // Checkbox

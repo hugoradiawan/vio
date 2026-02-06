@@ -6,10 +6,10 @@ sealed class Result<T, E> {
   const Result();
 
   /// Create a successful result
-  factory Result.success(T value) = Success<T, E>;
+  const factory Result.success(T value) = Success<T, E>;
 
   /// Create an error result
-  factory Result.failure(E error) = Failure<T, E>;
+  const factory Result.failure(E error) = Failure<T, E>;
 
   /// Check if this is a success
   bool get isSuccess => this is Success<T, E>;
@@ -141,7 +141,7 @@ extension NullableToResult<T> on T? {
 
 /// Extension to convert Future to Result
 extension FutureToResult<T> on Future<T> {
-  /// Convert Future to Future<Result> catching errors
+  /// Convert `Future<T>` to `Future<Result<T, Exception>>` catching errors
   Future<Result<T, Exception>> toResult() async {
     try {
       return Result.success(await this);

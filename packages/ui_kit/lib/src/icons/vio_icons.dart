@@ -83,9 +83,7 @@ class VioIcon extends StatelessWidget {
 /// An icon button that uses Vio SVG icons.
 class VioSvgIconButton extends StatelessWidget {
   const VioSvgIconButton({
-    super.key,
-    required this.assetPath,
-    required this.onPressed,
+    required this.assetPath, required this.onPressed, super.key,
     this.size = 16,
     this.buttonSize = 28,
     this.color,
@@ -143,7 +141,7 @@ class VioSvgIconButton extends StatelessWidget {
     );
 
     if (tooltip != null) {
-      button = Tooltip(message: tooltip!, child: button);
+      button = Tooltip(message: tooltip, child: button);
     }
 
     return button;

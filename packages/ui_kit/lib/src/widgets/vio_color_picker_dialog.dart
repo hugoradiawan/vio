@@ -8,8 +8,7 @@ import '../theme/vio_typography.dart';
 /// A full-featured color picker dialog with HSV picker, RGB/HEX inputs, and opacity slider
 class VioColorPickerDialog extends StatefulWidget {
   const VioColorPickerDialog({
-    super.key,
-    required this.initialColor,
+    required this.initialColor, super.key,
     this.initialOpacity = 1.0,
     this.showOpacity = true,
   });
@@ -394,7 +393,7 @@ class _VioColorPickerDialogState extends State<VioColorPickerDialog> {
             controller: _hexController,
             prefix: '#',
             inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[0-9a-fA-F]')),
+              FilteringTextInputFormatter.allow(RegExp('[0-9a-fA-F]')),
               LengthLimitingTextInputFormatter(6),
               _UpperCaseTextFormatter(),
             ],
@@ -522,7 +521,7 @@ class _SVPickerPainter extends CustomPainter {
     canvas.drawRect(rect, Paint()..shader = satGradient.createShader(rect));
 
     // Draw value gradient (transparent to black)
-    final valGradient = const LinearGradient(
+    const valGradient = LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [Colors.transparent, Colors.black],

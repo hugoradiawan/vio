@@ -5,9 +5,7 @@ import 'package:vio_ui_kit/vio_ui_kit.dart';
 /// A color picker widget for selecting fill/stroke colors
 class VioColorPicker extends StatefulWidget {
   const VioColorPicker({
-    super.key,
-    required this.color,
-    required this.onColorChanged,
+    required this.color, required this.onColorChanged, super.key,
     this.showOpacity = true,
     this.opacity = 1.0,
     this.onOpacityChanged,
@@ -116,7 +114,7 @@ class _VioColorPickerState extends State<VioColorPicker> {
                       contentPadding: EdgeInsets.zero,
                     ),
                     inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9a-fA-F]')),
+                      FilteringTextInputFormatter.allow(RegExp('[0-9a-fA-F]')),
                       LengthLimitingTextInputFormatter(6),
                     ],
                     onSubmitted: (value) {
@@ -149,7 +147,7 @@ class _VioColorPickerState extends State<VioColorPicker> {
     );
   }
 
-  void _showColorPicker() async {
+  Future<void> _showColorPicker() async {
     final result = await VioColorPickerDialog.show(
       context,
       initialColor: widget.color,
@@ -168,13 +166,7 @@ class _VioColorPickerState extends State<VioColorPicker> {
 /// Alignment buttons for shape alignment
 class VioAlignmentButtons extends StatelessWidget {
   const VioAlignmentButtons({
-    super.key,
-    required this.onAlignLeft,
-    required this.onAlignCenterH,
-    required this.onAlignRight,
-    required this.onAlignTop,
-    required this.onAlignCenterV,
-    required this.onAlignBottom,
+    required this.onAlignLeft, required this.onAlignCenterH, required this.onAlignRight, required this.onAlignTop, required this.onAlignCenterV, required this.onAlignBottom, super.key,
   });
 
   final VoidCallback? onAlignLeft;
@@ -237,10 +229,7 @@ class VioAlignmentButtons extends StatelessWidget {
 /// A slider with numeric input for property editing
 class VioPropertySlider extends StatelessWidget {
   const VioPropertySlider({
-    super.key,
-    required this.label,
-    required this.value,
-    required this.onChanged,
+    required this.label, required this.value, required this.onChanged, super.key,
     this.min = 0.0,
     this.max = 100.0,
     this.showInput = true,
@@ -307,11 +296,7 @@ class VioPropertySlider extends StatelessWidget {
 /// A toggle row with icon and label
 class VioToggleRow extends StatelessWidget {
   const VioToggleRow({
-    super.key,
-    required this.iconAsset,
-    required this.label,
-    required this.value,
-    required this.onChanged,
+    required this.iconAsset, required this.label, required this.value, required this.onChanged, super.key,
   });
 
   final String iconAsset;
@@ -331,7 +316,7 @@ class VioToggleRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            VioIcon(iconAsset, size: 16),
+            VioIcon(iconAsset),
             const SizedBox(width: VioSpacing.sm),
             Expanded(
               child: Text(

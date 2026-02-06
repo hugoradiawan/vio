@@ -74,14 +74,12 @@ class VioTypography {
   static TextStyle get headlineMedium => _inter(
     fontSize: 18,
     fontWeight: FontWeight.w600,
-    letterSpacing: 0,
     height: 1.3,
   );
 
   static TextStyle get headlineSmall => _inter(
     fontSize: 16,
     fontWeight: FontWeight.w600,
-    letterSpacing: 0,
     height: 1.35,
   );
 
@@ -89,12 +87,10 @@ class VioTypography {
   static TextStyle get titleLarge => _inter(
     fontSize: 16,
     fontWeight: FontWeight.w500,
-    letterSpacing: 0,
     height: 1.4,
   );
 
   static TextStyle get titleMedium => _inter(
-    fontSize: 14,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.1,
     height: 1.4,
@@ -109,24 +105,17 @@ class VioTypography {
 
   // ============== Body Styles ==============
   static TextStyle get bodyLarge => _inter(
-    fontSize: 14,
-    fontWeight: FontWeight.w400,
     letterSpacing: 0.15,
-    height: 1.5,
   );
 
   static TextStyle get bodyMedium => _inter(
     fontSize: 13,
-    fontWeight: FontWeight.w400,
     letterSpacing: 0.15,
-    height: 1.5,
   );
 
   static TextStyle get bodySmall => _inter(
     fontSize: 12,
-    fontWeight: FontWeight.w400,
     letterSpacing: 0.2,
-    height: 1.5,
     color: VioColors.textSecondary,
   );
 
@@ -156,17 +145,12 @@ class VioTypography {
   // ============== Special Styles ==============
   /// Monospace style for coordinates, code, etc.
   static TextStyle get mono => _mono(
-    fontSize: 12,
-    fontWeight: FontWeight.w400,
-    letterSpacing: 0,
-    height: 1.5,
+    
   );
 
   /// Monospace small
   static TextStyle get monoSmall => _mono(
     fontSize: 11,
-    fontWeight: FontWeight.w400,
-    letterSpacing: 0,
     height: 1.4,
   );
 
@@ -181,7 +165,6 @@ class VioTypography {
   /// Caption/tooltip
   static TextStyle get caption => _inter(
     fontSize: 11,
-    fontWeight: FontWeight.w400,
     letterSpacing: 0.2,
     height: 1.3,
     color: VioColors.textTertiary,

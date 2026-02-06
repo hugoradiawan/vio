@@ -32,9 +32,11 @@ class RectangleShape extends Shape {
   }) : super(type: ShapeType.rectangle);
 
   /// X position
+  @override
   final double x;
 
   /// Y position
+  @override
   final double y;
 
   /// Width
@@ -163,7 +165,7 @@ class RectangleShape extends Shape {
             : Matrix2D.identity,
         transformInverse: json['transformInverse'] != null
             ? Matrix2D.fromJson(
-                json['transformInverse'] as Map<String, dynamic>)
+                json['transformInverse'] as Map<String, dynamic>,)
             : null,
         fills: (json['fills'] as List?)
                 ?.map((f) => ShapeFill.fromJson(f as Map<String, dynamic>))
@@ -179,7 +181,7 @@ class RectangleShape extends Shape {
         rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
         constraints: json['constraints'] != null
             ? ShapeConstraints.fromJson(
-                json['constraints'] as Map<String, dynamic>)
+                json['constraints'] as Map<String, dynamic>,)
             : null,
         shadow: json['shadow'] != null
             ? ShapeShadow.fromJson(json['shadow'] as Map<String, dynamic>)

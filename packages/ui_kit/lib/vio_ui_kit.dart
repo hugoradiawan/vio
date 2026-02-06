@@ -1,5 +1,5 @@
 /// Vio UI Kit - Design system and themed components
-library vio_ui_kit;
+library;
 
 // Icons
 export 'src/icons/vio_icons.dart';

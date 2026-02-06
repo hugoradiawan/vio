@@ -244,10 +244,10 @@ class ShapePainter {
     final scaleX = (bounds.width + amount * 2) / bounds.width;
     final scaleY = (bounds.height + amount * 2) / bounds.height;
 
-    final matrix = Matrix4.identity()
-      ..translate(center.dx, center.dy)
-      ..scale(scaleX, scaleY)
-      ..translate(-center.dx, -center.dy);
+    // Build transformation: translate to origin, scale, translate back
+    final matrix = Matrix4.translationValues(center.dx, center.dy, 0)
+      ..multiply(Matrix4.diagonal3Values(scaleX, scaleY, 1))
+      ..multiply(Matrix4.translationValues(-center.dx, -center.dy, 0));
 
     return path.transform(matrix.storage);
   }

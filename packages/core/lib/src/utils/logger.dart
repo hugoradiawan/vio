@@ -126,7 +126,7 @@ class Logger {
 }
 
 /// Global application logger
-final appLogger = Logger('Vio');
+const appLogger = Logger('Vio');
 
 /// Log extension for easy logging
 extension LoggerExtension on Object {

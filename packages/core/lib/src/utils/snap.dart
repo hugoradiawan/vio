@@ -306,7 +306,7 @@ class SnapPointGenerator {
   /// Generate snap points from a frame (includes edge lines)
   static List<SnapPoint> fromFrame(FrameShape frame) {
     // Start with standard shape points
-    final points = fromShape(frame, includeCenter: true);
+    final points = fromShape(frame);
 
     // Frames get additional edge-line snap points for alignment
     // These are continuous along the edges

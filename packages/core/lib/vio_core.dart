@@ -1,5 +1,5 @@
 /// Vio Core - Shared utilities, extensions, and base abstractions
-library vio_core;
+library;
 
 // Extensions
 export 'src/extensions/num_extensions.dart';

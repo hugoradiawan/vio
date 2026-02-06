@@ -7,11 +7,11 @@ linter:
     - unawaited_futures
     # Relaxed for gradual adoption:
     # - avoid_positional_boolean_parameters
-    # - cascade_invocations  
+    # - cascade_invocations
     # - parameter_assignments
     # - sort_constructors_first
     # - sort_unnamed_constructors_first
-    # Existing rules
+    # Standard rules
     - always_declare_return_types
     - always_put_required_named_parameters_first
     - avoid_empty_else
@@ -19,7 +19,6 @@ linter:
     - avoid_redundant_argument_values
     - avoid_relative_lib_imports
     - avoid_returning_null_for_future
-    - avoid_slow_async_io
     - avoid_type_to_string
     - avoid_types_as_parameter_names
     - avoid_unnecessary_containers
@@ -66,21 +65,9 @@ linter:
     - use_build_context_synchronously
     - use_full_hex_values_for_flutter_colors
     - use_key_in_widget_constructors
-    # - use_late_for_private_fields_when_needed
     - use_string_buffers
 
 analyzer:
-  exclude:
-    - "**/*.g.dart"
-    - "**/*.freezed.dart"
-    - "**/*.config.dart"
-    - "**/*.pb.dart"
-    - "**/*.pbenum.dart"
-    - "**/*.pbjson.dart"
-    - "**/*.pbgrpc.dart"
-    - "lib/src/gen/**"
-  errors:
-    invalid_annotation_target: ignore
   language:
     strict-casts: true
     strict-inference: true

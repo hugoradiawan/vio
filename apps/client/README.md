@@ -1,16 +1,49 @@
-# vio_client
+# Vio Client
 
-A new Flutter project.
+The Flutter client application for Vio - a Penpot-inspired design & prototyping tool with Git-like version control.
 
-## Getting Started
+## Overview
 
-This project is a starting point for a Flutter application.
+This is the main composition root for the Vio design tool, providing a cross-platform UI (Web, Windows) built with Flutter.
 
-A few resources to get you started if this is your first Flutter project:
+## Architecture
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+The client follows a **feature-first Clean Architecture** pattern:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```
+lib/src/
+├── core/           # Shared infrastructure (API, theme, routing)
+│   ├── api/        # REST API services & DTOs
+│   └── grpc/       # gRPC services (planned)
+└── features/       # Feature modules
+    ├── canvas/     # Canvas editor with shape manipulation
+    ├── version_control/  # Git-like branching & commits
+    └── workspace/  # Project & workspace management
+```
+
+Each feature contains:
+- `bloc/` - State management using flutter_bloc
+- `models/` - Feature-specific data models  
+- `presentation/` - Widgets and views
+
+## Running
+
+```bash
+# Web
+melos run run:client:web
+
+# Windows
+melos run run:client:windows
+```
+
+## Key Dependencies
+
+- **flutter_bloc** - State management
+- **go_router** - Declarative routing
+- **dio** - HTTP client for REST API
+- **grpc** - gRPC client (future version control)
+
+## Internal Packages
+
+- **vio_core** - Shared models, math utilities (Matrix2D, Shape hierarchy)
+- **vio_ui_kit** - Design system (VioTheme, VioColors)

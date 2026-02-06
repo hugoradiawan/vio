@@ -18,22 +18,12 @@ melos:
   sdkPath: .fvm/flutter_sdk
   discoverNestedWorkspaces: true
   repository: https://github.com/user/vio
-  # packages:
-  #   - apps/**
-  #   - packages/**
-  #   - features/**
 
   ide:
     intellij:
       enabled: true
 
-  # command:
-  #   version:
-  #     linkToCommits: true
-  #     workspaceChangelog: true
-
   bootstrap:
-    # usePubspecOverrides: true
     runPubGetInParallel: true
 
   scripts:

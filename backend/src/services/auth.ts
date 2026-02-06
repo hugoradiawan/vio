@@ -149,8 +149,6 @@ export const authServiceImpl: ServiceImpl<typeof AuthService> = {
 		const accessToken = generateAccessToken(userId);
 		const refreshToken = generateRefreshToken(userId);
 
-		console.log(`User registered: ${user.email} (${userId})`);
-
 		return create(AuthResponseSchema, {
 			user: toProtoUser(user),
 			accessToken,
@@ -185,8 +183,6 @@ export const authServiceImpl: ServiceImpl<typeof AuthService> = {
 		// Generate tokens
 		const accessToken = generateAccessToken(userId);
 		const refreshToken = generateRefreshToken(userId);
-
-		console.log(`User logged in: ${user.email}`);
 
 		return create(AuthResponseSchema, {
 			user: toProtoUser(user),

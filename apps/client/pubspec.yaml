@@ -21,7 +21,6 @@ dependencies:
   flutter_bloc: ^9.1.1
   bloc_concurrency: ^0.3.0
   hydrated_bloc: ^10.1.1
-  # replay_bloc: ^0.3.0
 
   # Routing
   go_router: ^17.0.1
@@ -39,7 +38,6 @@ dependencies:
   dio: ^5.8.0
 
   # Platform
-  # window_manager: ^0.5.1
   path_provider: ^2.1.5
   grpc: ^5.1.0
   protobuf: ^6.0.0

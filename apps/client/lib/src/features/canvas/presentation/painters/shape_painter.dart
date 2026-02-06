@@ -151,10 +151,6 @@ class ShapePainter {
     final shadowColor =
         Color(shadow.color).withValues(alpha: shadow.opacity);
 
-    // Calculate expanded bounds for the shadow layer
-    final expansion = shadow.blur + shadow.spread.abs();
-    final layerBounds = shapeBounds.inflate(expansion + 20);
-
     canvas.save();
 
     // Translate by shadow offset

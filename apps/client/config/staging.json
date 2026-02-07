@@ -1,0 +1,8 @@
+{
+  "APP_ENV": "staging",
+  "API_BASE_URL": "https://staging-api.vio.app/api",
+  "GRPC_HOST": "staging-api.vio.app",
+  "GRPC_PORT": "443",
+  "GRPC_WEB_PORT": "443",
+  "USE_TLS": "true"
+}

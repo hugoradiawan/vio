@@ -561,7 +561,9 @@ class ShapePainter {
       bounds.height,
     );
 
-    final colors = gradient.stops.map((s) => Color(s.color)).toList();
+    final colors = gradient.stops
+        .map((s) => Color(s.color).withValues(alpha: s.opacity))
+        .toList();
     final stops = gradient.stops.map((s) => s.offset).toList();
 
     // Calculate gradient points in shape coordinates

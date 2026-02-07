@@ -55,6 +55,8 @@ class VersionControlBloc
     on<CanvasShapesChanged>(_onCanvasShapesChanged);
     on<BaseShapesLoaded>(_onBaseShapesLoaded);
     on<ShapeChangeDiscarded>(_onShapeChangeDiscarded);
+    on<CommitAndSwitchRequested>(_onCommitAndSwitch);
+    on<BranchUpdateRequested>(_onBranchUpdate);
   }
 
   Timer? _pollingTimer;
@@ -1286,6 +1288,138 @@ class VersionControlBloc
     }
 
     return newShapes;
+  }
+
+  // ============================================================================
+  // Commit and Switch
+  // ============================================================================
+
+  /// Commit current changes and then switch to a target branch.
+  Future<void> _onCommitAndSwitch(
+    CommitAndSwitchRequested event,
+    Emitter<VersionControlState> emit,
+  ) async {
+    if (state.projectId == null || state.userId == null) return;
+
+    emit(
+      state.copyWith(
+        status: VersionControlStatus.committing,
+        clearPendingSwitchBranchId: true,
+      ),
+    );
+
+    try {
+      // Step 1: Sync shapes to database
+      final repository = ServiceLocator.instance.canvasRepository;
+      await repository.sync();
+      VioLogger.info(
+        'VersionControlBloc: Synced shapes before commit-and-switch',
+      );
+
+      // Step 2: Create the commit
+      await _commitClient.createCommit(
+        commit_pb.CreateCommitRequest()
+          ..projectId = state.projectId!
+          ..branchId = state.currentBranchId!
+          ..message = event.message
+          ..authorId = state.userId!,
+      );
+
+      // Update state: current shapes become base (no uncommitted changes)
+      emit(
+        state.copyWith(
+          stagedShapeIds: {},
+          baseShapes: state.currentShapes,
+          uncommittedChanges: [],
+          status: VersionControlStatus.ready,
+        ),
+      );
+
+      VioLogger.info(
+        'VersionControlBloc: Commit created, now switching to ${event.targetBranchId}',
+      );
+
+      // Step 3: Switch to the target branch
+      add(
+        BranchSwitchRequested(
+          branchId: event.targetBranchId,
+          forceDiscard: true,
+        ),
+      );
+    } on GrpcError catch (e) {
+      emit(
+        state.copyWith(
+          status: VersionControlStatus.error,
+          error: e.message ?? 'Failed to commit and switch branch',
+        ),
+      );
+    }
+  }
+
+  // ============================================================================
+  // Branch Update
+  // ============================================================================
+
+  /// Update branch name, description, or protection status.
+  Future<void> _onBranchUpdate(
+    BranchUpdateRequested event,
+    Emitter<VersionControlState> emit,
+  ) async {
+    if (state.projectId == null) return;
+
+    emit(state.copyWith(status: VersionControlStatus.loading));
+
+    try {
+      final request = branch_pb.UpdateBranchRequest()
+        ..projectId = state.projectId!
+        ..branchId = event.branchId;
+
+      if (event.name != null) request.name = event.name!;
+      if (event.description != null) request.description = event.description!;
+      if (event.isProtected != null) request.isProtected = event.isProtected!;
+
+      final response = await _branchClient.updateBranch(request);
+
+      // Update the branch in local state
+      final updatedBranch = BranchDto(
+        id: response.branch.id,
+        name: response.branch.name,
+        projectId: response.branch.projectId,
+        description: response.branch.description.isEmpty
+            ? null
+            : response.branch.description,
+        headCommitId: response.branch.headCommitId.isEmpty
+            ? null
+            : response.branch.headCommitId,
+        isDefault: response.branch.isDefault,
+        isProtected: response.branch.isProtected,
+        createdById: response.branch.createdById,
+        createdAt: _timestampToDateTimeOrNull(response.branch.createdAt),
+        updatedAt: _timestampToDateTimeOrNull(response.branch.updatedAt),
+      );
+
+      final updatedBranches = state.branches.map((b) {
+        return b.id == updatedBranch.id ? updatedBranch : b;
+      }).toList();
+
+      emit(
+        state.copyWith(
+          branches: updatedBranches,
+          status: VersionControlStatus.ready,
+        ),
+      );
+
+      VioLogger.info(
+        'VersionControlBloc: Branch ${event.branchId} updated',
+      );
+    } on GrpcError catch (e) {
+      emit(
+        state.copyWith(
+          status: VersionControlStatus.error,
+          error: e.message ?? 'Failed to update branch',
+        ),
+      );
+    }
   }
 
   @override

@@ -332,14 +332,104 @@ class ProtoConverter {
     return ShapeFill(
       color: proto.color,
       opacity: proto.opacity,
-      // TODO: Handle gradient and fillImage
+      hidden: proto.hidden,
+      gradient: proto.hasGradient()
+          ? _gradientFromProto(proto.gradient)
+          : null,
+      fillImage: proto.hasFillImage()
+          ? _fillImageFromProto(proto.fillImage)
+          : null,
     );
   }
 
   static pb_common.Fill _fillToProto(ShapeFill fill) {
-    return pb_common.Fill()
+    final proto = pb_common.Fill()
       ..color = fill.color
-      ..opacity = fill.opacity;
+      ..opacity = fill.opacity
+      ..hidden = fill.hidden;
+    if (fill.gradient != null) {
+      proto.gradient = _gradientToProto(fill.gradient!);
+    }
+    if (fill.fillImage != null) {
+      proto.fillImage = _fillImageToProto(fill.fillImage!);
+    }
+    return proto;
+  }
+
+  // ============================================================================
+  // Gradient Conversions
+  // ============================================================================
+
+  static ShapeGradient _gradientFromProto(pb_common.Gradient proto) {
+    return ShapeGradient(
+      type: _gradientTypeFromProto(proto.type),
+      stops: proto.stops.map(_gradientStopFromProto).toList(),
+      startX: proto.startX,
+      startY: proto.startY,
+      endX: proto.endX,
+      endY: proto.endY,
+    );
+  }
+
+  static pb_common.Gradient _gradientToProto(ShapeGradient gradient) {
+    return pb_common.Gradient()
+      ..type = _gradientTypeToProto(gradient.type)
+      ..stops.addAll(gradient.stops.map(_gradientStopToProto))
+      ..startX = gradient.startX
+      ..startY = gradient.startY
+      ..endX = gradient.endX
+      ..endY = gradient.endY;
+  }
+
+  static GradientStop _gradientStopFromProto(pb_common.GradientStop proto) {
+    return GradientStop(
+      color: proto.color,
+      offset: proto.offset,
+      opacity: proto.opacity,
+    );
+  }
+
+  static pb_common.GradientStop _gradientStopToProto(GradientStop stop) {
+    return pb_common.GradientStop()
+      ..color = stop.color
+      ..offset = stop.offset
+      ..opacity = stop.opacity;
+  }
+
+  static GradientType _gradientTypeFromProto(pb_common.Gradient_Type proto) {
+    return switch (proto) {
+      pb_common.Gradient_Type.TYPE_LINEAR => GradientType.linear,
+      pb_common.Gradient_Type.TYPE_RADIAL => GradientType.radial,
+      _ => GradientType.linear,
+    };
+  }
+
+  static pb_common.Gradient_Type _gradientTypeToProto(GradientType type) {
+    return switch (type) {
+      GradientType.linear => pb_common.Gradient_Type.TYPE_LINEAR,
+      GradientType.radial => pb_common.Gradient_Type.TYPE_RADIAL,
+    };
+  }
+
+  // ============================================================================
+  // FillImage Conversions
+  // ============================================================================
+
+  static ShapeFillImage _fillImageFromProto(pb_common.FillImage proto) {
+    return ShapeFillImage(
+      id: proto.id,
+      width: proto.hasWidth() ? proto.width : null,
+      height: proto.hasHeight() ? proto.height : null,
+      mtype: proto.hasMtype() ? proto.mtype : null,
+    );
+  }
+
+  static pb_common.FillImage _fillImageToProto(ShapeFillImage fillImage) {
+    final proto = pb_common.FillImage()..id = fillImage.id;
+    if (fillImage.width != null) proto.width = fillImage.width!;
+    if (fillImage.height != null) proto.height = fillImage.height!;
+    if (fillImage.mtype != null) proto.mtype = fillImage.mtype!;
+    return proto;
   }
 
   // ============================================================================

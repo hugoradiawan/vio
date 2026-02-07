@@ -168,11 +168,21 @@ class _BranchSettingsDialogState extends State<BranchSettingsDialog> {
             if (_hasChanges && canEdit)
               ElevatedButton(
                 onPressed: () {
-                  // TODO: Implement branch update when backend supports it
+                  context.read<VersionControlBloc>().add(
+                        BranchUpdateRequested(
+                          branchId: widget.branch.id,
+                          name: _nameController.text.trim(),
+                          description:
+                              _descriptionController.text.trim().isEmpty
+                                  ? null
+                                  : _descriptionController.text.trim(),
+                        ),
+                      );
+                  Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Branch update not yet implemented'),
-                      backgroundColor: VioColors.warning,
+                      content: Text('Branch updated'),
+                      backgroundColor: VioColors.success,
                     ),
                   );
                 },

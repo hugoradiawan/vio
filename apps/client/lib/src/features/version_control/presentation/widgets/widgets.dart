@@ -4,6 +4,7 @@ library;
 export 'branch_list_panel.dart';
 export 'branch_selector_header.dart';
 export 'branch_settings_dialog.dart';
+export 'commit_dialog.dart';
 export 'commit_history_list.dart';
 export 'commit_panel.dart';
 export 'conflict_resolution_dialog.dart';

@@ -1,18 +1,26 @@
+import '../config/app_config.dart';
+
 /// API configuration constants
 class ApiConfig {
   ApiConfig._();
 
-  /// Base URL for the API in development
-  static const String devBaseUrl = 'http://localhost:4000/api';
+  static String? _baseUrlOverride;
 
-  /// Base URL for the API in production (to be configured)
-  static const String prodBaseUrl = 'https://api.vio.app/api';
+  /// Configure the base URL from [AppConfig].
+  ///
+  /// Called once during app startup from [ServiceLocator.initialize].
+  static void configure({required String baseUrl}) {
+    _baseUrlOverride = baseUrl;
+  }
 
-  /// Get the appropriate base URL based on environment
+  /// Get the appropriate base URL based on environment.
+  ///
+  /// Uses the value set via [configure] (from `--dart-define-from-file`),
+  /// or falls back to [AppConfig.fromEnvironment] defaults.
   static String get baseUrl {
-    // TODO: Use proper environment detection
-    const isProduction = bool.fromEnvironment('dart.vm.product');
-    return isProduction ? prodBaseUrl : devBaseUrl;
+    if (_baseUrlOverride != null) return _baseUrlOverride!;
+    // Fallback: resolve from compile-time defines directly
+    return AppConfig.fromEnvironment().apiBaseUrl;
   }
 
   /// API endpoints

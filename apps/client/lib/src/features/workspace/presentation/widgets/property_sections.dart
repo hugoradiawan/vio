@@ -8,6 +8,7 @@ import 'package:vio_core/vio_core.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../../canvas/bloc/canvas_bloc.dart';
+import 'gradient_editor.dart';
 
 /// Section for editing fill properties
 class FillSection extends StatelessWidget {
@@ -49,7 +50,7 @@ class FillSection extends StatelessWidget {
   }
 }
 
-class _FillItem extends StatelessWidget {
+class _FillItem extends StatefulWidget {
   const _FillItem({
     required this.fill,
     required this.index,
@@ -61,79 +62,212 @@ class _FillItem extends StatelessWidget {
   final Shape shape;
 
   @override
+  State<_FillItem> createState() => _FillItemState();
+}
+
+class _FillItemState extends State<_FillItem> {
+  bool _expanded = false;
+
+  ShapeFill get fill => widget.fill;
+  int get index => widget.index;
+  Shape get shape => widget.shape;
+
+  bool get _hasGradient => fill.gradient != null;
+
+  @override
+  void didUpdateWidget(covariant _FillItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Auto-collapse when gradient is removed.
+    if (oldWidget.fill.gradient != null && fill.gradient == null) {
+      _expanded = false;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(VioSpacing.sm),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Visibility toggle
-          VioSvgIconButton(
-            assetPath: fill.hidden ? VioIcons.eyeOff : VioIcons.eye,
-            size: 14,
-            buttonSize: 24,
-            onPressed: () => _toggleFillVisibility(context),
-          ),
-          const SizedBox(width: VioSpacing.xs),
-          // Color preview
-          GestureDetector(
-            onTap: () => _showColorPicker(context),
-            child: Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: Color(fill.color),
-                borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-                border: Border.all(color: VioColors.border),
+          Row(
+            children: [
+              // Visibility toggle
+              VioSvgIconButton(
+                assetPath: fill.hidden ? VioIcons.eyeOff : VioIcons.eye,
+                size: 14,
+                buttonSize: 24,
+                onPressed: () => _toggleFillVisibility(context),
               ),
-            ),
-          ),
-          const SizedBox(width: VioSpacing.sm),
-          // Hex value
-          Expanded(
-            child: Container(
-              height: 32,
-              padding: const EdgeInsets.symmetric(horizontal: VioSpacing.sm),
-              decoration: BoxDecoration(
-                color: VioColors.surfaceElevated,
-                borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-                border: Border.all(color: VioColors.border),
+              const SizedBox(width: VioSpacing.xs),
+              // Color / gradient preview swatch
+              GestureDetector(
+                onTap: _hasGradient
+                    ? () => setState(() => _expanded = !_expanded)
+                    : () => _showColorPicker(context),
+                child: _buildColorSwatch(),
               ),
-              child: Row(
-                children: [
-                  Text(
-                    '#',
-                    style: VioTypography.caption.copyWith(
-                      color: VioColors.textTertiary,
+              const SizedBox(width: VioSpacing.sm),
+              // Hex value or gradient label
+              Expanded(
+                child: GestureDetector(
+                  onTap: _hasGradient
+                      ? () => setState(() => _expanded = !_expanded)
+                      : null,
+                  child: Container(
+                    height: 32,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: VioSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: VioColors.surfaceElevated,
+                      borderRadius:
+                          BorderRadius.circular(VioSpacing.radiusSm),
+                      border: Border.all(color: VioColors.border),
+                    ),
+                    child: Row(
+                      children: [
+                        if (_hasGradient) ...[
+                          Icon(
+                            fill.gradient!.type == GradientType.radial
+                                ? Icons.radio_button_checked
+                                : Icons.gradient,
+                            size: 12,
+                            color: VioColors.textTertiary,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              fill.gradient!.type == GradientType.radial
+                                  ? 'Radial'
+                                  : 'Linear',
+                              style: VioTypography.caption.copyWith(
+                                color: VioColors.textSecondary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Icon(
+                            _expanded
+                                ? Icons.expand_less
+                                : Icons.expand_more,
+                            size: 14,
+                            color: VioColors.textTertiary,
+                          ),
+                        ] else ...[
+                          Text(
+                            '#',
+                            style: VioTypography.caption.copyWith(
+                              color: VioColors.textTertiary,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          Expanded(
+                            child: Text(
+                              _colorToHex(fill.color),
+                              style: VioTypography.caption.copyWith(
+                                color: VioColors.textPrimary,
+                                fontFamily: 'monospace',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 2),
-                  Expanded(
-                    child: Text(
-                      _colorToHex(fill.color),
-                      style: VioTypography.caption.copyWith(
-                        color: VioColors.textPrimary,
-                        fontFamily: 'monospace',
+                ),
+              ),
+              const SizedBox(width: VioSpacing.xs),
+              // Opacity (for solid fills)
+              if (!_hasGradient)
+                SizedBox(
+                  width: 56,
+                  child: VioNumericField(
+                    value: fill.opacity * 100,
+                    min: 0,
+                    max: 100,
+                    onChanged: (value) {
+                      _updateFillOpacity(context, value / 100);
+                    },
+                  ),
+                ),
+              // Gradient expand toggle (compact)
+              if (!_hasGradient)
+                Tooltip(
+                  message: 'Add gradient',
+                  child: GestureDetector(
+                    onTap: () {
+                      _applyGradient(
+                        context,
+                        ShapeGradient(
+                          type: GradientType.linear,
+                          stops: [
+                            GradientStop(color: fill.color, offset: 0.0),
+                            const GradientStop(
+                              color: 0xFFFFFFFF,
+                              offset: 1.0,
+                            ),
+                          ],
+                        ),
+                      );
+                      setState(() => _expanded = true);
+                    },
+                    child: Container(
+                      width: 24,
+                      height: 24,
+                      alignment: Alignment.center,
+                      child: const Icon(
+                        Icons.gradient,
+                        size: 14,
+                        color: VioColors.textTertiary,
                       ),
                     ),
                   ),
-                ],
+                ),
+            ],
+          ),
+          // ── Gradient Editor (expanded) ──
+          if (_expanded)
+            Padding(
+              padding: const EdgeInsets.only(
+                left: 28, // align with colour swatch
+                top: VioSpacing.xs,
+              ),
+              child: GradientEditor(
+                fill: fill,
+                onChanged: (result) => _onGradientChanged(context, result),
               ),
             ),
-          ),
-          const SizedBox(width: VioSpacing.xs),
-          // Opacity
-          SizedBox(
-            width: 56,
-            child: VioNumericField(
-              value: fill.opacity * 100,
-              min: 0,
-              max: 100,
-              onChanged: (value) {
-                _updateFillOpacity(context, value / 100);
-              },
-            ),
-          ),
         ],
+      ),
+    );
+  }
+
+  /// Build a 32×32 colour swatch — solid or gradient preview.
+  Widget _buildColorSwatch() {
+    if (_hasGradient) {
+      final stops = fill.gradient!.stops;
+      return Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
+          border: Border.all(color: VioColors.border),
+          gradient: LinearGradient(
+            colors: stops
+                .map((s) => Color(s.color).withValues(alpha: s.opacity))
+                .toList(),
+            stops: stops.map((s) => s.offset).toList(),
+          ),
+        ),
+      );
+    }
+    return Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: Color(fill.color),
+        borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
+        border: Border.all(color: VioColors.border),
       ),
     );
   }
@@ -168,6 +302,30 @@ class _FillItem extends StatelessWidget {
   void _toggleFillVisibility(BuildContext context) {
     final newFills = List<ShapeFill>.from(shape.fills);
     newFills[index] = fill.copyWith(hidden: !fill.hidden);
+    _updateShape(context, newFills: newFills);
+  }
+
+  void _applyGradient(BuildContext context, ShapeGradient gradient) {
+    final newFills = List<ShapeFill>.from(shape.fills);
+    newFills[index] = fill.copyWith(gradient: gradient);
+    _updateShape(context, newFills: newFills);
+  }
+
+  void _onGradientChanged(BuildContext context, GradientEditorResult result) {
+    final newFills = List<ShapeFill>.from(shape.fills);
+    if (result.gradient == null) {
+      // Switched back to solid.
+      newFills[index] = fill.copyWith(
+        color: result.fillColor,
+        clearGradient: true,
+      );
+      setState(() => _expanded = false);
+    } else {
+      newFills[index] = fill.copyWith(
+        color: result.fillColor,
+        gradient: result.gradient,
+      );
+    }
     _updateShape(context, newFills: newFills);
   }
 

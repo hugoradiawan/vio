@@ -4,6 +4,7 @@ import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../../../core/api/dto.dart';
 import '../../bloc/version_control_bloc.dart';
+import 'commit_dialog.dart';
 
 /// Sticky branch selector header that sits above the left panel
 /// Option A: Branch selector in a compact sticky header above the entire left panel
@@ -30,7 +31,11 @@ class BranchSelectorHeader extends StatelessWidget {
               createdById: '',
             ),
           );
-          _showUncommittedChangesDialog(context, pendingBranch.name);
+          _showUncommittedChangesDialog(
+            context,
+            pendingBranch.name,
+            pendingBranch.id,
+          );
         }
 
         // Handle branch delete confirmation
@@ -134,7 +139,11 @@ class BranchSelectorHeader extends StatelessWidget {
   }
 
   /// Show confirmation dialog when switching branches with uncommitted changes
-  void _showUncommittedChangesDialog(BuildContext context, String branchName) {
+  void _showUncommittedChangesDialog(
+    BuildContext context,
+    String branchName,
+    String branchId,
+  ) {
     showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -200,11 +209,17 @@ class BranchSelectorHeader extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.of(dialogContext).pop();
-              context
-                  .read<VersionControlBloc>()
-                  .add(const BranchSwitchCanceled());
-              // TODO: Open commit dialog - for now user can commit manually
-              // and then switch branches
+              showDialog<void>(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => BlocProvider.value(
+                  value: context.read<VersionControlBloc>(),
+                  child: CommitDialog(
+                    targetBranchId: branchId,
+                    targetBranchName: branchName,
+                  ),
+                ),
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: VioColors.primary,

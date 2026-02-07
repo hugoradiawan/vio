@@ -4,6 +4,8 @@ import '../gen/vio/v1/commit.pbgrpc.dart';
 import '../gen/vio/v1/project.pbgrpc.dart';
 import '../gen/vio/v1/pullrequest.pbgrpc.dart';
 import '../gen/vio/v1/shape.pbgrpc.dart';
+import 'api/api_config.dart';
+import 'config/app_config.dart';
 import 'grpc/grpc.dart';
 import 'repositories/repositories.dart';
 import 'services/preferences_service.dart';
@@ -31,15 +33,17 @@ class ServiceLocator {
   bool _initialized = false;
 
   /// Initialize all services
-  Future<void> initialize({
-    String? host,
-    int? port,
-  }) async {
+  ///
+  /// Accepts an optional [AppConfig] for environment-specific settings.
+  /// If not provided, defaults are resolved from `--dart-define` values.
+  Future<void> initialize({AppConfig? config}) async {
     if (_initialized) return;
 
-    // Use GrpcConfig defaults if not specified
-    final effectiveHost = host ?? GrpcConfig.host;
-    final effectivePort = port ?? GrpcConfig.port;
+    final effectiveConfig = config ?? AppConfig.fromEnvironment();
+
+    // Configure environment-aware singletons
+    GrpcConfig.configure(effectiveConfig);
+    ApiConfig.configure(baseUrl: effectiveConfig.apiBaseUrl);
 
     // Initialize preferences service first (no dependencies)
     _preferencesService = PreferencesService.instance;
@@ -47,7 +51,10 @@ class ServiceLocator {
 
     // Initialize gRPC client (singleton)
     _grpcClient = GrpcClient.instance;
-    _grpcClient.initialize(host: effectiveHost, port: effectivePort);
+    _grpcClient.initialize(
+      host: effectiveConfig.grpcHost,
+      port: GrpcConfig.port,
+    );
 
     // Get gRPC service clients
     _projectService = _grpcClient.projectClient;

@@ -297,20 +297,25 @@ class ShapeFill extends Equatable {
   /// Image fill (optional)
   final ShapeFillImage? fillImage;
 
-  /// Create a copy with updated properties
+  /// Create a copy with updated properties.
+  ///
+  /// Set [clearGradient] to true to remove the gradient.
+  /// Set [clearFillImage] to true to remove the fill image.
   ShapeFill copyWith({
     int? color,
     double? opacity,
     bool? hidden,
     ShapeGradient? gradient,
+    bool clearGradient = false,
     ShapeFillImage? fillImage,
+    bool clearFillImage = false,
   }) {
     return ShapeFill(
       color: color ?? this.color,
       opacity: opacity ?? this.opacity,
       hidden: hidden ?? this.hidden,
-      gradient: gradient ?? this.gradient,
-      fillImage: fillImage ?? this.fillImage,
+      gradient: clearGradient ? null : (gradient ?? this.gradient),
+      fillImage: clearFillImage ? null : (fillImage ?? this.fillImage),
     );
   }
 

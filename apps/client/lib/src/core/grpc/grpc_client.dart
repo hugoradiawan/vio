@@ -8,46 +8,41 @@ import '../../gen/vio/v1/commit.pbgrpc.dart';
 import '../../gen/vio/v1/project.pbgrpc.dart';
 import '../../gen/vio/v1/pullrequest.pbgrpc.dart';
 import '../../gen/vio/v1/shape.pbgrpc.dart';
+import '../config/app_config.dart';
 import 'grpc_channel.dart';
 
 /// gRPC client configuration
+///
+/// Reads values from [AppConfig] which is populated via
+/// `--dart-define-from-file` at build time.
 class GrpcConfig {
   GrpcConfig._();
 
-  /// Host for gRPC server in development
-  static const String devHost = 'localhost';
+  static AppConfig? _config;
 
-  /// Port for gRPC server in development (native HTTP/2)
-  static const int devPort = 4000;
+  /// Configure from [AppConfig]. Called once during app startup.
+  static void configure(AppConfig config) {
+    _config = config;
+  }
 
-  /// Port for gRPC-Web server in development (HTTP/1.1 for browsers)
-  static const int devWebPort = 4001;
-
-  /// Host for gRPC server in production
-  static const String prodHost = 'api.vio.app';
-
-  /// Port for gRPC server in production
-  static const int prodPort = 443;
+  static AppConfig get _effectiveConfig =>
+      _config ?? AppConfig.fromEnvironment();
 
   /// Get appropriate host based on environment
-  static String get host {
-    const isProduction = bool.fromEnvironment('dart.vm.product');
-    return isProduction ? prodHost : devHost;
-  }
+  static String get host => _effectiveConfig.grpcHost;
 
   /// Get appropriate port based on environment and platform
   static int get port {
-    const isProduction = bool.fromEnvironment('dart.vm.product');
-    if (isProduction) return prodPort;
-    // In development: web uses port 4001 (HTTP/1.1), native uses 4000 (HTTP/2)
-    return kIsWeb ? devWebPort : devPort;
+    final config = _effectiveConfig;
+    if (config.isDevelopment) {
+      // In development: web uses grpcWebPort (HTTP/1.1), native uses grpcPort (HTTP/2)
+      return kIsWeb ? config.grpcWebPort : config.grpcPort;
+    }
+    return kIsWeb ? config.grpcWebPort : config.grpcPort;
   }
 
   /// Whether to use TLS
-  static bool get useTls {
-    const isProduction = bool.fromEnvironment('dart.vm.product');
-    return isProduction;
-  }
+  static bool get useTls => _effectiveConfig.useTls;
 }
 
 /// Singleton gRPC client manager

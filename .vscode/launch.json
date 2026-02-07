@@ -7,7 +7,8 @@
       "request": "launch",
       "program": "lib/main.dart",
       "cwd": "${workspaceFolder}/apps/client",
-      "deviceId": "chrome"
+      "deviceId": "chrome",
+      "toolArgs": ["--dart-define-from-file=config/dev.json"]
     },
     {
       "name": "Vio Client (Web - Edge)",
@@ -15,7 +16,8 @@
       "request": "launch",
       "program": "lib/main.dart",
       "cwd": "${workspaceFolder}/apps/client",
-      "deviceId": "edge"
+      "deviceId": "edge",
+      "toolArgs": ["--dart-define-from-file=config/dev.json"]
     },
     {
       "name": "Vio Client (Windows Desktop)",
@@ -23,7 +25,8 @@
       "request": "launch",
       "program": "lib/main.dart",
       "cwd": "${workspaceFolder}/apps/client",
-      "deviceId": "windows"
+      "deviceId": "windows",
+      "toolArgs": ["--dart-define-from-file=config/dev.json"]
     },
     {
       "name": "Vio Client (macOS Desktop)",
@@ -31,7 +34,8 @@
       "request": "launch",
       "program": "lib/main.dart",
       "cwd": "${workspaceFolder}/apps/client",
-      "deviceId": "macos"
+      "deviceId": "macos",
+      "toolArgs": ["--dart-define-from-file=config/dev.json"]
     },
     {
       "name": "Vio Client (Linux Desktop)",
@@ -39,7 +43,8 @@
       "request": "launch",
       "program": "lib/main.dart",
       "cwd": "${workspaceFolder}/apps/client",
-      "deviceId": "linux"
+      "deviceId": "linux",
+      "toolArgs": ["--dart-define-from-file=config/dev.json"]
     },
     {
       "name": "Vio Client (Web - Chrome) - Profile Mode",
@@ -48,7 +53,8 @@
       "program": "lib/main.dart",
       "cwd": "${workspaceFolder}/apps/client",
       "deviceId": "chrome",
-      "flutterMode": "profile"
+      "flutterMode": "profile",
+      "toolArgs": ["--dart-define-from-file=config/dev.json"]
     },
     {
       "name": "Vio Client (Windows) - Profile Mode",
@@ -57,7 +63,8 @@
       "program": "lib/main.dart",
       "cwd": "${workspaceFolder}/apps/client",
       "deviceId": "windows",
-      "flutterMode": "profile"
+      "flutterMode": "profile",
+      "toolArgs": ["--dart-define-from-file=config/dev.json"]
     },
     {
       "name": "Vio Client (Windows) - Release Mode",
@@ -66,7 +73,8 @@
       "program": "lib/main.dart",
       "cwd": "${workspaceFolder}/apps/client",
       "deviceId": "windows",
-      "flutterMode": "release"
+      "flutterMode": "release",
+      "toolArgs": ["--dart-define-from-file=config/production.json"]
     }
   ],
   "compounds": [

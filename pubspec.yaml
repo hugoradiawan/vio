@@ -85,13 +85,25 @@ melos:
 
     # Run apps
     run:client:web:
-      run: cd apps/client && fvm flutter run -d chrome
-      description: Run client app on web
+      run: cd apps/client && fvm flutter run -d chrome --dart-define-from-file=config/dev.json
+      description: Run client app on web (dev)
+
+    run:client:web:staging:
+      run: cd apps/client && fvm flutter run -d chrome --dart-define-from-file=config/staging.json
+      description: Run client app on web (staging)
+
+    run:client:web:prod:
+      run: cd apps/client && fvm flutter run -d chrome --dart-define-from-file=config/production.json
+      description: Run client app on web (production)
 
     run:client:windows:
-      run: cd apps/client && fvm flutter run -d windows
-      description: Run client app on Windows
+      run: cd apps/client && fvm flutter run -d windows --dart-define-from-file=config/dev.json
+      description: Run client app on Windows (dev)
+
+    run:client:windows:prod:
+      run: cd apps/client && fvm flutter run -d windows --dart-define-from-file=config/production.json
+      description: Run client app on Windows (production)
 
     run:client:macos:
-      run: cd apps/client && fvm flutter run -d macos
-      description: Run client app on macOS
+      run: cd apps/client && fvm flutter run -d macos --dart-define-from-file=config/dev.json
+      description: Run client app on macOS (dev)

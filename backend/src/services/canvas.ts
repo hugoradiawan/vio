@@ -38,6 +38,9 @@ import {
 } from "../gen/vio/v1/canvas_pb.js";
 import {
 	FillSchema,
+	GradientSchema,
+	GradientStopSchema,
+	Gradient_Type,
 	StrokeAlignment,
 	StrokeCap,
 	StrokeJoin,
@@ -45,8 +48,9 @@ import {
 	TimestampSchema,
 	TransformSchema,
 	type Fill,
+	type Gradient,
 	type Stroke,
-	type Timestamp,
+	type Timestamp
 } from "../gen/vio/v1/common_pb.js";
 import { ShapeSchema, ShapeType, type Shape } from "../gen/vio/v1/shape_pb.js";
 import { invalidArgument, notFound } from "./errors.js";
@@ -181,9 +185,26 @@ function toProtoTimestamp(date: Date): Timestamp {
 	return create(TimestampSchema, { millis: BigInt(date.getTime()) });
 }
 
+interface DbGradientStop {
+	color?: number;
+	offset?: number;
+	opacity?: number;
+}
+
+interface DbGradient {
+	type?: string;
+	stops?: DbGradientStop[];
+	startX?: number;
+	startY?: number;
+	endX?: number;
+	endY?: number;
+}
+
 interface DbFill {
 	color?: number;
 	opacity?: number;
+	hidden?: boolean;
+	gradient?: DbGradient;
 }
 
 interface DbStroke {
@@ -193,13 +214,79 @@ interface DbStroke {
 	alignment?: string;
 }
 
+/** Convert a proto Fill to a plain JSON object for DB storage. */
+function fillToDb(f: Fill): DbFill {
+	const result: DbFill = {
+		color: f.color,
+		opacity: f.opacity,
+	};
+	if (f.gradient) {
+		result.gradient = {
+			type: gradientTypeToString(f.gradient.type),
+			stops: f.gradient.stops.map((s) => ({
+				color: s.color,
+				offset: s.offset,
+				opacity: s.opacity,
+			})),
+			startX: f.gradient.startX,
+			startY: f.gradient.startY,
+			endX: f.gradient.endX,
+			endY: f.gradient.endY,
+		};
+	}
+	return result;
+}
+
+/** Convert a DB fill JSON object to a proto Fill. */
+function dbToFill(f: DbFill): Fill {
+	return create(FillSchema, {
+		color: f.color ?? 0,
+		opacity: f.opacity ?? 1.0,
+		gradient: f.gradient ? dbToGradient(f.gradient) : undefined,
+	});
+}
+
+function dbToGradient(g: DbGradient): Gradient {
+	return create(GradientSchema, {
+		type: stringToGradientType(g.type ?? "linear"),
+		stops: (g.stops ?? []).map((s) =>
+			create(GradientStopSchema, {
+				color: s.color ?? 0,
+				offset: s.offset ?? 0,
+				opacity: s.opacity ?? 1.0,
+			}),
+		),
+		startX: g.startX ?? 0,
+		startY: g.startY ?? 0,
+		endX: g.endX ?? 1,
+		endY: g.endY ?? 1,
+	});
+}
+
+function gradientTypeToString(type: Gradient_Type): string {
+	switch (type) {
+		case Gradient_Type.LINEAR:
+			return "linear";
+		case Gradient_Type.RADIAL:
+			return "radial";
+		default:
+			return "linear";
+	}
+}
+
+function stringToGradientType(type: string): Gradient_Type {
+	switch (type) {
+		case "linear":
+			return Gradient_Type.LINEAR;
+		case "radial":
+			return Gradient_Type.RADIAL;
+		default:
+			return Gradient_Type.LINEAR;
+	}
+}
+
 function toProtoShape(dbShape: typeof schema.shapes.$inferSelect): Shape {
-	const fills: Fill[] = ((dbShape.fills as DbFill[]) || []).map((f) =>
-		create(FillSchema, {
-			color: f.color ?? 0,
-			opacity: f.opacity ?? 1.0,
-		}),
-	);
+	const fills: Fill[] = ((dbShape.fills as DbFill[]) || []).map(dbToFill);
 
 	const strokes: Stroke[] = ((dbShape.strokes as DbStroke[]) || []).map((st) =>
 		create(StrokeSchema, {
@@ -275,10 +362,7 @@ async function processOperation(
 						transformD: op.shape.transform?.d ?? 1,
 						transformE: op.shape.transform?.e ?? 0,
 						transformF: op.shape.transform?.f ?? 0,
-						fills: op.shape.fills.map((f) => ({
-							color: f.color,
-							opacity: f.opacity,
-						})),
+						fills: op.shape.fills.map(fillToDb),
 						strokes: op.shape.strokes.map((s) => ({
 							color: s.color,
 							width: s.width,
@@ -331,10 +415,7 @@ async function processOperation(
 				}
 
 				if (op.shape.fills.length > 0) {
-					updateData.fills = op.shape.fills.map((f) => ({
-						color: f.color,
-						opacity: f.opacity,
-					}));
+					updateData.fills = op.shape.fills.map(fillToDb);
 				}
 
 				if (op.shape.strokes.length > 0) {
@@ -443,12 +524,7 @@ export const canvasServiceImpl: ServiceImpl<typeof CanvasService> = {
 					// Convert snapshot shapes to proto format
 					const protoShapes: Shape[] = snapshotShapes.map((shape) => {
 						// Parse fills and strokes from snapshot format
-						const fills: Fill[] = ((shape.fills as DbFill[]) || []).map((f) =>
-							create(FillSchema, {
-								color: f.color ?? 0,
-								opacity: f.opacity ?? 1.0,
-							}),
-						);
+						const fills: Fill[] = ((shape.fills as DbFill[]) || []).map(dbToFill);
 
 						const strokes: Stroke[] = ((shape.strokes as DbStroke[]) || []).map(
 							(st) =>

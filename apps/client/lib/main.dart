@@ -13,8 +13,13 @@ void main() async {
   // Initialize logger
   VioLogger.initialize();
 
+  // Build environment config from --dart-define-from-file values
+  final appConfig = AppConfig.fromEnvironment();
+  VioLogger.info('Environment: ${appConfig.environment.name}');
+  VioLogger.info('Config: $appConfig');
+
   // Initialize service locator (gRPC services, repositories)
-  await ServiceLocator.instance.initialize();
+  await ServiceLocator.instance.initialize(config: appConfig);
 
   // Initialize HydratedBloc storage
   // Use web storage for web platform, otherwise use application documents directory

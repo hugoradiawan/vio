@@ -173,15 +173,34 @@ class VersionControlTab extends StatelessWidget {
   void _showSwitchConfirmationDialog(BuildContext context, BranchDto branch) {
     showDialog<void>(
       context: context,
+      barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: VioColors.surface,
-        title: const Text(
-          'Switch Branch?',
-          style: TextStyle(color: VioColors.textPrimary),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: VioColors.border),
+        ),
+        title: const Row(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              color: VioColors.warning,
+              size: 24,
+            ),
+            SizedBox(width: 12),
+            Text(
+              'Uncommitted Changes',
+              style: TextStyle(
+                color: VioColors.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
         content: Text(
-          'You have uncommitted changes. Switching to "${branch.name}" will discard them. Continue?',
-          style: const TextStyle(color: VioColors.textSecondary),
+          'You have uncommitted changes. What would you like to do before switching to "${branch.name}"?',
+          style: const TextStyle(color: VioColors.textSecondary, fontSize: 14),
         ),
         actions: [
           TextButton(
@@ -191,7 +210,10 @@ class VersionControlTab extends StatelessWidget {
                   .read<VersionControlBloc>()
                   .add(const BranchSwitchCanceled());
             },
-            child: const Text('Cancel'),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: VioColors.textSecondary),
+            ),
           ),
           TextButton(
             onPressed: () {
@@ -200,8 +222,29 @@ class VersionControlTab extends StatelessWidget {
                   .read<VersionControlBloc>()
                   .add(const BranchSwitchConfirmed());
             },
-            style: TextButton.styleFrom(foregroundColor: VioColors.warning),
-            child: const Text('Discard & Switch'),
+            style: TextButton.styleFrom(foregroundColor: VioColors.error),
+            child: const Text('Discard Changes'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              showDialog<void>(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => BlocProvider.value(
+                  value: context.read<VersionControlBloc>(),
+                  child: CommitDialog(
+                    targetBranchId: branch.id,
+                    targetBranchName: branch.name,
+                  ),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: VioColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Commit First'),
           ),
         ],
       ),

@@ -306,3 +306,35 @@ class ShapeChangeDiscarded extends VersionControlEvent {
   @override
   List<Object?> get props => [shapeId];
 }
+
+/// Commit current changes and then switch to a target branch
+class CommitAndSwitchRequested extends VersionControlEvent {
+  const CommitAndSwitchRequested({
+    required this.message,
+    required this.targetBranchId,
+  });
+
+  final String message;
+  final String targetBranchId;
+
+  @override
+  List<Object?> get props => [message, targetBranchId];
+}
+
+/// Update branch name, description, or protection status
+class BranchUpdateRequested extends VersionControlEvent {
+  const BranchUpdateRequested({
+    required this.branchId,
+    this.name,
+    this.description,
+    this.isProtected,
+  });
+
+  final String branchId;
+  final String? name;
+  final String? description;
+  final bool? isProtected;
+
+  @override
+  List<Object?> get props => [branchId, name, description, isProtected];
+}

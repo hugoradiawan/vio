@@ -9,37 +9,41 @@ import { and, eq } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { shapes } from "../db/schema/index.js";
 import {
-    EmptySchema,
-    FillSchema,
-    StrokeAlignment,
-    StrokeCap,
-    StrokeJoin,
-    StrokeSchema,
-    TimestampSchema,
-    TransformSchema,
-    type Empty,
-    type Fill,
-    type Stroke,
-    type Timestamp,
-    type Transform,
+	EmptySchema,
+	FillSchema,
+	GradientSchema,
+	GradientStopSchema,
+	Gradient_Type,
+	StrokeAlignment,
+	StrokeCap,
+	StrokeJoin,
+	StrokeSchema,
+	TimestampSchema,
+	TransformSchema,
+	type Empty,
+	type Fill,
+	type Gradient,
+	type Stroke,
+	type Timestamp,
+	type Transform
 } from "../gen/vio/v1/common_pb.js";
 import {
-    BatchMutateResponseSchema,
-    CreateShapeResponseSchema,
-    GetShapeResponseSchema,
-    ListShapesResponseSchema,
-    ShapeSchema,
-    ShapeService,
-    ShapeType,
-    UpdateShapeResponseSchema,
-    type BatchMutateRequest,
-    type BatchMutateResponse,
-    type CreateShapeRequest,
-    type CreateShapeResponse,
-    type GetShapeResponse,
-    type ListShapesResponse,
-    type Shape as ProtoShape,
-    type UpdateShapeResponse,
+	BatchMutateResponseSchema,
+	CreateShapeResponseSchema,
+	GetShapeResponseSchema,
+	ListShapesResponseSchema,
+	ShapeSchema,
+	ShapeService,
+	ShapeType,
+	UpdateShapeResponseSchema,
+	type BatchMutateRequest,
+	type BatchMutateResponse,
+	type CreateShapeRequest,
+	type CreateShapeResponse,
+	type GetShapeResponse,
+	type ListShapesResponse,
+	type Shape as ProtoShape,
+	type UpdateShapeResponse,
 } from "../gen/vio/v1/shape_pb.js";
 import { notFound } from "./errors.js";
 
@@ -48,6 +52,99 @@ import { notFound } from "./errors.js";
  */
 function toProtoTimestamp(date: Date): Timestamp {
 	return create(TimestampSchema, { millis: BigInt(date.getTime()) });
+}
+
+// ── Fill / Gradient DB helpers ──────────────────────────────────────────
+
+interface DbGradientStop {
+	color?: number;
+	offset?: number;
+	opacity?: number;
+}
+
+interface DbGradient {
+	type?: string;
+	stops?: DbGradientStop[];
+	startX?: number;
+	startY?: number;
+	endX?: number;
+	endY?: number;
+}
+
+interface DbFill {
+	color?: number;
+	opacity?: number;
+	hidden?: boolean;
+	gradient?: DbGradient;
+}
+
+function fillToDb(f: Fill): DbFill {
+	const result: DbFill = {
+		color: f.color,
+		opacity: f.opacity,
+	};
+	if (f.gradient) {
+		result.gradient = {
+			type: gradientTypeToString(f.gradient.type),
+			stops: f.gradient.stops.map((s) => ({
+				color: s.color,
+				offset: s.offset,
+				opacity: s.opacity,
+			})),
+			startX: f.gradient.startX,
+			startY: f.gradient.startY,
+			endX: f.gradient.endX,
+			endY: f.gradient.endY,
+		};
+	}
+	return result;
+}
+
+function dbToFill(f: DbFill): Fill {
+	return create(FillSchema, {
+		color: f.color ?? 0,
+		opacity: f.opacity ?? 1.0,
+		gradient: f.gradient ? dbToGradient(f.gradient) : undefined,
+	});
+}
+
+function dbToGradient(g: DbGradient): Gradient {
+	return create(GradientSchema, {
+		type: stringToGradientType(g.type ?? "linear"),
+		stops: (g.stops ?? []).map((s) =>
+			create(GradientStopSchema, {
+				color: s.color ?? 0,
+				offset: s.offset ?? 0,
+				opacity: s.opacity ?? 1.0,
+			}),
+		),
+		startX: g.startX ?? 0,
+		startY: g.startY ?? 0,
+		endX: g.endX ?? 1,
+		endY: g.endY ?? 1,
+	});
+}
+
+function gradientTypeToString(type: Gradient_Type): string {
+	switch (type) {
+		case Gradient_Type.LINEAR:
+			return "linear";
+		case Gradient_Type.RADIAL:
+			return "radial";
+		default:
+			return "linear";
+	}
+}
+
+function stringToGradientType(type: string): Gradient_Type {
+	switch (type) {
+		case "linear":
+			return Gradient_Type.LINEAR;
+		case "radial":
+			return Gradient_Type.RADIAL;
+		default:
+			return Gradient_Type.LINEAR;
+	}
 }
 
 /**
@@ -96,11 +193,8 @@ function toProtoShape(row: typeof shapes.$inferSelect): ProtoShape {
 	const strokesJson = (row.strokes as unknown[]) || [];
 
 	const protoFills: Fill[] = fillsJson.map((f: unknown) => {
-		const fill = f as Record<string, unknown>;
-		return create(FillSchema, {
-			color: (fill.color as number) ?? 0,
-			opacity: (fill.opacity as number) ?? 1.0,
-		});
+		const fill = f as DbFill;
+		return dbToFill(fill);
 	});
 
 	const protoStrokes: Stroke[] = strokesJson.map((s: unknown) => {
@@ -226,10 +320,7 @@ export const shapeServiceImpl: ServiceImpl<typeof ShapeService> = {
 	async createShape(req: CreateShapeRequest): Promise<CreateShapeResponse> {
 		const transform = req.transform ?? defaultTransform;
 
-		const fillsJson = req.fills.map((f: Fill) => ({
-			color: f.color,
-			opacity: f.opacity,
-		}));
+		const fillsJson = req.fills.map(fillToDb);
 
 		const strokesJson = req.strokes.map((s: Stroke) => ({
 			color: s.color,
@@ -309,10 +400,7 @@ export const shapeServiceImpl: ServiceImpl<typeof ShapeService> = {
 		}
 
 		if (req.fills.length > 0) {
-			updateData.fills = req.fills.map((f: Fill) => ({
-				color: f.color,
-				opacity: f.opacity,
-			}));
+			updateData.fills = req.fills.map(fillToDb);
 		}
 
 		if (req.strokes.length > 0) {
@@ -377,10 +465,7 @@ export const shapeServiceImpl: ServiceImpl<typeof ShapeService> = {
 			try {
 				const transform = createReq.transform ?? defaultTransform;
 
-				const fillsJson = createReq.fills.map((f: Fill) => ({
-					color: f.color,
-					opacity: f.opacity,
-				}));
+				const fillsJson = createReq.fills.map(fillToDb);
 
 				const strokesJson = createReq.strokes.map((s: Stroke) => ({
 					color: s.color,
@@ -466,10 +551,7 @@ export const shapeServiceImpl: ServiceImpl<typeof ShapeService> = {
 				}
 
 				if (updateReq.fills.length > 0) {
-					updateData.fills = updateReq.fills.map((f: Fill) => ({
-						color: f.color,
-						opacity: f.opacity,
-					}));
+					updateData.fills = updateReq.fills.map(fillToDb);
 				}
 
 				if (updateReq.strokes.length > 0) {

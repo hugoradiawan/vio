@@ -123,6 +123,63 @@ class _CommitPanelState extends State<CommitPanel> {
     });
   }
 
+  void _showDiscardAllConfirmation(BuildContext context, int changeCount) {
+    final vcBloc = context.read<VersionControlBloc>();
+
+    showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: VioColors.surface,
+        title: const Text(
+          'Discard All Changes',
+          style: TextStyle(color: VioColors.textPrimary),
+        ),
+        content: Text(
+          'Are you sure you want to discard all $changeCount change${changeCount == 1 ? '' : 's'}? This cannot be undone.',
+          style: const TextStyle(color: VioColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: VioColors.error,
+            ),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Discard All'),
+          ),
+        ],
+      ),
+    ).then((confirmed) {
+      if (confirmed == true && context.mounted) {
+        final canvasBloc = context.read<CanvasBloc>();
+
+        // Apply each change to canvas before discarding in VC bloc
+        for (final change in vcBloc.state.uncommittedChanges) {
+          switch (change.changeType) {
+            case ShapeChangeType.added:
+              canvasBloc.add(ShapeRemoved(shapeId: change.shapeId));
+            case ShapeChangeType.modified:
+              final baseShape = vcBloc.state.baseShapes[change.shapeId];
+              if (baseShape != null) {
+                canvasBloc.add(ShapeUpdated(baseShape));
+              }
+            case ShapeChangeType.deleted:
+              final baseShape = vcBloc.state.baseShapes[change.shapeId];
+              if (baseShape != null) {
+                canvasBloc.add(ShapeAdded(baseShape));
+              }
+          }
+        }
+
+        // Update VC bloc
+        vcBloc.add(const AllChangesDiscarded());
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<VersionControlBloc, VersionControlState>(
@@ -179,6 +236,12 @@ class _CommitPanelState extends State<CommitPanel> {
                   },
                   onDiscard: (shapeId) {
                     _showDiscardConfirmation(context, shapeId);
+                  },
+                  onDiscardAll: () {
+                    _showDiscardAllConfirmation(
+                      context,
+                      uncommittedChanges.length,
+                    );
                   },
                 ),
               ] else ...[
@@ -310,6 +373,7 @@ class _ChangedFilesList extends StatelessWidget {
     required this.onToggleStaged,
     required this.onStageAll,
     required this.onUnstageAll,
+    required this.onDiscardAll,
     required this.onHoverChange,
     required this.onDiscard,
   });
@@ -319,6 +383,7 @@ class _ChangedFilesList extends StatelessWidget {
   final void Function(String shapeId) onToggleStaged;
   final VoidCallback onStageAll;
   final VoidCallback onUnstageAll;
+  final VoidCallback onDiscardAll;
   final void Function(String? shapeId) onHoverChange;
   final void Function(String shapeId) onDiscard;
 
@@ -337,21 +402,13 @@ class _ChangedFilesList extends StatelessWidget {
           _ChangesSection(
             title: 'Staged Changes',
             count: stagedChanges.length,
-            action: TextButton(
-              onPressed: onUnstageAll,
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            actions: [
+              _SectionIconButton(
+                icon: Icons.remove_done,
+                tooltip: 'Unstage All',
+                onPressed: onUnstageAll,
               ),
-              child: const Text(
-                'Unstage All',
-                style: TextStyle(
-                  color: VioColors.primary,
-                  fontSize: 11,
-                ),
-              ),
-            ),
+            ],
             children: stagedChanges
                 .map(
                   (change) => _ChangeItem(
@@ -373,21 +430,18 @@ class _ChangedFilesList extends StatelessWidget {
           _ChangesSection(
             title: 'Changes',
             count: unstagedChanges.length,
-            action: TextButton(
-              onPressed: onStageAll,
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            actions: [
+              _SectionIconButton(
+                icon: Icons.done_all,
+                tooltip: 'Stage All',
+                onPressed: onStageAll,
               ),
-              child: const Text(
-                'Stage All',
-                style: TextStyle(
-                  color: VioColors.primary,
-                  fontSize: 11,
-                ),
+              _SectionIconButton(
+                icon: Icons.undo,
+                tooltip: 'Discard All',
+                onPressed: onDiscardAll,
               ),
-            ),
+            ],
             children: unstagedChanges
                 .map(
                   (change) => _ChangeItem(
@@ -408,18 +462,44 @@ class _ChangedFilesList extends StatelessWidget {
   }
 }
 
+/// Compact icon button for section actions
+class _SectionIconButton extends StatelessWidget {
+  const _SectionIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 14, color: VioColors.textSecondary),
+      tooltip: tooltip,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+      visualDensity: VisualDensity.compact,
+      style: IconButton.styleFrom(backgroundColor: Colors.transparent),
+    );
+  }
+}
+
 /// Section header for staged/unstaged changes
 class _ChangesSection extends StatelessWidget {
   const _ChangesSection({
     required this.title,
     required this.count,
-    required this.action,
+    required this.actions,
     required this.children,
   });
 
   final String title;
   final int count;
-  final Widget action;
+  final List<Widget> actions;
   final List<Widget> children;
 
   @override
@@ -456,7 +536,7 @@ class _ChangesSection extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              action,
+              ...actions,
             ],
           ),
         ),

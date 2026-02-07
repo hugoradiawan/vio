@@ -55,6 +55,7 @@ class VersionControlBloc
     on<CanvasShapesChanged>(_onCanvasShapesChanged);
     on<BaseShapesLoaded>(_onBaseShapesLoaded);
     on<ShapeChangeDiscarded>(_onShapeChangeDiscarded);
+    on<AllChangesDiscarded>(_onAllChangesDiscarded);
     on<CommitAndSwitchRequested>(_onCommitAndSwitch);
     on<BranchUpdateRequested>(_onBranchUpdate);
   }
@@ -203,13 +204,22 @@ class VersionControlBloc
       }
 
       // CRITICAL: Initialize the canvas repository with project/branch context
-      // This enables sync operations to work (without projectId, _syncToServer silently returns)
+      // This loads the working copy from the server (shapes table) which
+      // includes uncommitted changes that were synced before the last restart.
       final repository = ServiceLocator.instance.canvasRepository;
-      repository.setShapesFromSnapshot(
-        baseShapes.values.toList(),
+      await repository.initialize(
         projectId: event.projectId,
         branchId: initialBranch.id,
       );
+
+      // Build currentShapes from the working copy (repository state)
+      // This preserves uncommitted changes across app restarts
+      final Map<String, Shape> currentShapes = {
+        for (final shape in repository.shapes) shape.id: shape,
+      };
+
+      // Compute uncommitted changes between snapshot and working copy
+      final uncommittedChanges = _computeChanges(baseShapes, currentShapes);
 
       // Save the selected branch for next app startup
       await _prefsService.setLastBranchId(event.projectId, initialBranch.id);
@@ -221,8 +231,8 @@ class VersionControlBloc
           currentBranchId: initialBranch.id,
           commits: commits,
           baseShapes: baseShapes,
-          currentShapes: baseShapes, // Start with no uncommitted changes
-          uncommittedChanges: const [], // baseShapes == currentShapes → no changes
+          currentShapes: currentShapes,
+          uncommittedChanges: uncommittedChanges,
           clearError: true,
         ),
       );
@@ -230,7 +240,7 @@ class VersionControlBloc
       VioLogger.info(
         'VersionControlBloc: Loaded ${branches.length} branches, '
         '${commits.length} commits, ${baseShapes.length} base shapes, '
-        '0 uncommitted changes (fresh load)',
+        '${uncommittedChanges.length} uncommitted changes',
       );
     } on GrpcError catch (e) {
       VioLogger.error(
@@ -1258,6 +1268,23 @@ class VersionControlBloc
         currentShapes: newCurrentShapes,
         uncommittedChanges: newChanges,
         stagedShapeIds: newStagedIds,
+      ),
+    );
+  }
+
+  /// Handle discard all changes request
+  void _onAllChangesDiscarded(
+    AllChangesDiscarded event,
+    Emitter<VersionControlState> emit,
+  ) {
+    // Revert currentShapes to baseShapes
+    final newCurrentShapes = Map<String, Shape>.from(state.baseShapes);
+
+    emit(
+      state.copyWith(
+        currentShapes: newCurrentShapes,
+        uncommittedChanges: [],
+        stagedShapeIds: <String>{},
       ),
     );
   }

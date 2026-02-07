@@ -307,6 +307,14 @@ class ShapeChangeDiscarded extends VersionControlEvent {
   List<Object?> get props => [shapeId];
 }
 
+/// Discard all uncommitted changes (revert everything to base state)
+class AllChangesDiscarded extends VersionControlEvent {
+  const AllChangesDiscarded();
+
+  @override
+  List<Object?> get props => [];
+}
+
 /// Commit current changes and then switch to a target branch
 class CommitAndSwitchRequested extends VersionControlEvent {
   const CommitAndSwitchRequested({

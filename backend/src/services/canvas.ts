@@ -470,9 +470,9 @@ async function processOperation(
 
 export const canvasServiceImpl: ServiceImpl<typeof CanvasService> = {
 	// Get current canvas state
-	// IMPORTANT: This now reads from the branch's head commit snapshot, NOT the
-	// shapes table directly. This ensures branch-consistent state and prevents
-	// race conditions during branch switching.
+	// Reads from the shapes table (working copy) which includes uncommitted
+	// changes synced via auto-sync. Falls back to HEAD commit snapshot if the
+	// shapes table has no entries for this project.
 	async getCanvasState(req): Promise<GetCanvasStateResponse> {
 		if (!req.projectId || !req.branchId) {
 			throw invalidArgument("Project ID and Branch ID are required");
@@ -487,7 +487,7 @@ export const canvasServiceImpl: ServiceImpl<typeof CanvasService> = {
 			throw notFound("Project not found");
 		}
 
-		// Get branch with head commit info
+		// Get branch for version info
 		const branch = await db.query.branches.findFirst({
 			where: and(
 				eq(schema.branches.id, req.branchId),
@@ -503,8 +503,27 @@ export const canvasServiceImpl: ServiceImpl<typeof CanvasService> = {
 			? BigInt(new Date(branch.updatedAt).getTime())
 			: BigInt(Date.now());
 
-		// If branch has a head commit, load shapes from its snapshot
-		// This is the "committed state" - the source of truth for branch content
+		// First, try loading from the shapes table (working copy)
+		// This preserves uncommitted changes that were synced before the last restart
+		const workingCopyShapes = await db
+			.select()
+			.from(schema.shapes)
+			.where(eq(schema.shapes.projectId, req.projectId))
+			.orderBy(asc(schema.shapes.sortOrder));
+
+		if (workingCopyShapes.length > 0) {
+			const state = create(CanvasStateSchema, {
+				shapes: workingCopyShapes.map(toProtoShape),
+				version,
+				lastModified: branch.updatedAt
+					? new Date(branch.updatedAt).toISOString()
+					: new Date().toISOString(),
+			});
+
+			return create(GetCanvasStateResponseSchema, { state });
+		}
+
+		// No shapes in working copy — fall back to HEAD commit snapshot
 		if (branch.headCommitId) {
 			const commit = await db.query.commits.findFirst({
 				where: eq(schema.commits.id, branch.headCommitId),

@@ -354,8 +354,7 @@ class ShapeFactory {
           imageWidth: imageWidth,
           imageHeight: imageHeight,
           assetId: (properties['assetId'] as String?) ?? '',
-          originalWidth:
-              (properties['originalWidth'] as num?)?.toDouble() ?? 0,
+          originalWidth: (properties['originalWidth'] as num?)?.toDouble() ?? 0,
           originalHeight:
               (properties['originalHeight'] as num?)?.toDouble() ?? 0,
           scaleMode: ImageScaleMode.values.firstWhere(

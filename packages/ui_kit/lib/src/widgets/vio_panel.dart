@@ -14,7 +14,8 @@ class VioPanel extends StatelessWidget {
   final bool initiallyExpanded;
 
   const VioPanel({
-    required this.child, super.key,
+    required this.child,
+    super.key,
     this.title,
     this.trailing,
     this.padding,
@@ -86,7 +87,9 @@ class _CollapsiblePanel extends StatefulWidget {
   final bool initiallyExpanded;
 
   const _CollapsiblePanel({
-    required this.child, required this.initiallyExpanded, this.title,
+    required this.child,
+    required this.initiallyExpanded,
+    this.title,
     this.trailing,
     this.padding,
   });

@@ -50,7 +50,7 @@ import {
 	type Fill,
 	type Gradient,
 	type Stroke,
-	type Timestamp
+	type Timestamp,
 } from "../gen/vio/v1/common_pb.js";
 import { ShapeSchema, ShapeType, type Shape } from "../gen/vio/v1/shape_pb.js";
 import { invalidArgument, notFound } from "./errors.js";
@@ -543,7 +543,9 @@ export const canvasServiceImpl: ServiceImpl<typeof CanvasService> = {
 					// Convert snapshot shapes to proto format
 					const protoShapes: Shape[] = snapshotShapes.map((shape) => {
 						// Parse fills and strokes from snapshot format
-						const fills: Fill[] = ((shape.fills as DbFill[]) || []).map(dbToFill);
+						const fills: Fill[] = ((shape.fills as DbFill[]) || []).map(
+							dbToFill,
+						);
 
 						const strokes: Stroke[] = ((shape.strokes as DbStroke[]) || []).map(
 							(st) =>

@@ -34,6 +34,19 @@ void main() async {
 
   VioLogger.info('Starting Vio Client...');
 
+  // Flush pending canvas changes when the app is about to be
+  // paused, hidden, or closed (covers browser tab close, mobile
+  // backgrounding, desktop window close, etc.)
+  AppLifecycleListener(
+    onStateChange: (state) {
+      if (state == AppLifecycleState.paused ||
+          state == AppLifecycleState.detached ||
+          state == AppLifecycleState.hidden) {
+        ServiceLocator.instance.canvasRepository.sync();
+      }
+    },
+  );
+
   runApp(const VioApp());
 }
 

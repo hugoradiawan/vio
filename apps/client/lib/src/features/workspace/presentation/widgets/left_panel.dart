@@ -5,6 +5,7 @@ import 'package:vio_client/src/features/version_control/presentation/widgets/ver
 import 'package:vio_client/src/features/workspace/bloc/workspace_bloc.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
+import '../../../assets/presentation/widgets/assets_tab.dart';
 import '../../../canvas/presentation/widgets/layer_tree.dart';
 
 /// Left panel containing layers tree and assets browser
@@ -116,7 +117,7 @@ class _LeftPanelState extends State<LeftPanel>
               controller: _tabController,
               children: const [
                 _LayersTab(),
-                _AssetsTab(),
+                AssetsTab(),
                 VersionControlTab(),
               ],
             ),
@@ -366,76 +367,6 @@ Widget _buildViewToggles(BuildContext context) {
       );
     },
   );
-}
-
-class _AssetsTab extends StatelessWidget {
-  const _AssetsTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Asset categories
-        VioPanel(
-          title: 'Components',
-          child: _buildEmptyState(
-            icon: Icons.widgets_outlined,
-            message: 'No components',
-          ),
-        ),
-        VioPanel(
-          title: 'Graphics',
-          child: _buildEmptyState(
-            icon: Icons.image_outlined,
-            message: 'No graphics',
-          ),
-        ),
-        VioPanel(
-          title: 'Colors',
-          child: _buildEmptyState(
-            icon: Icons.palette_outlined,
-            message: 'No colors',
-          ),
-        ),
-        VioPanel(
-          title: 'Typographies',
-          child: _buildEmptyState(
-            icon: Icons.text_fields,
-            message: 'No typographies',
-          ),
-        ),
-        const Spacer(),
-      ],
-    );
-  }
-
-  Widget _buildEmptyState({
-    required IconData icon,
-    required String message,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.all(VioSpacing.md),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 24,
-              color: VioColors.textTertiary,
-            ),
-            const SizedBox(height: VioSpacing.xs),
-            Text(
-              message,
-              style: VioTypography.caption.copyWith(
-                color: VioColors.textTertiary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _ToggleButton extends StatelessWidget {

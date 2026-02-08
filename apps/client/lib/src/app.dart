@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import 'core/core.dart';
+import 'features/assets/bloc/asset_bloc.dart';
 import 'features/canvas/bloc/canvas_bloc.dart';
 import 'features/version_control/bloc/version_control_bloc.dart';
 import 'features/workspace/bloc/workspace_bloc.dart';
@@ -42,6 +43,12 @@ class VioApp extends StatelessWidget {
                   userId: _demoUserId,
                 ),
               ),
+          ),
+          BlocProvider(
+            create: (context) => AssetBloc(
+              assetService: ServiceLocator.instance.assetService,
+              canvasBloc: context.read<CanvasBloc>(),
+            )..add(AssetsLoadRequested(projectId: _demoProjectId)),
           ),
         ],
         child: const _CanvasVersionControlBridge(

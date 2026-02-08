@@ -58,7 +58,8 @@ class VioToolbarGroup extends StatelessWidget {
   final bool showSeparators;
 
   const VioToolbarGroup({
-    required this.children, super.key,
+    required this.children,
+    super.key,
     this.showSeparators = true,
   });
 
@@ -105,7 +106,8 @@ class VioToolbarItem extends StatelessWidget {
   final VoidCallback? onPressed;
 
   const VioToolbarItem({
-    required this.icon, super.key,
+    required this.icon,
+    super.key,
     this.tooltip,
     this.isSelected = false,
     this.onPressed,
@@ -131,7 +133,8 @@ class VioCanvasToolbar extends StatelessWidget {
   final ValueChanged<String>? onToolSelected;
 
   const VioCanvasToolbar({
-    required this.tools, super.key,
+    required this.tools,
+    super.key,
     this.selectedToolId,
     this.onToolSelected,
   });

@@ -129,21 +129,23 @@ async function seed() {
 				y: 100,
 				width: 180,
 				height: 120,
-				fills: [{
-					color: 0xff22c55e,
-					opacity: 1.0,
-					gradient: {
-						type: "linear",
-						stops: [
-							{ color: 0xff22c55e, offset: 0.0, opacity: 1.0 },
-							{ color: 0xff3b82f6, offset: 1.0, opacity: 1.0 },
-						],
-						startX: 0.0,
-						startY: 0.0,
-						endX: 1.0,
-						endY: 1.0,
+				fills: [
+					{
+						color: 0xff22c55e,
+						opacity: 1.0,
+						gradient: {
+							type: "linear",
+							stops: [
+								{ color: 0xff22c55e, offset: 0.0, opacity: 1.0 },
+								{ color: 0xff3b82f6, offset: 1.0, opacity: 1.0 },
+							],
+							startX: 0.0,
+							startY: 0.0,
+							endX: 1.0,
+							endY: 1.0,
+						},
 					},
-				}],
+				],
 				strokes: [{ color: 0xff16a34a, width: 2 }],
 				properties: { frameId: SHAPE_FRAME_ID },
 			},
@@ -188,21 +190,23 @@ async function seed() {
 				y: 330,
 				width: 140,
 				height: 140,
-				fills: [{
-					color: 0xffa855f7,
-					opacity: 1.0,
-					gradient: {
-						type: "radial",
-						stops: [
-							{ color: 0xffa855f7, offset: 0.0, opacity: 1.0 },
-							{ color: 0xffec4899, offset: 1.0, opacity: 1.0 },
-						],
-						startX: 0.5,
-						startY: 0.5,
-						endX: 1.0,
-						endY: 0.5,
+				fills: [
+					{
+						color: 0xffa855f7,
+						opacity: 1.0,
+						gradient: {
+							type: "radial",
+							stops: [
+								{ color: 0xffa855f7, offset: 0.0, opacity: 1.0 },
+								{ color: 0xffec4899, offset: 1.0, opacity: 1.0 },
+							],
+							startX: 0.5,
+							startY: 0.5,
+							endX: 1.0,
+							endY: 0.5,
+						},
 					},
-				}],
+				],
 				strokes: [{ color: 0xff9333ea, width: 2 }],
 				properties: { frameId: SHAPE_FRAME_ID },
 			},

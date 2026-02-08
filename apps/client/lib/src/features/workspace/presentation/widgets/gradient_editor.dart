@@ -394,8 +394,7 @@ class _GradientEditorState extends State<GradientEditor> {
                 Positioned.fill(
                   child: Container(
                     decoration: BoxDecoration(
-                      borderRadius:
-                          BorderRadius.circular(VioSpacing.radiusSm),
+                      borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
                       gradient: LinearGradient(
                         colors: stops
                             .map(

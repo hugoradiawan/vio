@@ -1,0 +1,302 @@
+// Vio Asset Service
+//
+// This file defines the asset management API for Vio design projects.
+// Assets include:
+// - Graphics: images (PNG, JPEG, WebP, GIF) and SVGs for use on the canvas
+// - Colors: reusable color palette with solid colors and gradients
+//
+// Assets are scoped per-project. Graphics are stored as binary data (bytea)
+// in PostgreSQL. Colors support solid hex values and gradient definitions.
+//
+// Assets support path-based grouping using "/" as separator
+// (e.g., "Icons/Social", "Brand/Primary") following Penpot's approach.
+syntax = "proto3";
+
+package vio.v1;
+
+import "vio/v1/common.proto";
+
+// =============================================================================
+// Asset Service
+// =============================================================================
+
+// AssetService handles CRUD operations for project assets (graphics and colors).
+//
+// Graphics are binary media files (images, SVGs) stored in the database.
+// Colors are reusable palette entries that can be applied to shapes.
+// Both support path-based grouping for organization.
+service AssetService {
+  // Upload a new graphic asset to a project.
+  //
+  // Accepts raw binary data with metadata. The server validates the MIME type,
+  // extracts dimensions, and generates a thumbnail for panel display.
+  //
+  // Supported MIME types: image/png, image/jpeg, image/gif, image/webp, image/svg+xml
+  // Maximum file size: 10 MB
+  //
+  // Errors:
+  // - INVALID_ARGUMENT: Unsupported MIME type, file too large, or missing data
+  // - NOT_FOUND: Project does not exist
+  rpc UploadAsset(UploadAssetRequest) returns (UploadAssetResponse);
+
+  // List all graphic assets in a project.
+  //
+  // Returns asset metadata and thumbnails (not full binary data).
+  // Optionally filter by path prefix for group-based browsing.
+  //
+  // Errors:
+  // - NOT_FOUND: Project does not exist
+  rpc ListAssets(ListAssetsRequest) returns (ListAssetsResponse);
+
+  // Get a single asset with its full binary data.
+  //
+  // Use this to load the actual image for rendering on the canvas.
+  // For panel thumbnails, use the thumbnail from ListAssets instead.
+  //
+  // Errors:
+  // - NOT_FOUND: Asset does not exist
+  rpc GetAsset(GetAssetRequest) returns (GetAssetResponse);
+
+  // Update asset metadata (name, path/group).
+  //
+  // Used for renaming assets and moving them between groups.
+  // Does not modify the binary data.
+  //
+  // Errors:
+  // - NOT_FOUND: Asset does not exist
+  // - INVALID_ARGUMENT: Invalid name or path
+  rpc UpdateAsset(UpdateAssetRequest) returns (UpdateAssetResponse);
+
+  // Delete an asset from the project.
+  //
+  // Warning: Shapes referencing this asset (via assetId) will lose their image.
+  //
+  // Errors:
+  // - NOT_FOUND: Asset does not exist
+  rpc DeleteAsset(DeleteAssetRequest) returns (vio.v1.Empty);
+
+  // ─── Color RPCs ────────────────────────────────────────────────────────
+
+  // Create a new color in the project palette.
+  //
+  // A color can be either a solid hex color or a gradient.
+  //
+  // Errors:
+  // - INVALID_ARGUMENT: Missing name or color/gradient
+  // - NOT_FOUND: Project does not exist
+  rpc CreateColor(CreateColorRequest) returns (CreateColorResponse);
+
+  // List all colors in a project.
+  //
+  // Optionally filter by path prefix for group-based browsing.
+  //
+  // Errors:
+  // - NOT_FOUND: Project does not exist
+  rpc ListColors(ListColorsRequest) returns (ListColorsResponse);
+
+  // Update a color's properties.
+  //
+  // Can update name, path, color value, opacity, and gradient.
+  //
+  // Errors:
+  // - NOT_FOUND: Color does not exist
+  rpc UpdateColor(UpdateColorRequest) returns (UpdateColorResponse);
+
+  // Delete a color from the project palette.
+  //
+  // Errors:
+  // - NOT_FOUND: Color does not exist
+  rpc DeleteColor(DeleteColorRequest) returns (vio.v1.Empty);
+}
+
+// =============================================================================
+// Asset Messages (Graphics)
+// =============================================================================
+
+// A graphic asset (image or SVG) stored in the project.
+message Asset {
+  // Unique identifier.
+  string id = 1;
+  // Project this asset belongs to.
+  string project_id = 2;
+  // Display name of the asset.
+  string name = 3;
+  // Group path using "/" separator (e.g., "Icons/Social"). Empty for ungrouped.
+  string path = 4;
+  // MIME type (e.g., "image/png", "image/svg+xml").
+  string mime_type = 5;
+  // Image width in pixels.
+  int32 width = 6;
+  // Image height in pixels.
+  int32 height = 7;
+  // File size in bytes.
+  int32 file_size = 8;
+  // Small JPEG thumbnail for panel display (~200px wide).
+  bytes thumbnail = 9;
+  // Full binary data. Only populated by GetAsset, not ListAssets.
+  bytes data = 10;
+  // When this asset was created.
+  vio.v1.Timestamp created_at = 11;
+  // When this asset was last updated.
+  vio.v1.Timestamp updated_at = 12;
+}
+
+// A reusable color from the project palette.
+message ProjectColor {
+  // Unique identifier.
+  string id = 1;
+  // Project this color belongs to.
+  string project_id = 2;
+  // Display name (e.g., "Primary Blue", "Gray 100").
+  string name = 3;
+  // Group path using "/" separator (e.g., "Brand/Primary"). Empty for ungrouped.
+  string path = 4;
+  // Hex color string (e.g., "#4C9AFF"). Empty if gradient-only.
+  string color = 5;
+  // Color opacity from 0.0 to 1.0.
+  double opacity = 6;
+  // Optional gradient definition. When present, this is a gradient color.
+  optional vio.v1.Gradient gradient = 7;
+  // When this color was created.
+  vio.v1.Timestamp created_at = 8;
+  // When this color was last updated.
+  vio.v1.Timestamp updated_at = 9;
+}
+
+// =============================================================================
+// Request / Response Messages
+// =============================================================================
+
+// ─── Upload Asset ────────────────────────────────────────────────────────
+
+message UploadAssetRequest {
+  // Project to upload the asset to.
+  string project_id = 1;
+  // Display name for the asset.
+  string name = 2;
+  // MIME type of the uploaded file.
+  string mime_type = 3;
+  // Raw binary data of the file.
+  bytes data = 4;
+  // Optional group path (e.g., "Icons/Social").
+  string path = 5;
+}
+
+message UploadAssetResponse {
+  // The created asset (includes generated thumbnail, excludes full data).
+  Asset asset = 1;
+}
+
+// ─── List Assets ─────────────────────────────────────────────────────────
+
+message ListAssetsRequest {
+  // Project to list assets for.
+  string project_id = 1;
+  // Optional path prefix filter (e.g., "Icons" returns all in Icons group).
+  string path_prefix = 2;
+}
+
+message ListAssetsResponse {
+  // Assets in the project (metadata + thumbnails, no full data).
+  repeated Asset assets = 1;
+}
+
+// ─── Get Asset ───────────────────────────────────────────────────────────
+
+message GetAssetRequest {
+  // ID of the asset to retrieve.
+  string id = 1;
+}
+
+message GetAssetResponse {
+  // The asset with full binary data populated.
+  Asset asset = 1;
+}
+
+// ─── Update Asset ────────────────────────────────────────────────────────
+
+message UpdateAssetRequest {
+  // ID of the asset to update.
+  string id = 1;
+  // New display name. If empty, name is not changed.
+  optional string name = 2;
+  // New group path. Set to empty string to ungroup.
+  optional string path = 3;
+}
+
+message UpdateAssetResponse {
+  // The updated asset.
+  Asset asset = 1;
+}
+
+// ─── Delete Asset ────────────────────────────────────────────────────────
+
+message DeleteAssetRequest {
+  // ID of the asset to delete.
+  string id = 1;
+}
+
+// ─── Create Color ────────────────────────────────────────────────────────
+
+message CreateColorRequest {
+  // Project to add the color to.
+  string project_id = 1;
+  // Display name for the color.
+  string name = 2;
+  // Hex color string (e.g., "#4C9AFF").
+  string color = 3;
+  // Color opacity from 0.0 to 1.0. Default: 1.0.
+  double opacity = 4;
+  // Optional gradient definition.
+  optional vio.v1.Gradient gradient = 5;
+  // Optional group path.
+  string path = 6;
+}
+
+message CreateColorResponse {
+  // The created color.
+  ProjectColor color = 1;
+}
+
+// ─── List Colors ─────────────────────────────────────────────────────────
+
+message ListColorsRequest {
+  // Project to list colors for.
+  string project_id = 1;
+  // Optional path prefix filter.
+  string path_prefix = 2;
+}
+
+message ListColorsResponse {
+  // Colors in the project.
+  repeated ProjectColor colors = 1;
+}
+
+// ─── Update Color ────────────────────────────────────────────────────────
+
+message UpdateColorRequest {
+  // ID of the color to update.
+  string id = 1;
+  // New display name.
+  optional string name = 2;
+  // New group path.
+  optional string path = 3;
+  // New hex color value.
+  optional string color = 4;
+  // New opacity.
+  optional double opacity = 5;
+  // New gradient definition. Set to clear existing gradient.
+  optional vio.v1.Gradient gradient = 6;
+}
+
+message UpdateColorResponse {
+  // The updated color.
+  ProjectColor color = 1;
+}
+
+// ─── Delete Color ────────────────────────────────────────────────────────
+
+message DeleteColorRequest {
+  // ID of the color to delete.
+  string id = 1;
+}

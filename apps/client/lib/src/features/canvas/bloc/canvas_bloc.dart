@@ -908,6 +908,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         handle,
         state.resizeOrigin!,
         state.originalShapeBounds!,
+        shiftPressed: event.shiftPressed,
       );
       emit(
         state.copyWith(
@@ -2574,8 +2575,9 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     Offset currentPointer,
     HandlePosition handle,
     Offset origin,
-    Rect originalBounds,
-  ) {
+    Rect originalBounds, {
+    bool shiftPressed = false,
+  }) {
     final newShapes = Map<String, Shape>.from(state.shapes);
     final originalShapes = state.originalShapes;
 
@@ -2637,8 +2639,71 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     }
 
     // Calculate new dimensions
-    final newWidth = (newRight - newLeft).clamp(1.0, double.infinity);
-    final newHeight = (newBottom - newTop).clamp(1.0, double.infinity);
+    double newWidth = (newRight - newLeft).clamp(1.0, double.infinity);
+    double newHeight = (newBottom - newTop).clamp(1.0, double.infinity);
+
+    // Shift+resize: constrain to original aspect ratio
+    if (shiftPressed && originalWidth > 0 && originalHeight > 0) {
+      final aspectRatio = originalWidth / originalHeight;
+      final isCorner = handle == HandlePosition.topLeft ||
+          handle == HandlePosition.topRight ||
+          handle == HandlePosition.bottomLeft ||
+          handle == HandlePosition.bottomRight;
+      final isHorizontalEdge = handle == HandlePosition.middleLeft ||
+          handle == HandlePosition.middleRight;
+
+      if (isCorner) {
+        // Use the dominant axis to determine the new size
+        if (newWidth / aspectRatio > newHeight) {
+          newHeight = newWidth / aspectRatio;
+        } else {
+          newWidth = newHeight * aspectRatio;
+        }
+      } else if (isHorizontalEdge) {
+        newHeight = newWidth / aspectRatio;
+      } else {
+        // Vertical edge
+        newWidth = newHeight * aspectRatio;
+      }
+
+      // Re-anchor the constrained size to the correct corner/edge
+      switch (handle) {
+        case HandlePosition.topLeft:
+          newLeft = newRight - newWidth;
+          newTop = newBottom - newHeight;
+        case HandlePosition.topCenter:
+          newTop = newBottom - newHeight;
+          final cx = (newLeft + newRight) / 2;
+          newLeft = cx - newWidth / 2;
+          newRight = cx + newWidth / 2;
+        case HandlePosition.topRight:
+          newRight = newLeft + newWidth;
+          newTop = newBottom - newHeight;
+        case HandlePosition.middleLeft:
+          newLeft = newRight - newWidth;
+          final cy = (newTop + newBottom) / 2;
+          newTop = cy - newHeight / 2;
+          newBottom = cy + newHeight / 2;
+        case HandlePosition.middleRight:
+          newRight = newLeft + newWidth;
+          final cy = (newTop + newBottom) / 2;
+          newTop = cy - newHeight / 2;
+          newBottom = cy + newHeight / 2;
+        case HandlePosition.bottomLeft:
+          newLeft = newRight - newWidth;
+          newBottom = newTop + newHeight;
+        case HandlePosition.bottomCenter:
+          newBottom = newTop + newHeight;
+          final cx = (newLeft + newRight) / 2;
+          newLeft = cx - newWidth / 2;
+          newRight = cx + newWidth / 2;
+        case HandlePosition.bottomRight:
+          newRight = newLeft + newWidth;
+          newBottom = newTop + newHeight;
+        case HandlePosition.rotation:
+          break;
+      }
+    }
 
     // Apply resize to each selected shape
     for (final shapeId in state.selectedShapeIds) {
@@ -2693,6 +2758,20 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
           y: shapeNewY,
           textWidth: shapeNewWidth,
           textHeight: shapeNewHeight,
+        );
+      } else if (originalShape is ImageShape) {
+        newShapes[shapeId] = originalShape.copyWith(
+          x: shapeNewX,
+          y: shapeNewY,
+          imageWidth: shapeNewWidth,
+          imageHeight: shapeNewHeight,
+        );
+      } else if (originalShape is SvgShape) {
+        newShapes[shapeId] = originalShape.copyWith(
+          x: shapeNewX,
+          y: shapeNewY,
+          svgWidth: shapeNewWidth,
+          svgHeight: shapeNewHeight,
         );
       }
     }

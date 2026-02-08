@@ -8,7 +8,8 @@ import '../theme/vio_typography.dart';
 /// A full-featured color picker dialog with HSV picker, RGB/HEX inputs, and opacity slider
 class VioColorPickerDialog extends StatefulWidget {
   const VioColorPickerDialog({
-    required this.initialColor, super.key,
+    required this.initialColor,
+    super.key,
     this.initialOpacity = 1.0,
     this.showOpacity = true,
   });

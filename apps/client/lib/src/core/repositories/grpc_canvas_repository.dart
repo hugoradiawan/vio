@@ -46,7 +46,12 @@ class GrpcCanvasRepository {
 
   // Sync timer
   Timer? _syncTimer;
+  Timer? _debouncedSyncTimer;
   bool _isSyncing = false;
+
+  /// Duration for debounced sync after mutations (short delay to batch
+  /// rapid changes while still persisting quickly).
+  static const _debounceSyncDelay = Duration(milliseconds: 500);
 
   // Stream controllers for state updates
   final _shapesController = StreamController<List<Shape>>.broadcast();
@@ -151,6 +156,11 @@ class GrpcCanvasRepository {
   /// Dispose resources
   void dispose() {
     _syncTimer?.cancel();
+    _debouncedSyncTimer?.cancel();
+    // Attempt a final sync before disposing to avoid losing pending changes.
+    if (_pendingOperations.isNotEmpty || _isDirty) {
+      _syncToServer();
+    }
     _shapesController.close();
     _syncStatusController.close();
   }
@@ -200,7 +210,9 @@ class GrpcCanvasRepository {
     }
   }
 
-  /// Add a shape locally and queue for sync
+  /// Add a shape locally and queue for sync.
+  /// Triggers an immediate sync for shape creation since this is a
+  /// high-value operation that should persist ASAP.
   void addShape(Shape shape) {
     _shapes.add(shape);
     _isDirty = true;
@@ -214,8 +226,16 @@ class GrpcCanvasRepository {
       ),
     );
 
+    VioLogger.info(
+      'GrpcCanvasRepository.addShape: queued CREATE for ${shape.id} '
+      '(type=${shape.type}, pending=${_pendingOperations.length}, '
+      'projectId=$_projectId, branchId=$_branchId)',
+    );
+
     _shapesController.add(shapes);
     _updateSyncStatus(SyncStatus.pending);
+    // Sync immediately for shape creation — don't debounce.
+    _syncToServer();
   }
 
   /// Update a shape locally and queue for sync
@@ -244,6 +264,7 @@ class GrpcCanvasRepository {
 
     _shapesController.add(shapes);
     _updateSyncStatus(SyncStatus.pending);
+    _scheduleDebouncedSync();
   }
 
   /// Delete a shape locally and queue for sync
@@ -271,6 +292,8 @@ class GrpcCanvasRepository {
 
     _shapesController.add(shapes);
     _updateSyncStatus(SyncStatus.pending);
+    // Sync immediately for shape deletion.
+    _syncToServer();
   }
 
   /// Update multiple shapes at once
@@ -287,6 +310,16 @@ class GrpcCanvasRepository {
     _isDirty = true;
     _shapesController.add(shapes);
     _updateSyncStatus(SyncStatus.pending);
+  }
+
+  /// Schedule a debounced sync shortly after a mutation so changes
+  /// are persisted quickly without waiting for the full sync interval.
+  /// Uses a very short delay to batch rapid consecutive mutations
+  /// (e.g., moving a shape fires many updates) while still syncing
+  /// almost immediately for single operations like shape creation.
+  void _scheduleDebouncedSync() {
+    _debouncedSyncTimer?.cancel();
+    _debouncedSyncTimer = Timer(_debounceSyncDelay, _syncToServer);
   }
 
   /// Start the auto-sync timer

@@ -179,17 +179,21 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
     LeftPanelWidthReset event,
     Emitter<WorkspaceState> emit,
   ) {
-    emit(state.copyWith(
-      leftPanelWidth: PanelConstraints.leftPanelDefaultWidth,
-    ),);
+    emit(
+      state.copyWith(
+        leftPanelWidth: PanelConstraints.leftPanelDefaultWidth,
+      ),
+    );
   }
 
   void _onRightPanelWidthReset(
     RightPanelWidthReset event,
     Emitter<WorkspaceState> emit,
   ) {
-    emit(state.copyWith(
-      rightPanelWidth: PanelConstraints.rightPanelDefaultWidth,
-    ),);
+    emit(
+      state.copyWith(
+        rightPanelWidth: PanelConstraints.rightPanelDefaultWidth,
+      ),
+    );
   }
 }

@@ -4,6 +4,7 @@ import 'dart:ui' show TextAlign;
 
 import 'package:vio_core/vio_core.dart';
 
+import '../../gen/vio/v1/asset.pb.dart' as pb_asset;
 import '../../gen/vio/v1/canvas.pb.dart' as pb_canvas;
 import '../../gen/vio/v1/common.pb.dart' as pb_common;
 import '../../gen/vio/v1/shape.pb.dart' as pb_shape;
@@ -116,6 +117,59 @@ class ProtoConverter {
           letterSpacingPercent:
               (props['letterSpacingPercent'] as num?)?.toDouble() ?? 0,
           textAlign: _parseTextAlign(props['textAlign'] as String?),
+          rotation: proto.rotation,
+          transform: transform,
+          fills: fills,
+          strokes: strokes,
+          opacity: proto.opacity,
+          hidden: proto.hidden,
+          blocked: proto.blocked,
+          sortOrder: proto.sortOrder,
+          frameId: proto.hasFrameId() ? proto.frameId : null,
+          parentId: proto.hasParentId() ? proto.parentId : null,
+          shadow: shadow,
+          blur: blur,
+        );
+      case ShapeType.image:
+        return ImageShape(
+          id: proto.id,
+          name: proto.name,
+          x: proto.x,
+          y: proto.y,
+          imageWidth: proto.width,
+          imageHeight: proto.height,
+          assetId: (props['assetId'] as String?) ?? '',
+          originalWidth:
+              (props['originalWidth'] as num?)?.toDouble() ?? proto.width,
+          originalHeight:
+              (props['originalHeight'] as num?)?.toDouble() ?? proto.height,
+          scaleMode: ImageScaleMode.values.firstWhere(
+            (e) => e.name == (props['scaleMode'] as String?),
+            orElse: () => ImageScaleMode.fill,
+          ),
+          rotation: proto.rotation,
+          transform: transform,
+          fills: fills,
+          strokes: strokes,
+          opacity: proto.opacity,
+          hidden: proto.hidden,
+          blocked: proto.blocked,
+          sortOrder: proto.sortOrder,
+          frameId: proto.hasFrameId() ? proto.frameId : null,
+          parentId: proto.hasParentId() ? proto.parentId : null,
+          shadow: shadow,
+          blur: blur,
+        );
+      case ShapeType.svg:
+        return SvgShape(
+          id: proto.id,
+          name: proto.name,
+          x: proto.x,
+          y: proto.y,
+          svgWidth: proto.width,
+          svgHeight: proto.height,
+          svgContent: (props['svgContent'] as String?) ?? '',
+          viewBox: props['viewBox'] as String?,
           rotation: proto.rotation,
           transform: transform,
           fills: fills,
@@ -255,6 +309,14 @@ class ProtoConverter {
       if (shape.lineHeight != null) props['lineHeight'] = shape.lineHeight;
       props['letterSpacingPercent'] = shape.letterSpacingPercent;
       props['textAlign'] = shape.textAlign.name;
+    } else if (shape is ImageShape) {
+      props['assetId'] = shape.assetId;
+      props['originalWidth'] = shape.originalWidth;
+      props['originalHeight'] = shape.originalHeight;
+      props['scaleMode'] = shape.scaleMode.name;
+    } else if (shape is SvgShape) {
+      props['svgContent'] = shape.svgContent;
+      if (shape.viewBox != null) props['viewBox'] = shape.viewBox;
     }
 
     if (props.isEmpty) {
@@ -333,12 +395,9 @@ class ProtoConverter {
       color: proto.color,
       opacity: proto.opacity,
       hidden: proto.hidden,
-      gradient: proto.hasGradient()
-          ? _gradientFromProto(proto.gradient)
-          : null,
-      fillImage: proto.hasFillImage()
-          ? _fillImageFromProto(proto.fillImage)
-          : null,
+      gradient: proto.hasGradient() ? _gradientFromProto(proto.gradient) : null,
+      fillImage:
+          proto.hasFillImage() ? _fillImageFromProto(proto.fillImage) : null,
     );
   }
 
@@ -580,6 +639,73 @@ class ProtoConverter {
       SyncOperationType.update => pb_canvas.OperationType.OPERATION_TYPE_UPDATE,
       SyncOperationType.delete => pb_canvas.OperationType.OPERATION_TYPE_DELETE,
     };
+  }
+
+  // ============================================================================
+  // Asset Conversions
+  // ============================================================================
+
+  /// Convert proto Asset to domain ProjectAsset
+  static ProjectAsset assetFromProto(pb_asset.Asset proto) {
+    return ProjectAsset(
+      id: proto.id,
+      projectId: proto.projectId,
+      name: proto.name,
+      path: proto.path,
+      mimeType: proto.mimeType,
+      width: proto.width,
+      height: proto.height,
+      fileSize: proto.fileSize,
+      thumbnailBytes: proto.thumbnail.isNotEmpty
+          ? Uint8List.fromList(proto.thumbnail)
+          : null,
+      dataBytes: proto.data.isNotEmpty ? Uint8List.fromList(proto.data) : null,
+      createdAt: proto.hasCreatedAt()
+          ? DateTime.fromMillisecondsSinceEpoch(proto.createdAt.millis.toInt())
+          : null,
+      updatedAt: proto.hasUpdatedAt()
+          ? DateTime.fromMillisecondsSinceEpoch(proto.updatedAt.millis.toInt())
+          : null,
+    );
+  }
+
+  /// Convert proto ProjectColor to domain ProjectColor
+  static ProjectColor projectColorFromProto(pb_asset.ProjectColor proto) {
+    return ProjectColor(
+      id: proto.id,
+      projectId: proto.projectId,
+      name: proto.name,
+      path: proto.path,
+      color: proto.color.isNotEmpty ? proto.color : null,
+      opacity: proto.opacity,
+      gradient: proto.hasGradient() ? _gradientFromProto(proto.gradient) : null,
+      createdAt: proto.hasCreatedAt()
+          ? DateTime.fromMillisecondsSinceEpoch(proto.createdAt.millis.toInt())
+          : null,
+      updatedAt: proto.hasUpdatedAt()
+          ? DateTime.fromMillisecondsSinceEpoch(proto.updatedAt.millis.toInt())
+          : null,
+    );
+  }
+
+  /// Convert a domain ShapeGradient to proto Gradient (for color creation/update)
+  static pb_common.Gradient gradientToProto(ShapeGradient gradient) {
+    return pb_common.Gradient()
+      ..type = gradient.type == GradientType.radial
+          ? pb_common.Gradient_Type.TYPE_RADIAL
+          : pb_common.Gradient_Type.TYPE_LINEAR
+      ..stops.addAll(
+        gradient.stops.map(
+          (s) => pb_common.GradientStop()
+            ..color = s.color
+            ..offset = s.offset
+            ..opacity = s.opacity,
+        ),
+      )
+      ..startX = gradient.startX
+      ..startY = gradient.startY
+      ..endX = gradient.endX
+      ..endY = gradient.endY;
   }
 }
 

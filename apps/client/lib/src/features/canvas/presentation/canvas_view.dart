@@ -1,16 +1,19 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:uuid/uuid.dart';
 import 'package:vio_core/vio_core.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../../core/core.dart';
+import '../../assets/bloc/asset_bloc.dart';
 import '../../workspace/bloc/workspace_bloc.dart';
 import '../bloc/canvas_bloc.dart';
 import '../models/frame_presets.dart';
@@ -76,6 +79,18 @@ class _CanvasViewState extends State<CanvasView> {
   /// Throttle interval in milliseconds (~60fps)
   static const int _throttleMs = 16;
 
+  /// Subscription to image cache decode events for triggering repaints.
+  StreamSubscription<String>? _imageDecodeSub;
+
+  /// Track which assetIds we've already requested data for.
+  final Set<String> _requestedAssetIds = {};
+
+  /// Whether an OS file is being dragged over the canvas.
+  bool _isDroppingFile = false;
+
+  /// Last known drag position for OS file drops.
+  Offset? _lastOsDragOffset;
+
   @override
   void initState() {
     super.initState();
@@ -101,6 +116,11 @@ class _CanvasViewState extends State<CanvasView> {
         _commitTextEdit(shapeId: id);
       }
     });
+
+    // Repaint when a new image finishes decoding
+    _imageDecodeSub = ImageCacheService.instance.onImageDecoded.listen((_) {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -111,6 +131,7 @@ class _CanvasViewState extends State<CanvasView> {
 
     HardwareKeyboard.instance.removeHandler(_handleKeyboardEvent);
 
+    _imageDecodeSub?.cancel();
     _textLayoutDebounce?.cancel();
     _textController.removeListener(_onTextControllerChanged);
     _textController.dispose();
@@ -267,345 +288,458 @@ class _CanvasViewState extends State<CanvasView> {
   @override
   Widget build(BuildContext context) {
     // Use CanvasBloc provided from parent (VioApp)
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final canvasBloc = context.read<CanvasBloc>();
-        // Initialize canvas with size
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          canvasBloc.add(
-            CanvasInitialized(
-              width: constraints.maxWidth,
-              height: constraints.maxHeight,
-            ),
-          );
-        });
-        return BlocBuilder<CanvasBloc, CanvasState>(
-          builder: (context, canvasState) {
-            return BlocBuilder<WorkspaceBloc, WorkspaceState>(
-              buildWhen: (prev, curr) =>
-                  prev.showGrid != curr.showGrid ||
-                  prev.showRulers != curr.showRulers ||
-                  prev.gridSize != curr.gridSize ||
-                  prev.activeTool != curr.activeTool,
-              builder: (context, workspaceState) {
-                final selectionRect = canvasState.selectionRect;
-                final orderedShapes = canvasState.shapeList;
-
-                return MultiBlocListener(
-                  listeners: [
-                    BlocListener<CanvasBloc, CanvasState>(
-                      listenWhen: (prev, curr) =>
-                          prev.interactionMode == InteractionMode.drawing &&
-                          curr.interactionMode != InteractionMode.drawing,
-                      listener: (context, canvasState) {
-                        final tool =
-                            context.read<WorkspaceBloc>().state.activeTool;
-                        final isBoxTool = tool == CanvasTool.rectangle ||
-                            tool == CanvasTool.ellipse ||
-                            tool == CanvasTool.frame;
-
-                        if (isBoxTool) {
-                          context
-                              .read<WorkspaceBloc>()
-                              .add(const ToolSelected(CanvasTool.select));
-                        }
-                      },
+    return DropTarget(
+      onDragEntered: (_) => setState(() => _isDroppingFile = true),
+      onDragExited: (_) {
+        setState(() => _isDroppingFile = false);
+        _lastOsDragOffset = null;
+      },
+      onDragUpdated: (details) {
+        _lastOsDragOffset = details.localPosition;
+      },
+      onDragDone: (details) {
+        setState(() => _isDroppingFile = false);
+        _handleOsFileDrop(context, details, _lastOsDragOffset);
+        _lastOsDragOffset = null;
+      },
+      child: Stack(
+        children: [
+          BlocListener<CanvasBloc, CanvasState>(
+            listenWhen: (prev, curr) => prev.shapes != curr.shapes,
+            listener: _loadImagesForNewShapes,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final canvasBloc = context.read<CanvasBloc>();
+                // Initialize canvas with size
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (!mounted) return;
+                  canvasBloc.add(
+                    CanvasInitialized(
+                      width: constraints.maxWidth,
+                      height: constraints.maxHeight,
                     ),
-                    BlocListener<CanvasBloc, CanvasState>(
-                      listenWhen: (prev, curr) =>
-                          prev.editingTextShapeId != curr.editingTextShapeId,
-                      listener: (context, canvasState) {
-                        final id = canvasState.editingTextShapeId;
-                        setState(() {
-                          _editingTextShapeId = id;
-                        });
+                  );
+                });
+                return BlocBuilder<CanvasBloc, CanvasState>(
+                  builder: (context, canvasState) {
+                    return BlocBuilder<WorkspaceBloc, WorkspaceState>(
+                      buildWhen: (prev, curr) =>
+                          prev.showGrid != curr.showGrid ||
+                          prev.showRulers != curr.showRulers ||
+                          prev.gridSize != curr.gridSize ||
+                          prev.activeTool != curr.activeTool,
+                      builder: (context, workspaceState) {
+                        final selectionRect = canvasState.selectionRect;
+                        final orderedShapes = canvasState.shapeList;
 
-                        _lastSentTextWidth = null;
-                        _lastSentTextHeight = null;
+                        return MultiBlocListener(
+                          listeners: [
+                            BlocListener<CanvasBloc, CanvasState>(
+                              listenWhen: (prev, curr) =>
+                                  prev.interactionMode ==
+                                      InteractionMode.drawing &&
+                                  curr.interactionMode !=
+                                      InteractionMode.drawing,
+                              listener: (context, canvasState) {
+                                final tool = context
+                                    .read<WorkspaceBloc>()
+                                    .state
+                                    .activeTool;
+                                final isBoxTool =
+                                    tool == CanvasTool.rectangle ||
+                                        tool == CanvasTool.ellipse ||
+                                        tool == CanvasTool.frame;
 
-                        if (id == null) {
-                          return;
-                        }
-
-                        // After creating a new text element, immediately switch
-                        // back to Select (Penpot-like behavior). Only do this
-                        // for draft text shapes so editing existing text doesn't
-                        // unexpectedly change tools.
-                        if (canvasState.draftTextShapeIds.contains(id)) {
-                          final workspaceBloc = context.read<WorkspaceBloc>();
-                          if (workspaceBloc.state.activeTool ==
-                              CanvasTool.text) {
-                            workspaceBloc.add(
-                              const ToolSelected(CanvasTool.select),
-                            );
-                          }
-                        }
-
-                        final shape = canvasState.shapes[id];
-                        if (shape is! TextShape) {
-                          return;
-                        }
-
-                        _textController.text = shape.text;
-                        _textController.selection = TextSelection.fromPosition(
-                          TextPosition(offset: _textController.text.length),
-                        );
-
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (mounted) {
-                            _textFocusNode.requestFocus();
-                          }
-                        });
-
-                        // If this is a Google font, it may load async and change
-                        // metrics after we've measured. Trigger a relayout once
-                        // the font is ready so text never overflows the box.
-                        _relayoutEditingTextAfterFontLoad(
-                          shapeId: id,
-                          shape: shape,
-                        );
-                      },
-                    ),
-                  ],
-                  child: MouseRegion(
-                    cursor: _getCursor(workspaceState.activeTool),
-                    onHover: (event) =>
-                        _handlePointerHover(context, event, workspaceState),
-                    onExit: (_) => _handlePointerExit(context),
-                    child: Listener(
-                      onPointerDown: (event) =>
-                          _handlePointerDown(context, event, workspaceState),
-                      onPointerMove: (event) =>
-                          _handlePointerMove(context, event, workspaceState),
-                      onPointerUp: (event) => _handlePointerUp(context, event),
-                      onPointerSignal: (event) =>
-                          _handlePointerSignal(context, event),
-                      onPointerPanZoomStart: (event) {
-                        // Trackpad pan/zoom gesture started
-                        _lastScale = 1.0;
-                      },
-                      onPointerPanZoomUpdate: (event) {
-                        // Handle trackpad pan and zoom
-                        if (event.scale != 1.0) {
-                          // Pinch zoom on trackpad
-                          // When zooming, do NOT apply panDelta separately
-                          // The focal point zoom already handles keeping the
-                          // focal point stationary
-                          final scaleChange = event.scale / _lastScale;
-                          _lastScale = event.scale;
-                          context.read<CanvasBloc>().add(
-                                ViewportZoomed(
-                                  scaleFactor: scaleChange,
-                                  focalX: event.localPosition.dx,
-                                  focalY: event.localPosition.dy,
-                                ),
-                              );
-                        } else if (event.panDelta != Offset.zero) {
-                          // Only pan when NOT zooming
-                          // This prevents the pan from interfering with
-                          // zoom focal point calculations
-                          context.read<CanvasBloc>().add(
-                                ViewportPanned(
-                                  deltaX: event.panDelta.dx,
-                                  deltaY: event.panDelta.dy,
-                                ),
-                              );
-                        }
-                      },
-                      onPointerPanZoomEnd: (event) {
-                        _lastScale = 1.0;
-                      },
-                      child: ClipRect(
-                        child: Stack(
-                          children: [
-                            // Background
-                            Positioned.fill(
-                              child: Container(
-                                color: VioColors.canvasBackground,
-                              ),
+                                if (isBoxTool) {
+                                  context.read<WorkspaceBloc>().add(
+                                        const ToolSelected(CanvasTool.select),
+                                      );
+                                }
+                              },
                             ),
+                            BlocListener<CanvasBloc, CanvasState>(
+                              listenWhen: (prev, curr) =>
+                                  prev.editingTextShapeId !=
+                                  curr.editingTextShapeId,
+                              listener: (context, canvasState) {
+                                final id = canvasState.editingTextShapeId;
+                                setState(() {
+                                  _editingTextShapeId = id;
+                                });
 
-                            // Grid layer
-                            if (workspaceState.showGrid)
-                              Positioned.fill(
-                                child: RepaintBoundary(
-                                  child: CustomPaint(
-                                    isComplex: true,
-                                    painter: GridPainter(
-                                      gridSize: workspaceState.gridSize,
-                                      zoom: canvasState.zoom,
-                                      offset: Offset(
-                                        canvasState.viewportOffset.dx,
-                                        canvasState.viewportOffset.dy,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
+                                _lastSentTextWidth = null;
+                                _lastSentTextHeight = null;
 
-                            // Canvas content layer
-                            Positioned.fill(
-                              child: RepaintBoundary(
-                                child: CustomPaint(
-                                  isComplex: true,
-                                  willChange: true,
-                                  painter: CanvasPainter(
-                                    viewMatrix: canvasState.viewMatrix,
-                                    shapes: orderedShapes,
-                                    dragRect: canvasState.dragRect,
-                                    dragOffset: canvasState.dragOffset,
-                                    selectedShapeIds:
-                                        canvasState.selectedShapeIds,
-                                    hoveredShapeId: canvasState.hoveredShapeId,
-                                    hoveredLayerId: canvasState.hoveredLayerId,
-                                    editingTextShapeId: _editingTextShapeId,
+                                if (id == null) {
+                                  return;
+                                }
+
+                                // After creating a new text element, immediately switch
+                                // back to Select (Penpot-like behavior). Only do this
+                                // for draft text shapes so editing existing text doesn't
+                                // unexpectedly change tools.
+                                if (canvasState.draftTextShapeIds
+                                    .contains(id)) {
+                                  final workspaceBloc =
+                                      context.read<WorkspaceBloc>();
+                                  if (workspaceBloc.state.activeTool ==
+                                      CanvasTool.text) {
+                                    workspaceBloc.add(
+                                      const ToolSelected(CanvasTool.select),
+                                    );
+                                  }
+                                }
+
+                                final shape = canvasState.shapes[id];
+                                if (shape is! TextShape) {
+                                  return;
+                                }
+
+                                _textController.text = shape.text;
+                                _textController.selection =
+                                    TextSelection.fromPosition(
+                                  TextPosition(
+                                    offset: _textController.text.length,
                                   ),
-                                ),
-                              ),
+                                );
+
+                                WidgetsBinding.instance
+                                    .addPostFrameCallback((_) {
+                                  if (mounted) {
+                                    _textFocusNode.requestFocus();
+                                  }
+                                });
+
+                                // If this is a Google font, it may load async and change
+                                // metrics after we've measured. Trigger a relayout once
+                                // the font is ready so text never overflows the box.
+                                _relayoutEditingTextAfterFontLoad(
+                                  shapeId: id,
+                                  shape: shape,
+                                );
+                              },
                             ),
-
-                            // Selection box layer
-                            if (canvasState.hasSelection)
-                              Positioned.fill(
-                                child: RepaintBoundary(
-                                  child: CustomPaint(
-                                    willChange: true,
-                                    painter: SelectionBoxPainter(
-                                      selectedShapes:
-                                          canvasState.selectedShapes,
-                                      viewMatrix: canvasState.viewMatrix,
-                                      dragOffset: canvasState.dragOffset,
-                                      activeCornerIndex:
-                                          canvasState.activeCornerIndex,
-                                      hoveredCornerIndex:
-                                          canvasState.hoveredCornerIndex,
-                                      showCornerRadiusHandles:
-                                          canvasState.selectedShapes.length ==
-                                                  1 &&
-                                              canvasState.selectedShapes.first
-                                                  is RectangleShape,
-                                    ),
-                                  ),
-                                ),
-                              ),
-
-                            // Snap guides layer
-                            if (canvasState.snapLines.isNotEmpty ||
-                                canvasState.snapPoints.isNotEmpty)
-                              Positioned.fill(
-                                child: RepaintBoundary(
-                                  child: CustomPaint(
-                                    willChange: true,
-                                    painter: SnapGuidesPainter(
-                                      snapLines: canvasState.snapLines,
-                                      snapPoints: canvasState.snapPoints,
-                                      viewMatrix: canvasState.viewMatrix,
-                                      zoom: canvasState.zoom,
-                                    ),
-                                  ),
-                                ),
-                              ),
-
-                            // Size indicator layer
-                            if (canvasState.hasSelection &&
-                                selectionRect != null)
-                              Positioned.fill(
-                                child: RepaintBoundary(
-                                  child: CustomPaint(
-                                    painter: SizeIndicatorPainter(
-                                      selectionRect: selectionRect,
-                                      viewMatrix: canvasState.viewMatrix,
-                                      zoom: canvasState.zoom,
-                                    ),
-                                  ),
-                                ),
-                              ),
-
-                            // Rulers
-                            if (workspaceState.showRulers) ...[
-                              // Horizontal ruler
-                              Positioned(
-                                top: 0,
-                                left: 20,
-                                right: 0,
-                                height: 20,
-                                child: RepaintBoundary(
-                                  child: CustomPaint(
-                                    painter: HorizontalRulerPainter(
-                                      offset: canvasState.viewportOffset.dx,
-                                      zoom: canvasState.zoom,
-                                      selectionRect: selectionRect,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              // Vertical ruler
-                              Positioned(
-                                top: 20,
-                                left: 0,
-                                bottom: 0,
-                                width: 20,
-                                child: RepaintBoundary(
-                                  child: CustomPaint(
-                                    painter: VerticalRulerPainter(
-                                      offset: canvasState.viewportOffset.dy,
-                                      zoom: canvasState.zoom,
-                                      selectionRect: selectionRect,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              // Corner
-                              Positioned(
-                                top: 0,
-                                left: 0,
-                                width: 20,
-                                height: 20,
-                                child: Container(
-                                  color: VioColors.surface2,
-                                ),
-                              ),
-                            ],
-
-                            // Coordinates display
-                            Positioned(
-                              bottom: VioSpacing.sm,
-                              left: VioSpacing.xxl,
-                              child: _CoordinatesDisplay(
-                                pointer: canvasState.currentPointer,
-                              ),
-                            ),
-
-                            // Sync status indicator
-                            Positioned(
-                              bottom: VioSpacing.sm,
-                              right: VioSpacing.sm,
-                              child: _SyncStatusIndicator(
-                                syncStatus: canvasState.syncStatus,
-                                syncError: canvasState.syncError,
-                              ),
-                            ),
-
-                            // Inline text editor overlay
-                            if (_editingTextShapeId != null)
-                              _TextEditorOverlay(
-                                shapeId: _editingTextShapeId!,
-                                controller: _textController,
-                                focusNode: _textFocusNode,
-                                canvasState: canvasState,
-                              ),
                           ],
-                        ),
-                      ),
-                    ),
-                  ),
+                          child: MouseRegion(
+                            cursor: _getCursor(workspaceState.activeTool),
+                            onHover: (event) => _handlePointerHover(
+                              context,
+                              event,
+                              workspaceState,
+                            ),
+                            onExit: (_) => _handlePointerExit(context),
+                            child: Listener(
+                              onPointerDown: (event) => _handlePointerDown(
+                                context,
+                                event,
+                                workspaceState,
+                              ),
+                              onPointerMove: (event) => _handlePointerMove(
+                                context,
+                                event,
+                                workspaceState,
+                              ),
+                              onPointerUp: (event) =>
+                                  _handlePointerUp(context, event),
+                              onPointerSignal: (event) =>
+                                  _handlePointerSignal(context, event),
+                              onPointerPanZoomStart: (event) {
+                                // Trackpad pan/zoom gesture started
+                                _lastScale = 1.0;
+                              },
+                              onPointerPanZoomUpdate: (event) {
+                                // Handle trackpad pan and zoom
+                                if (event.scale != 1.0) {
+                                  // Pinch zoom on trackpad
+                                  // When zooming, do NOT apply panDelta separately
+                                  // The focal point zoom already handles keeping the
+                                  // focal point stationary
+                                  final scaleChange = event.scale / _lastScale;
+                                  _lastScale = event.scale;
+                                  context.read<CanvasBloc>().add(
+                                        ViewportZoomed(
+                                          scaleFactor: scaleChange,
+                                          focalX: event.localPosition.dx,
+                                          focalY: event.localPosition.dy,
+                                        ),
+                                      );
+                                } else if (event.panDelta != Offset.zero) {
+                                  // Only pan when NOT zooming
+                                  // This prevents the pan from interfering with
+                                  // zoom focal point calculations
+                                  context.read<CanvasBloc>().add(
+                                        ViewportPanned(
+                                          deltaX: event.panDelta.dx,
+                                          deltaY: event.panDelta.dy,
+                                        ),
+                                      );
+                                }
+                              },
+                              onPointerPanZoomEnd: (event) {
+                                _lastScale = 1.0;
+                              },
+                              child: DragTarget<ProjectAsset>(
+                                onAcceptWithDetails: (details) {
+                                  _handleAssetDrop(
+                                    context,
+                                    details,
+                                    canvasState,
+                                  );
+                                },
+                                builder:
+                                    (context, candidateData, rejectedData) {
+                                  return ClipRect(
+                                    child: Stack(
+                                      children: [
+                                        // Background
+                                        Positioned.fill(
+                                          child: Container(
+                                            color: VioColors.canvasBackground,
+                                          ),
+                                        ),
+
+                                        // Grid layer
+                                        if (workspaceState.showGrid)
+                                          Positioned.fill(
+                                            child: RepaintBoundary(
+                                              child: CustomPaint(
+                                                isComplex: true,
+                                                painter: GridPainter(
+                                                  gridSize:
+                                                      workspaceState.gridSize,
+                                                  zoom: canvasState.zoom,
+                                                  offset: Offset(
+                                                    canvasState
+                                                        .viewportOffset.dx,
+                                                    canvasState
+                                                        .viewportOffset.dy,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+
+                                        // Canvas content layer
+                                        Positioned.fill(
+                                          child: RepaintBoundary(
+                                            child: CustomPaint(
+                                              isComplex: true,
+                                              willChange: true,
+                                              painter: CanvasPainter(
+                                                viewMatrix:
+                                                    canvasState.viewMatrix,
+                                                shapes: orderedShapes,
+                                                dragRect: canvasState.dragRect,
+                                                dragOffset:
+                                                    canvasState.dragOffset,
+                                                selectedShapeIds: canvasState
+                                                    .selectedShapeIds,
+                                                hoveredShapeId:
+                                                    canvasState.hoveredShapeId,
+                                                hoveredLayerId:
+                                                    canvasState.hoveredLayerId,
+                                                editingTextShapeId:
+                                                    _editingTextShapeId,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+
+                                        // Selection box layer
+                                        if (canvasState.hasSelection)
+                                          Positioned.fill(
+                                            child: RepaintBoundary(
+                                              child: CustomPaint(
+                                                willChange: true,
+                                                painter: SelectionBoxPainter(
+                                                  selectedShapes: canvasState
+                                                      .selectedShapes,
+                                                  viewMatrix:
+                                                      canvasState.viewMatrix,
+                                                  dragOffset:
+                                                      canvasState.dragOffset,
+                                                  activeCornerIndex: canvasState
+                                                      .activeCornerIndex,
+                                                  hoveredCornerIndex:
+                                                      canvasState
+                                                          .hoveredCornerIndex,
+                                                  showCornerRadiusHandles:
+                                                      canvasState.selectedShapes
+                                                                  .length ==
+                                                              1 &&
+                                                          canvasState
+                                                                  .selectedShapes
+                                                                  .first
+                                                              is RectangleShape,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+
+                                        // Snap guides layer
+                                        if (canvasState.snapLines.isNotEmpty ||
+                                            canvasState.snapPoints.isNotEmpty)
+                                          Positioned.fill(
+                                            child: RepaintBoundary(
+                                              child: CustomPaint(
+                                                willChange: true,
+                                                painter: SnapGuidesPainter(
+                                                  snapLines:
+                                                      canvasState.snapLines,
+                                                  snapPoints:
+                                                      canvasState.snapPoints,
+                                                  viewMatrix:
+                                                      canvasState.viewMatrix,
+                                                  zoom: canvasState.zoom,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+
+                                        // Size indicator layer
+                                        if (canvasState.hasSelection &&
+                                            selectionRect != null)
+                                          Positioned.fill(
+                                            child: RepaintBoundary(
+                                              child: CustomPaint(
+                                                painter: SizeIndicatorPainter(
+                                                  selectionRect: selectionRect,
+                                                  viewMatrix:
+                                                      canvasState.viewMatrix,
+                                                  zoom: canvasState.zoom,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+
+                                        // Rulers
+                                        if (workspaceState.showRulers) ...[
+                                          // Horizontal ruler
+                                          Positioned(
+                                            top: 0,
+                                            left: 20,
+                                            right: 0,
+                                            height: 20,
+                                            child: RepaintBoundary(
+                                              child: CustomPaint(
+                                                painter: HorizontalRulerPainter(
+                                                  offset: canvasState
+                                                      .viewportOffset.dx,
+                                                  zoom: canvasState.zoom,
+                                                  selectionRect: selectionRect,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          // Vertical ruler
+                                          Positioned(
+                                            top: 20,
+                                            left: 0,
+                                            bottom: 0,
+                                            width: 20,
+                                            child: RepaintBoundary(
+                                              child: CustomPaint(
+                                                painter: VerticalRulerPainter(
+                                                  offset: canvasState
+                                                      .viewportOffset.dy,
+                                                  zoom: canvasState.zoom,
+                                                  selectionRect: selectionRect,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          // Corner
+                                          Positioned(
+                                            top: 0,
+                                            left: 0,
+                                            width: 20,
+                                            height: 20,
+                                            child: Container(
+                                              color: VioColors.surface2,
+                                            ),
+                                          ),
+                                        ],
+
+                                        // Coordinates display
+                                        Positioned(
+                                          bottom: VioSpacing.sm,
+                                          left: VioSpacing.xxl,
+                                          child: _CoordinatesDisplay(
+                                            pointer: canvasState.currentPointer,
+                                          ),
+                                        ),
+
+                                        // Sync status indicator
+                                        Positioned(
+                                          bottom: VioSpacing.sm,
+                                          right: VioSpacing.sm,
+                                          child: _SyncStatusIndicator(
+                                            syncStatus: canvasState.syncStatus,
+                                            syncError: canvasState.syncError,
+                                          ),
+                                        ),
+
+                                        // Inline text editor overlay
+                                        if (_editingTextShapeId != null)
+                                          _TextEditorOverlay(
+                                            shapeId: _editingTextShapeId!,
+                                            controller: _textController,
+                                            focusNode: _textFocusNode,
+                                            canvasState: canvasState,
+                                          ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
                 );
               },
-            );
-          },
-        );
-      },
+            ),
+          ),
+          // OS file drop overlay indicator
+          if (_isDroppingFile)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: VioColors.primary.withValues(alpha: 0.1),
+                    border: Border.all(
+                      color: VioColors.primary,
+                      width: 2,
+                    ),
+                  ),
+                  child: const Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.file_download,
+                          size: 48,
+                          color: VioColors.primary,
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Drop files to upload',
+                          style: TextStyle(
+                            color: VioColors.primary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -1025,6 +1159,151 @@ class _CanvasViewState extends State<CanvasView> {
   void _handlePointerExit(BuildContext context) {
     // Clear hovered shape when mouse leaves canvas
     context.read<CanvasBloc>().add(const CanvasPointerExited());
+  }
+
+  /// Handle an asset dragged from the Assets panel and dropped onto the canvas.
+  void _handleAssetDrop(
+    BuildContext context,
+    DragTargetDetails<ProjectAsset> details,
+    CanvasState canvasState,
+  ) {
+    final asset = details.data;
+
+    // Convert global drop position → local (relative to this widget)
+    final renderBox = context.findRenderObject() as RenderBox;
+    final localOffset = renderBox.globalToLocal(details.offset);
+
+    // Convert local screen position → canvas coordinates
+    final canvasPoint = canvasState.screenToCanvas(
+      Size(localOffset.dx, localOffset.dy),
+    );
+
+    final newId = const Uuid().v4();
+
+    Shape shape;
+    if (asset.isSvg) {
+      final sw = (asset.width > 0 ? asset.width : 200).toDouble();
+      final sh = (asset.height > 0 ? asset.height : 200).toDouble();
+      shape = SvgShape(
+        id: newId,
+        name: asset.name,
+        x: canvasPoint.dx - sw / 2,
+        y: canvasPoint.dy - sh / 2,
+        svgWidth: sw,
+        svgHeight: sh,
+      );
+    } else {
+      final w = (asset.width > 0 ? asset.width : 200).toDouble();
+      final h = (asset.height > 0 ? asset.height : 200).toDouble();
+      shape = ImageShape(
+        id: newId,
+        name: asset.name,
+        x: canvasPoint.dx - w / 2,
+        y: canvasPoint.dy - h / 2,
+        imageWidth: w,
+        imageHeight: h,
+        assetId: asset.id,
+        originalWidth: w,
+        originalHeight: h,
+      );
+    }
+
+    context.read<CanvasBloc>().add(ShapeAdded(shape));
+  }
+
+  /// Scans the canvas shapes for ImageShapes whose asset data hasn't been
+  /// fetched yet and triggers loading + decoding.
+  void _loadImagesForNewShapes(BuildContext context, CanvasState state) {
+    for (final shape in state.shapes.values) {
+      if (shape is ImageShape &&
+          shape.assetId.isNotEmpty &&
+          !ImageCacheService.instance.has(shape.assetId) &&
+          !ImageCacheService.instance.isPending(shape.assetId) &&
+          !_requestedAssetIds.contains(shape.assetId)) {
+        _requestedAssetIds.add(shape.assetId);
+        // Fetch asset data via the AssetBloc
+        context
+            .read<AssetBloc>()
+            .add(AssetDataRequested(assetId: shape.assetId));
+      }
+    }
+  }
+
+  /// Handle files dragged from the OS (Windows Explorer, Finder, etc.)
+  /// onto the canvas. Uploads them as assets AND creates shapes on the canvas.
+  Future<void> _handleOsFileDrop(
+    BuildContext context,
+    DropDoneDetails details,
+    Offset? dropPosition,
+  ) async {
+    final assetBloc = context.read<AssetBloc>();
+    final canvasBloc = context.read<CanvasBloc>();
+    final projectId = assetBloc.state.projectId;
+    if (projectId == null || projectId.isEmpty) return;
+
+    const allowedExtensions = {
+      'png',
+      'jpg',
+      'jpeg',
+      'gif',
+      'webp',
+      'svg',
+    };
+    const mimeMap = {
+      'png': 'image/png',
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'gif': 'image/gif',
+      'webp': 'image/webp',
+      'svg': 'image/svg+xml',
+    };
+
+    // Convert drop position to canvas coordinates
+    final canvasState = canvasBloc.state;
+    double canvasX;
+    double canvasY;
+    if (dropPosition != null) {
+      final canvasPoint = canvasState.screenToCanvas(
+        Size(dropPosition.dx, dropPosition.dy),
+      );
+      canvasX = canvasPoint.dx;
+      canvasY = canvasPoint.dy;
+    } else {
+      // Fallback: center of viewport
+      canvasX =
+          (canvasState.viewportSize.width / 2 - canvasState.viewportOffset.dx) /
+              canvasState.zoom;
+      canvasY = (canvasState.viewportSize.height / 2 -
+              canvasState.viewportOffset.dy) /
+          canvasState.zoom;
+    }
+
+    var offsetIndex = 0;
+    for (final xFile in details.files) {
+      final name = xFile.name;
+      final ext = name.split('.').last.toLowerCase();
+
+      if (!allowedExtensions.contains(ext)) continue;
+
+      final bytes = await xFile.readAsBytes();
+      if (bytes.isEmpty) continue;
+
+      final mimeType = mimeMap[ext] ?? 'application/octet-stream';
+
+      // Upload asset AND create shape on canvas
+      assetBloc.add(
+        AssetUploaded(
+          projectId: projectId,
+          name: name,
+          mimeType: mimeType,
+          data: bytes,
+          createShapeOnCanvas: true,
+          canvasX: canvasX + offsetIndex * 20,
+          canvasY: canvasY + offsetIndex * 20,
+        ),
+      );
+      offsetIndex++;
+    }
   }
 
   void _handlePointerSignal(BuildContext context, PointerSignalEvent event) {

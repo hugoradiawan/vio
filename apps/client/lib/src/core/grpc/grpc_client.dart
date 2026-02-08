@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:grpc/grpc_connection_interface.dart';
 
+import '../../gen/vio/v1/asset.pbgrpc.dart';
 import '../../gen/vio/v1/auth.pbgrpc.dart';
 import '../../gen/vio/v1/branch.pbgrpc.dart';
 import '../../gen/vio/v1/canvas.pbgrpc.dart';
@@ -60,6 +61,7 @@ class GrpcClient {
   bool _initialized = false;
 
   // Service clients
+  AssetServiceClient? _assetClient;
   AuthServiceClient? _authClient;
   ProjectServiceClient? _projectClient;
   BranchServiceClient? _branchClient;
@@ -90,6 +92,7 @@ class GrpcClient {
     );
 
     // Initialize all service clients
+    _assetClient = AssetServiceClient(_channel!);
     _authClient = AuthServiceClient(_channel!);
     _projectClient = ProjectServiceClient(_channel!);
     _branchClient = BranchServiceClient(_channel!);
@@ -111,6 +114,12 @@ class GrpcClient {
         'GrpcClient not initialized. Call GrpcClient.instance.initialize() first.',
       );
     }
+  }
+
+  /// Get the asset service client
+  AssetServiceClient get assetClient {
+    _ensureInitialized();
+    return _assetClient!;
   }
 
   /// Get the auth service client
@@ -162,6 +171,7 @@ class GrpcClient {
       _channel = null;
     }
     _initialized = false;
+    _assetClient = null;
     _authClient = null;
     _projectClient = null;
     _branchClient = null;

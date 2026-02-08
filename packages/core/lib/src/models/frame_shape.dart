@@ -173,7 +173,8 @@ class FrameShape extends Shape {
             : Matrix2D.identity,
         transformInverse: json['transformInverse'] != null
             ? Matrix2D.fromJson(
-                json['transformInverse'] as Map<String, dynamic>,)
+                json['transformInverse'] as Map<String, dynamic>,
+              )
             : null,
         fills: (json['fills'] as List?)
                 ?.map((f) => ShapeFill.fromJson(f as Map<String, dynamic>))
@@ -189,7 +190,8 @@ class FrameShape extends Shape {
         rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
         constraints: json['constraints'] != null
             ? ShapeConstraints.fromJson(
-                json['constraints'] as Map<String, dynamic>,)
+                json['constraints'] as Map<String, dynamic>,
+              )
             : null,
         shadow: json['shadow'] != null
             ? ShapeShadow.fromJson(json['shadow'] as Map<String, dynamic>)
@@ -202,11 +204,13 @@ class FrameShape extends Shape {
         children: (json['children'] as List?)?.cast<String>() ?? const [],
         gridLayout: json['gridLayout'] != null
             ? FrameGridLayout.fromJson(
-                json['gridLayout'] as Map<String, dynamic>,)
+                json['gridLayout'] as Map<String, dynamic>,
+              )
             : null,
         flexLayout: json['flexLayout'] != null
             ? FrameFlexLayout.fromJson(
-                json['flexLayout'] as Map<String, dynamic>,)
+                json['flexLayout'] as Map<String, dynamic>,
+              )
             : null,
       );
 

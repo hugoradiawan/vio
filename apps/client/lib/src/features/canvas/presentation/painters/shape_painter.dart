@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:vio_core/vio_core.dart';
 
+import '../../../../core/services/image_cache_service.dart';
+
 /// Utility class for rendering shapes with fills and strokes
 class ShapePainter {
   ShapePainter._();
@@ -21,6 +23,13 @@ class ShapePainter {
     // Text shapes have a custom paint path (fills act as text color)
     if (shape is TextShape) {
       _paintText(canvas, shape);
+      canvas.restore();
+      return;
+    }
+
+    // Image shapes render the decoded bitmap (or a placeholder)
+    if (shape is ImageShape) {
+      _paintImageShape(canvas, shape);
       canvas.restore();
       return;
     }
@@ -148,8 +157,7 @@ class ShapePainter {
     Rect shapeBounds,
   ) {
     final sigma = shadow.blur / 2.0; // Penpot uses blur/2 for sigma
-    final shadowColor =
-        Color(shadow.color).withValues(alpha: shadow.opacity);
+    final shadowColor = Color(shadow.color).withValues(alpha: shadow.opacity);
 
     canvas.save();
 
@@ -166,7 +174,8 @@ class ShapePainter {
     final shadowPaint = Paint()
       ..color = shadowColor
       ..style = PaintingStyle.fill
-      ..maskFilter = sigma > 0 ? MaskFilter.blur(BlurStyle.normal, sigma) : null;
+      ..maskFilter =
+          sigma > 0 ? MaskFilter.blur(BlurStyle.normal, sigma) : null;
 
     // Draw the shadow
     canvas.drawPath(shadowPath, shadowPaint);
@@ -183,8 +192,7 @@ class ShapePainter {
     Rect shapeBounds,
   ) {
     final sigma = shadow.blur / 2.0;
-    final shadowColor =
-        Color(shadow.color).withValues(alpha: shadow.opacity);
+    final shadowColor = Color(shadow.color).withValues(alpha: shadow.opacity);
 
     // Calculate layer bounds
     final expansion = shadow.blur + shadow.spread.abs() + 20;
@@ -209,7 +217,8 @@ class ShapePainter {
     final shadowPaint = Paint()
       ..color = shadowColor
       ..style = PaintingStyle.fill
-      ..maskFilter = sigma > 0 ? MaskFilter.blur(BlurStyle.normal, sigma) : null;
+      ..maskFilter =
+          sigma > 0 ? MaskFilter.blur(BlurStyle.normal, sigma) : null;
 
     // Create inverted path: outer rect minus the inner (offset) shape
     final outerRect = layerBounds.inflate(shadow.blur * 2);
@@ -309,6 +318,84 @@ class ShapePainter {
 
     canvas.restore(); // blur layer
     canvas.restore(); // clip
+  }
+
+  /// Paint an image shape — draws the decoded bitmap if cached, else a placeholder.
+  static void _paintImageShape(Canvas canvas, ImageShape shape) {
+    final bounds = shape.bounds;
+    final assetId = shape.assetId;
+
+    // Apply opacity
+    if (shape.opacity < 1.0) {
+      canvas.saveLayer(
+        null,
+        Paint()..color = Colors.white.withValues(alpha: shape.opacity),
+      );
+    }
+
+    // Check for a decoded image in the cache
+    final cachedImage =
+        assetId.isNotEmpty ? ImageCacheService.instance.get(assetId) : null;
+
+    if (cachedImage != null) {
+      // Draw the actual image
+      final srcRect = Rect.fromLTWH(
+        0,
+        0,
+        cachedImage.width.toDouble(),
+        cachedImage.height.toDouble(),
+      );
+      final paint = Paint()..filterQuality = FilterQuality.medium;
+      canvas.drawImageRect(cachedImage, srcRect, bounds, paint);
+    } else {
+      // Placeholder: light gray rectangle with image icon indicator
+      final bgPaint = Paint()..color = const Color(0xFF2D333B);
+      final borderPaint = Paint()
+        ..color = const Color(0xFF444C56)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1;
+
+      canvas.drawRect(bounds, bgPaint);
+      canvas.drawRect(bounds, borderPaint);
+
+      // Draw a small image icon in the center
+      final iconSize = (bounds.shortestSide * 0.3).clamp(16.0, 48.0);
+      final crossPaint = Paint()
+        ..color = const Color(0xFF768390)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5;
+      final cx = bounds.center.dx;
+      final cy = bounds.center.dy;
+      final half = iconSize / 2;
+
+      // Simple mountain/landscape icon shape
+      final iconPath = Path()
+        ..moveTo(cx - half, cy + half * 0.6)
+        ..lineTo(cx - half * 0.3, cy - half * 0.2)
+        ..lineTo(cx, cy + half * 0.2)
+        ..lineTo(cx + half * 0.3, cy - half * 0.5)
+        ..lineTo(cx + half, cy + half * 0.6)
+        ..close();
+      canvas.drawPath(iconPath, crossPaint);
+
+      // Small circle (sun)
+      canvas.drawCircle(
+        Offset(cx - half * 0.4, cy - half * 0.3),
+        iconSize * 0.12,
+        crossPaint,
+      );
+    }
+
+    // Draw strokes on top
+    final path = Path()..addRect(bounds);
+    for (final stroke in shape.strokes) {
+      _paintStroke(canvas, path, stroke, shape);
+    }
+
+    // Restore opacity layer
+    if (shape.opacity < 1.0) {
+      canvas.restore();
+    }
   }
 
   static void _paintText(Canvas canvas, TextShape shape) {

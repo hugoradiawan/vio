@@ -1,3 +1,4 @@
+import '../gen/vio/v1/asset.pbgrpc.dart';
 import '../gen/vio/v1/branch.pbgrpc.dart';
 import '../gen/vio/v1/canvas.pbgrpc.dart';
 import '../gen/vio/v1/commit.pbgrpc.dart';
@@ -21,6 +22,7 @@ class ServiceLocator {
   static ServiceLocator get instance => _instance ??= ServiceLocator._();
 
   late final GrpcClient _grpcClient;
+  late final AssetServiceClient _assetService;
   late final ProjectServiceClient _projectService;
   late final BranchServiceClient _branchService;
   late final CanvasServiceClient _canvasService;
@@ -57,6 +59,7 @@ class ServiceLocator {
     );
 
     // Get gRPC service clients
+    _assetService = _grpcClient.assetClient;
     _projectService = _grpcClient.projectClient;
     _branchService = _grpcClient.branchClient;
     _canvasService = _grpcClient.canvasClient;
@@ -74,6 +77,12 @@ class ServiceLocator {
   GrpcClient get grpcClient {
     _ensureInitialized();
     return _grpcClient;
+  }
+
+  /// Get the asset gRPC service client
+  AssetServiceClient get assetService {
+    _ensureInitialized();
+    return _assetService;
   }
 
   /// Get the project gRPC service client

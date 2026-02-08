@@ -27,7 +27,8 @@ class VioIconButton extends StatelessWidget {
   final Color? color;
 
   const VioIconButton({
-    required this.icon, super.key,
+    required this.icon,
+    super.key,
     this.onPressed,
     this.variant = VioIconButtonVariant.ghost,
     this.size,

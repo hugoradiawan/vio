@@ -71,30 +71,18 @@ class VioTypography {
     height: 1.3,
   );
 
-  static TextStyle get headlineMedium => _inter(
-    fontSize: 18,
-    fontWeight: FontWeight.w600,
-    height: 1.3,
-  );
+  static TextStyle get headlineMedium =>
+      _inter(fontSize: 18, fontWeight: FontWeight.w600, height: 1.3);
 
-  static TextStyle get headlineSmall => _inter(
-    fontSize: 16,
-    fontWeight: FontWeight.w600,
-    height: 1.35,
-  );
+  static TextStyle get headlineSmall =>
+      _inter(fontSize: 16, fontWeight: FontWeight.w600, height: 1.35);
 
   // ============== Title Styles ==============
-  static TextStyle get titleLarge => _inter(
-    fontSize: 16,
-    fontWeight: FontWeight.w500,
-    height: 1.4,
-  );
+  static TextStyle get titleLarge =>
+      _inter(fontSize: 16, fontWeight: FontWeight.w500, height: 1.4);
 
-  static TextStyle get titleMedium => _inter(
-    fontWeight: FontWeight.w500,
-    letterSpacing: 0.1,
-    height: 1.4,
-  );
+  static TextStyle get titleMedium =>
+      _inter(fontWeight: FontWeight.w500, letterSpacing: 0.1, height: 1.4);
 
   static TextStyle get titleSmall => _inter(
     fontSize: 12,
@@ -104,20 +92,12 @@ class VioTypography {
   );
 
   // ============== Body Styles ==============
-  static TextStyle get bodyLarge => _inter(
-    letterSpacing: 0.15,
-  );
+  static TextStyle get bodyLarge => _inter(letterSpacing: 0.15);
 
-  static TextStyle get bodyMedium => _inter(
-    fontSize: 13,
-    letterSpacing: 0.15,
-  );
+  static TextStyle get bodyMedium => _inter(fontSize: 13, letterSpacing: 0.15);
 
-  static TextStyle get bodySmall => _inter(
-    fontSize: 12,
-    letterSpacing: 0.2,
-    color: VioColors.textSecondary,
-  );
+  static TextStyle get bodySmall =>
+      _inter(fontSize: 12, letterSpacing: 0.2, color: VioColors.textSecondary);
 
   // ============== Label Styles ==============
   static TextStyle get labelLarge => _inter(
@@ -144,15 +124,10 @@ class VioTypography {
 
   // ============== Special Styles ==============
   /// Monospace style for coordinates, code, etc.
-  static TextStyle get mono => _mono(
-    
-  );
+  static TextStyle get mono => _mono();
 
   /// Monospace small
-  static TextStyle get monoSmall => _mono(
-    fontSize: 11,
-    height: 1.4,
-  );
+  static TextStyle get monoSmall => _mono(fontSize: 11, height: 1.4);
 
   /// Button text
   static TextStyle get button => _inter(

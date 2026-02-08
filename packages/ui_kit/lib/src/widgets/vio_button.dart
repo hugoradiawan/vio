@@ -34,7 +34,8 @@ class VioButton extends StatelessWidget {
   final bool isFullWidth;
 
   const VioButton({
-    required this.label, super.key,
+    required this.label,
+    super.key,
     this.onPressed,
     this.variant = VioButtonVariant.primary,
     this.size = VioButtonSize.medium,

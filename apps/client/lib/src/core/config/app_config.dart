@@ -32,11 +32,9 @@ class AppConfig {
 
     return AppConfig(
       environment: environment,
-      apiBaseUrl: apiBaseUrl.isNotEmpty
-          ? apiBaseUrl
-          : environment.defaultApiBaseUrl,
-      grpcHost:
-          grpcHost.isNotEmpty ? grpcHost : environment.defaultGrpcHost,
+      apiBaseUrl:
+          apiBaseUrl.isNotEmpty ? apiBaseUrl : environment.defaultApiBaseUrl,
+      grpcHost: grpcHost.isNotEmpty ? grpcHost : environment.defaultGrpcHost,
       grpcPort: grpcPort != 0 ? grpcPort : environment.defaultGrpcPort,
       grpcWebPort:
           grpcWebPort != 0 ? grpcWebPort : environment.defaultGrpcWebPort,
@@ -56,8 +54,7 @@ class AppConfig {
   bool get isStaging => environment == AppEnvironment.staging;
 
   @override
-  String toString() =>
-      'AppConfig(env: ${environment.name}, api: $apiBaseUrl, '
+  String toString() => 'AppConfig(env: ${environment.name}, api: $apiBaseUrl, '
       'grpc: $grpcHost:$grpcPort, tls: $useTls)';
 }
 

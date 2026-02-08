@@ -158,7 +158,9 @@ class _WorkspacePageState extends State<WorkspacePage> {
                                       bloc.state.rightPanelWidth;
                                   // Dragging right makes panel narrower
                                   bloc.add(
-                                    RightPanelWidthChanged(currentWidth - delta),
+                                    RightPanelWidthChanged(
+                                      currentWidth - delta,
+                                    ),
                                   );
                                 },
                                 onDoubleTap: () {

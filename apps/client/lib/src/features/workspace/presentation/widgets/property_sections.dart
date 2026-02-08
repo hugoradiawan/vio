@@ -120,8 +120,7 @@ class _FillItemState extends State<_FillItem> {
                         const EdgeInsets.symmetric(horizontal: VioSpacing.sm),
                     decoration: BoxDecoration(
                       color: VioColors.surfaceElevated,
-                      borderRadius:
-                          BorderRadius.circular(VioSpacing.radiusSm),
+                      borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
                       border: Border.all(color: VioColors.border),
                     ),
                     child: Row(
@@ -147,9 +146,7 @@ class _FillItemState extends State<_FillItem> {
                             ),
                           ),
                           Icon(
-                            _expanded
-                                ? Icons.expand_less
-                                : Icons.expand_more,
+                            _expanded ? Icons.expand_less : Icons.expand_more,
                             size: 14,
                             color: VioColors.textTertiary,
                           ),

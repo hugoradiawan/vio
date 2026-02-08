@@ -15,6 +15,7 @@ import {
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { AssetService } from "./gen/vio/v1/asset_pb.js";
 import { AuthService } from "./gen/vio/v1/auth_pb.js";
 import { BranchService } from "./gen/vio/v1/branch_pb.js";
 import { CanvasService } from "./gen/vio/v1/canvas_pb.js";
@@ -24,6 +25,7 @@ import { PullRequestService } from "./gen/vio/v1/pullrequest_pb.js";
 import { ShapeService } from "./gen/vio/v1/shape_pb.js";
 
 import {
+	assetServiceImpl,
 	authServiceImpl,
 	branchServiceImpl,
 	canvasServiceImpl,
@@ -46,6 +48,7 @@ const USE_TLS = process.env.USE_TLS === "true";
 
 // Create ConnectRPC router with all services
 function createRoutes(router: ConnectRouter) {
+	router.service(AssetService, assetServiceImpl);
 	router.service(AuthService, authServiceImpl);
 	router.service(ProjectService, projectServiceImpl);
 	router.service(BranchService, branchServiceImpl);
@@ -150,6 +153,7 @@ if (USE_TLS) {
    Protocol: ConnectRPC (HTTP/1.1 + HTTP/2 with TLS)
 
    Services:
+   - vio.v1.AssetService
    - vio.v1.AuthService
    - vio.v1.ProjectService
    - vio.v1.BranchService
@@ -198,6 +202,7 @@ if (USE_TLS) {
    Web Browser:    http://localhost:${WEB_PORT} (HTTP/1.1 gRPC-Web)
 
    Services:
+   - vio.v1.AssetService
    - vio.v1.AuthService
    - vio.v1.ProjectService
    - vio.v1.BranchService

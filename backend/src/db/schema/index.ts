@@ -1,16 +1,25 @@
 import { relations } from "drizzle-orm";
 import {
 	boolean,
+	customType,
 	doublePrecision,
 	index,
 	integer,
 	jsonb,
 	pgTable,
+	real,
 	text,
 	timestamp,
 	uuid,
 	varchar,
 } from "drizzle-orm/pg-core";
+
+// Custom type for PostgreSQL bytea columns (binary data)
+const bytea = customType<{ data: Buffer; dpiName: string }>({
+	dataType() {
+		return "bytea";
+	},
+});
 
 // ============================================================================
 // Projects - Top-level container
@@ -262,6 +271,8 @@ export const projectsRelations = relations(projects, ({ many, one }) => ({
 	frames: many(frames),
 	shapes: many(shapes),
 	pullRequests: many(pullRequests),
+	assets: many(projectAssets),
+	colors: many(projectColors),
 	defaultBranch: one(branches, {
 		fields: [projects.defaultBranchId],
 		references: [branches.id],
@@ -322,4 +333,75 @@ export const shapesRelations = relations(shapes, ({ one, many }) => ({
 	}),
 	children: many(shapes),
 	comments: many(comments),
+}));
+
+// ============================================================================
+// Project Assets - Images, SVGs, and other binary media
+// ============================================================================
+
+export const projectAssets = pgTable(
+	"project_assets",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		projectId: uuid("project_id")
+			.notNull()
+			.references(() => projects.id, { onDelete: "cascade" }),
+		name: text("name").notNull(),
+		path: text("path"), // Group path using "/" separator (e.g., "Icons/Social")
+		mimeType: varchar("mime_type", { length: 100 }).notNull(),
+		width: integer("width").notNull().default(0),
+		height: integer("height").notNull().default(0),
+		data: bytea("data").notNull(), // Raw binary data
+		thumbnail: bytea("thumbnail"), // Small JPEG preview for panel display
+		fileSize: integer("file_size").notNull().default(0),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+		updatedAt: timestamp("updated_at").defaultNow().notNull(),
+	},
+	(table) => ({
+		projectIdx: index("project_assets_project_idx").on(table.projectId),
+		pathIdx: index("project_assets_path_idx").on(table.projectId, table.path),
+	}),
+);
+
+// ============================================================================
+// Project Colors - Reusable color palette
+// ============================================================================
+
+export const projectColors = pgTable(
+	"project_colors",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		projectId: uuid("project_id")
+			.notNull()
+			.references(() => projects.id, { onDelete: "cascade" }),
+		name: text("name").notNull(),
+		path: text("path"), // Group path using "/" separator
+		color: varchar("color", { length: 9 }), // Hex color string (e.g., "#FF3B82F6")
+		opacity: real("opacity").default(1.0).notNull(),
+		gradient: jsonb("gradient"), // Gradient definition (type, stops, coordinates)
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+		updatedAt: timestamp("updated_at").defaultNow().notNull(),
+	},
+	(table) => ({
+		projectIdx: index("project_colors_project_idx").on(table.projectId),
+		pathIdx: index("project_colors_path_idx").on(table.projectId, table.path),
+	}),
+);
+
+// ============================================================================
+// Asset & Color Relations
+// ============================================================================
+
+export const projectAssetsRelations = relations(projectAssets, ({ one }) => ({
+	project: one(projects, {
+		fields: [projectAssets.projectId],
+		references: [projects.id],
+	}),
+}));
+
+export const projectColorsRelations = relations(projectColors, ({ one }) => ({
+	project: one(projects, {
+		fields: [projectColors.projectId],
+		references: [projects.id],
+	}),
 }));

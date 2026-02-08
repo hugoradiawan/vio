@@ -5,7 +5,9 @@ import 'package:vio_ui_kit/vio_ui_kit.dart';
 /// A color picker widget for selecting fill/stroke colors
 class VioColorPicker extends StatefulWidget {
   const VioColorPicker({
-    required this.color, required this.onColorChanged, super.key,
+    required this.color,
+    required this.onColorChanged,
+    super.key,
     this.showOpacity = true,
     this.opacity = 1.0,
     this.onOpacityChanged,
@@ -166,7 +168,13 @@ class _VioColorPickerState extends State<VioColorPicker> {
 /// Alignment buttons for shape alignment
 class VioAlignmentButtons extends StatelessWidget {
   const VioAlignmentButtons({
-    required this.onAlignLeft, required this.onAlignCenterH, required this.onAlignRight, required this.onAlignTop, required this.onAlignCenterV, required this.onAlignBottom, super.key,
+    required this.onAlignLeft,
+    required this.onAlignCenterH,
+    required this.onAlignRight,
+    required this.onAlignTop,
+    required this.onAlignCenterV,
+    required this.onAlignBottom,
+    super.key,
   });
 
   final VoidCallback? onAlignLeft;
@@ -229,7 +237,10 @@ class VioAlignmentButtons extends StatelessWidget {
 /// A slider with numeric input for property editing
 class VioPropertySlider extends StatelessWidget {
   const VioPropertySlider({
-    required this.label, required this.value, required this.onChanged, super.key,
+    required this.label,
+    required this.value,
+    required this.onChanged,
+    super.key,
     this.min = 0.0,
     this.max = 100.0,
     this.showInput = true,
@@ -296,7 +307,11 @@ class VioPropertySlider extends StatelessWidget {
 /// A toggle row with icon and label
 class VioToggleRow extends StatelessWidget {
   const VioToggleRow({
-    required this.iconAsset, required this.label, required this.value, required this.onChanged, super.key,
+    required this.iconAsset,
+    required this.label,
+    required this.value,
+    required this.onChanged,
+    super.key,
   });
 
   final String iconAsset;

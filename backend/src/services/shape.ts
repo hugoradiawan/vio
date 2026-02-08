@@ -25,7 +25,7 @@ import {
 	type Gradient,
 	type Stroke,
 	type Timestamp,
-	type Transform
+	type Transform,
 } from "../gen/vio/v1/common_pb.js";
 import {
 	BatchMutateResponseSchema,

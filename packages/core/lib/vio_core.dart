@@ -14,6 +14,7 @@ export 'src/models/frame_shape.dart';
 export 'src/models/group_shape.dart';
 export 'src/models/image_shape.dart';
 export 'src/models/path_shape.dart';
+export 'src/models/project_asset.dart';
 export 'src/models/rectangle_shape.dart';
 // Models
 export 'src/models/result.dart';

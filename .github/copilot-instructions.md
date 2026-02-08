@@ -24,6 +24,10 @@ Protos (`packages/protos/vio/v1/*.proto`) → codegen → TypeScript services (`
 # Setup
 fvm install && fvm use && dart pub global activate melos && melos bootstrap
 
+# Start PostgreSQL (required before backend)
+podman machine start
+podman compose up -d postgres
+
 # Run (use --dart-define-from-file for env config)
 melos run run:client:web              # Flutter web (dev config)
 cd backend && bun run dev             # Backend with watch mode (port 4000/4001)
@@ -62,7 +66,13 @@ Matrix2D.rotationAt(angleDeg, centerX, centerY)
 // Duplicate: always generate new UUID
 shape.duplicate(newId: Uuid().v4(), offsetX: 10, offsetY: 10)
 ```
-Shape hierarchy: `Shape` (abstract) → `RectangleShape`, `EllipseShape`, `TextShape`, `FrameShape`, `GroupShape`, `PathShape`, `ImageShape`, `SvgShape`, `BoolShape`. Each has specific geometric params (e.g., `r1`–`r4` corner radii on rectangles). `sortOrder` controls z-order among siblings.
+Shape hierarchy: `Shape` (abstract) → `RectangleShape`, `EllipseShape`, `TextShape`, `FrameShape`, `GroupShape`, `PathShape`, `ImageShape`, `SvgShape`, `BoolShape`. Each has specific geometric params (e.g., `r1`–`r4` corner radii on rectangles). `sortOrder` controls z-order among siblings. Shapes support `ShapeShadow`, `ShapeBlur`, gradient fills, and fill/stroke visibility toggling.
+
+### Asset System
+- `AssetBloc` manages graphics + palette colors via gRPC `AssetServiceClient`
+- Upload flow: `AssetUploaded` event → backend processes with `sharp` (resize, format) → stores binary → optionally creates `ImageShape`/`SvgShape` on canvas via `createShapeOnCanvas` flag
+- Binary data cached in `AssetState.assetDataCache` for rendering
+- Backend enforces 10MB limit and MIME validation (`backend/src/services/asset.ts`)
 
 ### Backend (ConnectRPC + Drizzle)
 - Services in `backend/src/services/` implement `ServiceImpl<T>` from `@connectrpc/connect`
@@ -78,10 +88,11 @@ Always use `VioColors` from `packages/ui_kit/`: `primary` (#4C9AFF), `background
 Flutter environments configured via `apps/client/config/{dev,staging,production}.json` passed with `--dart-define-from-file`. Controls `GRPC_HOST`, `GRPC_PORT`, `GRPC_WEB_PORT`, `USE_TLS`.
 
 ## Key Files
-- **PLAN.md** / **PROGRESS.md** — Roadmap and daily log (repo root)
+- **PLAN.md** / **PROGRESS.md** / **SKILL.md** — Roadmap, daily log, and tech stack reference (repo root)
 - **apps/client/lib/src/features/canvas/bloc/canvas_bloc.dart** — Core canvas logic (~3300 lines)
 - **packages/core/lib/src/models/shape.dart** — Shape base class hierarchy
 - **apps/client/lib/src/core/grpc/proto_converter.dart** — Proto ↔ domain conversion
 - **apps/client/lib/src/app.dart** — BLoC wiring and `_CanvasVersionControlBridge`
 - **backend/src/db/schema/index.ts** — Full DB schema (projects, branches, commits, snapshots, shapes, pull_requests)
+- **backend/src/services/merge.ts** — Three-way merge algorithm for version control
 - **packages/protos/vio/v1/** — All `.proto` definitions

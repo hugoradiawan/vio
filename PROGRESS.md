@@ -5,6 +5,200 @@
 
 ---
 
+## 2026-02-08
+
+### Session: Asset Management System
+
+| Date | Task | Status | Notes/Blockers |
+|------|------|--------|----------------|
+| 2026-02-08 | Implement AssetBloc with gRPC AssetServiceClient | ✅ Completed | CRUD for graphics and palette colors |
+| 2026-02-08 | Create ProjectAsset / ProjectColor domain models | ✅ Completed | In `packages/core/lib/src/models/project_asset.dart` |
+| 2026-02-08 | Build Assets tab UI with drag-and-drop upload | ✅ Completed | Graphics section, Colors section, search, `desktop_drop` + file picker |
+| 2026-02-08 | Implement backend AssetService | ✅ Completed | Upload with `sharp` image processing, CRUD, 10MB limit, MIME validation |
+| 2026-02-08 | Extend ProtoConverter for assets | ✅ Completed | `assetFromProto()`, `projectColorFromProto()` |
+| 2026-02-08 | Update copilot-instructions.md and README.md | ✅ Completed | Corrected Elysia → ConnectRPC throughout |
+
+### Changes Made
+
+#### apps/client/lib/src/features/assets/
+- `bloc/asset_bloc.dart` - **New** (431 lines) - Full CRUD via gRPC `AssetServiceClient`:
+  - Events: `AssetsLoadRequested`, `AssetUploaded`, `AssetDeleted`, `AssetRenamed`, `AssetDataRequested`, `ColorCreated`, `ColorUpdated`, `ColorDeleted`, `AssetSearchChanged`, `AssetViewModeToggled`
+  - State: `AssetState` with `assetDataCache` (binary data for canvas rendering), search/filter, grid/list view mode
+  - Integrates with `CanvasBloc` — `createShapeOnCanvas` flag on upload adds image/SVG shapes directly
+- `presentation/widgets/assets_tab.dart` - **New** (1143 lines) - Graphics section, Colors section, Components/Typographies placeholders, search bar, drag-and-drop upload, file picker
+
+#### packages/core/lib/src/models/
+- `project_asset.dart` - **New** - `ProjectAsset` and `ProjectColor` domain models
+
+#### backend/src/services/
+- `asset.ts` - **New** (596 lines) - Upload with `sharp` image processing, CRUD for assets/colors, 10MB limit, MIME validation
+
+---
+
+## 2026-02-07
+
+### Session: Gradient Fills + Discard Changes
+
+| Date | Task | Status | Notes/Blockers |
+|------|------|--------|----------------|
+| 2026-02-07 | Implement gradient fill editor | ✅ Completed | Linear + radial gradients with color stops |
+| 2026-02-07 | Add discard all changes in version control | ✅ Completed | `AllChangesDiscarded` event reverts shapes to base state |
+| 2026-02-07 | Code readability refactoring | ✅ Completed | Consistency pass across multiple files |
+
+### Changes Made
+
+#### apps/client/lib/src/features/workspace/presentation/widgets/
+- `gradient_editor.dart` - **New** - Gradient fill editor in shape properties panel
+
+#### apps/client/lib/src/features/version_control/
+- `bloc/version_control_bloc.dart` - Added `AllChangesDiscarded` event handler — full shape revert to base state
+
+---
+
+## 2026-02-03 – 2026-02-04
+
+### Session: Resizable Panels + Shadow/Blur Effects
+
+| Date | Task | Status | Notes/Blockers |
+|------|------|--------|----------------|
+| 2026-02-03 | Add resizable left and right panels | ✅ Completed | Drag handles with `LeftPanelWidthChanged` / `RightPanelWidthChanged` events |
+| 2026-02-04 | Implement shadow and blur effects | ✅ Completed | `ShapeShadow` / `ShapeBlur` models, rendering, property editor, proto converter |
+
+### Changes Made
+
+#### apps/client/lib/src/features/workspace/
+- `presentation/widgets/resizable_panel_handle.dart` - **New** - Drag handle widget for panel resizing
+- `bloc/workspace_bloc.dart` - Added `LeftPanelWidthChanged` / `RightPanelWidthChanged` events
+
+#### packages/core/lib/src/models/
+- `shape.dart` - Added `ShapeShadow` and `ShapeBlur` model classes
+
+#### apps/client/lib/src/features/canvas/presentation/painters/
+- `shape_painter.dart` - Shadow and blur rendering support
+
+#### apps/client/lib/src/core/grpc/
+- `proto_converter.dart` - Shadow/blur proto conversion
+
+---
+
+## 2026-02-02
+
+### Session: Fill/Stroke Visibility
+
+| Date | Task | Status | Notes/Blockers |
+|------|------|--------|----------------|
+| 2026-02-02 | Add fill/stroke visibility toggle | ✅ Completed | Hidden property in shape property editor |
+| 2026-02-02 | Formatting cleanup | ✅ Completed | gRPC channel and repository files |
+
+---
+
+## 2026-02-01
+
+### Session: ConnectRPC Migration + gRPC Client Infrastructure
+
+| Date | Task | Status | Notes/Blockers |
+|------|------|--------|----------------|
+| 2026-02-01 | Migrate backend from Elysia REST to ConnectRPC | ✅ Completed | `@connectrpc/connect` + `connectNodeAdapter` with HTTP/2 |
+| 2026-02-01 | Implement dual-port server | ✅ Completed | Port 4000 (native gRPC) + 4001 (gRPC-Web for Flutter web) |
+| 2026-02-01 | Create GrpcClient singleton | ✅ Completed | Manages channel + 8 service clients |
+| 2026-02-01 | Implement platform-agnostic gRPC channels | ✅ Completed | Conditional imports: gRPC-Web/XHR for web, native HTTP/2 for desktop |
+| 2026-02-01 | Create AppConfig from dart-define-from-file | ✅ Completed | `AppEnvironment` enum (dev/staging/production) with per-env defaults |
+| 2026-02-01 | Create ServiceLocator DI container | ✅ Completed | Singleton initializing GrpcClient, all service clients, GrpcCanvasRepository |
+| 2026-02-01 | Create environment config files | ✅ Completed | `config/{dev,staging,production}.json` |
+| 2026-02-01 | Wire up main.dart lifecycle | ✅ Completed | AppConfig → ServiceLocator → HydratedStorage → AppLifecycleListener |
+
+### Changes Made
+
+#### backend/src/
+- `index.ts` - **Rewritten** - ConnectRPC router with `router.service()` for all 8 services, HTTP/2 server, CORS for Flutter web
+
+#### apps/client/lib/src/core/grpc/
+- `grpc_client.dart` - **New** - `GrpcClient` singleton managing channel + 8 service clients
+- `grpc_channel.dart` - **New** - Platform-agnostic channel factory (conditional import)
+- `grpc_channel_web.dart` - **New** - gRPC-Web/XHR transport for Flutter web
+- `grpc_channel_native.dart` - **New** - Native HTTP/2 transport for desktop
+
+#### apps/client/lib/src/core/config/
+- `app_config.dart` - **New** - `AppConfig` with `AppEnvironment` enum, `fromEnvironment()` factory
+
+#### apps/client/lib/src/core/
+- `service_locator.dart` - **New** - Singleton DI container
+
+#### apps/client/config/
+- `dev.json` / `staging.json` / `production.json` - **New** - Environment-specific gRPC host/port/TLS settings
+
+### Key Design Decisions
+1. **Dual-port server**: Native gRPC on port 4000, gRPC-Web on port 4001 — Flutter web requires gRPC-Web (XHR), desktop uses native HTTP/2
+2. **Conditional imports**: `grpc_channel.dart` uses `dart:io`-based conditional import to select web vs native transport at compile time
+3. **ServiceLocator pattern**: All gRPC clients created once in `main()`, accessed via `ServiceLocator.instance` throughout the app
+
+---
+
+## 2026-01-31
+
+### Session: Canvas↔VersionControl Bridge
+
+| Date | Task | Status | Notes/Blockers |
+|------|------|--------|----------------|
+| 2026-01-31 | Create _CanvasVersionControlBridge widget | ✅ Completed | Bidirectional sync between CanvasBloc and VersionControlBloc |
+| 2026-01-31 | Add ShapesReplaced event to CanvasBloc | ✅ Completed | Efficient bulk shape replacement for branch switches |
+| 2026-01-31 | Add branch switch protection to GrpcCanvasRepository | ✅ Completed | `beginBranchSwitch()` / `endBranchSwitch()` pauses auto-sync |
+| 2026-01-31 | Add setShapesFromSnapshot to repository | ✅ Completed | Replaces internal state atomically, clears pending ops |
+
+### Changes Made
+
+#### apps/client/lib/src/
+- `app.dart` - Added `_CanvasVersionControlBridge` widget using `MultiBlocListener`:
+  - Canvas→VC: sends `CanvasShapesChanged` whenever shapes change
+  - VC→Canvas: dispatches `ShapesReplaced` on branch switch or initial load completion
+- `features/canvas/bloc/canvas_bloc.dart` - Added `ShapesReplaced` event handler
+- `core/repositories/grpc_canvas_repository.dart` - Added `beginBranchSwitch()`, `endBranchSwitch()`, `setShapesFromSnapshot()`
+
+### Key Design Decisions
+1. **Bridge widget over direct BLoC coupling**: `_CanvasVersionControlBridge` uses `MultiBlocListener` to avoid CanvasBloc depending on VersionControlBloc directly
+2. **Branch switch safety**: Auto-sync paused during switch to prevent stale data from overwriting new branch state
+
+---
+
+## 2026-01-27
+
+### Session: Version Control Frontend UI
+
+| Date | Task | Status | Notes/Blockers |
+|------|------|--------|----------------|
+| 2026-01-27 | Implement VersionControlBloc | ✅ Completed | 1458 lines, 27+ events, full branch/commit/PR state management |
+| 2026-01-27 | Build branch selector header + list panel | ✅ Completed | Branch switching with uncommitted changes detection |
+| 2026-01-27 | Build commit panel + dialog + history list | ✅ Completed | Shape-level change tracking, staging, commit creation |
+| 2026-01-27 | Build PR list + merge/close UI | ✅ Completed | Full PR lifecycle in UI |
+| 2026-01-27 | Build conflict resolution dialog | ✅ Completed | Interactive property-level conflict resolution |
+| 2026-01-27 | Build branch settings dialog | ✅ Completed | Rename, protection settings |
+| 2026-01-27 | Add PreferencesService | ✅ Completed | Persists last-selected branch per project |
+
+### Changes Made
+
+#### apps/client/lib/src/features/version_control/
+- `bloc/version_control_bloc.dart` - **New** (1458 lines) - Full VC state management:
+  - VersionControlStatus enum: `initial`, `loading`, `ready`, `committing`, `switching`, `merging`, `error`
+  - Change detection: compares `baseShapes` (HEAD snapshot) vs `currentShapes` (live canvas)
+  - Branch switch protection: `pendingSwitchBranchId` triggers confirmation when uncommitted changes exist
+  - Accesses gRPC clients via `ServiceLocator.instance`
+- `bloc/version_control_event.dart` - 27+ events including `BranchSwitchRequested`, `CommitCreateRequested`, `PullRequestMergeRequested`, `CanvasShapesChanged`, `AllChangesDiscarded`, `CommitAndSwitchRequested`
+- `bloc/version_control_state.dart` - Immutable state with branches, commits, PRs, staging set, base/current shapes
+- `presentation/widgets/version_control_tab.dart` - **New** - Main VC tab with collapsible sections
+- `presentation/widgets/branch_selector_header.dart` - **New** - Branch dropdown with switch confirmation
+- `presentation/widgets/branch_list_panel.dart` - **New** - Branch list with create/delete actions
+- `presentation/widgets/commit_dialog.dart` - **New** - Commit message input dialog
+- `presentation/widgets/commit_panel.dart` - **New** - Staged changes panel
+- `presentation/widgets/commit_history_list.dart` - **New** - Commit log with checkout/revert actions
+- `presentation/widgets/pull_request_list.dart` - **New** - PR list with merge/close actions
+- `presentation/widgets/conflict_resolution_dialog.dart` - **New** - Property-level conflict resolution
+- `presentation/widgets/branch_settings_dialog.dart` - **New** - Branch rename/protection
+
+#### apps/client/lib/src/core/services/
+- `preferences_service.dart` - **New** - SharedPreferences wrapper for persisting branch selection
+
+---
+
 ## 2026-01-26
 
 ### Session: Git-like Version Control Implementation

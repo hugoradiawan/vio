@@ -1,6 +1,6 @@
 # Vio Design Tool
 
-A design and prototyping tool with Git-like version control, built with Flutter (frontend) and Bun + Elysia (backend).
+A design and prototyping tool with Git-like version control, built with Flutter (frontend) and Bun + ConnectRPC (backend).
 
 ## 🚀 Quick Start
 
@@ -9,6 +9,7 @@ A design and prototyping tool with Git-like version control, built with Flutter 
 - [FVM](https://fvm.app/) - Flutter Version Management
 - [Melos](https://melos.invertase.dev/) - Monorepo management
 - [Bun](https://bun.sh/) - JavaScript runtime for backend
+- [Podman](https://podman.io/) - Container runtime for PostgreSQL
 
 ### Setup
 
@@ -27,22 +28,42 @@ dart pub global activate melos
 
 # Bootstrap the monorepo
 melos bootstrap
+
+# Backend setup
+cd backend && bun install
 ```
 
 ### Development
 
 ```bash
-# Run client on web
+# Start PostgreSQL (required before backend)
+podman machine start
+podman compose up -d postgres
+
+# Run client on web (uses config/dev.json for env)
 melos run run:client:web
 
 # Run client on Windows
 melos run run:client:windows
+
+# Run backend (with watch mode, ports 4000/4001)
+cd backend && bun run dev
+
+# Database
+cd backend && bun run db:push          # Push Drizzle schema to PostgreSQL
+cd backend && bun run db:seed          # Seed demo data
+
+# Protobuf codegen (generates both backend/src/gen/ and apps/client/lib/src/gen/)
+cd backend && bun run proto:generate
 
 # Run all tests
 melos run test
 
 # Analyze code
 melos run analyze
+
+# Format backend (Biome)
+cd backend && bun run format
 ```
 
 ## 📁 Project Structure
@@ -50,30 +71,38 @@ melos run analyze
 ```
 vio/
 ├── apps/
-│   └── client/           # Main Flutter application
+│   └── client/                     # Flutter app (Web/Windows)
+│       └── lib/src/
+│           ├── features/
+│           │   ├── canvas/         # Infinite canvas (bloc, painters, widgets)
+│           │   ├── version_control/ # Branch/commit/PR UI
+│           │   ├── workspace/      # Shell layout, panels, toolbars
+│           │   └── assets/         # Image/SVG asset management
+│           ├── core/               # DI, gRPC client, repositories, config
+│           └── gen/                # Generated Dart gRPC stubs
 ├── packages/
-│   ├── core/             # Shared utilities & abstractions
-│   ├── ui_kit/           # Design system components
-│   └── protos/           # Protobuf definitions
-├── features/
-│   ├── canvas/           # Infinite canvas feature
-│   ├── version_control/  # Git-like VC feature
-│   ├── auth/             # Authentication feature
-│   └── collaboration/    # Real-time collaboration
-├── backend/
-│   └── server/           # Bun + Elysia API server
-├── PLAN.md               # Development roadmap
-└── PROGRESS.md           # Daily progress log
+│   ├── core/                       # Shared models (Shape hierarchy), math (Matrix2D)
+│   ├── ui_kit/                     # Design system (VioTheme, VioColors)
+│   └── protos/                     # Protobuf .proto files (single source of truth)
+│       └── vio/v1/                 # shape, canvas, branch, commit, pullrequest, etc.
+├── backend/                        # Bun + ConnectRPC gRPC server
+│   └── src/
+│       ├── services/               # Service implementations (ServiceImpl<T>)
+│       ├── db/schema/              # Drizzle ORM schema (PostgreSQL)
+│       └── gen/                    # Generated TypeScript from protos
+├── PLAN.md                         # Development roadmap
+└── PROGRESS.md                     # Daily progress log
 ```
 
 ## 🎨 Features
 
 - **Infinite Canvas**: High-performance rendering with CustomPainter
+- **Shape Tools**: Rectangle, ellipse, frame, text, images, SVG
 - **Text Tool**: Inline editing, typography controls, Google Fonts rendering
 - **Context Menus**: Right-click menus on canvas and layers (cut/copy/paste, group/ungroup, z-order)
 - **Layers Panel**: Penpot-like row hover controls (eye/lock), drag/drop reparenting
 - **Git-like Version Control**: Branches, commits, and pull requests for designs
-- **Real-time Collaboration**: Cursor presence and draft state sync via gRPC
+- **Three-way Merge**: Property-level conflict detection and resolution
 - **Blue Dark Mode**: Beautiful dark theme optimized for design work
 
 ## 🖱️ Canvas Controls
@@ -98,7 +127,3 @@ vio/
 
 - [PLAN.md](./PLAN.md) - Detailed development roadmap
 - [PROGRESS.md](./PROGRESS.md) - Daily development log
-
-## 📄 License
-
-MIT

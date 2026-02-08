@@ -2,7 +2,7 @@
 
 ## Vision
 
-Recreate the core functionality of Penpot (Open Source Design & Prototyping Tool) using Flutter for the frontend and Bun + Elysia for the backend. This implementation introduces a **Git-like Version Control System for Design** where users work on branches, commit changes, and merge via Pull Requests.
+Recreate the core functionality of Penpot (Open Source Design & Prototyping Tool) using Flutter for the frontend and Bun + ConnectRPC for the backend. This implementation introduces a **Git-like Version Control System for Design** where users work on branches, commit changes, and merge via Pull Requests.
 
 ## Architecture Overview
 
@@ -24,8 +24,7 @@ Recreate the core functionality of Penpot (Open Source Design & Prototyping Tool
 │  ├── auth/             # Authentication & authorization         │
 │  └── collaboration/    # Real-time presence & draft states      │
 │                                                                 │
-│  backend/                                                       │
-│  └── server/           # Bun + Elysia API server                │
+│  backend/              # Bun + ConnectRPC gRPC server            │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -40,12 +39,13 @@ Recreate the core functionality of Penpot (Open Source Design & Prototyping Tool
   - `hydrated_bloc` for persistence
 - **Rendering**: `CustomPainter` + Flow delegates for infinite canvas
 
-### Backend (Bun + Elysia)
+### Backend (Bun + ConnectRPC)
 - **Runtime**: Bun (latest)
-- **Framework**: ElysiaJS with `elysia-decorators`
+- **Framework**: ConnectRPC (`@connectrpc/connect` + `@connectrpc/connect-node`)
 - **Database**: PostgreSQL
-- **ORM**: Drizzle ORM
-- **Communication**: gRPC (connect-es) with Protobuf
+- **ORM**: Drizzle ORM (`drizzle-orm/bun-sql`)
+- **Communication**: ConnectRPC (HTTP/2) + gRPC-Web for Flutter
+- **Lint/Format**: Biome (not ESLint/Prettier)
 
 ### Shared
 - **Protobuf**: Single source of truth for types
@@ -116,12 +116,12 @@ Recreate the core functionality of Penpot (Open Source Design & Prototyping Tool
 ## Phase 2: Backend & Data Layer
 
 ### 2.1 Backend Setup
-- [x] Initialize Bun project with Elysia
+- [x] Initialize Bun project
 - [x] Configure Drizzle ORM with PostgreSQL
 - [x] Migrate to Bun native SQL (`bun:sql` + `drizzle-orm/bun-sql`)
 - [x] Set up database migrations
-- [x] Create base API structure with decorators
-- [x] Use Elysia TypeBox (t.*) for validation (no Zod)
+- [x] Migrate from Elysia REST to ConnectRPC gRPC server
+- [x] Implement `ServiceImpl<T>` pattern for all services
 
 ### 2.2 Database Schema
 - [x] Create `users` table (via ownerId/authorId references)
@@ -132,27 +132,31 @@ Recreate the core functionality of Penpot (Open Source Design & Prototyping Tool
 - [x] Create `snapshots` table (serialized canvas state)
 
 ### 2.3 Flutter API Infrastructure
-- [x] Add dio HTTP client package
+- [x] Add dio HTTP client package (legacy REST layer)
 - [x] Create ApiClient base class with interceptors
 - [x] Create ApiConfig and ApiEndpoints
 - [x] Create Shape DTOs (ShapeDto, ShapeFactory)
-- [x] Create ProjectApiService, BranchApiService
-- [x] Create CanvasApiService (state, sync, shapes)
-- [x] Create CanvasRepository with auto-sync
+- [x] Migrate to gRPC-Web client (`grpc` package)
+- [x] Create `ProtoConverter` for proto ↔ domain conversion
+- [x] Create `GrpcCanvasRepository` with auto-sync (5s interval, last-write-wins)
 
-### 2.4 REST API Endpoints
+### 2.4 gRPC Services (ConnectRPC)
 - [ ] Authentication endpoints (register, login, refresh)
-- [x] Project CRUD endpoints
-- [x] Shape CRUD endpoints
-- [x] Shape batch operations endpoints
-- [x] Canvas state endpoint
-- [x] Sync endpoint (for auto-sync operations)
+- [x] ProjectService — CRUD
+- [x] ShapeService — CRUD + batch mutations
+- [x] CanvasService — state load/sync
+- [x] BranchService — CRUD + merge + compare
+- [x] CommitService — create, checkout, revert, cherry-pick
+- [x] PullRequestService — full PR lifecycle (10 RPCs)
+- [x] AssetService — image/SVG asset management
 
-### 2.5 Protobuf Definitions (Future)
-- [ ] Define Shape message types
-- [ ] Define Matrix/Transform messages
-- [ ] Define File/Project messages
-- [ ] Set up code generation scripts
+### 2.5 Protobuf Definitions
+- [x] Define Shape message types (`shape.proto`)
+- [x] Define Matrix/Transform messages (`common.proto`)
+- [x] Define Project/Branch/Commit messages
+- [x] Set up `buf generate` codegen → TypeScript + Dart (`packages/protos/buf.gen.yaml`)
+- [x] Define PR and conflict resolution messages (`pullrequest.proto`, `common.proto`)
+- [x] Define asset messages (`asset.proto`)
 
 ---
 
@@ -166,16 +170,16 @@ Recreate the core functionality of Penpot (Open Source Design & Prototyping Tool
 
 ### 3.2 Branch Operations
 - [x] Create branch from commit
-- [ ] Switch between branches (UI)
-- [x] Delete branch
+- [x] Switch between branches (UI) — with uncommitted changes detection
+- [x] Delete branch (with confirmation dialog)
 - [x] List branches for project
 - [x] Merge branches (fast-forward and three-way)
 - [x] Compare branches (ahead/behind)
 
 ### 3.3 Commit Operations
-- [ ] Stage changes (diff current vs last commit)
+- [x] Stage changes (diff current vs last commit) — shape-level change tracking
 - [x] Create commit with message
-- [ ] View commit history (log)
+- [x] View commit history (log) — commit history list panel
 - [x] Checkout specific commit (creates branch)
 - [x] Revert commit (creates inverse commit)
 - [x] Cherry-pick commit (apply to another branch)
@@ -190,10 +194,12 @@ Recreate the core functionality of Penpot (Open Source Design & Prototyping Tool
 - [x] Resolve conflicts interactively
 
 ### 3.5 Frontend VC UI
-- [ ] Branch selector dropdown
-- [ ] Commit panel with staged changes
-- [ ] PR creation dialog
-- [ ] Merge conflict resolution UI
+- [x] Branch selector header with branch list panel
+- [x] Commit panel with staged changes + commit dialog
+- [x] PR list + creation + merge UI
+- [x] Merge conflict resolution dialog
+- [x] Branch settings dialog (rename, protection)
+- [x] `_CanvasVersionControlBridge` for bidirectional sync
 
 ---
 
@@ -226,10 +232,10 @@ Recreate the core functionality of Penpot (Open Source Design & Prototyping Tool
 ## Phase 5: Advanced Features (Future)
 
 ### 5.1 Additional Shape Types
-- [ ] Path/Pen tool
+- [ ] Path/Pen tool (model exists: `PathShape`)
 - [x] Text with fonts
-- [ ] Images
-- [ ] Boolean operations (union, subtract, intersect)
+- [x] Images (model + asset service: `ImageShape`, `AssetService`)
+- [ ] Boolean operations (model exists: `BoolShape`)
 
 ### 5.2 Components & Libraries
 - [ ] Create reusable components

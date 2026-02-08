@@ -78,10 +78,10 @@ Always use `VioColors` from `packages/ui_kit/`: `primary` (#4C9AFF), `background
 Flutter environments configured via `apps/client/config/{dev,staging,production}.json` passed with `--dart-define-from-file`. Controls `GRPC_HOST`, `GRPC_PORT`, `GRPC_WEB_PORT`, `USE_TLS`.
 
 ## Key Files
-- `PLAN.md` / `PROGRESS.md` — Roadmap and daily log
-- `apps/client/lib/src/features/canvas/bloc/canvas_bloc.dart` — Core canvas logic (~3300 lines)
-- `packages/core/lib/src/models/shape.dart` — Shape base class hierarchy
-- `apps/client/lib/src/core/grpc/proto_converter.dart` — Proto ↔ domain conversion
-- `apps/client/lib/src/app.dart` — BLoC wiring and `_CanvasVersionControlBridge`
-- `backend/src/db/schema/index.ts` — Full DB schema (projects, branches, commits, snapshots, shapes, pull_requests)
-- `packages/protos/vio/v1/` — All `.proto` definitions
+- **PLAN.md** / **PROGRESS.md** — Roadmap and daily log (repo root)
+- **apps/client/lib/src/features/canvas/bloc/canvas_bloc.dart** — Core canvas logic (~3300 lines)
+- **packages/core/lib/src/models/shape.dart** — Shape base class hierarchy
+- **apps/client/lib/src/core/grpc/proto_converter.dart** — Proto ↔ domain conversion
+- **apps/client/lib/src/app.dart** — BLoC wiring and `_CanvasVersionControlBridge`
+- **backend/src/db/schema/index.ts** — Full DB schema (projects, branches, commits, snapshots, shapes, pull_requests)
+- **packages/protos/vio/v1/** — All `.proto` definitions

@@ -69,8 +69,9 @@ melos:
     # Protobuf Generation
     proto:generate:
       run: |
-        cd packages/protos && dart run build_runner build --delete-conflicting-outputs
-      description: Generate Dart code from proto files
+        export PATH="$PATH:$PWD/backend/node_modules/.bin:$HOME/.pub-cache/bin"
+        cd packages/protos && bunx buf generate
+      description: Generate Dart + TypeScript code from proto files
 
     # Clean
     clean:

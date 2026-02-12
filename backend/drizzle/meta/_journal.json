@@ -8,6 +8,13 @@
       "when": 1769967650694,
       "tag": "0000_unusual_franklin_storm",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1770912189817,
+      "tag": "0001_absent_namorita",
+      "breakpoints": true
     }
   ]
 }

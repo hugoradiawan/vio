@@ -24,6 +24,7 @@ import { ProjectService } from "./gen/vio/v1/project_pb.js";
 import { PullRequestService } from "./gen/vio/v1/pullrequest_pb.js";
 import { ShapeService } from "./gen/vio/v1/shape_pb.js";
 
+import { loggingInterceptor } from "./interceptors/index.js";
 import {
 	assetServiceImpl,
 	authServiceImpl,
@@ -108,6 +109,7 @@ const connectHandler = connectNodeAdapter({
 	routes: createRoutes,
 	connect: true,
 	grpcWeb: true, // Enable gRPC-Web for Flutter web client
+	interceptors: [loggingInterceptor],
 });
 
 // Wrap handler with CORS support

@@ -110,12 +110,23 @@ export const commitServiceImpl: ServiceImpl<typeof CommitService> = {
 	},
 
 	async createCommit(req): Promise<CreateCommitResponse> {
-		// Get current shapes to create snapshot
-		const shapes = await db
-			.select()
-			.from(schema.shapes)
-			.where(eq(schema.shapes.projectId, req.projectId))
-			.orderBy(asc(schema.shapes.sortOrder));
+		// Determine snapshot data: use client-provided data if available,
+		// otherwise fall back to reading all shapes from the DB.
+		// Client sends snapshot_data for partial commits (only staged changes).
+		let snapshotData: { shapes: unknown[] };
+
+		if (req.snapshotData && req.snapshotData.length > 0) {
+			// Client provided explicit snapshot data (partial commit with staged changes only)
+			snapshotData = JSON.parse(new TextDecoder().decode(req.snapshotData));
+		} else {
+			// Default: read all current shapes from DB (full commit)
+			const shapes = await db
+				.select()
+				.from(schema.shapes)
+				.where(eq(schema.shapes.projectId, req.projectId))
+				.orderBy(asc(schema.shapes.sortOrder));
+			snapshotData = { shapes };
+		}
 
 		// Get current branch head commit
 		const branch = await db.query.branches.findFirst({
@@ -134,7 +145,7 @@ export const commitServiceImpl: ServiceImpl<typeof CommitService> = {
 			.insert(schema.snapshots)
 			.values({
 				projectId: req.projectId,
-				data: { shapes }, // Store shapes as JSON
+				data: snapshotData,
 			})
 			.returning();
 

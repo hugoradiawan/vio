@@ -786,26 +786,52 @@ class VersionControlBloc
         'VersionControlBloc: Synced shapes to database before commit',
       );
 
-      await _commitClient.createCommit(
-        commit_pb.CreateCommitRequest()
-          ..projectId = state.projectId!
-          ..branchId = state.currentBranchId!
-          ..message = event.message
-          ..authorId = state.userId!,
-      );
+      // Compute the committed shapes: base shapes + only staged changes.
+      // Unstaged changes are NOT included in the commit snapshot.
+      final committedShapes = _computeCommittedShapes();
+      final isPartialCommit = state.stagedShapeIds.length <
+          state.uncommittedChanges.length;
 
-      // After commit, current shapes become the new base (no uncommitted changes)
+      final request = commit_pb.CreateCommitRequest()
+        ..projectId = state.projectId!
+        ..branchId = state.currentBranchId!
+        ..message = event.message
+        ..authorId = state.userId!;
+
+      // For partial commits (not all changes staged), send explicit snapshot
+      // data so the backend doesn't read ALL shapes from the DB.
+      if (isPartialCommit) {
+        final snapshotJson = jsonEncode({
+          'shapes': committedShapes.values
+              .map(_shapeToSnapshotJson)
+              .toList(),
+        });
+        request.snapshotData = utf8.encode(snapshotJson);
+        VioLogger.info(
+          'VersionControlBloc: Partial commit - sending ${committedShapes.length} '
+          'committed shapes as snapshot data',
+        );
+      }
+
+      await _commitClient.createCommit(request);
+
+      // After commit, update base shapes to the committed state.
+      // Unstaged changes remain as uncommitted.
+      final newUncommitted = _computeChanges(committedShapes, state.currentShapes);
       emit(
         state.copyWith(
           stagedShapeIds: {},
-          baseShapes: state.currentShapes,
-          uncommittedChanges: [],
+          baseShapes: committedShapes,
+          uncommittedChanges: newUncommitted,
           status: VersionControlStatus.ready,
         ),
       );
       add(const CommitsRefreshRequested());
 
-      VioLogger.info('VersionControlBloc: Commit created, base shapes updated');
+      VioLogger.info(
+        'VersionControlBloc: Commit created. '
+        '${newUncommitted.length} uncommitted changes remain',
+      );
     } on GrpcError catch (e) {
       emit(
         state.copyWith(
@@ -814,6 +840,95 @@ class VersionControlBloc
         ),
       );
     }
+  }
+
+  /// Compute the shapes that should be included in a commit snapshot.
+  /// This takes the base shapes and applies only the staged changes.
+  Map<String, Shape> _computeCommittedShapes() {
+    final committed = Map<String, Shape>.from(state.baseShapes);
+
+    for (final change in state.uncommittedChanges) {
+      if (!state.stagedShapeIds.contains(change.shapeId)) continue;
+
+      switch (change.changeType) {
+        case ShapeChangeType.added:
+        case ShapeChangeType.modified:
+          final currentShape = state.currentShapes[change.shapeId];
+          if (currentShape != null) {
+            committed[change.shapeId] = currentShape;
+          }
+        case ShapeChangeType.deleted:
+          committed.remove(change.shapeId);
+      }
+    }
+
+    return committed;
+  }
+
+  /// Convert a Shape to DB-compatible JSON format for snapshot data.
+  /// Matches the format used when the backend reads shapes from the DB:
+  /// flat transform columns (transformA..F) and properties wrapper.
+  static Map<String, dynamic> _shapeToSnapshotJson(Shape shape) {
+    final properties = <String, dynamic>{};
+
+    // Shadow
+    if (shape.shadow != null) {
+      properties['shadow'] = shape.shadow!.toJson();
+    }
+    // Blur
+    if (shape.blur != null) {
+      properties['blur'] = shape.blur!.toJson();
+    }
+
+    // Type-specific properties
+    if (shape is RectangleShape) {
+      properties['r1'] = shape.r1;
+      properties['r2'] = shape.r2;
+      properties['r3'] = shape.r3;
+      properties['r4'] = shape.r4;
+    } else if (shape is TextShape) {
+      properties['text'] = shape.text;
+      properties['fontSize'] = shape.fontSize;
+      if (shape.fontFamily != null) properties['fontFamily'] = shape.fontFamily;
+      if (shape.fontWeight != null) properties['fontWeight'] = shape.fontWeight;
+      if (shape.lineHeight != null) properties['lineHeight'] = shape.lineHeight;
+      properties['letterSpacingPercent'] = shape.letterSpacingPercent;
+      properties['textAlign'] = shape.textAlign.name;
+    } else if (shape is ImageShape) {
+      properties['assetId'] = shape.assetId;
+      properties['originalWidth'] = shape.originalWidth;
+      properties['originalHeight'] = shape.originalHeight;
+      properties['scaleMode'] = shape.scaleMode.name;
+    } else if (shape is SvgShape) {
+      properties['svgContent'] = shape.svgContent;
+      if (shape.viewBox != null) properties['viewBox'] = shape.viewBox;
+    }
+
+    return {
+      'id': shape.id,
+      'type': shape.type.name,
+      'name': shape.name,
+      'x': shape.x,
+      'y': shape.y,
+      'width': shape.width,
+      'height': shape.height,
+      'rotation': shape.rotation,
+      'transformA': shape.transform.a,
+      'transformB': shape.transform.b,
+      'transformC': shape.transform.c,
+      'transformD': shape.transform.d,
+      'transformE': shape.transform.e,
+      'transformF': shape.transform.f,
+      'fills': shape.fills.map((f) => f.toJson()).toList(),
+      'strokes': shape.strokes.map((s) => s.toJson()).toList(),
+      'opacity': shape.opacity,
+      'hidden': shape.hidden,
+      'blocked': shape.blocked,
+      'sortOrder': shape.sortOrder,
+      if (shape.parentId != null) 'parentId': shape.parentId,
+      if (shape.frameId != null) 'frameId': shape.frameId,
+      'properties': properties,
+    };
   }
 
   Future<void> _onCommitCheckout(

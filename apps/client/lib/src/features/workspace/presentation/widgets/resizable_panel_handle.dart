@@ -62,12 +62,11 @@ class _ResizablePanelHandleState extends State<ResizablePanelHandle> {
         },
         onDoubleTap: widget.onDoubleTap,
         child: Container(
-          width: 8, // Hit area width
           color: Colors.transparent,
           child: Center(
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
-              width: isActive ? 3 : 1,
+              width: 1,
               color: isActive ? VioColors.primary : VioColors.border,
             ),
           ),

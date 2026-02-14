@@ -103,74 +103,97 @@ class _WorkspacePageState extends State<WorkspacePage> {
                     children: [
                       // Main content area
                       Expanded(
-                        child: Row(
+                        child: Stack(
                           children: [
-                            // Left panel (layers, assets) with resize handle
-                            if (state.isLeftPanelVisible) ...[
-                              LeftPanel(width: state.leftPanelWidth),
-                              ResizablePanelHandle(
-                                onDragUpdate: (delta) {
-                                  final bloc = context.read<WorkspaceBloc>();
-                                  final currentWidth =
-                                      bloc.state.leftPanelWidth;
-                                  bloc.add(
-                                    LeftPanelWidthChanged(currentWidth + delta),
-                                  );
-                                },
-                                onDoubleTap: () {
-                                  context.read<WorkspaceBloc>().add(
-                                        const LeftPanelWidthReset(),
-                                      );
-                                },
-                              ),
-                            ],
-                            // Canvas area
-                            Expanded(
-                              child: Container(
-                                color: VioColors.canvasBackground,
-                                child: Stack(
-                                  children: [
-                                    const CanvasView(),
-                                    Positioned(
-                                      bottom: VioSpacing.sm,
-                                      left: 0,
-                                      right: 0,
-                                      child: Center(
-                                        child: ConstrainedBox(
-                                          constraints: const BoxConstraints(
-                                            maxWidth: 640,
+                            Row(
+                              children: [
+                                // Left panel
+                                if (state.isLeftPanelVisible)
+                                  LeftPanel(width: state.leftPanelWidth),
+                                // Canvas area
+                                Expanded(
+                                  child: Container(
+                                    color: VioColors.canvasBackground,
+                                    child: Stack(
+                                      children: [
+                                        const CanvasView(),
+                                        Positioned(
+                                          bottom: VioSpacing.sm,
+                                          left: 0,
+                                          right: 0,
+                                          child: Center(
+                                            child: ConstrainedBox(
+                                              constraints:
+                                                  const BoxConstraints(
+                                                maxWidth: 640,
+                                              ),
+                                              child:
+                                                  _buildToolsSection(context),
+                                            ),
                                           ),
-                                          child: _buildToolsSection(context),
                                         ),
-                                      ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
+                                ),
+                                // Right panel
+                                if (state.isRightPanelVisible)
+                                  RightPanel(width: state.rightPanelWidth),
+                              ],
+                            ),
+                            // Left panel resize handle (overlay)
+                            if (state.isLeftPanelVisible)
+                              Positioned(
+                                left: state.leftPanelWidth - 6,
+                                top: 0,
+                                bottom: 0,
+                                width: 12,
+                                child: ResizablePanelHandle(
+                                  onDragUpdate: (delta) {
+                                    final bloc =
+                                        context.read<WorkspaceBloc>();
+                                    final currentWidth =
+                                        bloc.state.leftPanelWidth;
+                                    bloc.add(
+                                      LeftPanelWidthChanged(
+                                        currentWidth + delta,
+                                      ),
+                                    );
+                                  },
+                                  onDoubleTap: () {
+                                    context.read<WorkspaceBloc>().add(
+                                          const LeftPanelWidthReset(),
+                                        );
+                                  },
                                 ),
                               ),
-                            ),
-                            // Right panel (properties) with resize handle
-                            if (state.isRightPanelVisible) ...[
-                              ResizablePanelHandle(
-                                isLeftSide: false,
-                                onDragUpdate: (delta) {
-                                  final bloc = context.read<WorkspaceBloc>();
-                                  final currentWidth =
-                                      bloc.state.rightPanelWidth;
-                                  // Dragging right makes panel narrower
-                                  bloc.add(
-                                    RightPanelWidthChanged(
-                                      currentWidth - delta,
-                                    ),
-                                  );
-                                },
-                                onDoubleTap: () {
-                                  context.read<WorkspaceBloc>().add(
-                                        const RightPanelWidthReset(),
-                                      );
-                                },
+                            // Right panel resize handle (overlay)
+                            if (state.isRightPanelVisible)
+                              Positioned(
+                                right: state.rightPanelWidth - 6,
+                                top: 0,
+                                bottom: 0,
+                                width: 12,
+                                child: ResizablePanelHandle(
+                                  isLeftSide: false,
+                                  onDragUpdate: (delta) {
+                                    final bloc =
+                                        context.read<WorkspaceBloc>();
+                                    final currentWidth =
+                                        bloc.state.rightPanelWidth;
+                                    bloc.add(
+                                      RightPanelWidthChanged(
+                                        currentWidth - delta,
+                                      ),
+                                    );
+                                  },
+                                  onDoubleTap: () {
+                                    context.read<WorkspaceBloc>().add(
+                                          const RightPanelWidthReset(),
+                                        );
+                                  },
+                                ),
                               ),
-                              RightPanel(width: state.rightPanelWidth),
-                            ],
                           ],
                         ),
                       ),

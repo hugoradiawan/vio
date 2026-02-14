@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:vio_core/vio_core.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
-import '../../../../core/api/dto.dart';
+import '../../../../gen/vio/v1/common.pb.dart' as common_pb;
+import '../../../../gen/vio/v1/common.pbenum.dart' as common_enum;
 
 /// Dialog for resolving merge conflicts with visual diff preview
 /// Option B: Visual side-by-side shape preview
@@ -15,10 +16,10 @@ class ConflictResolutionDialog extends StatefulWidget {
     super.key,
   });
 
-  final List<ShapeConflictDto> conflicts;
+  final List<common_pb.ShapeConflict> conflicts;
   final String sourceBranchName;
   final String targetBranchName;
-  final void Function(List<ConflictResolutionDto> resolutions) onResolve;
+  final void Function(List<common_pb.ConflictResolution> resolutions) onResolve;
 
   @override
   State<ConflictResolutionDialog> createState() =>
@@ -26,7 +27,7 @@ class ConflictResolutionDialog extends StatefulWidget {
 }
 
 class _ConflictResolutionDialogState extends State<ConflictResolutionDialog> {
-  late Map<String, ConflictResolutionChoice> _resolutions;
+  late Map<String, common_enum.ResolutionChoice> _resolutions;
   int _currentIndex = 0;
 
   @override
@@ -35,18 +36,18 @@ class _ConflictResolutionDialogState extends State<ConflictResolutionDialog> {
     // Initialize all resolutions to use source by default
     _resolutions = {
       for (final conflict in widget.conflicts)
-        conflict.shapeId: ConflictResolutionChoice.source,
+        conflict.shapeId: common_enum.ResolutionChoice.RESOLUTION_CHOICE_SOURCE,
     };
   }
 
   bool get _allResolved => _resolutions.values.every(
         (choice) =>
-            choice != ConflictResolutionChoice.source &&
-                choice != ConflictResolutionChoice.target ||
+            choice != common_enum.ResolutionChoice.RESOLUTION_CHOICE_SOURCE &&
+                choice != common_enum.ResolutionChoice.RESOLUTION_CHOICE_TARGET ||
             _resolutions.values.isNotEmpty,
       );
 
-  ShapeConflictDto get _currentConflict => widget.conflicts[_currentIndex];
+  common_pb.ShapeConflict get _currentConflict => widget.conflicts[_currentIndex];
 
   @override
   Widget build(BuildContext context) {
@@ -100,12 +101,20 @@ class _ConflictResolutionDialogState extends State<ConflictResolutionDialog> {
               canResolve: _allResolved,
               onCancel: () => Navigator.of(context).pop(),
               onResolve: () {
-                final resolutions = widget.conflicts.map((conflict) {
-                  return ConflictResolutionDto(
-                    shapeId: conflict.shapeId,
-                    choice: _resolutions[conflict.shapeId]!,
-                  );
-                }).toList();
+                final resolutions = <common_pb.ConflictResolution>[];
+                for (final conflict in widget.conflicts) {
+                  final choice = _resolutions[conflict.shapeId]!;
+                  // Generate per-property resolutions from per-shape choice
+                  for (final prop in conflict.propertyConflicts) {
+                    resolutions.add(
+                      common_pb.ConflictResolution(
+                        shapeId: conflict.shapeId,
+                        propertyName: prop.propertyName,
+                        choice: choice,
+                      ),
+                    );
+                  }
+                }
                 widget.onResolve(resolutions);
               },
             ),
@@ -181,9 +190,9 @@ class _ConflictNavigator extends StatelessWidget {
     required this.onSelectConflict,
   });
 
-  final List<ShapeConflictDto> conflicts;
+  final List<common_pb.ShapeConflict> conflicts;
   final int currentIndex;
-  final Map<String, ConflictResolutionChoice> resolutions;
+  final Map<String, common_enum.ResolutionChoice> resolutions;
   final void Function(int index) onSelectConflict;
 
   @override
@@ -257,11 +266,11 @@ class _ConflictDiffView extends StatelessWidget {
     required this.onResolutionChanged,
   });
 
-  final ShapeConflictDto conflict;
+  final common_pb.ShapeConflict conflict;
   final String sourceBranchName;
   final String targetBranchName;
-  final ConflictResolutionChoice resolution;
-  final void Function(ConflictResolutionChoice) onResolutionChanged;
+  final common_enum.ResolutionChoice resolution;
+  final void Function(common_enum.ResolutionChoice) onResolutionChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -273,13 +282,13 @@ class _ConflictDiffView extends StatelessWidget {
           child: _ShapeVersionPanel(
             title: sourceBranchName,
             subtitle: 'Incoming changes',
-            isSelected: resolution == ConflictResolutionChoice.source,
+            isSelected: resolution == common_enum.ResolutionChoice.RESOLUTION_CHOICE_SOURCE,
             color: VioColors.primary,
-            shapeData: conflict.sourceShape,
+            shapeData: null, // Proto ShapeConflict doesn't carry full shape objects
             propertyConflicts: conflict.propertyConflicts,
             showSource: true,
             onSelect: () =>
-                onResolutionChanged(ConflictResolutionChoice.source),
+                onResolutionChanged(common_enum.ResolutionChoice.RESOLUTION_CHOICE_SOURCE),
           ),
         ),
         const SizedBox(width: 16),
@@ -289,13 +298,13 @@ class _ConflictDiffView extends StatelessWidget {
           child: _ShapeVersionPanel(
             title: targetBranchName,
             subtitle: 'Current version',
-            isSelected: resolution == ConflictResolutionChoice.target,
+            isSelected: resolution == common_enum.ResolutionChoice.RESOLUTION_CHOICE_TARGET,
             color: VioColors.warning,
-            shapeData: conflict.targetShape,
+            shapeData: null, // Proto ShapeConflict doesn't carry full shape objects
             propertyConflicts: conflict.propertyConflicts,
             showSource: false,
             onSelect: () =>
-                onResolutionChanged(ConflictResolutionChoice.target),
+                onResolutionChanged(common_enum.ResolutionChoice.RESOLUTION_CHOICE_TARGET),
           ),
         ),
       ],
@@ -321,7 +330,7 @@ class _ShapeVersionPanel extends StatelessWidget {
   final bool isSelected;
   final Color color;
   final Shape? shapeData;
-  final List<PropertyConflictDto> propertyConflicts;
+  final List<common_pb.PropertyConflict> propertyConflicts;
   final bool showSource;
   final VoidCallback onSelect;
 
@@ -593,7 +602,7 @@ class _PropertyConflictsList extends StatelessWidget {
     required this.accentColor,
   });
 
-  final List<PropertyConflictDto> conflicts;
+  final List<common_pb.PropertyConflict> conflicts;
   final bool showSource;
   final Color accentColor;
 

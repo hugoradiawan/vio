@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vio_client/src/features/version_control/presentation/presentation.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
-import '../../../../core/api/dto.dart' show BranchDto;
+import '../../../../gen/vio/v1/branch.pb.dart' as branch_pb;
 import '../../bloc/version_control_bloc.dart';
 
 /// Main version control tab content for the left panel
@@ -21,14 +21,10 @@ class VersionControlTab extends StatelessWidget {
         if (state.pendingSwitchBranchId != null) {
           final branch = state.branches.firstWhere(
             (b) => b.id == state.pendingSwitchBranchId,
-            orElse: () => BranchDto(
-              id: state.pendingSwitchBranchId!,
-              projectId: state.projectId ?? '',
-              name: 'Unknown',
-              isDefault: false,
-              isProtected: false,
-              createdById: '',
-            ),
+            orElse: () => branch_pb.Branch()
+              ..id = state.pendingSwitchBranchId!
+              ..projectId = state.projectId ?? ''
+              ..name = 'Unknown',
           );
           _showSwitchConfirmationDialog(context, branch);
         }
@@ -37,14 +33,10 @@ class VersionControlTab extends StatelessWidget {
         if (state.pendingDeleteBranchId != null) {
           final branch = state.branches.firstWhere(
             (b) => b.id == state.pendingDeleteBranchId,
-            orElse: () => BranchDto(
-              id: state.pendingDeleteBranchId!,
-              projectId: state.projectId ?? '',
-              name: 'Unknown',
-              isDefault: false,
-              isProtected: false,
-              createdById: '',
-            ),
+            orElse: () => branch_pb.Branch()
+              ..id = state.pendingDeleteBranchId!
+              ..projectId = state.projectId ?? ''
+              ..name = 'Unknown',
           );
           _showDeleteConfirmationDialog(context, branch);
         }
@@ -170,7 +162,7 @@ class VersionControlTab extends StatelessWidget {
     );
   }
 
-  void _showSwitchConfirmationDialog(BuildContext context, BranchDto branch) {
+  void _showSwitchConfirmationDialog(BuildContext context, branch_pb.Branch branch) {
     showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -251,7 +243,7 @@ class VersionControlTab extends StatelessWidget {
     );
   }
 
-  void _showDeleteConfirmationDialog(BuildContext context, BranchDto branch) {
+  void _showDeleteConfirmationDialog(BuildContext context, branch_pb.Branch branch) {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(

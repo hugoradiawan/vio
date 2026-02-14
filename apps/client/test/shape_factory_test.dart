@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vio_client/src/core/api/dto.dart';
 import 'package:vio_core/vio_core.dart';
 
 void main() {

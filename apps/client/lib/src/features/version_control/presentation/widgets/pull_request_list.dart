@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
-import '../../../../core/api/dto.dart';
+import '../../../../gen/vio/v1/branch.pb.dart' as branch_pb;
+import '../../../../gen/vio/v1/common.pbenum.dart' as common_enum;
+import '../../../../gen/vio/v1/pullrequest.pb.dart' as pr_pb;
+import '../../../../gen/vio/v1/pullrequest.pbenum.dart' as pr_enum;
 import '../../bloc/version_control_bloc.dart';
+import '../../models/models.dart';
 import 'conflict_resolution_dialog.dart';
 
 /// Pull request list and detail view
@@ -134,8 +138,8 @@ class PullRequestList extends StatelessWidget {
       barrierDismissible: false,
       builder: (dialogContext) => ConflictResolutionDialog(
         conflicts: conflicts,
-        sourceBranchName: detail.pullRequest.sourceBranchName ?? 'source',
-        targetBranchName: detail.pullRequest.targetBranchName ?? 'target',
+        sourceBranchName: detail.sourceBranch?.name ?? 'source',
+        targetBranchName: detail.targetBranch?.name ?? 'target',
         onResolve: (resolutions) {
           context.read<VersionControlBloc>().add(
                 ConflictsResolveRequested(
@@ -284,7 +288,7 @@ class _PullRequestItem extends StatelessWidget {
     required this.onTap,
   });
 
-  final PullRequestDto pullRequest;
+  final pr_pb.PullRequest pullRequest;
   final bool isSelected;
   final VoidCallback onTap;
 
@@ -359,7 +363,7 @@ class _PullRequestItem extends StatelessWidget {
 class _StatusBadge extends StatelessWidget {
   const _StatusBadge({required this.status});
 
-  final PullRequestStatus status;
+  final pr_enum.PullRequestStatus status;
 
   @override
   Widget build(BuildContext context) {
@@ -368,21 +372,25 @@ class _StatusBadge extends StatelessWidget {
     String label;
 
     switch (status) {
-      case PullRequestStatus.open:
+      case pr_enum.PullRequestStatus.PULL_REQUEST_STATUS_OPEN:
         bgColor = VioColors.success.withAlpha(51);
         textColor = VioColors.success;
         label = 'Open';
         break;
-      case PullRequestStatus.merged:
+      case pr_enum.PullRequestStatus.PULL_REQUEST_STATUS_MERGED:
         bgColor = VioColors.primary.withAlpha(51);
         textColor = VioColors.primary;
         label = 'Merged';
         break;
-      case PullRequestStatus.closed:
+      case pr_enum.PullRequestStatus.PULL_REQUEST_STATUS_CLOSED:
         bgColor = VioColors.textTertiary.withAlpha(51);
         textColor = VioColors.textTertiary;
         label = 'Closed';
         break;
+      default:
+        bgColor = VioColors.success.withAlpha(51);
+        textColor = VioColors.success;
+        label = 'Open';
     }
 
     return Container(
@@ -413,7 +421,7 @@ class _PullRequestDetailPanel extends StatelessWidget {
     required this.onResolveConflicts,
   });
 
-  final PullRequestDetailDto detail;
+  final PullRequestDetail detail;
   final bool isMerging;
   final VoidCallback onMerge;
   final VoidCallback onClose;
@@ -439,7 +447,7 @@ class _PullRequestDetailPanel extends StatelessWidget {
           Row(
             children: [
               _BranchChip(
-                name: detail.pullRequest.sourceBranchName ?? 'Unknown',
+                name: detail.sourceBranch?.name ?? 'Unknown',
               ),
               const SizedBox(width: 8),
               const Icon(
@@ -449,7 +457,7 @@ class _PullRequestDetailPanel extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               _BranchChip(
-                name: detail.pullRequest.targetBranchName ?? 'Unknown',
+                name: detail.targetBranch?.name ?? 'Unknown',
               ),
             ],
           ),
@@ -659,7 +667,7 @@ class CreatePullRequestDialog extends StatefulWidget {
     super.key,
   });
 
-  final List<BranchDto> branches;
+  final List<branch_pb.Branch> branches;
   final String? currentBranchId;
   final void Function(
     String sourceBranchId,
@@ -860,7 +868,7 @@ class _BranchSelector extends StatelessWidget {
 
   final String label;
   final String? value;
-  final List<BranchDto> branches;
+  final List<branch_pb.Branch> branches;
   final void Function(String?) onChanged;
 
   @override
@@ -923,9 +931,9 @@ class MergePullRequestDialog extends StatefulWidget {
     super.key,
   });
 
-  final PullRequestDto pullRequest;
+  final pr_pb.PullRequest pullRequest;
   final bool isMergeable;
-  final void Function(MergeStrategy strategy, String? commitMessage) onMerge;
+  final void Function(common_enum.MergeStrategy strategy, String? commitMessage) onMerge;
 
   @override
   State<MergePullRequestDialog> createState() => _MergePullRequestDialogState();
@@ -933,7 +941,7 @@ class MergePullRequestDialog extends StatefulWidget {
 
 class _MergePullRequestDialogState extends State<MergePullRequestDialog> {
   final _messageController = TextEditingController();
-  MergeStrategy _strategy = MergeStrategy.mergeCommit;
+  common_enum.MergeStrategy _strategy = common_enum.MergeStrategy.MERGE_STRATEGY_MERGE_COMMIT;
 
   @override
   void initState() {
@@ -1057,35 +1065,35 @@ class _StrategySelector extends StatelessWidget {
     required this.onChanged,
   });
 
-  final MergeStrategy value;
-  final void Function(MergeStrategy) onChanged;
+  final common_enum.MergeStrategy value;
+  final void Function(common_enum.MergeStrategy) onChanged;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         _StrategyOption(
-          strategy: MergeStrategy.mergeCommit,
+          strategy: common_enum.MergeStrategy.MERGE_STRATEGY_MERGE_COMMIT,
           title: 'Merge Commit',
           description: 'Create a merge commit to combine branches',
-          isSelected: value == MergeStrategy.mergeCommit,
-          onTap: () => onChanged(MergeStrategy.mergeCommit),
+          isSelected: value == common_enum.MergeStrategy.MERGE_STRATEGY_MERGE_COMMIT,
+          onTap: () => onChanged(common_enum.MergeStrategy.MERGE_STRATEGY_MERGE_COMMIT),
         ),
         const SizedBox(height: 8),
         _StrategyOption(
-          strategy: MergeStrategy.fastForward,
+          strategy: common_enum.MergeStrategy.MERGE_STRATEGY_FAST_FORWARD,
           title: 'Fast Forward',
           description: 'Move branch pointer without merge commit',
-          isSelected: value == MergeStrategy.fastForward,
-          onTap: () => onChanged(MergeStrategy.fastForward),
+          isSelected: value == common_enum.MergeStrategy.MERGE_STRATEGY_FAST_FORWARD,
+          onTap: () => onChanged(common_enum.MergeStrategy.MERGE_STRATEGY_FAST_FORWARD),
         ),
         const SizedBox(height: 8),
         _StrategyOption(
-          strategy: MergeStrategy.squash,
+          strategy: common_enum.MergeStrategy.MERGE_STRATEGY_SQUASH,
           title: 'Squash',
           description: 'Combine all commits into a single commit',
-          isSelected: value == MergeStrategy.squash,
-          onTap: () => onChanged(MergeStrategy.squash),
+          isSelected: value == common_enum.MergeStrategy.MERGE_STRATEGY_SQUASH,
+          onTap: () => onChanged(common_enum.MergeStrategy.MERGE_STRATEGY_SQUASH),
         ),
       ],
     );
@@ -1102,7 +1110,7 @@ class _StrategyOption extends StatelessWidget {
     required this.onTap,
   });
 
-  final MergeStrategy strategy;
+  final common_enum.MergeStrategy strategy;
   final String title;
   final String description;
   final bool isSelected;

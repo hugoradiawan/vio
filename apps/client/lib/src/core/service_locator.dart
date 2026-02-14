@@ -5,7 +5,6 @@ import '../gen/vio/v1/commit.pbgrpc.dart';
 import '../gen/vio/v1/project.pbgrpc.dart';
 import '../gen/vio/v1/pullrequest.pbgrpc.dart';
 import '../gen/vio/v1/shape.pbgrpc.dart';
-import 'api/api_config.dart';
 import 'config/app_config.dart';
 import 'grpc/grpc.dart';
 import 'repositories/repositories.dart';
@@ -45,7 +44,6 @@ class ServiceLocator {
 
     // Configure environment-aware singletons
     GrpcConfig.configure(effectiveConfig);
-    ApiConfig.configure(baseUrl: effectiveConfig.apiBaseUrl);
 
     // Initialize preferences service first (no dependencies)
     _preferencesService = PreferencesService.instance;

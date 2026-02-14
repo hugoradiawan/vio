@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
-import '../../../../core/api/dto.dart';
+import '../../../../gen/vio/v1/branch.pb.dart' as branch_pb;
 import '../../bloc/version_control_bloc.dart';
 import 'branch_settings_dialog.dart';
 
@@ -181,7 +181,7 @@ class _BranchListPanelState extends State<BranchListPanel> {
   Widget _buildBranchList(
     BuildContext context,
     VersionControlState state,
-    List<BranchDto> branches,
+    List<branch_pb.Branch> branches,
   ) {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -217,7 +217,7 @@ class _BranchListPanelState extends State<BranchListPanel> {
     );
   }
 
-  List<BranchDto> _filterBranches(List<BranchDto> branches, String query) {
+  List<branch_pb.Branch> _filterBranches(List<branch_pb.Branch> branches, String query) {
     var filtered = branches;
 
     // Filter by search query
@@ -240,8 +240,8 @@ class _BranchListPanelState extends State<BranchListPanel> {
 
   void _showCreatePRDialog(
     BuildContext context,
-    BranchDto sourceBranch,
-    BranchDto targetBranch,
+    branch_pb.Branch sourceBranch,
+    branch_pb.Branch targetBranch,
   ) {
     showDialog<void>(
       context: context,
@@ -275,7 +275,7 @@ class BranchListItem extends StatefulWidget {
     super.key,
   });
 
-  final BranchDto branch;
+  final branch_pb.Branch branch;
   final bool isCurrentBranch;
   final VoidCallback onTap;
   final VoidCallback onDelete;
@@ -342,10 +342,10 @@ class _BranchListItemState extends State<BranchListItem> {
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if (widget.branch.description?.isNotEmpty == true) ...[
+                    if (widget.branch.description.isNotEmpty) ...[
                       const SizedBox(height: 2),
                       Text(
-                        widget.branch.description!,
+                        widget.branch.description,
                         style: const TextStyle(
                           color: VioColors.textTertiary,
                           fontSize: 11,
@@ -569,8 +569,8 @@ class _CreatePRFromBranchDialog extends StatefulWidget {
     required this.onCreatePR,
   });
 
-  final BranchDto sourceBranch;
-  final BranchDto targetBranch;
+  final branch_pb.Branch sourceBranch;
+  final branch_pb.Branch targetBranch;
   final void Function(String title, String? description) onCreatePR;
 
   @override

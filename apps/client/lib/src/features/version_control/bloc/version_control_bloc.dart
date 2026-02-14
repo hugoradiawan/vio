@@ -12,8 +12,11 @@ import '../../../gen/vio/v1/branch.pbgrpc.dart';
 import '../../../gen/vio/v1/commit.pb.dart' as commit_pb;
 import '../../../gen/vio/v1/commit.pbgrpc.dart';
 import '../../../gen/vio/v1/common.pb.dart' as common_pb;
+import '../../../gen/vio/v1/common.pbenum.dart' as common_enum;
 import '../../../gen/vio/v1/pullrequest.pb.dart' as pr_pb;
+import '../../../gen/vio/v1/pullrequest.pbenum.dart' as pr_enum;
 import '../../../gen/vio/v1/pullrequest.pbgrpc.dart' hide PullRequestStatus;
+import '../models/models.dart';
 
 part 'version_control_event.dart';
 part 'version_control_state.dart';
@@ -71,17 +74,6 @@ class VersionControlBloc
   PreferencesService get _prefsService =>
       ServiceLocator.instance.preferencesService;
 
-  /// Convert proto Timestamp to DateTime
-  DateTime _timestampToDateTime(common_pb.Timestamp ts) {
-    return DateTime.fromMillisecondsSinceEpoch(ts.millis.toInt());
-  }
-
-  /// Convert proto Timestamp to nullable DateTime
-  DateTime? _timestampToDateTimeOrNull(common_pb.Timestamp? ts) {
-    if (ts == null || !ts.hasMillis()) return null;
-    return DateTime.fromMillisecondsSinceEpoch(ts.millis.toInt());
-  }
-
   Future<void> _onInitialized(
     VersionControlInitialized event,
     Emitter<VersionControlState> emit,
@@ -101,30 +93,15 @@ class VersionControlBloc
         branch_pb.ListBranchesRequest()..projectId = event.projectId,
       );
 
-      final branches = branchesResponse.branches
-          .map(
-            (b) => BranchDto(
-              id: b.id,
-              name: b.name,
-              projectId: b.projectId,
-              description: b.description.isEmpty ? null : b.description,
-              headCommitId: b.headCommitId.isEmpty ? null : b.headCommitId,
-              isDefault: b.isDefault,
-              isProtected: b.isProtected,
-              createdById: b.createdById,
-              createdAt: _timestampToDateTimeOrNull(b.createdAt),
-              updatedAt: _timestampToDateTimeOrNull(b.updatedAt),
-            ),
-          )
-          .toList();
+      final branches = branchesResponse.branches.toList();
 
       // Try to restore last selected branch, fallback to default branch
       final lastBranchId = _prefsService.getLastBranchId(event.projectId);
-      BranchDto? initialBranch;
+      branch_pb.Branch? initialBranch;
 
       if (lastBranchId != null) {
         // Try to find the last selected branch
-        initialBranch = branches.cast<BranchDto?>().firstWhere(
+        initialBranch = branches.cast<branch_pb.Branch?>().firstWhere(
               (b) => b?.id == lastBranchId,
               orElse: () => null,
             );
@@ -148,30 +125,16 @@ class VersionControlBloc
           ..branchId = initialBranch.id,
       );
 
-      final commits = commitsResponse.commits
-          .map(
-            (c) => CommitDto(
-              id: c.id,
-              projectId: c.projectId,
-              branchId: c.branchId,
-              message: c.message,
-              authorId: c.authorId,
-              snapshotId: c.snapshotId,
-              createdAt: _timestampToDateTime(c.createdAt),
-              parentId: c.parentId.isEmpty ? null : c.parentId,
-            ),
-          )
-          .toList();
+      final commits = commitsResponse.commits.toList();
 
       // Load base shapes from HEAD commit's snapshot (if any commits exist)
       final Map<String, Shape> baseShapes = {};
-      if (initialBranch.headCommitId != null &&
-          initialBranch.headCommitId!.isNotEmpty) {
+      if (initialBranch.headCommitId.isNotEmpty) {
         try {
           final commitResponse = await _commitClient.getCommit(
             commit_pb.GetCommitRequest()
               ..projectId = event.projectId
-              ..commitId = initialBranch.headCommitId!,
+              ..commitId = initialBranch.headCommitId,
           );
 
           if (commitResponse.hasSnapshot()) {
@@ -293,22 +256,7 @@ class VersionControlBloc
         branch_pb.ListBranchesRequest()..projectId = state.projectId!,
       );
 
-      final branches = response.branches
-          .map(
-            (b) => BranchDto(
-              id: b.id,
-              name: b.name,
-              projectId: b.projectId,
-              description: b.description.isEmpty ? null : b.description,
-              headCommitId: b.headCommitId.isEmpty ? null : b.headCommitId,
-              isDefault: b.isDefault,
-              isProtected: b.isProtected,
-              createdById: b.createdById,
-              createdAt: _timestampToDateTimeOrNull(b.createdAt),
-              updatedAt: _timestampToDateTimeOrNull(b.updatedAt),
-            ),
-          )
-          .toList();
+      final branches = response.branches.toList();
 
       emit(state.copyWith(branches: branches));
     } on GrpcError catch (e) {
@@ -710,7 +658,7 @@ class VersionControlBloc
 
       emit(
         state.copyWith(
-          branchComparison: BranchComparisonDto(
+          branchComparison: BranchComparison(
             baseBranchId: event.baseBranchId,
             headBranchId: event.headBranchId,
             commitsAhead: response.commitsAhead,
@@ -741,20 +689,7 @@ class VersionControlBloc
           ..branchId = state.currentBranchId!,
       );
 
-      final commits = response.commits
-          .map(
-            (c) => CommitDto(
-              id: c.id,
-              projectId: c.projectId,
-              branchId: c.branchId,
-              message: c.message,
-              authorId: c.authorId,
-              snapshotId: c.snapshotId,
-              createdAt: _timestampToDateTime(c.createdAt),
-              parentId: c.parentId.isEmpty ? null : c.parentId,
-            ),
-          )
-          .toList();
+      final commits = response.commits.toList();
 
       emit(state.copyWith(commits: commits));
     } on GrpcError catch (e) {
@@ -1013,43 +948,13 @@ class VersionControlBloc
         pr_pb.ListPullRequestsRequest()..projectId = state.projectId!,
       );
 
-      final prs = response.pullRequests
-          .map(
-            (pr) => PullRequestDto(
-              id: pr.id,
-              projectId: pr.projectId,
-              title: pr.title,
-              description: pr.description.isEmpty ? null : pr.description,
-              sourceBranchId: pr.sourceBranchId,
-              targetBranchId: pr.targetBranchId,
-              status: _mapPrStatus(pr.status),
-              authorId: pr.authorId,
-              createdAt: _timestampToDateTime(pr.createdAt),
-              updatedAt: _timestampToDateTime(pr.updatedAt),
-              mergedAt: _timestampToDateTimeOrNull(pr.mergedAt),
-              closedAt: _timestampToDateTimeOrNull(pr.closedAt),
-            ),
-          )
-          .toList();
+      final prs = response.pullRequests.toList();
 
       emit(state.copyWith(pullRequests: prs));
     } on GrpcError catch (e) {
       VioLogger.error(
         'VersionControlBloc: Failed to refresh PRs - ${e.message}',
       );
-    }
-  }
-
-  PullRequestStatus _mapPrStatus(pr_pb.PullRequestStatus status) {
-    switch (status) {
-      case pr_pb.PullRequestStatus.PULL_REQUEST_STATUS_OPEN:
-        return PullRequestStatus.open;
-      case pr_pb.PullRequestStatus.PULL_REQUEST_STATUS_MERGED:
-        return PullRequestStatus.merged;
-      case pr_pb.PullRequestStatus.PULL_REQUEST_STATUS_CLOSED:
-        return PullRequestStatus.closed;
-      default:
-        return PullRequestStatus.open;
     }
   }
 
@@ -1242,11 +1147,11 @@ class VersionControlBloc
   }
 
   /// Compute shape changes between base and current shapes
-  List<ShapeChangeDto> _computeChanges(
+  List<ShapeChange> _computeChanges(
     Map<String, Shape> base,
     Map<String, Shape> current,
   ) {
-    final changes = <ShapeChangeDto>[];
+    final changes = <ShapeChange>[];
 
     // Check for added and modified shapes
     for (final entry in current.entries) {
@@ -1257,7 +1162,7 @@ class VersionControlBloc
       if (baseShape == null) {
         // Shape was added
         changes.add(
-          ShapeChangeDto(
+          ShapeChange(
             shapeId: id,
             shapeName: currentShape.name,
             changeType: ShapeChangeType.added,
@@ -1267,7 +1172,7 @@ class VersionControlBloc
       } else if (_hasShapeChanged(baseShape, currentShape)) {
         // Shape was modified
         changes.add(
-          ShapeChangeDto(
+          ShapeChange(
             shapeId: id,
             shapeName: currentShape.name,
             changeType: ShapeChangeType.modified,
@@ -1284,7 +1189,7 @@ class VersionControlBloc
       final id = entry.key;
       if (!current.containsKey(id)) {
         changes.add(
-          ShapeChangeDto(
+          ShapeChange(
             shapeId: id,
             shapeName: entry.value.name,
             changeType: ShapeChangeType.deleted,
@@ -1523,22 +1428,7 @@ class VersionControlBloc
       final response = await _branchClient.updateBranch(request);
 
       // Update the branch in local state
-      final updatedBranch = BranchDto(
-        id: response.branch.id,
-        name: response.branch.name,
-        projectId: response.branch.projectId,
-        description: response.branch.description.isEmpty
-            ? null
-            : response.branch.description,
-        headCommitId: response.branch.headCommitId.isEmpty
-            ? null
-            : response.branch.headCommitId,
-        isDefault: response.branch.isDefault,
-        isProtected: response.branch.isProtected,
-        createdById: response.branch.createdById,
-        createdAt: _timestampToDateTimeOrNull(response.branch.createdAt),
-        updatedAt: _timestampToDateTimeOrNull(response.branch.updatedAt),
-      );
+      final updatedBranch = response.branch;
 
       final updatedBranches = state.branches.map((b) {
         return b.id == updatedBranch.id ? updatedBranch : b;

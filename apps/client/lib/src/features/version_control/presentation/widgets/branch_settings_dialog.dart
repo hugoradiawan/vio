@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
-import '../../../../core/api/dto.dart';
+import '../../../../core/core.dart';
+import '../../../../gen/vio/v1/branch.pb.dart' as branch_pb;
 import '../../bloc/version_control_bloc.dart';
 
 /// Dialog for viewing and editing branch settings
@@ -19,7 +20,7 @@ class BranchSettingsDialog extends StatefulWidget {
     super.key,
   });
 
-  final BranchDto branch;
+  final branch_pb.Branch branch;
 
   @override
   State<BranchSettingsDialog> createState() => _BranchSettingsDialogState();
@@ -35,7 +36,7 @@ class _BranchSettingsDialogState extends State<BranchSettingsDialog> {
     super.initState();
     _nameController = TextEditingController(text: widget.branch.name);
     _descriptionController = TextEditingController(
-      text: widget.branch.description ?? '',
+      text: widget.branch.description,
     );
   }
 
@@ -49,7 +50,7 @@ class _BranchSettingsDialogState extends State<BranchSettingsDialog> {
   void _checkForChanges() {
     final hasNameChange = _nameController.text != widget.branch.name;
     final hasDescriptionChange =
-        _descriptionController.text != (widget.branch.description ?? '');
+        _descriptionController.text != widget.branch.description;
 
     setState(() {
       _hasChanges = hasNameChange || hasDescriptionChange;
@@ -221,20 +222,20 @@ class _BranchSettingsDialogState extends State<BranchSettingsDialog> {
         ),
 
         // Head commit
-        if (widget.branch.headCommitId != null)
+        if (widget.branch.headCommitId.isNotEmpty)
           _InfoRow(
             label: 'Head Commit',
-            value: widget.branch.headCommitId!.substring(0, 8),
+            value: widget.branch.headCommitId.substring(0, 8),
             icon: Icons.commit,
             valueColor: VioColors.textTertiary,
             monospace: true,
           ),
 
         // Created date
-        if (widget.branch.createdAt != null)
+        if (widget.branch.createdAtDateTime != null)
           _InfoRow(
             label: 'Created',
-            value: _formatDate(widget.branch.createdAt!),
+            value: _formatDate(widget.branch.createdAtDateTime!),
             icon: Icons.calendar_today,
           ),
       ],
@@ -530,7 +531,7 @@ class _ActionButton extends StatelessWidget {
 }
 
 /// Helper function to show the branch settings dialog
-void showBranchSettingsDialog(BuildContext context, BranchDto branch) {
+void showBranchSettingsDialog(BuildContext context, branch_pb.Branch branch) {
   showDialog<void>(
     context: context,
     builder: (dialogContext) => BranchSettingsDialog(branch: branch),

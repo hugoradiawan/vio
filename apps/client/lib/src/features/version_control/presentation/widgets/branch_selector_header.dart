@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
-import '../../../../core/api/dto.dart';
+import '../../../../gen/vio/v1/branch.pb.dart' as branch_pb;
 import '../../bloc/version_control_bloc.dart';
 import 'commit_dialog.dart';
 
@@ -22,14 +22,10 @@ class BranchSelectorHeader extends StatelessWidget {
         if (state.pendingSwitchBranchId != null) {
           final pendingBranch = state.branches.firstWhere(
             (b) => b.id == state.pendingSwitchBranchId,
-            orElse: () => BranchDto(
-              id: state.pendingSwitchBranchId!,
-              name: 'branch',
-              projectId: state.projectId ?? '',
-              isDefault: false,
-              isProtected: false,
-              createdById: '',
-            ),
+            orElse: () => branch_pb.Branch()
+              ..id = state.pendingSwitchBranchId!
+              ..name = 'branch'
+              ..projectId = state.projectId ?? '',
           );
           _showUncommittedChangesDialog(
             context,
@@ -42,14 +38,10 @@ class BranchSelectorHeader extends StatelessWidget {
         if (state.pendingDeleteBranchId != null) {
           final pendingBranch = state.branches.firstWhere(
             (b) => b.id == state.pendingDeleteBranchId,
-            orElse: () => BranchDto(
-              id: state.pendingDeleteBranchId!,
-              name: 'branch',
-              projectId: state.projectId ?? '',
-              isDefault: false,
-              isProtected: false,
-              createdById: '',
-            ),
+            orElse: () => branch_pb.Branch()
+              ..id = state.pendingDeleteBranchId!
+              ..name = 'branch'
+              ..projectId = state.projectId ?? '',
           );
           _showDeleteBranchDialog(context, pendingBranch);
         }
@@ -233,7 +225,7 @@ class BranchSelectorHeader extends StatelessWidget {
   }
 
   /// Show confirmation dialog before deleting a branch
-  void _showDeleteBranchDialog(BuildContext context, BranchDto branch) {
+  void _showDeleteBranchDialog(BuildContext context, branch_pb.Branch branch) {
     showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -325,8 +317,8 @@ class _BranchDropdown extends StatelessWidget {
     required this.onBranchSelected,
   });
 
-  final BranchDto? currentBranch;
-  final List<BranchDto> branches;
+  final branch_pb.Branch? currentBranch;
+  final List<branch_pb.Branch> branches;
   final bool isLoading;
   final void Function(String branchId) onBranchSelected;
 
@@ -476,7 +468,7 @@ class _BranchMenuItem extends StatelessWidget {
     required this.isSelected,
   });
 
-  final BranchDto branch;
+  final branch_pb.Branch branch;
   final bool isSelected;
 
   @override
@@ -629,7 +621,7 @@ class CreateBranchDialog extends StatefulWidget {
     super.key,
   });
 
-  final List<BranchDto> branches;
+  final List<branch_pb.Branch> branches;
   final String? currentBranchId;
   final bool hasUncommittedChanges;
   final void Function(String name, String? description, String sourceBranchId)

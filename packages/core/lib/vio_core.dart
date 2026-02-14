@@ -19,6 +19,7 @@ export 'src/models/rectangle_shape.dart';
 // Models
 export 'src/models/result.dart';
 export 'src/models/shape.dart';
+export 'src/models/shape_factory.dart';
 export 'src/models/svg_shape.dart';
 export 'src/models/text_shape.dart';
 export 'src/models/uuid_value.dart';

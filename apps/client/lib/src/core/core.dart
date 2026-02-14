@@ -1,4 +1,3 @@
-export 'api/api.dart';
 export 'config/app_config.dart';
 export 'grpc/grpc.dart';
 export 'repositories/repositories.dart';

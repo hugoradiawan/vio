@@ -37,14 +37,14 @@ class VersionControlState extends Equatable {
   final VersionControlStatus status;
   final String? projectId;
   final String? userId;
-  final List<BranchDto> branches;
+  final List<branch_pb.Branch> branches;
   final String? currentBranchId;
-  final List<CommitDto> commits;
-  final List<PullRequestDto> pullRequests;
-  final PullRequestDto? selectedPullRequest;
-  final PullRequestDetailDto? selectedPullRequestDetail;
-  final BranchComparisonDto? branchComparison;
-  final List<ShapeChangeDto> uncommittedChanges;
+  final List<commit_pb.Commit> commits;
+  final List<pr_pb.PullRequest> pullRequests;
+  final pr_pb.PullRequest? selectedPullRequest;
+  final PullRequestDetail? selectedPullRequestDetail;
+  final BranchComparison? branchComparison;
+  final List<ShapeChange> uncommittedChanges;
   final Set<String> stagedShapeIds;
 
   /// Shapes at the last commit (base for comparison)
@@ -62,7 +62,7 @@ class VersionControlState extends Equatable {
   final bool isPolling;
 
   /// Get current branch
-  BranchDto? get currentBranch {
+  branch_pb.Branch? get currentBranch {
     if (currentBranchId == null) return null;
     return branches.firstWhere(
       (b) => b.id == currentBranchId,
@@ -71,7 +71,7 @@ class VersionControlState extends Equatable {
   }
 
   /// Get default branch
-  BranchDto? get defaultBranch {
+  branch_pb.Branch? get defaultBranch {
     try {
       return branches.firstWhere((b) => b.isDefault);
     } catch (_) {
@@ -83,7 +83,7 @@ class VersionControlState extends Equatable {
   bool get hasUncommittedChanges => uncommittedChanges.isNotEmpty;
 
   /// Get staged changes
-  List<ShapeChangeDto> get stagedChanges {
+  List<ShapeChange> get stagedChanges {
     return uncommittedChanges
         .where((c) => stagedShapeIds.contains(c.shapeId))
         .toList();
@@ -93,9 +93,9 @@ class VersionControlState extends Equatable {
   bool get canCommit => stagedShapeIds.isNotEmpty;
 
   /// Get open pull requests
-  List<PullRequestDto> get openPullRequests {
+  List<pr_pb.PullRequest> get openPullRequests {
     return pullRequests
-        .where((pr) => pr.status == PullRequestStatus.open)
+        .where((pr) => pr.isOpen)
         .toList();
   }
 
@@ -110,17 +110,17 @@ class VersionControlState extends Equatable {
     VersionControlStatus? status,
     String? projectId,
     String? userId,
-    List<BranchDto>? branches,
+    List<branch_pb.Branch>? branches,
     String? currentBranchId,
-    List<CommitDto>? commits,
-    List<PullRequestDto>? pullRequests,
-    PullRequestDto? selectedPullRequest,
+    List<commit_pb.Commit>? commits,
+    List<pr_pb.PullRequest>? pullRequests,
+    pr_pb.PullRequest? selectedPullRequest,
     bool clearSelectedPullRequest = false,
-    PullRequestDetailDto? selectedPullRequestDetail,
+    PullRequestDetail? selectedPullRequestDetail,
     bool clearSelectedPullRequestDetail = false,
-    BranchComparisonDto? branchComparison,
+    BranchComparison? branchComparison,
     bool clearBranchComparison = false,
-    List<ShapeChangeDto>? uncommittedChanges,
+    List<ShapeChange>? uncommittedChanges,
     Set<String>? stagedShapeIds,
     Map<String, Shape>? baseShapes,
     Map<String, Shape>? currentShapes,

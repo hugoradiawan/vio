@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
-import '../../../../core/api/dto.dart';
+import '../../../../core/core.dart';
+import '../../../../gen/vio/v1/commit.pb.dart' as commit_pb;
 import '../../bloc/version_control_bloc.dart';
 
 /// Displays commit history as a timeline
@@ -41,7 +42,7 @@ class CommitHistoryList extends StatelessWidget {
     );
   }
 
-  void _showCheckoutDialog(BuildContext context, CommitDto commit) {
+  void _showCheckoutDialog(BuildContext context, commit_pb.Commit commit) {
     final nameController = TextEditingController(
       text: 'checkout-${commit.id.substring(0, 7)}',
     );
@@ -131,7 +132,7 @@ class CommitHistoryList extends StatelessWidget {
     );
   }
 
-  void _showRevertDialog(BuildContext context, CommitDto commit) {
+  void _showRevertDialog(BuildContext context, commit_pb.Commit commit) {
     final messageController = TextEditingController(
       text: 'Revert "${commit.message}"',
     );
@@ -225,7 +226,7 @@ class CommitHistoryList extends StatelessWidget {
   void _showDiffDialog(
     BuildContext context,
     VersionControlState state,
-    CommitDto commit,
+    commit_pb.Commit commit,
   ) {
     // For now, show a placeholder. Full diff view would be a more complex widget.
     showDialog<void>(
@@ -324,7 +325,7 @@ class _CommitItem extends StatelessWidget {
     required this.onViewDiff,
   });
 
-  final CommitDto commit;
+  final commit_pb.Commit commit;
   final bool isFirst;
   final bool isLast;
   final VoidCallback onCheckout;
@@ -405,7 +406,7 @@ class _CommitItem extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            _formatDate(commit.createdAt),
+                            _formatDate(commit.createdAtDateTime),
                             style: const TextStyle(
                               color: VioColors.textTertiary,
                               fontSize: 11,
@@ -555,7 +556,7 @@ class _CommitPreview extends StatelessWidget {
     this.expanded = false,
   });
 
-  final CommitDto commit;
+  final commit_pb.Commit commit;
   final bool expanded;
 
   @override
@@ -610,7 +611,7 @@ class _CommitPreview extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  _formatFullDate(commit.createdAt),
+                  _formatFullDate(commit.createdAtDateTime),
                   style: const TextStyle(
                     color: VioColors.textTertiary,
                     fontSize: 11,

@@ -5,6 +5,7 @@ import 'package:vio_ui_kit/vio_ui_kit.dart';
 import '../../../../core/core.dart';
 import '../../../canvas/bloc/canvas_bloc.dart';
 import '../../bloc/version_control_bloc.dart';
+import '../../models/models.dart';
 
 /// Commit panel for staging changes and creating commits
 class CommitPanel extends StatefulWidget {
@@ -378,7 +379,7 @@ class _ChangedFilesList extends StatelessWidget {
     required this.onDiscard,
   });
 
-  final List<ShapeChangeDto> changes;
+  final List<ShapeChange> changes;
   final Set<String> stagedIds;
   final void Function(String shapeId) onToggleStaged;
   final VoidCallback onStageAll;
@@ -556,7 +557,7 @@ class _ChangeItem extends StatefulWidget {
     required this.onDiscard,
   });
 
-  final ShapeChangeDto change;
+  final ShapeChange change;
   final bool isStaged;
   final VoidCallback onToggle;
   final void Function(bool hovering) onHover;

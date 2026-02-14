@@ -170,7 +170,7 @@ class CommitRevertRequested extends VersionControlEvent {
 class PullRequestsRefreshRequested extends VersionControlEvent {
   const PullRequestsRefreshRequested({this.status});
 
-  final PullRequestStatus? status;
+  final pr_enum.PullRequestStatus? status;
 
   @override
   List<Object?> get props => [status];
@@ -209,12 +209,12 @@ class PullRequestSelected extends VersionControlEvent {
 class PullRequestMergeRequested extends VersionControlEvent {
   const PullRequestMergeRequested({
     required this.pullRequestId,
-    this.strategy = MergeStrategy.mergeCommit,
+    this.strategy = common_enum.MergeStrategy.MERGE_STRATEGY_MERGE_COMMIT,
     this.commitMessage,
   });
 
   final String pullRequestId;
-  final MergeStrategy strategy;
+  final common_enum.MergeStrategy strategy;
   final String? commitMessage;
 
   @override
@@ -239,7 +239,7 @@ class ConflictsResolveRequested extends VersionControlEvent {
   });
 
   final String pullRequestId;
-  final List<ConflictResolutionDto> resolutions;
+  final List<common_pb.ConflictResolution> resolutions;
 
   @override
   List<Object?> get props => [pullRequestId, resolutions];

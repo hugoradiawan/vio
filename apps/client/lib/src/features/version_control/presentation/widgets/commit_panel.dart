@@ -580,15 +580,15 @@ class _ChangeItemState extends State<_ChangeItem> {
         setState(() => _isHovering = false);
         widget.onHover(false);
       },
-      child: InkWell(
-        onTap: widget.onToggle,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          color: _isHovering ? VioColors.surfaceElevated : null,
-          child: Row(
-            children: [
-              // Checkbox
-              Container(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        color: _isHovering ? VioColors.surfaceElevated : null,
+        child: Row(
+          children: [
+            // Checkbox - only this triggers stage/unstage
+            GestureDetector(
+              onTap: widget.onToggle,
+              child: Container(
                 width: 16,
                 height: 16,
                 decoration: BoxDecoration(
@@ -608,64 +608,63 @@ class _ChangeItemState extends State<_ChangeItem> {
                       )
                     : null,
               ),
-              const SizedBox(width: 8),
+            ),
+            const SizedBox(width: 8),
 
-              // Change type indicator
-              _ChangeTypeIcon(type: widget.change.changeType),
-              const SizedBox(width: 8),
+            // Change type indicator
+            _ChangeTypeIcon(type: widget.change.changeType),
+            const SizedBox(width: 8),
 
-              // Shape name
-              Expanded(
+            // Shape name
+            Expanded(
+              child: Text(
+                widget.change.shapeName,
+                style: const TextStyle(
+                  color: VioColors.textPrimary,
+                  fontSize: 12,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+
+            // Discard button (visible on hover)
+            if (_isHovering)
+              IconButton(
+                onPressed: widget.onDiscard,
+                icon: const Icon(
+                  Icons.undo,
+                  size: 14,
+                  color: VioColors.textSecondary,
+                ),
+                tooltip: 'Discard change',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: 24,
+                  minHeight: 24,
+                ),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                ),
+              )
+            else
+              // Shape type badge (visible when not hovering)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: BoxDecoration(
+                  color: VioColors.surfaceElevated,
+                  borderRadius: BorderRadius.circular(4),
+                ),
                 child: Text(
-                  widget.change.shapeName,
+                  widget.change.afterShape?.type.name ??
+                      widget.change.beforeShape?.type.name ??
+                      'shape',
                   style: const TextStyle(
-                    color: VioColors.textPrimary,
-                    fontSize: 12,
+                    color: VioColors.textTertiary,
+                    fontSize: 9,
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-
-              // Discard button (visible on hover)
-              if (_isHovering)
-                IconButton(
-                  onPressed: widget.onDiscard,
-                  icon: const Icon(
-                    Icons.undo,
-                    size: 14,
-                    color: VioColors.textSecondary,
-                  ),
-                  tooltip: 'Discard change',
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 24,
-                    minHeight: 24,
-                  ),
-                  style: IconButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                  ),
-                )
-              else
-                // Shape type badge (visible when not hovering)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: VioColors.surfaceElevated,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    widget.change.afterShape?.type.name ??
-                        widget.change.beforeShape?.type.name ??
-                        'shape',
-                    style: const TextStyle(
-                      color: VioColors.textTertiary,
-                      fontSize: 9,
-                    ),
-                  ),
-                ),
-            ],
-          ),
+          ],
         ),
       ),
     );

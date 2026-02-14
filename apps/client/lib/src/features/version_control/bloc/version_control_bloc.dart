@@ -1162,9 +1162,9 @@ class VersionControlBloc
     ShapesStagedForCommit event,
     Emitter<VersionControlState> emit,
   ) {
-    final newStaged = Set<String>.from(state.stagedShapeIds)
-      ..addAll(event.shapeIds);
-    emit(state.copyWith(stagedShapeIds: newStaged));
+    // Replace the entire staged set with the provided IDs.
+    // The caller computes the full desired set (toggle add/remove).
+    emit(state.copyWith(stagedShapeIds: Set<String>.from(event.shapeIds)));
   }
 
   void _onStagedCleared(

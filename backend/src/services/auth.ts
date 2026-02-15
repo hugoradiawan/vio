@@ -1,10 +1,17 @@
 /**
  * Auth service implementation for ConnectRPC.
+ *
+ * Uses PostgreSQL (Drizzle) for user persistence and bcrypt for password hashing.
+ * Access tokens are kept in-memory (short-lived, 15min TTL).
+ * Refresh tokens are persisted in the database.
  */
 
 import { create } from "@bufbuild/protobuf";
 import type { ServiceImpl } from "@connectrpc/connect";
+import bcrypt from "bcryptjs";
+import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
+import { db, schema } from "../db/index.js";
 import {
 	AuthResponseSchema,
 	AuthService,
@@ -28,31 +35,38 @@ import {
 } from "./errors.js";
 
 // ============================================================================
-// In-Memory User Store (replace with database in production)
+// In-Memory Access Token Store (short-lived, lost on restart is OK)
 // ============================================================================
-
-interface StoredUser {
-	id: string;
-	email: string;
-	name: string;
-	passwordHash: string;
-	avatarUrl?: string;
-	createdAt: Date;
-}
 
 interface StoredToken {
 	userId: string;
 	expiresAt: number;
 }
 
-const users = new Map<string, StoredUser>();
-const usersByEmail = new Map<string, string>(); // email -> userId
 const accessTokens = new Map<string, StoredToken>();
-const refreshTokens = new Map<string, StoredToken>();
 
-// Token validity durations
-const ACCESS_TOKEN_DURATION = 15 * 60 * 1000; // 15 minutes
-const REFRESH_TOKEN_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
+// Token validity durations (configurable via environment variables)
+function getDurationMsFromEnv(envVar: string, defaultMs: number): number {
+	const raw = process.env[envVar];
+	if (!raw) {
+		return defaultMs;
+	}
+	const parsed = Number(raw);
+	if (!Number.isFinite(parsed) || parsed <= 0) {
+		return defaultMs;
+	}
+	return parsed;
+}
+
+const ACCESS_TOKEN_DURATION = getDurationMsFromEnv(
+	"ACCESS_TOKEN_DURATION_MS",
+	15 * 60 * 1000, // 15 minutes
+);
+const REFRESH_TOKEN_DURATION = getDurationMsFromEnv(
+	"REFRESH_TOKEN_DURATION_MS",
+	7 * 24 * 60 * 60 * 1000, // 7 days
+);
+const BCRYPT_ROUNDS = 12;
 
 // ============================================================================
 // Helper Functions
@@ -64,31 +78,20 @@ function toProtoTimestamp(date: Date): Timestamp {
 	});
 }
 
-function toProtoUser(stored: StoredUser): User {
+function toProtoUser(stored: {
+	id: string;
+	email: string;
+	name: string;
+	avatarUrl: string | null;
+	createdAt: Date;
+}): User {
 	return create(UserSchema, {
 		id: stored.id,
 		email: stored.email,
 		name: stored.name,
-		avatarUrl: stored.avatarUrl,
+		avatarUrl: stored.avatarUrl ?? undefined,
 		createdAt: toProtoTimestamp(stored.createdAt),
 	});
-}
-
-// Simple hash function (use bcrypt in production!)
-async function hashPassword(password: string): Promise<string> {
-	const encoder = new TextEncoder();
-	const data = encoder.encode(password);
-	const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-	const hashArray = Array.from(new Uint8Array(hashBuffer));
-	return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-async function verifyPassword(
-	password: string,
-	hash: string,
-): Promise<boolean> {
-	const inputHash = await hashPassword(password);
-	return inputHash === hash;
 }
 
 function generateAccessToken(userId: string): string {
@@ -100,11 +103,12 @@ function generateAccessToken(userId: string): string {
 	return token;
 }
 
-function generateRefreshToken(userId: string): string {
+async function generateRefreshToken(userId: string): Promise<string> {
 	const token = `vio_rt_${nanoid(48)}`;
-	refreshTokens.set(token, {
+	await db.insert(schema.refreshTokens).values({
+		token,
 		userId,
-		expiresAt: Date.now() + REFRESH_TOKEN_DURATION,
+		expiresAt: new Date(Date.now() + REFRESH_TOKEN_DURATION),
 	});
 	return token;
 }
@@ -125,29 +129,27 @@ export const authServiceImpl: ServiceImpl<typeof AuthService> = {
 		}
 
 		// Check if email is already taken
-		if (usersByEmail.has(req.email.toLowerCase())) {
+		const existing = await db.query.users.findFirst({
+			where: eq(schema.users.email, req.email.toLowerCase()),
+		});
+		if (existing) {
 			throw alreadyExists("Email already registered");
 		}
 
 		// Create user
-		const userId = nanoid(21);
-		const passwordHash = await hashPassword(req.password);
-		const now = new Date();
-
-		const user: StoredUser = {
-			id: userId,
-			email: req.email.toLowerCase(),
-			name: req.name,
-			passwordHash,
-			createdAt: now,
-		};
-
-		users.set(userId, user);
-		usersByEmail.set(user.email, userId);
+		const passwordHash = await bcrypt.hash(req.password, BCRYPT_ROUNDS);
+		const [user] = await db
+			.insert(schema.users)
+			.values({
+				email: req.email.toLowerCase(),
+				name: req.name,
+				passwordHash,
+			})
+			.returning();
 
 		// Generate tokens
-		const accessToken = generateAccessToken(userId);
-		const refreshToken = generateRefreshToken(userId);
+		const accessToken = generateAccessToken(user.id);
+		const refreshToken = await generateRefreshToken(user.id);
 
 		return create(AuthResponseSchema, {
 			user: toProtoUser(user),
@@ -164,25 +166,22 @@ export const authServiceImpl: ServiceImpl<typeof AuthService> = {
 		}
 
 		// Find user
-		const userId = usersByEmail.get(req.email.toLowerCase());
-		if (!userId) {
-			throw unauthenticated("Invalid email or password");
-		}
-
-		const user = users.get(userId);
+		const user = await db.query.users.findFirst({
+			where: eq(schema.users.email, req.email.toLowerCase()),
+		});
 		if (!user) {
 			throw unauthenticated("Invalid email or password");
 		}
 
 		// Verify password
-		const valid = await verifyPassword(req.password, user.passwordHash);
+		const valid = await bcrypt.compare(req.password, user.passwordHash);
 		if (!valid) {
 			throw unauthenticated("Invalid email or password");
 		}
 
 		// Generate tokens
-		const accessToken = generateAccessToken(userId);
-		const refreshToken = generateRefreshToken(userId);
+		const accessToken = generateAccessToken(user.id);
+		const refreshToken = await generateRefreshToken(user.id);
 
 		return create(AuthResponseSchema, {
 			user: toProtoUser(user),
@@ -198,34 +197,45 @@ export const authServiceImpl: ServiceImpl<typeof AuthService> = {
 			throw invalidArgument("Refresh token is required");
 		}
 
-		// Verify refresh token
-		const tokenData = refreshTokens.get(req.refreshToken);
-		if (!tokenData) {
+		// Find the refresh token in DB
+		const tokenRecord = await db.query.refreshTokens.findFirst({
+			where: eq(schema.refreshTokens.token, req.refreshToken),
+		});
+		if (!tokenRecord) {
 			throw unauthenticated("Invalid refresh token");
 		}
 
-		if (Date.now() > tokenData.expiresAt) {
-			refreshTokens.delete(req.refreshToken);
+		if (new Date() > tokenRecord.expiresAt) {
+			// Clean up expired token
+			await db
+				.delete(schema.refreshTokens)
+				.where(eq(schema.refreshTokens.id, tokenRecord.id));
 			throw unauthenticated("Refresh token expired");
 		}
 
-		const user = users.get(tokenData.userId);
+		const user = await db.query.users.findFirst({
+			where: eq(schema.users.id, tokenRecord.userId),
+			// Preserve historical contract: refreshToken does not return user data
+			// user: undefined,
+		});
 		if (!user) {
 			throw notFound("User not found");
 		}
 
 		// Revoke old refresh token
-		refreshTokens.delete(req.refreshToken);
+		await db
+			.delete(schema.refreshTokens)
+			.where(eq(schema.refreshTokens.id, tokenRecord.id));
 
 		// Generate new tokens
 		const accessToken = generateAccessToken(user.id);
-		const refreshToken = generateRefreshToken(user.id);
+		const refreshToken = await generateRefreshToken(user.id);
 
 		return create(AuthResponseSchema, {
 			accessToken,
 			refreshToken,
 			expiresIn: BigInt(Math.floor(ACCESS_TOKEN_DURATION / 1000)),
-			user: undefined,
+			user: toProtoUser(user),
 		});
 	},
 
@@ -235,7 +245,7 @@ export const authServiceImpl: ServiceImpl<typeof AuthService> = {
 			throw invalidArgument("Access token is required");
 		}
 
-		// Verify access token
+		// Verify access token (in-memory)
 		const tokenData = accessTokens.get(req.accessToken);
 		if (!tokenData) {
 			return create(ValidateTokenResponseSchema, {
@@ -252,7 +262,9 @@ export const authServiceImpl: ServiceImpl<typeof AuthService> = {
 			});
 		}
 
-		const user = users.get(tokenData.userId);
+		const user = await db.query.users.findFirst({
+			where: eq(schema.users.id, tokenData.userId),
+		});
 		if (!user) {
 			return create(ValidateTokenResponseSchema, {
 				valid: false,
@@ -267,9 +279,11 @@ export const authServiceImpl: ServiceImpl<typeof AuthService> = {
 	},
 
 	async logout(req): Promise<Empty> {
-		// Revoke tokens
+		// Revoke refresh token from DB
 		if (req.refreshToken) {
-			refreshTokens.delete(req.refreshToken);
+			await db
+				.delete(schema.refreshTokens)
+				.where(eq(schema.refreshTokens.token, req.refreshToken));
 		}
 
 		return create(EmptySchema, {});
@@ -280,9 +294,9 @@ export const authServiceImpl: ServiceImpl<typeof AuthService> = {
 // Token Validation Middleware Helper
 // ============================================================================
 
-export function validateAccessToken(
+export async function validateAccessToken(
 	token: string | undefined,
-): StoredUser | null {
+): Promise<{ id: string; email: string; name: string } | null> {
 	if (!token) return null;
 
 	// Remove "Bearer " prefix if present
@@ -296,6 +310,42 @@ export function validateAccessToken(
 		return null;
 	}
 
-	const user = users.get(tokenData.userId);
-	return user ?? null;
+	const user = await db.query.users.findFirst({
+		where: eq(schema.users.id, tokenData.userId),
+	});
+	if (!user) return null;
+
+	return { id: user.id, email: user.email, name: user.name };
+}
+
+// ============================================================================
+// Admin User Bootstrap
+// ============================================================================
+
+const ADMIN_EMAIL = "admin@vio.dev";
+const ADMIN_PASSWORD = "admin123";
+const ADMIN_NAME = "Admin";
+
+/**
+ * Ensures a default admin user exists.
+ * Called on server startup — creates the admin only if no users exist.
+ */
+export async function ensureAdminUser(): Promise<void> {
+	const existingUsers = await db.query.users.findFirst();
+	if (existingUsers) return; // Users exist, skip
+
+	const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, BCRYPT_ROUNDS);
+	await db.insert(schema.users).values({
+		email: ADMIN_EMAIL,
+		name: ADMIN_NAME,
+		passwordHash,
+		isAdmin: true,
+	});
+
+	console.log(`
+✅ Default admin user created:
+   Email:    ${ADMIN_EMAIL}
+   Password: ${ADMIN_PASSWORD}
+   ⚠️  Change this password after first login!
+`);
 }

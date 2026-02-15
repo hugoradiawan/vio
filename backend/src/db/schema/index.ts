@@ -22,6 +22,48 @@ const bytea = customType<{ data: Buffer; dpiName: string }>({
 });
 
 // ============================================================================
+// Users - Authentication accounts
+// ============================================================================
+
+export const users = pgTable(
+	"users",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		email: varchar("email", { length: 255 }).notNull().unique(),
+		name: varchar("name", { length: 255 }).notNull(),
+		passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+		avatarUrl: text("avatar_url"),
+		isAdmin: boolean("is_admin").default(false).notNull(),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+		updatedAt: timestamp("updated_at").defaultNow().notNull(),
+	},
+	(table) => ({
+		emailIdx: index("users_email_idx").on(table.email),
+	}),
+);
+
+// ============================================================================
+// Refresh Tokens - Persistent token storage for auth sessions
+// ============================================================================
+
+export const refreshTokens = pgTable(
+	"refresh_tokens",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		token: varchar("token", { length: 255 }).notNull().unique(),
+		userId: uuid("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		expiresAt: timestamp("expires_at").notNull(),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+	},
+	(table) => ({
+		tokenIdx: index("refresh_tokens_token_idx").on(table.token),
+		userIdx: index("refresh_tokens_user_idx").on(table.userId),
+	}),
+);
+
+// ============================================================================
 // Projects - Top-level container
 // ============================================================================
 
@@ -403,5 +445,21 @@ export const projectColorsRelations = relations(projectColors, ({ one }) => ({
 	project: one(projects, {
 		fields: [projectColors.projectId],
 		references: [projects.id],
+	}),
+}));
+
+// ============================================================================
+// User & Token Relations
+// ============================================================================
+
+export const usersRelations = relations(users, ({ many }) => ({
+	refreshTokens: many(refreshTokens),
+	projects: many(projects),
+}));
+
+export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
+	user: one(users, {
+		fields: [refreshTokens.userId],
+		references: [users.id],
 	}),
 }));

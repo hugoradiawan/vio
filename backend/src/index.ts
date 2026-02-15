@@ -24,13 +24,14 @@ import { ProjectService } from "./gen/vio/v1/project_pb.js";
 import { PullRequestService } from "./gen/vio/v1/pullrequest_pb.js";
 import { ShapeService } from "./gen/vio/v1/shape_pb.js";
 
-import { loggingInterceptor } from "./interceptors/index.js";
+import { authInterceptor, loggingInterceptor } from "./interceptors/index.js";
 import {
 	assetServiceImpl,
 	authServiceImpl,
 	branchServiceImpl,
 	canvasServiceImpl,
 	commitServiceImpl,
+	ensureAdminUser,
 	projectServiceImpl,
 	pullRequestServiceImpl,
 	shapeServiceImpl,
@@ -96,7 +97,10 @@ function setCorsHeaders(
 		res.setHeader("Access-Control-Allow-Origin", origin || "*");
 	}
 	res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-	res.setHeader("Access-Control-Allow-Headers", CONNECT_HEADERS.join(", "));
+	res.setHeader(
+		"Access-Control-Allow-Headers",
+		[...CONNECT_HEADERS, "Authorization"].join(", "),
+	);
 	res.setHeader(
 		"Access-Control-Expose-Headers",
 		"Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin",
@@ -109,7 +113,7 @@ const connectHandler = connectNodeAdapter({
 	routes: createRoutes,
 	connect: true,
 	grpcWeb: true, // Enable gRPC-Web for Flutter web client
-	interceptors: [loggingInterceptor],
+	interceptors: [authInterceptor, loggingInterceptor],
 });
 
 // Wrap handler with CORS support
@@ -128,6 +132,9 @@ const handler = (
 
 	return connectHandler(req, res);
 };
+
+// Bootstrap admin user on startup
+await ensureAdminUser();
 
 // Create and start server
 // For development: Use HTTP/1.1 for easy testing with curl/Postman

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:grpc/grpc_connection_interface.dart';
+import 'package:grpc/service_api.dart' as grpc_api;
 
 import '../../gen/vio/v1/asset.pbgrpc.dart';
 import '../../gen/vio/v1/auth.pbgrpc.dart';
@@ -91,15 +92,17 @@ class GrpcClient {
       useTls: effectiveUseTls,
     );
 
-    // Initialize all service clients
-    _assetClient = AssetServiceClient(_channel!);
-    _authClient = AuthServiceClient(_channel!);
-    _projectClient = ProjectServiceClient(_channel!);
-    _branchClient = BranchServiceClient(_channel!);
-    _commitClient = CommitServiceClient(_channel!);
-    _shapeClient = ShapeServiceClient(_channel!);
-    _canvasClient = CanvasServiceClient(_channel!);
-    _pullRequestClient = PullRequestServiceClient(_channel!);
+    // Initialize all service clients with auth interceptor
+    final interceptors = [_authInterceptor];
+    _assetClient = AssetServiceClient(_channel!, interceptors: interceptors);
+    _authClient = AuthServiceClient(_channel!); // No auth needed for auth service
+    _projectClient = ProjectServiceClient(_channel!, interceptors: interceptors);
+    _branchClient = BranchServiceClient(_channel!, interceptors: interceptors);
+    _commitClient = CommitServiceClient(_channel!, interceptors: interceptors);
+    _shapeClient = ShapeServiceClient(_channel!, interceptors: interceptors);
+    _canvasClient = CanvasServiceClient(_channel!, interceptors: interceptors);
+    _pullRequestClient =
+        PullRequestServiceClient(_channel!, interceptors: interceptors);
 
     _initialized = true;
 
@@ -115,6 +118,27 @@ class GrpcClient {
       );
     }
   }
+
+  // ============== Auth Token Management ==============
+
+  String? _authToken;
+
+  /// The auth interceptor used by all service clients.
+  late final _AuthInterceptor _authInterceptor = _AuthInterceptor(this);
+
+  /// Set the auth token to be included in all subsequent gRPC calls.
+  void setAuthToken(String token) {
+    _authToken = token;
+    debugPrint('[GrpcClient] Auth token set');
+  }
+
+  /// Clear the auth token (on logout).
+  void clearAuthToken() {
+    _authToken = null;
+    debugPrint('[GrpcClient] Auth token cleared');
+  }
+
+
 
   /// Get the asset service client
   AssetServiceClient get assetClient {
@@ -179,5 +203,45 @@ class GrpcClient {
     _shapeClient = null;
     _canvasClient = null;
     _pullRequestClient = null;
+  }
+}
+
+/// gRPC client interceptor that attaches the auth token to every request.
+///
+/// Reads the token from the parent [GrpcClient] at call time so it
+/// always reflects the current auth state (login/logout).
+class _AuthInterceptor extends grpc_api.ClientInterceptor {
+  _AuthInterceptor(this._grpcClient);
+
+  final GrpcClient _grpcClient;
+
+  @override
+  grpc_api.ResponseFuture<R> interceptUnary<Q, R>(
+    grpc_api.ClientMethod<Q, R> method,
+    Q request,
+    CallOptions options,
+    grpc_api.ClientUnaryInvoker<Q, R> invoker,
+  ) {
+    final newOptions = _applyAuth(options);
+    return invoker(method, request, newOptions);
+  }
+
+  @override
+  grpc_api.ResponseStream<R> interceptStreaming<Q, R>(
+    grpc_api.ClientMethod<Q, R> method,
+    Stream<Q> requests,
+    CallOptions options,
+    grpc_api.ClientStreamingInvoker<Q, R> invoker,
+  ) {
+    final newOptions = _applyAuth(options);
+    return invoker(method, requests, newOptions);
+  }
+
+  CallOptions _applyAuth(CallOptions existing) {
+    final token = _grpcClient._authToken;
+    if (token == null) return existing;
+    return existing.mergedWith(
+      CallOptions(metadata: {'authorization': 'Bearer $token'}),
+    );
   }
 }

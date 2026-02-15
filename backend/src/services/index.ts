@@ -1,6 +1,6 @@
 // Service implementations for ConnectRPC
 export { assetServiceImpl } from "./asset.js";
-export { authServiceImpl, validateAccessToken } from "./auth.js";
+export { authServiceImpl, ensureAdminUser, validateAccessToken } from "./auth.js";
 export { branchServiceImpl } from "./branch.js";
 export { canvasServiceImpl } from "./canvas.js";
 export { commitServiceImpl } from "./commit.js";

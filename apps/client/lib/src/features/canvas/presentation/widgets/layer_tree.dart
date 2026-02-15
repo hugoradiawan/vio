@@ -109,7 +109,6 @@ class LayerTree extends StatelessWidget {
             context.read<CanvasBloc>().add(
                   ShapesReparented(
                     shapeIds: ids,
-                    destinationFrameId: null,
                   ),
                 );
           },
@@ -122,15 +121,31 @@ class LayerTree extends StatelessWidget {
                 if (node == null) return const SizedBox.shrink();
 
                 final isFrame = node.shape is FrameShape;
+                final isGroup = node.shape is GroupShape;
+                final isContainer = isFrame || isGroup;
 
                 return DragTarget<_LayerDragPayload>(
                   onWillAcceptWithDetails: (details) {
-                    if (!isFrame) return false;
+                    if (!isContainer) return false;
                     final ids = reparentableIds(details.data.shapeIds);
                     if (ids.isEmpty) return false;
                     // Don't allow dropping a selection onto itself.
                     if (ids.contains(node.shape.id)) {
                       return false;
+                    }
+                    // Prevent cycles: can't drop a parent into its
+                    // own descendant.
+                    if (isGroup) {
+                      final ancestors =
+                          LayerTreeBuilder.getAncestorIds(
+                        node.shape.id,
+                        state.shapes,
+                      );
+                      final ancestorSet = <String>{
+                        node.shape.id,
+                        ...ancestors,
+                      };
+                      if (ids.any(ancestorSet.contains)) return false;
                     }
                     return true;
                   },
@@ -140,7 +155,10 @@ class LayerTree extends StatelessWidget {
                     context.read<CanvasBloc>().add(
                           ShapesReparented(
                             shapeIds: ids,
-                            destinationFrameId: node.shape.id,
+                            destinationFrameId:
+                                isFrame ? node.shape.id : null,
+                            destinationGroupId:
+                                isGroup ? node.shape.id : null,
                           ),
                         );
                   },

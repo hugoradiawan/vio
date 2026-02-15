@@ -1553,12 +1553,30 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
   ) {
     if (event.shapeIds.isEmpty) return;
 
-    final destinationFrameId = event.destinationFrameId;
-    if (destinationFrameId != null) {
+    final destinationGroupId = event.destinationGroupId;
+    String? destinationFrameId = event.destinationFrameId;
+
+    // Validate group destination.
+    if (destinationGroupId != null) {
+      final destinationGroup = state.shapes[destinationGroupId];
+      if (destinationGroup is! GroupShape) return;
+      // Inherit the group's frameId so children stay in the right frame.
+      destinationFrameId = destinationGroup.frameId;
+    } else if (destinationFrameId != null) {
       final destinationFrame = state.shapes[destinationFrameId];
       if (destinationFrame is! FrameShape) {
         return;
       }
+    }
+
+    // Prevent cycles: a shape cannot be dropped into its own descendant.
+    if (destinationGroupId != null) {
+      final ancestorIds = LayerTreeBuilder.getAncestorIds(
+        destinationGroupId,
+        state.shapes,
+      );
+      final ancestorSet = <String>{destinationGroupId, ...ancestorIds};
+      if (event.shapeIds.any(ancestorSet.contains)) return;
     }
 
     final newShapes = Map<String, Shape>.from(state.shapes);
@@ -1591,11 +1609,13 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
       if (shape is FrameShape) continue;
       if (shape.blocked) continue;
 
-      if (shape.frameId != destinationFrameId || shape.parentId != null) {
-        // Reparenting into a frame/root removes any group parent.
+      final newParentId = destinationGroupId;
+      final newFrameId = destinationFrameId;
+
+      if (shape.frameId != newFrameId || shape.parentId != newParentId) {
         newShapes[id] = shape.copyWith(
-          frameId: destinationFrameId,
-          parentId: null,
+          frameId: newFrameId,
+          parentId: newParentId,
         );
         updatedShapeIds.add(id);
       }

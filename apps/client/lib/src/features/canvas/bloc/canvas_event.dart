@@ -218,21 +218,28 @@ class PointerUp extends CanvasEvent {
   List<Object?> get props => [x, y];
 }
 
-/// Reparent one or more shapes to a destination frame (or root when null).
+/// Reparent one or more shapes to a destination frame, group, or root.
 ///
-/// Coordinates remain absolute in canvas space; only `frameId` (and any
-/// frame-owned ordering metadata) is updated.
+/// Coordinates remain absolute in canvas space; only `frameId` / `parentId`
+/// (and any frame-owned ordering metadata) is updated.
+///
+/// When [destinationGroupId] is provided the shapes are placed inside that
+/// group (inheriting the group's `frameId`).  When only [destinationFrameId]
+/// is provided the shapes are placed at that frame's root level.  When both
+/// are `null` the shapes are moved to the canvas root.
 class ShapesReparented extends CanvasEvent {
   const ShapesReparented({
     required this.shapeIds,
-    required this.destinationFrameId,
+    this.destinationFrameId,
+    this.destinationGroupId,
   });
 
   final List<String> shapeIds;
   final String? destinationFrameId;
+  final String? destinationGroupId;
 
   @override
-  List<Object?> get props => [shapeIds, destinationFrameId];
+  List<Object?> get props => [shapeIds, destinationFrameId, destinationGroupId];
 }
 
 /// Create a new group from the current selection.

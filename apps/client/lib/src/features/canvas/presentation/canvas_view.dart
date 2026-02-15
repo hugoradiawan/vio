@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/foundation.dart';
@@ -157,9 +156,13 @@ class _CanvasViewState extends State<CanvasView> {
       final (measuredWidth, measuredHeight) =
           _measureText(_textController.text, shape);
 
-      // Keep a minimum editor size (Penpot-like default).
-      final width = math.max(200.0, measuredWidth);
-      final height = math.max(24.0, measuredHeight);
+      // Use measured values directly – _measureText already defaults to
+      // 200×24 for unset shapes, and the grow-only guard in
+      // _onTextEditLayoutChanged prevents shrinking below the current
+      // shape dimensions.  A hard-coded floor here would override
+      // user-resized boxes back to the default width.
+      final width = measuredWidth;
+      final height = measuredHeight;
 
       // Tiny threshold to reduce no-op updates.
       const eps = 0.5;
@@ -1530,8 +1533,8 @@ class _CanvasViewState extends State<CanvasView> {
 
       final (measuredWidth, measuredHeight) =
           _measureText(_textController.text, latest);
-      final width = math.max(200.0, measuredWidth);
-      final height = math.max(24.0, measuredHeight);
+      final width = measuredWidth;
+      final height = measuredHeight;
 
       bloc.add(
         TextEditLayoutChanged(

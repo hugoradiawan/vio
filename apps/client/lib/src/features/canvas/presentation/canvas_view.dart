@@ -856,7 +856,7 @@ class _CanvasViewState extends State<CanvasView> {
       return;
     }
 
-    // Double click on text to edit (Select/DirectSelect tools).
+    // Double-click detection (Select/DirectSelect tools).
     if (event.buttons == kPrimaryButton &&
         (workspaceState.activeTool == CanvasTool.select ||
             workspaceState.activeTool == CanvasTool.directSelect)) {
@@ -877,11 +877,14 @@ class _CanvasViewState extends State<CanvasView> {
           : (event.localPosition - _lastPrimaryClickPosition!).distance <=
               _doubleClickMaxDistancePx;
       final sameShape = hitShape != null &&
-          hitShape.id == _lastPrimaryClickShapeId &&
-          hitShape is TextShape;
+          hitShape.id == _lastPrimaryClickShapeId;
 
       if (withinTime && withinDistance && sameShape) {
-        context.read<CanvasBloc>().add(TextEditRequested(shapeId: hitShape.id));
+        // Let the bloc decide what to do: enter group, start text edit, etc.
+        context.read<CanvasBloc>().add(CanvasDoubleClicked(
+              x: event.localPosition.dx,
+              y: event.localPosition.dy,
+            ),);
 
         // Reset click tracking to avoid triple-click oddities.
         _lastPrimaryClickMs = 0;
@@ -900,6 +903,7 @@ class _CanvasViewState extends State<CanvasView> {
       CanvasTool.ellipse => CanvasPointerTool.drawEllipse,
       CanvasTool.frame => CanvasPointerTool.drawFrame,
       CanvasTool.text => CanvasPointerTool.drawText,
+      CanvasTool.directSelect => CanvasPointerTool.directSelect,
       _ => CanvasPointerTool.select,
     };
 

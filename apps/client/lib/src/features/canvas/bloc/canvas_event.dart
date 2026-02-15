@@ -3,8 +3,11 @@ part of 'canvas_bloc.dart';
 /// Tool intent for pointer interactions that need to be routed into the canvas
 /// logic (kept minimal to avoid coupling CanvasBloc to WorkspaceBloc).
 enum CanvasPointerTool {
-  /// Default selection / manipulation behavior
+  /// Default selection / manipulation behavior (group-aware)
   select,
+
+  /// Direct selection — always picks the leaf shape, ignoring groups
+  directSelect,
 
   /// Drag-to-create shapes
   drawRectangle,
@@ -178,6 +181,23 @@ class TextEditRequested extends CanvasEvent {
 
   @override
   List<Object?> get props => [shapeId];
+}
+
+/// Fired on double-click to drill into a group or start text editing.
+class CanvasDoubleClicked extends CanvasEvent {
+  const CanvasDoubleClicked({
+    required this.x,
+    required this.y,
+  });
+
+  /// X position in screen coordinates
+  final double x;
+
+  /// Y position in screen coordinates
+  final double y;
+
+  @override
+  List<Object?> get props => [x, y];
 }
 
 /// Fired when pointer/mouse moves on canvas

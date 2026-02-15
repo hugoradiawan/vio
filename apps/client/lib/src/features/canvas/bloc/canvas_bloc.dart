@@ -60,6 +60,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     on<PointerDown>(_onPointerDown);
     on<PointerMove>(_onPointerMove);
     on<PointerUp>(_onPointerUp);
+    on<CanvasDoubleClicked>(_onCanvasDoubleClicked);
     on<CanvasPointerExited>(_onCanvasPointerExited);
     on<SelectionCleared>(_onSelectionCleared);
     on<ShapeAdded>(_onShapeAdded);
@@ -498,6 +499,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
 
     // Drag-to-create tools
     if (event.tool != CanvasPointerTool.select &&
+        event.tool != CanvasPointerTool.directSelect &&
         state.interactionMode != InteractionMode.drawing) {
       final newId = _uuid.v4();
 
@@ -554,6 +556,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
           ),
         CanvasPointerTool.drawText => throw StateError('Unreachable'),
         CanvasPointerTool.select => throw StateError('Unreachable'),
+        CanvasPointerTool.directSelect => throw StateError('Unreachable'),
       };
 
       final newShapes = Map<String, Shape>.from(state.shapes)
@@ -643,25 +646,67 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     final hitShape = HitTest.findTopShapeAtPoint(canvasPoint, state.shapeList);
 
     if (hitShape != null) {
+      // Resolve the correct selection target based on group drill-down state.
+      // DirectSelect always picks the leaf; Select uses group-aware logic.
+      final bool isDirectSelect =
+          event.tool == CanvasPointerTool.directSelect;
+
+      Shape selectionTarget;
+      bool shouldClearEnteredGroup = false;
+
+      if (isDirectSelect) {
+        selectionTarget = hitShape;
+        shouldClearEnteredGroup = state.enteredGroupId != null;
+      } else if (state.enteredGroupId != null) {
+        if (hitShape.id == state.enteredGroupId ||
+            !HitTest.isDescendantOf(
+              hitShape,
+              state.enteredGroupId!,
+              state.shapes,
+            )) {
+          // Clicked on the entered group's background or outside it.
+          // Exit the entered group and do normal (outermost-group) selection.
+          selectionTarget =
+              HitTest.resolveGroupTarget(hitShape, state.shapes);
+          shouldClearEnteredGroup = true;
+        } else {
+          // Clicked on a descendant — select the direct child of the entered
+          // group that contains this shape.
+          selectionTarget = HitTest.resolveGroupTarget(
+            hitShape,
+            state.shapes,
+            enteredGroupId: state.enteredGroupId,
+          );
+        }
+      } else {
+        // Not inside any group — select the outermost group ancestor.
+        selectionTarget =
+            HitTest.resolveGroupTarget(hitShape, state.shapes);
+      }
+
       // Check if shift is held for multi-select
       final addToSelection = event.shiftPressed;
 
       if (addToSelection) {
         // Toggle selection
-        if (state.selectedShapeIds.contains(hitShape.id)) {
+        if (state.selectedShapeIds.contains(selectionTarget.id)) {
           _endSnapSession();
           emit(
             state.copyWith(
               selectedShapeIds: state.selectedShapeIds
-                  .where((id) => id != hitShape.id)
+                  .where((id) => id != selectionTarget.id)
                   .toList(),
               interactionMode: InteractionMode.idle,
               clearDragStart: true,
               clearCurrentPointer: true,
+              clearEnteredGroupId: shouldClearEnteredGroup,
             ),
           );
         } else {
-          final newSelection = [...state.selectedShapeIds, hitShape.id];
+          final newSelection = [
+            ...state.selectedShapeIds,
+            selectionTarget.id,
+          ];
           _beginSnapSession(newSelection.toSet());
           emit(
             state.copyWith(
@@ -670,14 +715,16 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
               interactionMode: InteractionMode.movingShapes,
               dragStart: canvasPoint,
               currentPointer: canvasPoint,
+              clearEnteredGroupId: shouldClearEnteredGroup,
             ),
           );
         }
       } else {
-        // Single selection - shape clicked, start moving
-        final isAlreadySelected = state.selectedShapeIds.contains(hitShape.id);
+        // Single selection
+        final isAlreadySelected =
+            state.selectedShapeIds.contains(selectionTarget.id);
         final newSelection =
-            isAlreadySelected ? state.selectedShapeIds : [hitShape.id];
+            isAlreadySelected ? state.selectedShapeIds : [selectionTarget.id];
 
         _beginSnapSession(newSelection.toSet());
         emit(
@@ -687,11 +734,12 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
             interactionMode: InteractionMode.movingShapes,
             dragStart: canvasPoint,
             currentPointer: canvasPoint,
+            clearEnteredGroupId: shouldClearEnteredGroup,
           ),
         );
       }
     } else {
-      // No shape hit - start marquee selection
+      // No shape hit - start marquee selection, exit any entered group
       _endSnapSession();
       emit(
         state.copyWith(
@@ -699,9 +747,79 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
           dragStart: canvasPoint,
           currentPointer: canvasPoint,
           selectedShapeIds: [], // Clear selection
+          clearEnteredGroupId: true,
         ),
       );
     }
+  }
+
+  void _onCanvasDoubleClicked(
+    CanvasDoubleClicked event,
+    Emitter<CanvasState> emit,
+  ) {
+    // Double-click only acts on a single selected shape.
+    if (state.selectedShapeIds.length != 1) return;
+
+    final selectedShape = state.shapes[state.selectedShapeIds.first];
+    if (selectedShape == null) return;
+
+    // Double-click on a TextShape → start inline text editing.
+    if (selectedShape is TextShape) {
+      add(TextEditRequested(shapeId: selectedShape.id));
+      return;
+    }
+
+    // Double-click on a GroupShape → drill into the group.
+    if (selectedShape is GroupShape) {
+      final screenPoint = Offset(event.x, event.y);
+      final canvasPoint = _screenToCanvas(screenPoint);
+
+      // Find the leaf shape under the cursor.
+      final hitShape =
+          HitTest.findTopShapeAtPoint(canvasPoint, state.shapeList);
+
+      if (hitShape != null &&
+          hitShape.id != selectedShape.id &&
+          HitTest.isDescendantOf(
+              hitShape, selectedShape.id, state.shapes,)) {
+        // Resolve the direct child of the newly-entered group.
+        final target = HitTest.resolveGroupTarget(
+          hitShape,
+          state.shapes,
+          enteredGroupId: selectedShape.id,
+        );
+
+        final newSelection = [target.id];
+        emit(
+          state.copyWith(
+            enteredGroupId: selectedShape.id,
+            selectedShapeIds: newSelection,
+            expandedLayerIds: _expandAncestorsForShapes(newSelection),
+            interactionMode: InteractionMode.idle,
+            clearDragStart: true,
+            clearCurrentPointer: true,
+            clearDragOffset: true,
+            clearSnap: true,
+          ),
+        );
+      } else {
+        // Nothing under cursor inside the group — enter but clear selection.
+        emit(
+          state.copyWith(
+            enteredGroupId: selectedShape.id,
+            selectedShapeIds: const [],
+            interactionMode: InteractionMode.idle,
+            clearDragStart: true,
+            clearCurrentPointer: true,
+            clearDragOffset: true,
+            clearSnap: true,
+          ),
+        );
+      }
+      return;
+    }
+
+    // For other shape types, double-click is a no-op.
   }
 
   void _onTextEditCommitted(
@@ -1055,10 +1173,20 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
         hoveredCorner = _hitTestCornerRadiusHandle(screenPoint);
       }
 
-      // Hit test to find shape under pointer for hover highlight
-      final hoveredShape =
+      // Hit test to find shape under pointer for hover highlight.
+      // Resolve to the correct group level so the hover outline matches what
+      // a click would actually select.
+      final hoveredLeaf =
           HitTest.findTopShapeAtPoint(canvasPoint, state.shapeList);
-      final newHoveredId = hoveredShape?.id;
+      String? newHoveredId;
+      if (hoveredLeaf != null) {
+        final target = HitTest.resolveGroupTarget(
+          hoveredLeaf,
+          state.shapes,
+          enteredGroupId: state.enteredGroupId,
+        );
+        newHoveredId = target.id;
+      }
 
       final nextHoveredCornerIndex = hoveredCorner?.index;
 
@@ -1544,7 +1672,40 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState> {
     SelectionCleared event,
     Emitter<CanvasState> emit,
   ) {
-    emit(state.copyWith(selectedShapeIds: [], clearHoveredCornerIndex: true));
+    if (state.enteredGroupId != null) {
+      // Exit the entered group one level: select the entered group itself and
+      // move the drill-down cursor to its parent group (if any).
+      final enteredGroup = state.shapes[state.enteredGroupId!];
+      if (enteredGroup != null) {
+        final parentGroupId = enteredGroup.parentId;
+        final parentGroup =
+            parentGroupId != null ? state.shapes[parentGroupId] : null;
+        final nextEnteredGroupId =
+            (parentGroup is GroupShape) ? parentGroupId : null;
+
+        emit(
+          state.copyWith(
+            selectedShapeIds: [state.enteredGroupId!],
+            expandedLayerIds:
+                _expandAncestorsForShapes([state.enteredGroupId!]),
+            enteredGroupId: nextEnteredGroupId,
+            clearEnteredGroupId: nextEnteredGroupId == null,
+            clearHoveredCornerIndex: true,
+          ),
+        );
+      } else {
+        // Entered group no longer exists — just clear everything.
+        emit(
+          state.copyWith(
+            selectedShapeIds: [],
+            clearEnteredGroupId: true,
+            clearHoveredCornerIndex: true,
+          ),
+        );
+      }
+    } else {
+      emit(state.copyWith(selectedShapeIds: [], clearHoveredCornerIndex: true));
+    }
   }
 
   void _onShapesReparented(

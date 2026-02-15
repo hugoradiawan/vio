@@ -161,6 +161,63 @@ class HitTest {
     return hits;
   }
 
+  /// Given a directly-hit shape, resolve the correct selection target based on
+  /// the current group drill-down depth.
+  ///
+  /// When [enteredGroupId] is `null`, returns the outermost [GroupShape]
+  /// ancestor of [hitShape] (i.e. first click selects the top-level group).
+  /// When [enteredGroupId] is set, returns the direct child of that group that
+  /// contains [hitShape] (i.e. selecting one level deeper).
+  static Shape resolveGroupTarget(
+    Shape hitShape,
+    Map<String, Shape> shapesById, {
+    String? enteredGroupId,
+  }) {
+    if (enteredGroupId == null) {
+      // Walk up the GroupShape parentId chain to find the outermost group.
+      var current = hitShape;
+      while (true) {
+        final parentId = current.parentId;
+        if (parentId == null) break;
+        final parent = shapesById[parentId];
+        if (parent == null || parent is! GroupShape) break;
+        current = parent;
+      }
+      return current;
+    } else {
+      // Walk up to find the direct child of the entered group.
+      var current = hitShape;
+      while (true) {
+        final parentId = current.parentId;
+        if (parentId == enteredGroupId) return current;
+        if (parentId == null) break;
+        final parent = shapesById[parentId];
+        if (parent == null) break;
+        current = parent;
+      }
+      // hitShape is not inside the entered group — return as-is so the caller
+      // can decide to exit the entered group.
+      return hitShape;
+    }
+  }
+
+  /// Whether [shape] is a descendant (direct or transitive) of the shape with
+  /// [ancestorId], following the [parentId] chain through groups.
+  static bool isDescendantOf(
+    Shape shape,
+    String ancestorId,
+    Map<String, Shape> shapesById,
+  ) {
+    var currentId = shape.parentId;
+    while (currentId != null) {
+      if (currentId == ancestorId) return true;
+      final parent = shapesById[currentId];
+      if (parent == null) break;
+      currentId = parent.parentId;
+    }
+    return false;
+  }
+
   /// Get the axis-aligned bounding box of a shape after transform
   static Rect _getTransformedBounds(Shape shape) {
     final bounds = shape.bounds;

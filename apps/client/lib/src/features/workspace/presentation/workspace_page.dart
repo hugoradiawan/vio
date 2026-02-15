@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../../core/platform_shortcuts.dart';
-
 import '../../canvas/bloc/canvas_bloc.dart';
 import '../../canvas/presentation/canvas_view.dart';
 import '../bloc/workspace_bloc.dart';

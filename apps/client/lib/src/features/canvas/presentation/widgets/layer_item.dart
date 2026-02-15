@@ -5,7 +5,6 @@ import 'package:vio_core/vio_core.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../../../core/platform_shortcuts.dart';
-
 import '../../bloc/canvas_bloc.dart';
 
 enum _LayerContextAction {

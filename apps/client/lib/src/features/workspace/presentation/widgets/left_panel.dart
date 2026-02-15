@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vio_client/src/core/platform_shortcuts.dart';
 import 'package:vio_client/src/features/canvas/bloc/canvas_bloc.dart';
 import 'package:vio_client/src/features/version_control/presentation/widgets/version_control_tab.dart';
 import 'package:vio_client/src/features/workspace/bloc/workspace_bloc.dart';
@@ -252,7 +253,7 @@ Widget _buildZoomControls(BuildContext context) {
           VioIconButton(
             icon: Icons.remove,
             size: 24,
-            tooltip: 'Zoom Out (Ctrl+-)',
+            tooltip: 'Zoom Out (${platformModifierLabel()}+-)',
             onPressed: () {
               context.read<CanvasBloc>().add(const ZoomOut());
             },
@@ -306,7 +307,7 @@ Widget _buildZoomControls(BuildContext context) {
           VioIconButton(
             icon: Icons.add,
             size: 24,
-            tooltip: 'Zoom In (Ctrl++)',
+            tooltip: 'Zoom In (${platformModifierLabel()}++)',
             onPressed: () {
               context.read<CanvasBloc>().add(const ZoomIn());
             },
@@ -341,7 +342,7 @@ Widget _buildViewToggles(BuildContext context) {
         children: [
           _ToggleButton(
             icon: Icons.grid_4x4,
-            tooltip: 'Show Grid (Ctrl+`)',
+            tooltip: 'Show Grid (${platformModifierLabel()}+`)',
             isActive: state.showGrid,
             onPressed: () {
               context.read<WorkspaceBloc>().add(const GridToggled());
@@ -349,7 +350,7 @@ Widget _buildViewToggles(BuildContext context) {
           ),
           _ToggleButton(
             icon: Icons.grid_on,
-            tooltip: 'Snap to Grid (Ctrl+\')',
+            tooltip: 'Snap to Grid (${platformModifierLabel()}+\')',
             isActive: state.snapToGrid,
             onPressed: () {
               context.read<WorkspaceBloc>().add(const SnapToGridToggled());
@@ -357,7 +358,7 @@ Widget _buildViewToggles(BuildContext context) {
           ),
           _ToggleButton(
             icon: Icons.straighten,
-            tooltip: 'Show Rulers (Ctrl+Shift+R)',
+            tooltip: 'Show Rulers (${platformModifierLabel()}+Shift+R)',
             isActive: state.showRulers,
             onPressed: () {
               context.read<WorkspaceBloc>().add(const RulersToggled());

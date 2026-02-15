@@ -205,7 +205,7 @@ class _CanvasViewState extends State<CanvasView> {
       }
 
       // Handle keyboard shortcuts
-      final isCtrlPressed = HardwareKeyboard.instance.isControlPressed;
+      final isCtrlPressed = isPlatformModifierPressed();
       final isShiftPressed = HardwareKeyboard.instance.isShiftPressed;
 
       if (isCtrlPressed) {
@@ -1308,9 +1308,9 @@ class _CanvasViewState extends State<CanvasView> {
 
   void _handlePointerSignal(BuildContext context, PointerSignalEvent event) {
     if (event is PointerScrollEvent) {
-      // Check if this is a zoom gesture (Ctrl+scroll or trackpad pinch)
+      // Check if this is a zoom gesture (Cmd/Ctrl+scroll or trackpad pinch)
       // On web, trackpad pinch zoom comes as scroll events with ctrlKey
-      final isZoomGesture = HardwareKeyboard.instance.isControlPressed;
+      final isZoomGesture = isPlatformModifierPressed();
       final isShiftScroll = HardwareKeyboard.instance.isShiftPressed;
 
       if (isZoomGesture) {

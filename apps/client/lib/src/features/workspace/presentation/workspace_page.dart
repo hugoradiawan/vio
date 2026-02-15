@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
+import '../../../core/platform_shortcuts.dart';
+
 import '../../canvas/bloc/canvas_bloc.dart';
 import '../../canvas/presentation/canvas_view.dart';
 import '../bloc/workspace_bloc.dart';
@@ -324,56 +326,41 @@ class _WorkspacePageState extends State<WorkspacePage> {
       },
 
       // View shortcuts - with modifiers, safe to use
-      const SingleActivator(LogicalKeyboardKey.backquote, control: true):
+      platformSingleActivator(LogicalKeyboardKey.backquote):
           const _GridToggleIntent(),
-      const SingleActivator(LogicalKeyboardKey.quote, control: true):
+      platformSingleActivator(LogicalKeyboardKey.quote):
           const _SnapToggleIntent(),
-      const SingleActivator(
-        LogicalKeyboardKey.keyR,
-        control: true,
-        shift: true,
-      ): const _RulersToggleIntent(),
+      platformSingleActivator(LogicalKeyboardKey.keyR, shift: true):
+          const _RulersToggleIntent(),
 
       // Panel shortcuts
-      const SingleActivator(LogicalKeyboardKey.backslash, control: true):
+      platformSingleActivator(LogicalKeyboardKey.backslash):
           const _ZenModeToggleIntent(),
-      const SingleActivator(
-        LogicalKeyboardKey.backslash,
-        control: true,
-        shift: true,
-      ): const _RightPanelToggleIntent(),
+      platformSingleActivator(LogicalKeyboardKey.backslash, shift: true):
+          const _RightPanelToggleIntent(),
       // Some platforms report Shift+\\ as LogicalKeyboardKey.bar instead of backslash
-      const SingleActivator(LogicalKeyboardKey.bar, control: true, shift: true):
+      platformSingleActivator(LogicalKeyboardKey.bar, shift: true):
           const _RightPanelToggleIntent(),
       // Some keyboards send intlBackslash scancode
-      const SingleActivator(LogicalKeyboardKey.intlBackslash, control: true):
+      platformSingleActivator(LogicalKeyboardKey.intlBackslash):
           const _ZenModeToggleIntent(),
-      const SingleActivator(
-        LogicalKeyboardKey.intlBackslash,
-        control: true,
-        shift: true,
-      ): const _RightPanelToggleIntent(),
+      platformSingleActivator(LogicalKeyboardKey.intlBackslash, shift: true):
+          const _RightPanelToggleIntent(),
 
       // Keep an explicit left-panel toggle as a fallback.
-      const SingleActivator(
-        LogicalKeyboardKey.backslash,
-        control: true,
-        alt: true,
-      ): const _LeftPanelToggleIntent(),
-      const SingleActivator(
-        LogicalKeyboardKey.intlBackslash,
-        control: true,
-        alt: true,
-      ): const _LeftPanelToggleIntent(),
+      platformSingleActivator(LogicalKeyboardKey.backslash, alt: true):
+          const _LeftPanelToggleIntent(),
+      platformSingleActivator(LogicalKeyboardKey.intlBackslash, alt: true):
+          const _LeftPanelToggleIntent(),
 
       // Zoom shortcuts
-      const SingleActivator(LogicalKeyboardKey.equal, control: true):
+      platformSingleActivator(LogicalKeyboardKey.equal):
           const _ZoomInIntent(),
-      const SingleActivator(LogicalKeyboardKey.minus, control: true):
+      platformSingleActivator(LogicalKeyboardKey.minus):
           const _ZoomOutIntent(),
-      const SingleActivator(LogicalKeyboardKey.digit0, control: true):
+      platformSingleActivator(LogicalKeyboardKey.digit0):
           const _ZoomResetIntent(),
-      const SingleActivator(LogicalKeyboardKey.digit1, control: true):
+      platformSingleActivator(LogicalKeyboardKey.digit1):
           const _ZoomResetIntent(),
     };
   }

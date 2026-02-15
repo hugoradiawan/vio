@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vio_core/vio_core.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
+import '../../../../core/platform_shortcuts.dart';
+
 import '../../bloc/canvas_bloc.dart';
 
 enum _LayerContextAction {
@@ -475,8 +477,7 @@ class _LayerItemState extends State<LayerItem> {
 
   void _handleTap(BuildContext context) {
     final isShiftPressed = HardwareKeyboard.instance.isShiftPressed;
-    final isCtrlPressed = HardwareKeyboard.instance.isControlPressed ||
-        HardwareKeyboard.instance.isMetaPressed;
+    final isCtrlPressed = isPlatformModifierPressed();
 
     context.read<CanvasBloc>().add(
           ShapeSelected(

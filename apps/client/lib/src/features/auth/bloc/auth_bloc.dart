@@ -14,7 +14,9 @@ part 'auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc({
     required AuthServiceClient authClient,
+    TokenStorage? tokenStorage,
   })  : _authClient = authClient,
+        _tokenStorage = tokenStorage ?? TokenStorage.instance,
         super(const AuthState()) {
     on<AuthCheckRequested>(_onCheckRequested);
     on<AuthLoginRequested>(_onLoginRequested);
@@ -23,7 +25,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   final AuthServiceClient _authClient;
-  final TokenStorage _tokenStorage = TokenStorage.instance;
+  final TokenStorage _tokenStorage;
 
   /// Check for existing session on app startup.
   Future<void> _onCheckRequested(
@@ -34,7 +36,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     try {
       final accessToken = await _tokenStorage.getAccessToken();
-      debugPrint('[AuthBloc] Startup check: accessToken=${accessToken != null ? '${accessToken.substring(0, 10)}...' : 'null'}');
+      debugPrint(
+          '[AuthBloc] Startup check: accessToken=${accessToken != null ? '${accessToken.substring(0, 10)}...' : 'null'}',);
       if (accessToken == null) {
         debugPrint('[AuthBloc] No stored token, going to unauthenticated');
         emit(state.copyWith(status: AuthStatus.unauthenticated));

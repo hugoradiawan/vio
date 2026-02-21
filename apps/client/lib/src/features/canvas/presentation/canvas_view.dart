@@ -8,20 +8,21 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
+import 'package:vio_client/src/core/core.dart';
+import 'package:vio_client/src/features/assets/bloc/asset_bloc.dart';
+import 'package:vio_client/src/features/canvas/bloc/canvas_bloc.dart';
+import 'package:vio_client/src/features/canvas/models/frame_presets.dart';
+import 'package:vio_client/src/features/workspace/bloc/workspace_bloc.dart';
 import 'package:vio_core/vio_core.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
-import '../../../core/core.dart';
-import '../../assets/bloc/asset_bloc.dart';
-import '../../workspace/bloc/workspace_bloc.dart';
-import '../bloc/canvas_bloc.dart';
-import '../models/frame_presets.dart';
 import 'painters/canvas_painter.dart';
 import 'painters/grid_painter.dart';
-import 'painters/ruler_painter.dart';
+import 'painters/horizontal_ruler_painter.dart';
 import 'painters/selection_box_painter.dart';
 import 'painters/size_indicator_painter.dart';
 import 'painters/snap_guides_painter.dart';
+import 'painters/vertical_ruler_painter.dart';
 
 enum _CanvasContextAction {
   cut,

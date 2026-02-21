@@ -1,12 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:vio_client/src/features/canvas/const/ruler.const.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
-
-/// Ruler constants
-class RulerConstants {
-  static const double rulerSize = 20.0;
-  static const double selectionHighlightOpacity = 0.3;
-  static const Color selectionHighlightColor = VioColors.primary;
-}
 
 /// Horizontal ruler painter with selection highlight
 class HorizontalRulerPainter extends CustomPainter {

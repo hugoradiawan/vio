@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vio_client/src/features/canvas/presentation/painters/horizontal_ruler_painter.dart';
+import 'package:vio_client/src/features/canvas/const/ruler.const.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 /// Vertical ruler painter with selection highlight

@@ -42,8 +42,12 @@ class TokenStorage {
     required String refreshToken,
   }) async {
     if (_isWeb()) {
-      await _webBackend.write(_accessTokenKey, accessToken);
-      await _webBackend.write(_refreshTokenKey, refreshToken);
+      try {
+        await _webBackend.write(_accessTokenKey, accessToken);
+        await _webBackend.write(_refreshTokenKey, refreshToken);
+      } catch (error) {
+        debugPrint('[TokenStorage] Web save failed: $error');
+      }
       debugPrint('[TokenStorage] Tokens saved');
       return;
     }
@@ -55,8 +59,12 @@ class TokenStorage {
       debugPrint(
         '[TokenStorage] Secure save failed, using fallback storage: $error',
       );
-      await _webBackend.write(_accessTokenKey, accessToken);
-      await _webBackend.write(_refreshTokenKey, refreshToken);
+      try {
+        await _webBackend.write(_accessTokenKey, accessToken);
+        await _webBackend.write(_refreshTokenKey, refreshToken);
+      } catch (fallbackError) {
+        debugPrint('[TokenStorage] Fallback save failed: $fallbackError');
+      }
     }
     debugPrint('[TokenStorage] Tokens saved');
   }
@@ -74,8 +82,12 @@ class TokenStorage {
   /// Clear all stored tokens (logout).
   Future<void> clearTokens() async {
     if (_isWeb()) {
-      await _webBackend.delete(_accessTokenKey);
-      await _webBackend.delete(_refreshTokenKey);
+      try {
+        await _webBackend.delete(_accessTokenKey);
+        await _webBackend.delete(_refreshTokenKey);
+      } catch (error) {
+        debugPrint('[TokenStorage] Web clear failed: $error');
+      }
       debugPrint('[TokenStorage] Tokens cleared');
       return;
     }
@@ -89,8 +101,12 @@ class TokenStorage {
       );
     }
 
-    await _webBackend.delete(_accessTokenKey);
-    await _webBackend.delete(_refreshTokenKey);
+    try {
+      await _webBackend.delete(_accessTokenKey);
+      await _webBackend.delete(_refreshTokenKey);
+    } catch (fallbackError) {
+      debugPrint('[TokenStorage] Fallback clear failed: $fallbackError');
+    }
     debugPrint('[TokenStorage] Tokens cleared');
   }
 
@@ -116,7 +132,12 @@ class TokenStorage {
       );
     }
 
-    return _webBackend.read(key);
+    try {
+      return await _webBackend.read(key);
+    } catch (fallbackError) {
+      debugPrint('[TokenStorage] Fallback read failed: $fallbackError');
+      return null;
+    }
   }
 }
 

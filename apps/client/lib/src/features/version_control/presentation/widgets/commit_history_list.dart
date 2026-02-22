@@ -375,7 +375,6 @@ class _CommitItem extends StatelessWidget {
                       // Commit metadata
                       Row(
                         children: [
-                          // Commit hash
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 6,
@@ -397,29 +396,38 @@ class _CommitItem extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-
-                          // Timestamp
-                          const Icon(
-                            Icons.schedule,
-                            size: 12,
-                            color: VioColors.textTertiary,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            _formatDate(commit.createdAtDateTime),
-                            style: const TextStyle(
-                              color: VioColors.textTertiary,
-                              fontSize: 11,
+                          Expanded(
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.schedule,
+                                  size: 12,
+                                  color: VioColors.textTertiary,
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    _formatDate(commit.createdAtDateTime),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: VioColors.textTertiary,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const Spacer(),
-
-                          // Action buttons
-                          _CommitActions(
-                            onCheckout: onCheckout,
-                            onRevert: onRevert,
-                          ),
                         ],
+                      ),
+                      const SizedBox(height: 6),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: _CommitActions(
+                          onCheckout: onCheckout,
+                          onRevert: onRevert,
+                        ),
                       ),
                     ],
                   ),

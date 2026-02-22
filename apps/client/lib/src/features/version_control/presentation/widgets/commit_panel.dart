@@ -644,44 +644,48 @@ class _ChangeItemState extends State<_ChangeItem> {
                   ),
                 ),
 
-                // Discard button (visible on hover)
-                if (_isHovering)
-                  IconButton(
-                    onPressed: widget.onDiscard,
-                    icon: const Icon(
-                      Icons.undo,
-                      size: 14,
-                      color: VioColors.textSecondary,
-                    ),
-                    tooltip: 'Discard change',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 24,
-                      minHeight: 24,
-                    ),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                    ),
-                  )
-                else
-                  // Shape type badge (visible when not hovering)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                    decoration: BoxDecoration(
-                      color: VioColors.surfaceElevated,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      widget.change.afterShape?.type.name ??
-                          widget.change.beforeShape?.type.name ??
-                          'shape',
-                      style: const TextStyle(
-                        color: VioColors.textTertiary,
-                        fontSize: 9,
-                      ),
-                    ),
+                SizedBox(
+                  height: 24,
+                  child: Center(
+                    child: _isHovering
+                        ? IconButton(
+                            onPressed: widget.onDiscard,
+                            icon: const Icon(
+                              Icons.undo,
+                              size: 14,
+                              color: VioColors.textSecondary,
+                            ),
+                            tooltip: 'Discard change',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 24,
+                              minHeight: 24,
+                            ),
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                            ),
+                          )
+                        : Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 1,
+                            ),
+                            decoration: BoxDecoration(
+                              color: VioColors.surfaceElevated,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              widget.change.afterShape?.type.name ??
+                                  widget.change.beforeShape?.type.name ??
+                                  'shape',
+                              style: const TextStyle(
+                                color: VioColors.textTertiary,
+                                fontSize: 9,
+                              ),
+                            ),
+                          ),
                   ),
+                ),
               ],
             ),
           ),

@@ -109,6 +109,10 @@ class _LayerItemState extends State<LayerItem> {
   @override
   Widget build(BuildContext context) {
     final indent = widget.depth * 16.0;
+    final isCanvasLinkedHover = widget.isHovered && !widget.isRowHovered;
+    final isHighlighted =
+        widget.isSelected || widget.isRowHovered || isCanvasLinkedHover;
+    final showLeftAccent = widget.isSelected || isCanvasLinkedHover;
 
     final showControlsOnHover = widget.isRowHovered;
     final showVisibilityControl = showControlsOnHover || widget.shape.hidden;
@@ -128,13 +132,19 @@ class _LayerItemState extends State<LayerItem> {
           context,
           details.globalPosition,
         ),
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeInOut,
           height: 32,
           decoration: BoxDecoration(
-            color: _getBackgroundColor(),
-            border: widget.isHovered && !widget.isSelected
-                ? Border.all(
-                    color: VioColors.primary.withValues(alpha: 0.5),
+            color:
+                isHighlighted ? VioColors.surfaceElevated : Colors.transparent,
+            border: showLeftAccent
+                ? const Border(
+                    left: BorderSide(
+                      color: VioColors.primary,
+                      width: 2,
+                    ),
                   )
                 : null,
           ),
@@ -301,13 +311,6 @@ class _LayerItemState extends State<LayerItem> {
         bloc.add(const SendToBackSelected());
         break;
     }
-  }
-
-  Color _getBackgroundColor() {
-    if (widget.isSelected) {
-      return VioColors.primary.withValues(alpha: 0.2);
-    }
-    return Colors.transparent;
   }
 
   Widget _buildExpandButton() {

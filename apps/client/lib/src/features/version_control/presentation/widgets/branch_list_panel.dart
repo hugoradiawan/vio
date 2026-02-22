@@ -49,7 +49,6 @@ class _BranchListPanelState extends State<BranchListPanel> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 12),
               // Search bar
               _buildSearchBar(),
 
@@ -217,7 +216,8 @@ class _BranchListPanelState extends State<BranchListPanel> {
     );
   }
 
-  List<branch_pb.Branch> _filterBranches(List<branch_pb.Branch> branches, String query) {
+  List<branch_pb.Branch> _filterBranches(
+      List<branch_pb.Branch> branches, String query,) {
     var filtered = branches;
 
     // Filter by search query

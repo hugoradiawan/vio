@@ -7,8 +7,27 @@ import '../../../../gen/vio/v1/branch.pb.dart' as branch_pb;
 import '../../bloc/version_control_bloc.dart';
 
 /// Main version control tab content for the left panel
-class VersionControlTab extends StatelessWidget {
+class VersionControlTab extends StatefulWidget {
   const VersionControlTab({super.key});
+
+  @override
+  State<VersionControlTab> createState() => _VersionControlTabState();
+}
+
+class _VersionControlTabState extends State<VersionControlTab> {
+  final Map<String, bool> _expandedSections = <String, bool>{
+    'commit': true,
+    'branches': false,
+    'history': true,
+  };
+
+  bool _isExpanded(String key) => _expandedSections[key] ?? true;
+
+  void _setExpanded(String key, bool expanded) {
+    setState(() {
+      _expandedSections[key] = expanded;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,8 +90,15 @@ class VersionControlTab extends StatelessWidget {
         return Column(
           children: [
             // Commit panel (collapsible)
-            _CollapsibleSection(
+            VioPanel(
               title: 'Commit',
+              collapsible: true,
+              padding: EdgeInsets.zero,
+              isExpanded: _isExpanded('commit'),
+              onExpansionChanged: (expanded) => _setExpanded(
+                'commit',
+                expanded,
+              ),
               trailing: state.hasUncommittedChanges
                   ? Text(
                       '${state.uncommittedChanges.length} change${state.uncommittedChanges.length == 1 ? '' : 's'}',
@@ -86,9 +112,16 @@ class VersionControlTab extends StatelessWidget {
             ),
 
             // Branches section (collapsible)
-            _CollapsibleSection(
+            VioPanel(
               title: 'Branches',
+              collapsible: true,
+              padding: EdgeInsets.zero,
               initiallyExpanded: false,
+              isExpanded: _isExpanded('branches'),
+              onExpansionChanged: (expanded) => _setExpanded(
+                'branches',
+                expanded,
+              ),
               trailing: Row(
                 children: [
                   Text(
@@ -118,9 +151,13 @@ class VersionControlTab extends StatelessWidget {
 
             // History section (collapsible, takes remaining space)
             Expanded(
-              child: _CollapsibleSection(
+              child: _CollapsibleExpandedSection(
                 title: 'History',
-                expandContent: true,
+                isExpanded: _isExpanded('history'),
+                onExpansionChanged: (expanded) => _setExpanded(
+                  'history',
+                  expanded,
+                ),
                 trailing: _RefreshButton(
                   isLoading: state.status == VersionControlStatus.loading,
                   onRefresh: () {
@@ -162,7 +199,10 @@ class VersionControlTab extends StatelessWidget {
     );
   }
 
-  void _showSwitchConfirmationDialog(BuildContext context, branch_pb.Branch branch) {
+  void _showSwitchConfirmationDialog(
+    BuildContext context,
+    branch_pb.Branch branch,
+  ) {
     showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -243,7 +283,10 @@ class VersionControlTab extends StatelessWidget {
     );
   }
 
-  void _showDeleteConfirmationDialog(BuildContext context, branch_pb.Branch branch) {
+  void _showDeleteConfirmationDialog(
+    BuildContext context,
+    branch_pb.Branch branch,
+  ) {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -450,80 +493,78 @@ class _RefreshButton extends StatelessWidget {
   }
 }
 
-/// Collapsible section with header and content
-class _CollapsibleSection extends StatefulWidget {
-  const _CollapsibleSection({
+class _CollapsibleExpandedSection extends StatelessWidget {
+  const _CollapsibleExpandedSection({
     required this.title,
     required this.child,
+    required this.isExpanded,
+    required this.onExpansionChanged,
     this.trailing,
-    this.initiallyExpanded = true,
-    this.expandContent = false,
   });
 
   final String title;
   final Widget child;
+  final bool isExpanded;
+  final ValueChanged<bool> onExpansionChanged;
   final Widget? trailing;
-  final bool initiallyExpanded;
-
-  /// If true, wraps the content in Expanded when visible (for use inside Column with Expanded parent)
-  final bool expandContent;
-
-  @override
-  State<_CollapsibleSection> createState() => _CollapsibleSectionState();
-}
-
-class _CollapsibleSectionState extends State<_CollapsibleSection> {
-  late bool _isExpanded;
-
-  @override
-  void initState() {
-    super.initState();
-    _isExpanded = widget.initiallyExpanded;
-  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Header
-        InkWell(
-          onTap: () => setState(() => _isExpanded = !_isExpanded),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: const BoxDecoration(
-              color: VioColors.surface,
-              border: Border(
-                bottom: BorderSide(color: VioColors.border),
+    return Container(
+      decoration: const BoxDecoration(
+        color: VioColors.surface,
+        border: Border(bottom: BorderSide(color: VioColors.border)),
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () => onExpansionChanged(!isExpanded),
+            child: Padding(
+              padding: const EdgeInsets.all(VioSpacing.panelPadding),
+              child: Row(
+                children: [
+                  TweenAnimationBuilder<double>(
+                    tween: Tween<double>(
+                      begin: 0.0,
+                      end: isExpanded ? 0.5 : 0.0,
+                    ),
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeInOut,
+                    builder: (context, turns, child) {
+                      return Transform.rotate(
+                        angle: turns * 3.1415926535897932,
+                        child: child,
+                      );
+                    },
+                    child: const Icon(
+                      Icons.expand_more,
+                      size: VioSpacing.iconSm,
+                      color: VioColors.textTertiary,
+                    ),
+                  ),
+                  const SizedBox(width: VioSpacing.xs),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: VioTypography.titleSmall.copyWith(
+                        color: VioColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                  if (trailing != null) trailing!,
+                ],
               ),
             ),
-            child: Row(
-              children: [
-                Icon(
-                  _isExpanded ? Icons.expand_more : Icons.chevron_right,
-                  size: 16,
-                  color: VioColors.textTertiary,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  widget.title.toUpperCase(),
-                  style: const TextStyle(
-                    color: VioColors.textTertiary,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1,
-                  ),
-                ),
-                const Spacer(),
-                if (widget.trailing != null) widget.trailing!,
-              ],
-            ),
           ),
-        ),
-        // Content
-        if (_isExpanded)
-          widget.expandContent ? Expanded(child: widget.child) : widget.child,
-      ],
+          if (isExpanded)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(VioSpacing.panelPadding),
+                child: child,
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

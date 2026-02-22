@@ -200,7 +200,6 @@ class _CommitPanelState extends State<CommitPanel> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 12),
               // Changed files section
               if (uncommittedChanges.isNotEmpty) ...[
                 _ChangedFilesList(
@@ -573,8 +572,7 @@ class _ChangeItemState extends State<_ChangeItem> {
   @override
   Widget build(BuildContext context) {
     return BlocSelector<CanvasBloc, CanvasState, bool>(
-      selector: (state) =>
-          state.hoveredShapeId == widget.change.shapeId,
+      selector: (state) => state.hoveredShapeId == widget.change.shapeId,
       builder: (context, isCanvasHovered) {
         final highlighted = _isHovering || isCanvasHovered;
         return MouseRegion(

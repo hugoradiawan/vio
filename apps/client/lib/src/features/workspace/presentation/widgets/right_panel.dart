@@ -11,7 +11,7 @@ import 'property_sections.dart';
 import 'shape_properties.dart';
 
 /// Right panel containing properties inspector for selected shapes
-class RightPanel extends StatelessWidget {
+class RightPanel extends StatefulWidget {
   const RightPanel({
     required this.width,
     super.key,
@@ -21,9 +21,26 @@ class RightPanel extends StatelessWidget {
   final double width;
 
   @override
+  State<RightPanel> createState() => _RightPanelState();
+}
+
+class _RightPanelState extends State<RightPanel> {
+  final Map<String, bool> _expandedSections = <String, bool>{};
+
+  bool _isSectionExpanded(String key, {bool defaultValue = true}) {
+    return _expandedSections[key] ?? defaultValue;
+  }
+
+  void _setSectionExpanded(String key, bool expanded) {
+    setState(() {
+      _expandedSections[key] = expanded;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
-      width: width,
+      width: widget.width,
       decoration: const BoxDecoration(
         color: VioColors.surface1,
         border: Border(
@@ -58,7 +75,11 @@ class RightPanel extends StatelessWidget {
             if (shape == null) {
               return const _NoSelectionPanel();
             }
-            return _SingleShapePanel(shape: shape);
+            return _SingleShapePanel(
+              shape: shape,
+              isSectionExpanded: _isSectionExpanded,
+              onSectionExpansionChanged: _setSectionExpanded,
+            );
           }
 
           // Multiple selection
@@ -66,7 +87,11 @@ class RightPanel extends StatelessWidget {
               .map((id) => state.shapes[id])
               .whereType<Shape>()
               .toList();
-          return _MultipleSelectionPanel(shapes: selectedShapes);
+          return _MultipleSelectionPanel(
+            shapes: selectedShapes,
+            isSectionExpanded: _isSectionExpanded,
+            onSectionExpansionChanged: _setSectionExpanded,
+          );
         },
       ),
     );
@@ -161,9 +186,17 @@ class _NoSelectionPanel extends StatelessWidget {
 
 /// Panel for single shape selection
 class _SingleShapePanel extends StatelessWidget {
-  const _SingleShapePanel({required this.shape});
+  const _SingleShapePanel({
+    required this.shape,
+    required this.isSectionExpanded,
+    required this.onSectionExpansionChanged,
+  });
 
   final Shape shape;
+  final bool Function(String key, {bool defaultValue}) isSectionExpanded;
+  final void Function(String key, bool expanded) onSectionExpansionChanged;
+
+  String _sectionKey(String section) => 'single:$section';
 
   @override
   Widget build(BuildContext context) {
@@ -181,12 +214,24 @@ class _SingleShapePanel extends StatelessWidget {
                 // Position & Size (common to all shapes)
                 VioPanel(
                   title: 'Transform',
+                  collapsible: true,
+                  isExpanded: isSectionExpanded(_sectionKey('transform')),
+                  onExpansionChanged: (expanded) => onSectionExpansionChanged(
+                    _sectionKey('transform'),
+                    expanded,
+                  ),
                   child: PositionSizeSection(shape: shape),
                 ),
 
                 if (shape is TextShape)
                   VioPanel(
                     title: 'Typography',
+                    collapsible: true,
+                    isExpanded: isSectionExpanded(_sectionKey('typography')),
+                    onExpansionChanged: (expanded) => onSectionExpansionChanged(
+                      _sectionKey('typography'),
+                      expanded,
+                    ),
                     child: TypographySection(shape: shape as TextShape),
                   ),
 
@@ -194,22 +239,46 @@ class _SingleShapePanel extends StatelessWidget {
                 if (shape is RectangleShape)
                   VioPanel(
                     title: 'Rectangle',
+                    collapsible: true,
+                    isExpanded: isSectionExpanded(_sectionKey('rectangle')),
+                    onExpansionChanged: (expanded) => onSectionExpansionChanged(
+                      _sectionKey('rectangle'),
+                      expanded,
+                    ),
                     child: RectangleProperties(shape: shape as RectangleShape),
                   ),
                 if (shape is EllipseShape)
                   VioPanel(
                     title: 'Ellipse',
+                    collapsible: true,
+                    isExpanded: isSectionExpanded(_sectionKey('ellipse')),
+                    onExpansionChanged: (expanded) => onSectionExpansionChanged(
+                      _sectionKey('ellipse'),
+                      expanded,
+                    ),
                     child: EllipseProperties(shape: shape as EllipseShape),
                   ),
                 if (shape is FrameShape)
                   VioPanel(
                     title: 'Frame',
+                    collapsible: true,
+                    isExpanded: isSectionExpanded(_sectionKey('frame')),
+                    onExpansionChanged: (expanded) => onSectionExpansionChanged(
+                      _sectionKey('frame'),
+                      expanded,
+                    ),
                     child: FrameProperties(shape: shape as FrameShape),
                   ),
 
                 // Fill
                 VioPanel(
                   title: 'Fill',
+                  collapsible: true,
+                  isExpanded: isSectionExpanded(_sectionKey('fill')),
+                  onExpansionChanged: (expanded) => onSectionExpansionChanged(
+                    _sectionKey('fill'),
+                    expanded,
+                  ),
                   trailing: VioSvgIconButton(
                     assetPath: VioIcons.add,
                     size: 14,
@@ -224,6 +293,12 @@ class _SingleShapePanel extends StatelessWidget {
                   // Stroke
                   VioPanel(
                     title: 'Stroke',
+                    collapsible: true,
+                    isExpanded: isSectionExpanded(_sectionKey('stroke')),
+                    onExpansionChanged: (expanded) => onSectionExpansionChanged(
+                      _sectionKey('stroke'),
+                      expanded,
+                    ),
                     trailing: VioSvgIconButton(
                       assetPath: VioIcons.add,
                       size: 14,
@@ -237,6 +312,12 @@ class _SingleShapePanel extends StatelessWidget {
                   // Effects
                   VioPanel(
                     title: 'Shadow',
+                    collapsible: true,
+                    isExpanded: isSectionExpanded(_sectionKey('shadow')),
+                    onExpansionChanged: (expanded) => onSectionExpansionChanged(
+                      _sectionKey('shadow'),
+                      expanded,
+                    ),
                     trailing: VioSvgIconButton(
                       assetPath: VioIcons.add,
                       size: 14,
@@ -249,6 +330,12 @@ class _SingleShapePanel extends StatelessWidget {
 
                   VioPanel(
                     title: 'Blur',
+                    collapsible: true,
+                    isExpanded: isSectionExpanded(_sectionKey('blur')),
+                    onExpansionChanged: (expanded) => onSectionExpansionChanged(
+                      _sectionKey('blur'),
+                      expanded,
+                    ),
                     trailing: VioSvgIconButton(
                       assetPath: VioIcons.add,
                       size: 14,
@@ -262,6 +349,12 @@ class _SingleShapePanel extends StatelessWidget {
                   // Opacity
                   VioPanel(
                     title: 'Opacity',
+                    collapsible: true,
+                    isExpanded: isSectionExpanded(_sectionKey('opacity')),
+                    onExpansionChanged: (expanded) => onSectionExpansionChanged(
+                      _sectionKey('opacity'),
+                      expanded,
+                    ),
                     child: OpacitySection(shape: shape),
                   ),
                 ],
@@ -488,9 +581,17 @@ class _ShapeNameSectionState extends State<_ShapeNameSection> {
 
 /// Panel for multiple shape selection
 class _MultipleSelectionPanel extends StatelessWidget {
-  const _MultipleSelectionPanel({required this.shapes});
+  const _MultipleSelectionPanel({
+    required this.shapes,
+    required this.isSectionExpanded,
+    required this.onSectionExpansionChanged,
+  });
 
   final List<Shape> shapes;
+  final bool Function(String key, {bool defaultValue}) isSectionExpanded;
+  final void Function(String key, bool expanded) onSectionExpansionChanged;
+
+  String _sectionKey(String section) => 'multi:$section';
 
   @override
   Widget build(BuildContext context) {
@@ -548,6 +649,12 @@ class _MultipleSelectionPanel extends StatelessWidget {
                 // Alignment tools
                 VioPanel(
                   title: 'Alignment',
+                  collapsible: true,
+                  isExpanded: isSectionExpanded(_sectionKey('alignment')),
+                  onExpansionChanged: (expanded) => onSectionExpansionChanged(
+                    _sectionKey('alignment'),
+                    expanded,
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(VioSpacing.sm),
                     child: VioAlignmentButtons(
@@ -570,6 +677,12 @@ class _MultipleSelectionPanel extends StatelessWidget {
                 if (allSelectedAreFrames)
                   VioPanel(
                     title: 'Frame preset',
+                    collapsible: true,
+                    isExpanded: isSectionExpanded(_sectionKey('frame_preset')),
+                    onExpansionChanged: (expanded) => onSectionExpansionChanged(
+                      _sectionKey('frame_preset'),
+                      expanded,
+                    ),
                     child: FramePresetPicker(
                       value: _matchedPresetIdForFrames(selectedFrames),
                       onChanged: (presetId) {
@@ -599,6 +712,12 @@ class _MultipleSelectionPanel extends StatelessWidget {
                 // Bulk opacity
                 VioPanel(
                   title: 'Opacity',
+                  collapsible: true,
+                  isExpanded: isSectionExpanded(_sectionKey('opacity')),
+                  onExpansionChanged: (expanded) => onSectionExpansionChanged(
+                    _sectionKey('opacity'),
+                    expanded,
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(VioSpacing.sm),
                     child: VioPropertySlider(

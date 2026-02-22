@@ -321,9 +321,20 @@ class _LayerItemState extends State<LayerItem> {
       child: IconButton(
         padding: EdgeInsets.zero,
         iconSize: 16,
-        icon: Icon(
-          widget.isExpanded ? Icons.expand_more : Icons.chevron_right,
-          color: VioColors.textSecondary,
+        icon: TweenAnimationBuilder<double>(
+          tween: Tween<double>(begin: 0.0, end: widget.isExpanded ? 0.5 : 0.0),
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          builder: (context, turns, child) {
+            return Transform.rotate(
+              angle: turns * 3.1415926535897932,
+              child: child,
+            );
+          },
+          child: const Icon(
+            Icons.expand_more,
+            color: VioColors.textSecondary,
+          ),
         ),
         onPressed: () {
           final bloc = context.read<CanvasBloc>();

@@ -12,6 +12,8 @@ class VioPanel extends StatelessWidget {
   final EdgeInsets? padding;
   final bool collapsible;
   final bool initiallyExpanded;
+  final bool? isExpanded;
+  final ValueChanged<bool>? onExpansionChanged;
 
   const VioPanel({
     required this.child,
@@ -21,6 +23,8 @@ class VioPanel extends StatelessWidget {
     this.padding,
     this.collapsible = false,
     this.initiallyExpanded = true,
+    this.isExpanded,
+    this.onExpansionChanged,
   });
 
   @override
@@ -31,6 +35,8 @@ class VioPanel extends StatelessWidget {
         trailing: trailing,
         padding: padding,
         initiallyExpanded: initiallyExpanded,
+        isExpanded: isExpanded,
+        onExpansionChanged: onExpansionChanged,
         child: child,
       );
     }
@@ -85,6 +91,8 @@ class _CollapsiblePanel extends StatefulWidget {
   final Widget? trailing;
   final EdgeInsets? padding;
   final bool initiallyExpanded;
+  final bool? isExpanded;
+  final ValueChanged<bool>? onExpansionChanged;
 
   const _CollapsiblePanel({
     required this.child,
@@ -92,6 +100,8 @@ class _CollapsiblePanel extends StatefulWidget {
     this.title,
     this.trailing,
     this.padding,
+    this.isExpanded,
+    this.onExpansionChanged,
   });
 
   @override
@@ -105,10 +115,12 @@ class _CollapsiblePanelState extends State<_CollapsiblePanel>
   late Animation<double> _heightFactor;
   late Animation<double> _iconRotation;
 
+  bool get _isControlled => widget.isExpanded != null;
+
   @override
   void initState() {
     super.initState();
-    _isExpanded = widget.initiallyExpanded;
+    _isExpanded = widget.isExpanded ?? widget.initiallyExpanded;
     _controller = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
@@ -124,14 +136,28 @@ class _CollapsiblePanelState extends State<_CollapsiblePanel>
   }
 
   @override
+  void didUpdateWidget(covariant _CollapsiblePanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_isControlled && widget.isExpanded != oldWidget.isExpanded) {
+      _updateExpanded(widget.isExpanded!);
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
 
   void _toggle() {
+    final nextValue = !_isExpanded;
+    _updateExpanded(nextValue);
+    widget.onExpansionChanged?.call(nextValue);
+  }
+
+  void _updateExpanded(bool value) {
     setState(() {
-      _isExpanded = !_isExpanded;
+      _isExpanded = value;
       if (_isExpanded) {
         _controller.forward();
       } else {

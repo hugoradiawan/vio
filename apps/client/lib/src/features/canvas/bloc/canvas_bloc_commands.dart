@@ -394,7 +394,9 @@ mixin _CanvasCommandsMixin on Bloc<CanvasEvent, CanvasState> {
         parentId: duplicated.parentId,
         frameId: duplicated.frameId,
       );
-      newShapes[newId] = duplicated.copyWith(sortOrder: z);
+      final duplicatedWithSortOrder = duplicated.copyWith(sortOrder: z);
+      newShapes[newId] = duplicatedWithSortOrder;
+      _notifyRepositoryShapeAdded(duplicatedWithSortOrder);
       newIds.add(newId);
     }
 
@@ -451,7 +453,9 @@ mixin _CanvasCommandsMixin on Bloc<CanvasEvent, CanvasState> {
         parentId: duplicated.parentId,
         frameId: duplicated.frameId,
       );
-      newShapes[newId] = duplicated.copyWith(sortOrder: z);
+      final duplicatedWithSortOrder = duplicated.copyWith(sortOrder: z);
+      newShapes[newId] = duplicatedWithSortOrder;
+      _notifyRepositoryShapeAdded(duplicatedWithSortOrder);
       newIds.add(newId);
     }
 

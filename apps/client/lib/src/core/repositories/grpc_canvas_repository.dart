@@ -217,14 +217,26 @@ class GrpcCanvasRepository {
     _shapes.add(shape);
     _isDirty = true;
 
-    _pendingOperations.add(
-      _PendingOp(
+    final pendingIndex = _pendingOperationIndex(shape.id);
+    if (pendingIndex == -1) {
+      _pendingOperations.add(
+        _PendingOp(
+          type: SyncOperationType.create,
+          shapeId: shape.id,
+          shape: shape,
+          timestamp: DateTime.now(),
+        ),
+      );
+    } else {
+      final existing = _pendingOperations[pendingIndex];
+      _pendingOperations[pendingIndex] = _PendingOp(
         type: SyncOperationType.create,
         shapeId: shape.id,
         shape: shape,
         timestamp: DateTime.now(),
-      ),
-    );
+        opId: existing.opId,
+      );
+    }
 
     VioLogger.info(
       'GrpcCanvasRepository.addShape: queued CREATE for ${shape.id} '
@@ -251,16 +263,40 @@ class GrpcCanvasRepository {
     _shapes[index] = shape;
     _isDirty = true;
 
-    // Remove any pending operations for this shape and add new one
-    _pendingOperations.removeWhere((op) => op.shapeId == shape.id);
-    _pendingOperations.add(
-      _PendingOp(
-        type: SyncOperationType.update,
-        shapeId: shape.id,
-        shape: shape,
-        timestamp: DateTime.now(),
-      ),
-    );
+    final pendingIndex = _pendingOperationIndex(shape.id);
+    if (pendingIndex == -1) {
+      _pendingOperations.add(
+        _PendingOp(
+          type: SyncOperationType.update,
+          shapeId: shape.id,
+          shape: shape,
+          timestamp: DateTime.now(),
+        ),
+      );
+    } else {
+      final existing = _pendingOperations[pendingIndex];
+      switch (existing.type) {
+        case SyncOperationType.create:
+          _pendingOperations[pendingIndex] = _PendingOp(
+            type: SyncOperationType.create,
+            shapeId: shape.id,
+            shape: shape,
+            timestamp: DateTime.now(),
+            opId: existing.opId,
+          );
+        case SyncOperationType.update:
+          _pendingOperations[pendingIndex] = _PendingOp(
+            type: SyncOperationType.update,
+            shapeId: shape.id,
+            shape: shape,
+            timestamp: DateTime.now(),
+            opId: existing.opId,
+          );
+        case SyncOperationType.delete:
+          // Ignore update for a shape already queued for deletion.
+          break;
+      }
+    }
 
     _shapesController.add(shapes);
     _updateSyncStatus(SyncStatus.pending);
@@ -280,15 +316,33 @@ class GrpcCanvasRepository {
     _shapes.removeAt(index);
     _isDirty = true;
 
-    // Remove any pending operations for this shape and add delete
-    _pendingOperations.removeWhere((op) => op.shapeId == shapeId);
-    _pendingOperations.add(
-      _PendingOp(
-        type: SyncOperationType.delete,
-        shapeId: shapeId,
-        timestamp: DateTime.now(),
-      ),
-    );
+    final pendingIndex = _pendingOperationIndex(shapeId);
+    if (pendingIndex == -1) {
+      _pendingOperations.add(
+        _PendingOp(
+          type: SyncOperationType.delete,
+          shapeId: shapeId,
+          timestamp: DateTime.now(),
+        ),
+      );
+    } else {
+      final existing = _pendingOperations[pendingIndex];
+      switch (existing.type) {
+        case SyncOperationType.create:
+          // Create followed by delete before sync cancels out.
+          _pendingOperations.removeAt(pendingIndex);
+        case SyncOperationType.update:
+          _pendingOperations[pendingIndex] = _PendingOp(
+            type: SyncOperationType.delete,
+            shapeId: shapeId,
+            timestamp: DateTime.now(),
+            opId: existing.opId,
+          );
+        case SyncOperationType.delete:
+          // Already deleted.
+          break;
+      }
+    }
 
     _shapesController.add(shapes);
     _updateSyncStatus(SyncStatus.pending);
@@ -354,6 +408,8 @@ class GrpcCanvasRepository {
     _isSyncing = true;
     _updateSyncStatus(SyncStatus.syncing);
 
+    final operationsToSync = List<_PendingOp>.from(_pendingOperations);
+
     try {
       final request = pb.SyncChangesRequest()
         ..projectId = _projectId!
@@ -361,7 +417,7 @@ class GrpcCanvasRepository {
         ..localVersion = _localVersion;
 
       // Convert pending operations to proto
-      for (final op in _pendingOperations) {
+      for (final op in operationsToSync) {
         request.operations.add(
           ProtoConverter.syncOperationToProto(
             op.type,
@@ -377,8 +433,9 @@ class GrpcCanvasRepository {
 
       if (response.success) {
         _localVersion = response.serverVersion;
-        _pendingOperations.clear();
-        _isDirty = false;
+        final syncedOpIds = operationsToSync.map((op) => op.opId).toSet();
+        _pendingOperations.removeWhere((op) => syncedOpIds.contains(op.opId));
+        _isDirty = _pendingOperations.isNotEmpty;
 
         // If server returned shapes (conflict resolution), apply them
         if (response.shapes.isNotEmpty) {
@@ -515,6 +572,10 @@ class GrpcCanvasRepository {
     _currentStatus = status;
     _syncStatusController.add(status);
   }
+
+  int _pendingOperationIndex(String shapeId) {
+    return _pendingOperations.indexWhere((op) => op.shapeId == shapeId);
+  }
 }
 
 /// Internal pending operation class
@@ -524,12 +585,16 @@ class _PendingOp {
     required this.shapeId,
     required this.timestamp,
     this.shape,
-  });
+    int? opId,
+  }) : opId = opId ?? _nextPendingOpId++;
+
+  static int _nextPendingOpId = 1;
 
   final SyncOperationType type;
   final String shapeId;
   final Shape? shape;
   final DateTime timestamp;
+  final int opId;
 }
 
 /// Sync status states

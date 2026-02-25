@@ -272,7 +272,10 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
                             ),
                           ],
                           child: CanvasInputLayer(
-                            cursor: _getCursor(workspaceState.activeTool),
+                            cursor: _getCursor(
+                              workspaceState.activeTool,
+                              canvasState,
+                            ),
                             onHover: (event) => _handlePointerHover(
                               context,
                               event,

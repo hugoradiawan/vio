@@ -243,6 +243,7 @@ mixin _CanvasCommandsMixin on Bloc<CanvasEvent, CanvasState> {
       state.copyWith(
         clearHoveredShapeId: true,
         clearHoveredCornerIndex: true,
+        clearSelectionCursorKind: true,
       ),
     );
   }

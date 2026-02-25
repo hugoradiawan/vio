@@ -199,10 +199,11 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
         return;
       }
 
-      // Check resize/rotate handles
-      final handle = _hitTestHandle(screenPoint);
-      if (handle != null) {
-        if (handle.position == HandlePosition.rotation) {
+      // Check resize/rotate handles and edge affordances
+      final hit = _hitTestSelectionAffordance(screenPoint);
+      if (hit != null) {
+        final handle = hit.effectiveHandle;
+        if (handle == HandlePosition.rotation) {
           // Start rotation - calculate initial angle from selection center
           final bounds = state.selectionRect;
           final center = bounds?.center ?? canvasPoint;
@@ -210,27 +211,29 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
           emit(
             state.copyWith(
               interactionMode: InteractionMode.rotating,
-              activeHandle: handle.position.name,
+              activeHandle: handle.name,
               dragStart: canvasPoint,
               currentPointer: canvasPoint,
               originalShapeBounds: bounds,
               originalShapes: Map.from(state.shapes),
               initialRotationAngle: initialAngle,
+              selectionCursorKind: SelectionCursorKind.rotate,
             ),
           );
         } else {
           // Start resize - store original shapes for relative position calculation
           final bounds = state.selectionRect;
-          final resizeOrigin = _getResizeOrigin(handle.position, bounds);
+          final resizeOrigin = _getResizeOrigin(handle, bounds);
           emit(
             state.copyWith(
               interactionMode: InteractionMode.resizing,
-              activeHandle: handle.position.name,
+              activeHandle: handle.name,
               resizeOrigin: resizeOrigin,
               dragStart: canvasPoint,
               currentPointer: canvasPoint,
               originalShapeBounds: bounds,
               originalShapes: Map.from(state.shapes),
+              selectionCursorKind: _selectionCursorKindForHandle(handle),
             ),
           );
         }
@@ -666,11 +669,18 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
         newHoveredId = target.id;
       }
 
-      final nextHoveredCornerIndex = hoveredCorner?.index;
+          final nextHoveredCornerIndex = hoveredCorner?.index;
+          final hoveredSelectionHit = _hitTestSelectionAffordance(screenPoint);
+          final nextSelectionCursorKind = hoveredSelectionHit == null
+            ? SelectionCursorKind.none
+            : _selectionCursorKindForHandle(
+              hoveredSelectionHit.effectiveHandle,
+            );
 
       // Only emit if hovered shape changed
       if (newHoveredId != state.hoveredShapeId ||
-          nextHoveredCornerIndex != state.hoveredCornerIndex) {
+          nextHoveredCornerIndex != state.hoveredCornerIndex ||
+          nextSelectionCursorKind != state.selectionCursorKind) {
         if (newHoveredId == null) {
           emit(
             state.copyWith(
@@ -678,6 +688,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
               clearHoveredShapeId: true,
               hoveredCornerIndex: nextHoveredCornerIndex,
               clearHoveredCornerIndex: nextHoveredCornerIndex == null,
+              selectionCursorKind: nextSelectionCursorKind,
             ),
           );
         } else {
@@ -687,6 +698,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
               hoveredShapeId: newHoveredId,
               hoveredCornerIndex: nextHoveredCornerIndex,
               clearHoveredCornerIndex: nextHoveredCornerIndex == null,
+              selectionCursorKind: nextSelectionCursorKind,
             ),
           );
         }
@@ -1141,17 +1153,11 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
   // Handle Hit Testing & Interaction Helpers
   // ============================================================================
 
-  /// Handle size in screen pixels
-  static const double _handleSize = 8.0;
-
-  /// Rotation handle offset in canvas coordinates
-  static const double _rotationHandleOffset = 24.0;
-
   /// Corner radius handle size in screen pixels
   static const double _cornerRadiusHandleSize = 10.0;
 
-  /// Hit test for resize/rotate handles
-  HandleInfo? _hitTestHandle(Offset screenPoint) {
+  /// Hit test for selection resize/rotate handles and edge lines.
+  SelectionHitResult? _hitTestSelectionAffordance(Offset screenPoint) {
     if (state.selectedShapes.any((s) => s.blocked)) return null;
 
     final bounds = state.selectionRect;
@@ -1160,50 +1166,89 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
     final isSingleTextSelection = state.selectedShapes.length == 1 &&
         state.selectedShapes.first is TextShape;
 
-    bool isTextHandle(HandlePosition position) {
-      return position == HandlePosition.rotation ||
-          position == HandlePosition.topLeft ||
-          position == HandlePosition.topRight ||
-          position == HandlePosition.bottomLeft ||
-          position == HandlePosition.bottomRight;
-    }
-
-    final handlePositions = _getHandlePositions(bounds);
-    for (final entry in handlePositions.entries) {
-      if (isSingleTextSelection && !isTextHandle(entry.key)) {
-        continue;
-      }
-      final screenHandlePos = _canvasToScreen(entry.value);
-      final handleInfo = HandleInfo(
-        position: entry.key,
-        center: screenHandlePos,
-        size: _handleSize,
-      );
-      // Use larger hit area for easier interaction
-      if (handleInfo.containsPoint(screenPoint)) {
-        return handleInfo;
-      }
-    }
-    return null;
+    return hitTestSelectionAffordance(
+      screenPoint: screenPoint,
+      selectionBounds: bounds,
+      zoom: state.zoom,
+      viewportOffset: state.viewportOffset,
+      isSingleTextSelection: isSingleTextSelection,
+    );
   }
 
-  /// Get handle positions in canvas coordinates
-  Map<HandlePosition, Offset> _getHandlePositions(Rect bounds) {
-    final centerX = bounds.center.dx;
-    final centerY = bounds.center.dy;
+  SelectionCursorKind _selectionCursorKindForHandle(HandlePosition handle) {
+    if (handle == HandlePosition.rotation) {
+      return SelectionCursorKind.rotate;
+    }
 
-    return {
-      HandlePosition.topLeft: Offset(bounds.left, bounds.top),
-      HandlePosition.topCenter: Offset(centerX, bounds.top),
-      HandlePosition.topRight: Offset(bounds.right, bounds.top),
-      HandlePosition.middleLeft: Offset(bounds.left, centerY),
-      HandlePosition.middleRight: Offset(bounds.right, centerY),
-      HandlePosition.bottomLeft: Offset(bounds.left, bounds.bottom),
-      HandlePosition.bottomCenter: Offset(centerX, bounds.bottom),
-      HandlePosition.bottomRight: Offset(bounds.right, bounds.bottom),
-      HandlePosition.rotation:
-          Offset(centerX, bounds.top - _rotationHandleOffset),
+    Offset axisVectorFor(HandlePosition position) {
+      switch (position) {
+        case HandlePosition.topLeft:
+          return const Offset(-1, -1);
+        case HandlePosition.topCenter:
+          return const Offset(0, -1);
+        case HandlePosition.topRight:
+          return const Offset(1, -1);
+        case HandlePosition.middleLeft:
+          return const Offset(-1, 0);
+        case HandlePosition.middleRight:
+          return const Offset(1, 0);
+        case HandlePosition.bottomLeft:
+          return const Offset(-1, 1);
+        case HandlePosition.bottomCenter:
+          return const Offset(0, 1);
+        case HandlePosition.bottomRight:
+          return const Offset(1, 1);
+        case HandlePosition.rotation:
+          return const Offset(0, -1);
+      }
+    }
+
+    final vector = axisVectorFor(handle);
+    final radians = _selectionRotationDegrees() * math.pi / 180.0;
+    final cosA = math.cos(radians);
+    final sinA = math.sin(radians);
+    final rotated = Offset(
+      vector.dx * cosA - vector.dy * sinA,
+      vector.dx * sinA + vector.dy * cosA,
+    );
+
+    final angleDeg = math.atan2(rotated.dy, rotated.dx) * 180.0 / math.pi;
+    final axisDeg = ((angleDeg % 180.0) + 180.0) % 180.0;
+
+    const horizontal = 0.0;
+    const diagonalPrimary = 45.0;
+    const vertical = 90.0;
+    const diagonalSecondary = 135.0;
+
+    double circularDistance(double a, double b) {
+      final diff = (a - b).abs();
+      return diff > 90.0 ? 180.0 - diff : diff;
+    }
+
+    final distances = <SelectionCursorKind, double>{
+      SelectionCursorKind.resizeHorizontal: circularDistance(axisDeg, horizontal),
+      SelectionCursorKind.resizeDiagonalPrimary:
+          circularDistance(axisDeg, diagonalPrimary),
+      SelectionCursorKind.resizeVertical: circularDistance(axisDeg, vertical),
+      SelectionCursorKind.resizeDiagonalSecondary:
+          circularDistance(axisDeg, diagonalSecondary),
     };
+
+    return distances.entries
+        .reduce((a, b) => a.value <= b.value ? a : b)
+        .key;
+  }
+
+  double _selectionRotationDegrees() {
+    final selected = state.selectedShapes;
+    if (selected.isEmpty) return 0;
+    if (selected.length == 1) {
+      return selected.first.rotation;
+    }
+
+    final first = selected.first.rotation;
+    final allMatch = selected.every((shape) => (shape.rotation - first).abs() < 0.01);
+    return allMatch ? first : 0;
   }
 
   /// Hit test for corner radius handles
@@ -1215,10 +1260,11 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
     if (shape is! RectangleShape) return null;
 
     final positions = _getCornerRadiusHandlePositions(shape);
+    const hitRadius = (_cornerRadiusHandleSize / 2) + 1.0;
     for (var i = 0; i < positions.length; i++) {
       final screenHandlePos = _canvasToScreen(positions[i]);
       final distance = (screenPoint - screenHandlePos).distance;
-      if (distance <= _cornerRadiusHandleSize) {
+      if (distance <= hitRadius) {
         return _CornerRadiusHit(index: i, position: positions[i]);
       }
     }

@@ -27,6 +27,15 @@ enum InteractionMode {
   adjustingCornerRadius,
 }
 
+enum SelectionCursorKind {
+  none,
+  resizeHorizontal,
+  resizeVertical,
+  resizeDiagonalPrimary,
+  resizeDiagonalSecondary,
+  rotate,
+}
+
 // Note: SyncStatus is imported from '../../../core/repositories/canvas_repository.dart'
 // via the core.dart barrel file
 
@@ -66,6 +75,7 @@ class CanvasState extends Equatable {
     this.activeCornerIndex,
     this.hoveredCornerIndex,
     this.initialRotationAngle,
+    this.selectionCursorKind = SelectionCursorKind.none,
   }) : orderedShapes = orderedShapes ?? _buildShapeList(shapes);
 
   /// Current zoom level (1.0 = 100%)
@@ -136,6 +146,9 @@ class CanvasState extends Equatable {
 
   /// Initial rotation angle when rotation began (in degrees)
   final double? initialRotationAngle;
+
+  /// Contextual cursor intent when hovering selection affordances.
+  final SelectionCursorKind selectionCursorKind;
 
   /// Active snap lines to render (during drag)
   final List<SnapLine> snapLines;
@@ -372,6 +385,7 @@ class CanvasState extends Equatable {
     int? activeCornerIndex,
     int? hoveredCornerIndex,
     double? initialRotationAngle,
+    SelectionCursorKind? selectionCursorKind,
     bool clearDragStart = false,
     bool clearCurrentPointer = false,
     bool clearDragOffset = false,
@@ -390,6 +404,7 @@ class CanvasState extends Equatable {
     bool clearActiveCornerIndex = false,
     bool clearHoveredCornerIndex = false,
     bool clearInitialRotationAngle = false,
+    bool clearSelectionCursorKind = false,
   }) {
     final nextShapes = shapes ?? this.shapes;
     final nextOrderedShapes =
@@ -449,6 +464,9 @@ class CanvasState extends Equatable {
       initialRotationAngle: clearInitialRotationAngle
           ? null
           : (initialRotationAngle ?? this.initialRotationAngle),
+        selectionCursorKind: clearSelectionCursorKind
+          ? SelectionCursorKind.none
+          : (selectionCursorKind ?? this.selectionCursorKind),
     );
   }
 
@@ -486,5 +504,6 @@ class CanvasState extends Equatable {
         activeCornerIndex,
         hoveredCornerIndex,
         initialRotationAngle,
+        selectionCursorKind,
       ];
 }

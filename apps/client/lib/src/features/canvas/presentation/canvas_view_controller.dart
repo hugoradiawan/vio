@@ -128,10 +128,37 @@ mixin _CanvasViewController on State<CanvasView> {
     return false;
   }
 
-  MouseCursor _getCursor(CanvasTool tool) {
+  MouseCursor _getCursor(CanvasTool tool, CanvasState canvasState) {
     final state = this as _CanvasViewState;
     if (state._isSpacePressed || state._isPanning) {
       return SystemMouseCursors.grab;
+    }
+
+    bool supportsSelectionCursor(CanvasTool activeTool) {
+      return activeTool == CanvasTool.select ||
+          activeTool == CanvasTool.directSelect;
+    }
+
+    if (supportsSelectionCursor(tool)) {
+      if (canvasState.interactionMode == InteractionMode.rotating) {
+        return SystemMouseCursors.grab;
+      }
+
+      if (canvasState.interactionMode == InteractionMode.resizing ||
+          canvasState.interactionMode == InteractionMode.rotating) {
+        final activeCursor =
+            _cursorForSelectionKind(canvasState.selectionCursorKind);
+        if (activeCursor != null) {
+          return activeCursor;
+        }
+      }
+
+      final selectionCursor = _cursorForSelectionKind(
+        canvasState.selectionCursorKind,
+      );
+      if (selectionCursor != null) {
+        return selectionCursor;
+      }
     }
 
     return switch (tool) {
@@ -145,6 +172,25 @@ mixin _CanvasViewController on State<CanvasView> {
       CanvasTool.hand => SystemMouseCursors.grab,
       CanvasTool.zoom => SystemMouseCursors.basic,
       CanvasTool.comment => SystemMouseCursors.basic,
+    };
+  }
+
+  MouseCursor? _cursorForSelectionKind(SelectionCursorKind kind) {
+    final isMacDesktop = !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
+
+    return switch (kind) {
+      SelectionCursorKind.none => null,
+      SelectionCursorKind.resizeHorizontal => SystemMouseCursors.resizeLeftRight,
+      SelectionCursorKind.resizeVertical => SystemMouseCursors.resizeUpDown,
+      SelectionCursorKind.resizeDiagonalPrimary =>
+        isMacDesktop
+            ? SystemMouseCursors.resizeLeftRight
+            : SystemMouseCursors.resizeUpLeftDownRight,
+      SelectionCursorKind.resizeDiagonalSecondary =>
+        isMacDesktop
+            ? SystemMouseCursors.resizeUpDown
+            : SystemMouseCursors.resizeUpRightDownLeft,
+      SelectionCursorKind.rotate => SystemMouseCursors.grab,
     };
   }
 

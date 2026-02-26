@@ -317,6 +317,11 @@ class ZoomSet extends CanvasEvent {
   List<Object?> get props => [zoom];
 }
 
+/// Fired to center viewport on the current selection.
+class SelectionCentered extends CanvasEvent {
+  const SelectionCentered();
+}
+
 /// Fired to add a shape to the canvas
 class ShapeAdded extends CanvasEvent {
   const ShapeAdded(this.shape);

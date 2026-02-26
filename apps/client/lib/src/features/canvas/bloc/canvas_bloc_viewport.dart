@@ -91,6 +91,27 @@ mixin _CanvasViewportMixin on Bloc<CanvasEvent, CanvasState> {
     _zoomAtCenter(scaleFactor, emit);
   }
 
+  void _onSelectionCentered(
+    SelectionCentered event,
+    Emitter<CanvasState> emit,
+  ) {
+    final selectionRect = state.selectionRect;
+    if (selectionRect == null) return;
+
+    final center = selectionRect.center;
+    final viewportCenter = Offset(
+      state.viewportSize.width / 2,
+      state.viewportSize.height / 2,
+    );
+
+    final newOffset = Offset(
+      viewportCenter.dx - center.dx * state.zoom,
+      viewportCenter.dy - center.dy * state.zoom,
+    );
+
+    emit(state.copyWith(viewportOffset: newOffset));
+  }
+
   void _zoomAtCenter(double scaleFactor, Emitter<CanvasState> emit) {
     // Use viewport center as focal point
     final centerX = state.viewportSize.width / 2;

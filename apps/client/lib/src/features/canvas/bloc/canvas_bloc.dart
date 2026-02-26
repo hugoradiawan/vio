@@ -73,6 +73,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState>
     on<ZoomIn>(_onZoomIn);
     on<ZoomOut>(_onZoomOut);
     on<ZoomSet>(_onZoomSet);
+    on<SelectionCentered>(_onSelectionCentered);
     on<PointerDown>(_onPointerDown);
     on<PointerMove>(_onPointerMove);
     on<PointerUp>(_onPointerUp);

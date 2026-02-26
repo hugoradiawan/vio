@@ -8,6 +8,7 @@ import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../../assets/presentation/widgets/assets_tab.dart';
 import '../../../canvas/presentation/widgets/layer_tree.dart';
+import 'search_tab.dart';
 
 /// Left panel containing layers tree and assets browser
 class LeftPanel extends StatefulWidget {
@@ -27,10 +28,22 @@ class _LeftPanelState extends State<LeftPanel>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  void _openLayersFromSearchResult({
+    required String shapeId,
+  }) {
+    _tabController.animateTo(0);
+    context.read<CanvasBloc>().add(ShapeSelected(shapeId));
+    context.read<CanvasBloc>().add(const SelectionCentered());
+  }
+
+  void _setLayerHoverFromSearchResult(String? shapeId) {
+    context.read<CanvasBloc>().add(LayerHovered(shapeId));
+  }
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -94,16 +107,28 @@ class _LeftPanelState extends State<LeftPanel>
                     labelStyle: VioTypography.body2,
                     dividerColor: Colors.transparent,
                     tabs: const [
-                      Tab(text: 'Layers'),
-                      Tab(text: 'Assets'),
                       Tab(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.merge, size: 14),
-                            SizedBox(width: 4),
-                            Text('VC'),
-                          ],
+                        icon: Tooltip(
+                          message: 'Layers',
+                          child: Icon(Icons.layers_outlined, size: 18),
+                        ),
+                      ),
+                      Tab(
+                        icon: Tooltip(
+                          message: 'Assets',
+                          child: Icon(Icons.perm_media_outlined, size: 18),
+                        ),
+                      ),
+                      Tab(
+                        icon: Tooltip(
+                          message: 'Version Control',
+                          child: Icon(Icons.merge_outlined, size: 18),
+                        ),
+                      ),
+                      Tab(
+                        icon: Tooltip(
+                          message: 'Search',
+                          child: Icon(Icons.search_outlined, size: 18),
                         ),
                       ),
                     ],
@@ -116,10 +141,14 @@ class _LeftPanelState extends State<LeftPanel>
           Expanded(
             child: TabBarView(
               controller: _tabController,
-              children: const [
-                _LayersTab(),
-                AssetsTab(),
-                VersionControlTab(),
+              children: [
+                const _LayersTab(),
+                const AssetsTab(),
+                const VersionControlTab(),
+                SearchTab(
+                  onLayerResultTap: _openLayersFromSearchResult,
+                  onLayerResultHoverChanged: _setLayerHoverFromSearchResult,
+                ),
               ],
             ),
           ),

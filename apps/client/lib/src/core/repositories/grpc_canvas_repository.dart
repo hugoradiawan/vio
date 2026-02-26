@@ -260,6 +260,13 @@ class GrpcCanvasRepository {
       return;
     }
 
+    final previousShape = _shapes[index];
+    final requiresImmediateSync =
+        previousShape.frameId != shape.frameId ||
+        previousShape.parentId != shape.parentId ||
+        previousShape.transform != shape.transform ||
+        previousShape.rotation != shape.rotation;
+
     _shapes[index] = shape;
     _isDirty = true;
 
@@ -300,6 +307,17 @@ class GrpcCanvasRepository {
 
     _shapesController.add(shapes);
     _updateSyncStatus(SyncStatus.pending);
+
+    if (requiresImmediateSync) {
+      if (_isSyncing) {
+        // Ensure this operation still gets flushed once the current sync ends.
+        _scheduleDebouncedSync();
+      } else {
+        _syncToServer();
+      }
+      return;
+    }
+
     _scheduleDebouncedSync();
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'handle_types.dart';
+import 'selection_handle_metrics.dart';
 
 enum SelectionEdge {
   top,
@@ -39,16 +40,20 @@ class SelectionHitResult {
 
 class SelectionHitTestConfig {
   const SelectionHitTestConfig({
-    this.handleSize = 8,
-    this.rotationHandleOffset = 24,
-    this.edgeHitSlop = 4,
-    this.cornerHitSlop = 12,
+    this.handleSize = SelectionHandleMetrics.resizeVisualSize,
+    this.handleHitSize = SelectionHandleMetrics.resizeHitSize,
+    this.rotationHandleOffset = SelectionHandleMetrics.rotationOffset,
+    this.rotationHitRadius = SelectionHandleMetrics.rotationHitRadius,
+    this.edgeHitSlop = SelectionHandleMetrics.edgeHitSlop,
+    this.cornerHitSlop = SelectionHandleMetrics.cornerHitSlop,
     this.includeEdges = true,
     this.includeRotation = true,
   });
 
   final double handleSize;
+  final double handleHitSize;
   final double rotationHandleOffset;
+  final double rotationHitRadius;
   final double edgeHitSlop;
   final double cornerHitSlop;
   final bool includeEdges;
@@ -72,6 +77,10 @@ SelectionHitResult? hitTestSelectionAffordance({
 
   final centerX = selectionBounds.center.dx;
   final centerY = selectionBounds.center.dy;
+  final rotationOffsetInCanvas = SelectionHandleMetrics.toCanvasUnits(
+    screenPx: config.rotationHandleOffset,
+    zoom: zoom,
+  );
 
   final handlePositions = <HandlePosition, Offset>{
     HandlePosition.topLeft: Offset(selectionBounds.left, selectionBounds.top),
@@ -79,11 +88,13 @@ SelectionHitResult? hitTestSelectionAffordance({
     HandlePosition.topRight: Offset(selectionBounds.right, selectionBounds.top),
     HandlePosition.middleLeft: Offset(selectionBounds.left, centerY),
     HandlePosition.middleRight: Offset(selectionBounds.right, centerY),
-    HandlePosition.bottomLeft: Offset(selectionBounds.left, selectionBounds.bottom),
+    HandlePosition.bottomLeft:
+        Offset(selectionBounds.left, selectionBounds.bottom),
     HandlePosition.bottomCenter: Offset(centerX, selectionBounds.bottom),
-    HandlePosition.bottomRight: Offset(selectionBounds.right, selectionBounds.bottom),
+    HandlePosition.bottomRight:
+        Offset(selectionBounds.right, selectionBounds.bottom),
     HandlePosition.rotation:
-        Offset(centerX, selectionBounds.top - config.rotationHandleOffset),
+        Offset(centerX, selectionBounds.top - rotationOffsetInCanvas),
   };
 
   bool isTextHandle(HandlePosition position) {
@@ -93,8 +104,6 @@ SelectionHitResult? hitTestSelectionAffordance({
         position == HandlePosition.bottomLeft ||
         position == HandlePosition.bottomRight;
   }
-
-  final halfSize = config.handleSize / 2;
 
   for (final entry in handlePositions.entries) {
     final position = entry.key;
@@ -108,12 +117,12 @@ SelectionHitResult? hitTestSelectionAffordance({
     final center = toScreen(entry.value);
     final rect = Rect.fromCenter(
       center: center,
-      width: config.handleSize,
-      height: config.handleSize,
+      width: config.handleHitSize,
+      height: config.handleHitSize,
     );
 
     if (position == HandlePosition.rotation) {
-      if ((screenPoint - center).distance <= halfSize) {
+      if ((screenPoint - center).distance <= config.rotationHitRadius) {
         return SelectionHitResult.handle(position);
       }
       continue;
@@ -129,8 +138,7 @@ SelectionHitResult? hitTestSelectionAffordance({
   }
 
   final topLeft = toScreen(Offset(selectionBounds.left, selectionBounds.top));
-  final topRight =
-      toScreen(Offset(selectionBounds.right, selectionBounds.top));
+  final topRight = toScreen(Offset(selectionBounds.right, selectionBounds.top));
   final bottomLeft =
       toScreen(Offset(selectionBounds.left, selectionBounds.bottom));
   bool inX(double x, double minX, double maxX) => x >= minX && x <= maxX;

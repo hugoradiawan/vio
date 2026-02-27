@@ -669,11 +669,11 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
         newHoveredId = target.id;
       }
 
-          final nextHoveredCornerIndex = hoveredCorner?.index;
-          final hoveredSelectionHit = _hitTestSelectionAffordance(screenPoint);
-          final nextSelectionCursorKind = hoveredSelectionHit == null
-            ? SelectionCursorKind.none
-            : _selectionCursorKindForHandle(
+      final nextHoveredCornerIndex = hoveredCorner?.index;
+      final hoveredSelectionHit = _hitTestSelectionAffordance(screenPoint);
+      final nextSelectionCursorKind = hoveredSelectionHit == null
+          ? SelectionCursorKind.none
+          : _selectionCursorKindForHandle(
               hoveredSelectionHit.effectiveHandle,
             );
 
@@ -1153,9 +1153,6 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
   // Handle Hit Testing & Interaction Helpers
   // ============================================================================
 
-  /// Corner radius handle size in screen pixels
-  static const double _cornerRadiusHandleSize = 10.0;
-
   /// Hit test for selection resize/rotate handles and edge lines.
   SelectionHitResult? _hitTestSelectionAffordance(Offset screenPoint) {
     if (state.selectedShapes.any((s) => s.blocked)) return null;
@@ -1226,7 +1223,8 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
     }
 
     final distances = <SelectionCursorKind, double>{
-      SelectionCursorKind.resizeHorizontal: circularDistance(axisDeg, horizontal),
+      SelectionCursorKind.resizeHorizontal:
+          circularDistance(axisDeg, horizontal),
       SelectionCursorKind.resizeDiagonalPrimary:
           circularDistance(axisDeg, diagonalPrimary),
       SelectionCursorKind.resizeVertical: circularDistance(axisDeg, vertical),
@@ -1234,9 +1232,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
           circularDistance(axisDeg, diagonalSecondary),
     };
 
-    return distances.entries
-        .reduce((a, b) => a.value <= b.value ? a : b)
-        .key;
+    return distances.entries.reduce((a, b) => a.value <= b.value ? a : b).key;
   }
 
   double _selectionRotationDegrees() {
@@ -1247,7 +1243,8 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
     }
 
     final first = selected.first.rotation;
-    final allMatch = selected.every((shape) => (shape.rotation - first).abs() < 0.01);
+    final allMatch =
+        selected.every((shape) => (shape.rotation - first).abs() < 0.01);
     return allMatch ? first : 0;
   }
 
@@ -1260,7 +1257,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
     if (shape is! RectangleShape) return null;
 
     final positions = _getCornerRadiusHandlePositions(shape);
-    const hitRadius = (_cornerRadiusHandleSize / 2) + 1.0;
+    const hitRadius = SelectionHandleMetrics.cornerRadiusHitRadius;
     for (var i = 0; i < positions.length; i++) {
       final screenHandlePos = _canvasToScreen(positions[i]);
       final distance = (screenPoint - screenHandlePos).distance;
@@ -1275,7 +1272,10 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
   List<Offset> _getCornerRadiusHandlePositions(RectangleShape rect) {
     final bounds = rect.bounds;
 
-    const minInset = 8.0;
+    final minInset = SelectionHandleMetrics.toCanvasUnits(
+      screenPx: SelectionHandleMetrics.cornerRadiusMinInset,
+      zoom: state.zoom,
+    );
     double insetFor(double radius) => math.max(minInset, radius);
 
     return [

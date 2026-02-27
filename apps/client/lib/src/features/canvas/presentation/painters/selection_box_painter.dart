@@ -6,6 +6,7 @@ import 'package:vio_core/vio_core.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../models/handle_types.dart';
+import '../../models/selection_handle_metrics.dart';
 
 export '../../models/handle_types.dart';
 
@@ -17,9 +18,9 @@ class SelectionBoxPainter extends CustomPainter {
     this.dragOffset,
     this.activeCornerIndex,
     this.hoveredCornerIndex,
-    this.handleSize = 8.0,
-    this.rotationHandleOffset = 24.0,
-    this.cornerRadiusHandleSize = 10.0,
+    this.handleSize = SelectionHandleMetrics.resizeVisualSize,
+    this.rotationHandleOffset = SelectionHandleMetrics.rotationOffset,
+    this.cornerRadiusHandleSize = SelectionHandleMetrics.cornerRadiusVisualSize,
     this.showCornerRadiusHandles = false,
   });
 
@@ -66,6 +67,15 @@ class SelectionBoxPainter extends CustomPainter {
         position == HandlePosition.topRight ||
         position == HandlePosition.bottomLeft ||
         position == HandlePosition.bottomRight;
+  }
+
+  double get _zoom {
+    final zoom = viewMatrix.a.abs();
+    return zoom <= 0 ? 1.0 : zoom;
+  }
+
+  double _screenToCanvas(double px) {
+    return SelectionHandleMetrics.toCanvasUnits(screenPx: px, zoom: _zoom);
   }
 
   @override
@@ -280,18 +290,20 @@ class SelectionBoxPainter extends CustomPainter {
     final outlinePaint = Paint()
       ..color = VioColors.canvasSelection
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
+      ..strokeWidth =
+          _screenToCanvas(SelectionHandleMetrics.selectionStrokeWidth);
 
     canvas.drawRect(rect, outlinePaint);
 
     // Draw rotation handle line
     final centerX = bounds.center.dx;
-    final handleY = bounds.top - rotationHandleOffset;
+    final handleY = bounds.top - _screenToCanvas(rotationHandleOffset);
 
     final linePaint = Paint()
       ..color = VioColors.canvasSelection
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
+      ..strokeWidth =
+          _screenToCanvas(SelectionHandleMetrics.selectionStrokeWidth);
 
     canvas.drawLine(
       Offset(centerX, bounds.top),
@@ -325,16 +337,17 @@ class SelectionBoxPainter extends CustomPainter {
       HandlePosition.bottomCenter: Offset(centerX, bounds.bottom),
       HandlePosition.bottomRight: Offset(bounds.right, bounds.bottom),
       HandlePosition.rotation:
-          Offset(centerX, bounds.top - rotationHandleOffset),
+          Offset(centerX, bounds.top - _screenToCanvas(rotationHandleOffset)),
     };
   }
 
   void _drawHandle(Canvas canvas, Offset center, bool isRotationHandle) {
-    final halfSize = handleSize / 2;
+    final handleSizeInCanvas = _screenToCanvas(handleSize);
+    final halfSize = handleSizeInCanvas / 2;
     final rect = Rect.fromCenter(
       center: Offset(center.dx, center.dy),
-      width: handleSize,
-      height: handleSize,
+      width: handleSizeInCanvas,
+      height: handleSizeInCanvas,
     );
 
     // Fill
@@ -346,7 +359,7 @@ class SelectionBoxPainter extends CustomPainter {
     final strokePaint = Paint()
       ..color = VioColors.canvasSelection
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
+      ..strokeWidth = _screenToCanvas(SelectionHandleMetrics.handleStrokeWidth);
 
     if (isRotationHandle) {
       // Draw rotation handle as a circle
@@ -391,6 +404,7 @@ class SelectionBoxPainter extends CustomPainter {
   /// Draw corner radius handles inside the rectangle corners
   void _drawCornerRadiusHandles(Canvas canvas, RectangleShape rect) {
     final positions = _getCornerRadiusHandlePositions(rect);
+    final radiusInCanvas = _screenToCanvas(cornerRadiusHandleSize) / 2;
 
     // Fill
     final fillPaint = Paint()
@@ -401,11 +415,11 @@ class SelectionBoxPainter extends CustomPainter {
     final strokePaint = Paint()
       ..color = VioColors.canvasSelection
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
+      ..strokeWidth = _screenToCanvas(SelectionHandleMetrics.handleStrokeWidth);
 
     for (final pos in positions) {
-      canvas.drawCircle(pos, cornerRadiusHandleSize / 2, fillPaint);
-      canvas.drawCircle(pos, cornerRadiusHandleSize / 2, strokePaint);
+      canvas.drawCircle(pos, radiusInCanvas, fillPaint);
+      canvas.drawCircle(pos, radiusInCanvas, strokePaint);
     }
   }
 
@@ -415,7 +429,8 @@ class SelectionBoxPainter extends CustomPainter {
 
     // Inset from corner in local coordinates. Bigger radius => bigger inset
     // (handle moves toward the middle).
-    const minInset = 8.0;
+    final minInset =
+        _screenToCanvas(SelectionHandleMetrics.cornerRadiusMinInset);
     double insetFor(double radius) => math.max(minInset, radius);
 
     return [

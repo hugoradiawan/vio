@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:vio_core/vio_core.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
+import '../../models/selection_handle_metrics.dart';
 import 'shape_painter.dart';
 
 /// Main canvas painter for rendering shapes and selection
@@ -41,6 +42,15 @@ class CanvasPainter extends CustomPainter {
 
   /// ID of the text shape currently being edited (rendered by overlay)
   final String? editingTextShapeId;
+
+  double get _zoom {
+    final zoom = viewMatrix.a.abs();
+    return zoom <= 0 ? 1.0 : zoom;
+  }
+
+  double _screenToCanvas(double px) {
+    return SelectionHandleMetrics.toCanvasUnits(screenPx: px, zoom: _zoom);
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -295,7 +305,8 @@ class CanvasPainter extends CustomPainter {
     final outlinePaint = Paint()
       ..color = VioColors.canvasSelection
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
+      ..strokeWidth =
+          _screenToCanvas(SelectionHandleMetrics.selectionStrokeWidth);
 
     for (final shape in shapes) {
       if (!selectedShapeIds.contains(shape.id)) continue;

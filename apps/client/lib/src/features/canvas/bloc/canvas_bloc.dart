@@ -9,6 +9,7 @@ import 'package:vio_core/vio_core.dart';
 
 import '../../../core/core.dart';
 import '../models/handle_types.dart';
+import '../models/selection_handle_metrics.dart';
 import '../models/selection_hit_test.dart';
 
 part 'canvas_bloc_commands.dart';

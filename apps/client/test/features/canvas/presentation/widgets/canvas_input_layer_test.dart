@@ -18,6 +18,25 @@ void main() {
         home: Scaffold(
           body: Stack(
             children: [
+              Positioned.fill(
+                child: CanvasInputLayer(
+                  cursor: SystemMouseCursors.basic,
+                  onHover: (_) {},
+                  onExit: () {},
+                  onPointerDown: (_) {},
+                  onPointerMove: (_) {},
+                  onPointerUp: (_) {},
+                  onPointerSignal: (_) {},
+                  onPointerPanZoomStart: (_) {},
+                  onPointerPanZoomUpdate: (_) {},
+                  onPointerPanZoomEnd: (_) {},
+                  onAssetAccept: (details) => acceptedAsset = details.data,
+                  child: Container(
+                    key: const Key('drop-target'),
+                    color: Colors.transparent,
+                  ),
+                ),
+              ),
               const Positioned(
                 left: 16,
                 top: 16,
@@ -34,22 +53,6 @@ void main() {
                     height: 24,
                     child: ColoredBox(color: Colors.blue),
                   ),
-                ),
-              ),
-              Positioned.fill(
-                child: CanvasInputLayer(
-                  cursor: SystemMouseCursors.basic,
-                  onHover: (_) {},
-                  onExit: () {},
-                  onPointerDown: (_) {},
-                  onPointerMove: (_) {},
-                  onPointerUp: (_) {},
-                  onPointerSignal: (_) {},
-                  onPointerPanZoomStart: (_) {},
-                  onPointerPanZoomUpdate: (_) {},
-                  onPointerPanZoomEnd: (_) {},
-                  onAssetAccept: (details) => acceptedAsset = details.data,
-                  child: const SizedBox(key: Key('drop-target')),
                 ),
               ),
             ],
@@ -90,7 +93,7 @@ void main() {
             onPointerPanZoomUpdate: (_) {},
             onPointerPanZoomEnd: (_) {},
             onAssetAccept: (_) {},
-            child: const SizedBox.expand(),
+                  child: Container(color: Colors.transparent),
           ),
         ),
       ),

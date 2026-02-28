@@ -12,6 +12,11 @@ mixin _CanvasCommandsMixin on Bloc<CanvasEvent, CanvasState> {
   _PruneEmptyGroupsResult _pruneEmptyGroups(Map<String, Shape> shapes);
   Set<String> _expandAncestorsForShapes(List<String> shapeIds);
 
+  // Rust engine state (from _CanvasRustMixin)
+  RustEngineService get _rustEngine;
+  set _rustEngineLoaded(bool value);
+  set _lastRustSyncedShapes(Map<String, Shape> value);
+
   String? _effectiveContainerIdFor({
     required Map<String, Shape> shapes,
     required String? parentId,
@@ -55,6 +60,11 @@ mixin _CanvasCommandsMixin on Bloc<CanvasEvent, CanvasState> {
     _undoStack.clear();
     _redoStack.clear();
     _undoStack.add(Map.from(event.shapes));
+
+    // Reset Rust engine so the next onChange triggers a fresh bulk load.
+    _rustEngine.reset();
+    _rustEngineLoaded = false;
+    _lastRustSyncedShapes = const {};
 
     VioLogger.info(
       'CanvasBloc: Shapes replaced from branch switch: ${event.shapes.length} shapes',

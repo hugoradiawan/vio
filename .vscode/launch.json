@@ -38,6 +38,19 @@
       ]
     },
     {
+      "name": "Vio Client (macOS Desktop) rust",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/apps/client",
+      "deviceId": "macos",
+      "toolArgs": [
+        "--dart-define-from-file=config/dev.json",
+        "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true",
+        "--dart-define=VIO_USE_RUST_BACKEND=true"
+      ]
+    },
+    {
       "name": "Vio Client (macOS Desktop)",
       "type": "dart",
       "request": "launch",
@@ -49,7 +62,7 @@
         "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true"
       ]
     },
-        {
+    {
       "name": "Vio Client (macOS Desktop) profile mode",
       "type": "dart",
       "request": "launch",

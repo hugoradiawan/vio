@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 import 'package:vio_core/vio_core.dart';
 
 import '../../../core/core.dart';
+import '../../../core/rust/render_shape_converter.dart';
 import '../models/handle_types.dart';
 import '../models/selection_handle_metrics.dart';
 import '../models/selection_hit_test.dart';
@@ -16,6 +17,7 @@ part 'canvas_bloc_commands.dart';
 part 'canvas_bloc_hierarchy.dart';
 part 'canvas_bloc_history.dart';
 part 'canvas_bloc_interaction.dart';
+part 'canvas_bloc_rust.dart';
 part 'canvas_bloc_sync.dart';
 part 'canvas_bloc_text.dart';
 part 'canvas_bloc_viewport.dart';
@@ -60,7 +62,8 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState>
         _CanvasCommandsMixin,
         _CanvasViewportMixin,
         _CanvasTextMixin,
-        _CanvasSyncMixin {
+        _CanvasSyncMixin,
+        _CanvasRustMixin {
   CanvasBloc({GrpcCanvasRepository? repository})
       : _repository = repository,
         super(CanvasState()) {
@@ -459,5 +462,19 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState>
   Future<void> close() {
     _syncStatusSubscription?.cancel();
     return super.close();
+  }
+
+  // --------------------------------------------------------------------------
+  // Rust engine sync: detects shape changes on every state emission
+  // --------------------------------------------------------------------------
+
+  @override
+  void onChange(Change<CanvasState> change) {
+    super.onChange(change);
+
+    // Only sync to Rust when the shapes map object has changed.
+    if (!identical(change.nextState.shapes, change.currentState.shapes)) {
+      _syncShapesToRust(change.nextState.shapes);
+    }
   }
 }

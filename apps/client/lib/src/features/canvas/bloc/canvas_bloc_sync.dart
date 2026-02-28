@@ -5,6 +5,11 @@ mixin _CanvasSyncMixin on Bloc<CanvasEvent, CanvasState> {
   List<Map<String, Shape>> get _undoStack;
   List<Map<String, Shape>> get _redoStack;
 
+  // Rust engine state (from _CanvasRustMixin)
+  RustEngineService get _rustEngine;
+  set _rustEngineLoaded(bool value);
+  set _lastRustSyncedShapes(Map<String, Shape> value);
+
   /// Subscription for repository sync status changes
   StreamSubscription<SyncStatus>? _syncStatusSubscription;
 
@@ -79,6 +84,11 @@ mixin _CanvasSyncMixin on Bloc<CanvasEvent, CanvasState> {
     _undoStack.clear();
     _redoStack.clear();
     _undoStack.add(Map.from(event.shapes));
+
+    // Reset Rust engine so the next onChange triggers a fresh bulk load.
+    _rustEngine.reset();
+    _rustEngineLoaded = false;
+    _lastRustSyncedShapes = const {};
 
     emit(
       state.copyWith(

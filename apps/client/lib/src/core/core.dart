@@ -4,6 +4,7 @@ export 'grpc/grpc.dart';
 export 'platform_shortcuts.dart';
 export 'repositories/repositories.dart';
 export 'router.dart';
+export 'rust/render_shape_converter.dart';
 export 'service_locator.dart';
 export 'services/image_cache_service.dart';
 export 'services/preferences_service.dart';

@@ -23,6 +23,10 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
   _PruneEmptyGroupsResult _pruneEmptyGroups(Map<String, Shape> shapes);
   void _pushUndoState(Map<String, Shape> shapes);
 
+  // Hit test delegation (from _CanvasRustMixin)
+  Shape? findTopShapeAtPoint(Offset canvasPoint, List<Shape> shapeList);
+  List<Shape> findShapesInRect(Rect rect, List<Shape> shapeList);
+
   void _notifyRepositoryShapeAdded(Shape shape);
   void _notifyRepositoryShapeUpdated(Shape shape);
   void _notifyRepositoryShapeDeleted(String shapeId);
@@ -242,7 +246,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
     }
 
     // Hit test to find shape under pointer
-    final hitShape = HitTest.findTopShapeAtPoint(canvasPoint, state.shapeList);
+    final hitShape = findTopShapeAtPoint(canvasPoint, state.shapeList);
 
     if (hitShape != null) {
       // Resolve the correct selection target based on group drill-down state.
@@ -372,7 +376,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
 
       // Find the leaf shape under the cursor.
       final hitShape =
-          HitTest.findTopShapeAtPoint(canvasPoint, state.shapeList);
+          findTopShapeAtPoint(canvasPoint, state.shapeList);
 
       if (hitShape != null &&
           hitShape.id != selectedShape.id &&
@@ -658,7 +662,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
       // Resolve to the correct group level so the hover outline matches what
       // a click would actually select.
       final hoveredLeaf =
-          HitTest.findTopShapeAtPoint(canvasPoint, state.shapeList);
+          findTopShapeAtPoint(canvasPoint, state.shapeList);
       String? newHoveredId;
       if (hoveredLeaf != null) {
         final target = HitTest.resolveGroupTarget(
@@ -810,7 +814,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
     if (state.interactionMode == InteractionMode.dragging &&
         state.dragRect != null) {
       // Find shapes in the marquee rectangle
-      final shapesInRect = HitTest.findShapesInRect(
+      final shapesInRect = findShapesInRect(
         state.dragRect!,
         state.shapeList,
       );

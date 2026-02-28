@@ -6,8 +6,7 @@ mixin _CanvasViewController on State<CanvasView> {
     state._bufferedPanZoomDelta = Offset.zero;
     state._bufferedPanZoomScale = 1.0;
     state._bufferedPanZoomFocal = focalPoint;
-    state._lastPanZoomFlushTimestamp =
-        DateTime.now().millisecondsSinceEpoch;
+    state._lastPanZoomFlushTimestamp = DateTime.now().millisecondsSinceEpoch;
   }
 
   void _bufferPanZoomViewportUpdate(
@@ -63,8 +62,7 @@ mixin _CanvasViewController on State<CanvasView> {
       state._bufferedPanZoomDelta = Offset.zero;
     }
 
-    state._lastPanZoomFlushTimestamp =
-        DateTime.now().millisecondsSinceEpoch;
+    state._lastPanZoomFlushTimestamp = DateTime.now().millisecondsSinceEpoch;
   }
 
   void _setViewportInteractionActive({Duration? holdFor}) {

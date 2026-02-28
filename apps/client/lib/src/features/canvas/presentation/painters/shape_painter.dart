@@ -380,9 +380,8 @@ class ShapePainter {
         cachedImage.height.toDouble(),
       );
       final paint = Paint()
-        ..filterQuality = simplifyForInteraction
-            ? FilterQuality.low
-            : FilterQuality.medium;
+        ..filterQuality =
+            simplifyForInteraction ? FilterQuality.low : FilterQuality.medium;
       if (simplifyForInteraction && shape.opacity < 1.0) {
         paint.color = Colors.white.withValues(alpha: shape.opacity);
       }
@@ -466,14 +465,14 @@ class ShapePainter {
     // Use the first fill as text color, otherwise default to white.
     final fill = shape.fills.isNotEmpty ? shape.fills.first : null;
     final effectiveFillAlpha = fill == null
-      ? (simplifyForInteraction ? shape.opacity : 1.0)
-      : _combinedAlpha(
-        fill.opacity,
-        simplifyForInteraction ? shape.opacity : 1.0,
-        );
+        ? (simplifyForInteraction ? shape.opacity : 1.0)
+        : _combinedAlpha(
+            fill.opacity,
+            simplifyForInteraction ? shape.opacity : 1.0,
+          );
     final color = fill != null
-      ? Color(fill.color).withValues(alpha: effectiveFillAlpha)
-      : Colors.white.withValues(alpha: effectiveFillAlpha);
+        ? Color(fill.color).withValues(alpha: effectiveFillAlpha)
+        : Colors.white.withValues(alpha: effectiveFillAlpha);
 
     FontWeight? fontWeight;
     final weightValue = shape.fontWeight;
@@ -648,16 +647,16 @@ class ShapePainter {
     // Check for gradient first
     if (fill.gradient != null) {
       if (simplifyForInteraction) {
-        final firstStop = fill.gradient!.stops.isEmpty
-            ? null
-            : fill.gradient!.stops.first;
-        paint.color = (firstStop == null ? Color(fill.color) : Color(firstStop.color))
-            .withValues(
-              alpha: _combinedAlpha(
-                firstStop?.opacity ?? fill.opacity,
-                shapeOpacity,
-              ),
-            );
+        final firstStop =
+            fill.gradient!.stops.isEmpty ? null : fill.gradient!.stops.first;
+        paint.color =
+            (firstStop == null ? Color(fill.color) : Color(firstStop.color))
+                .withValues(
+          alpha: _combinedAlpha(
+            firstStop?.opacity ?? fill.opacity,
+            shapeOpacity,
+          ),
+        );
       } else {
         paint.shader = _createGradientShader(fill.gradient!, shape.bounds);
       }
@@ -691,9 +690,8 @@ class ShapePainter {
       ..strokeJoin = _mapStrokeJoin(stroke.join);
 
     // Handle stroke alignment
-    final alignment = simplifyForInteraction
-        ? StrokeAlignment.center
-        : stroke.alignment;
+    final alignment =
+        simplifyForInteraction ? StrokeAlignment.center : stroke.alignment;
     switch (alignment) {
       case StrokeAlignment.center:
         canvas.drawPath(path, paint);

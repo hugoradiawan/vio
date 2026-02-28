@@ -43,11 +43,13 @@ class _ConflictResolutionDialogState extends State<ConflictResolutionDialog> {
   bool get _allResolved => _resolutions.values.every(
         (choice) =>
             choice != common_enum.ResolutionChoice.RESOLUTION_CHOICE_SOURCE &&
-                choice != common_enum.ResolutionChoice.RESOLUTION_CHOICE_TARGET ||
+                choice !=
+                    common_enum.ResolutionChoice.RESOLUTION_CHOICE_TARGET ||
             _resolutions.values.isNotEmpty,
       );
 
-  common_pb.ShapeConflict get _currentConflict => widget.conflicts[_currentIndex];
+  common_pb.ShapeConflict get _currentConflict =>
+      widget.conflicts[_currentIndex];
 
   @override
   Widget build(BuildContext context) {
@@ -282,13 +284,15 @@ class _ConflictDiffView extends StatelessWidget {
           child: _ShapeVersionPanel(
             title: sourceBranchName,
             subtitle: 'Incoming changes',
-            isSelected: resolution == common_enum.ResolutionChoice.RESOLUTION_CHOICE_SOURCE,
+            isSelected: resolution ==
+                common_enum.ResolutionChoice.RESOLUTION_CHOICE_SOURCE,
             color: VioColors.primary,
-            shapeData: null, // Proto ShapeConflict doesn't carry full shape objects
+            shapeData:
+                null, // Proto ShapeConflict doesn't carry full shape objects
             propertyConflicts: conflict.propertyConflicts,
             showSource: true,
-            onSelect: () =>
-                onResolutionChanged(common_enum.ResolutionChoice.RESOLUTION_CHOICE_SOURCE),
+            onSelect: () => onResolutionChanged(
+                common_enum.ResolutionChoice.RESOLUTION_CHOICE_SOURCE),
           ),
         ),
         const SizedBox(width: 16),
@@ -298,13 +302,15 @@ class _ConflictDiffView extends StatelessWidget {
           child: _ShapeVersionPanel(
             title: targetBranchName,
             subtitle: 'Current version',
-            isSelected: resolution == common_enum.ResolutionChoice.RESOLUTION_CHOICE_TARGET,
+            isSelected: resolution ==
+                common_enum.ResolutionChoice.RESOLUTION_CHOICE_TARGET,
             color: VioColors.warning,
-            shapeData: null, // Proto ShapeConflict doesn't carry full shape objects
+            shapeData:
+                null, // Proto ShapeConflict doesn't carry full shape objects
             propertyConflicts: conflict.propertyConflicts,
             showSource: false,
-            onSelect: () =>
-                onResolutionChanged(common_enum.ResolutionChoice.RESOLUTION_CHOICE_TARGET),
+            onSelect: () => onResolutionChanged(
+                common_enum.ResolutionChoice.RESOLUTION_CHOICE_TARGET),
           ),
         ),
       ],

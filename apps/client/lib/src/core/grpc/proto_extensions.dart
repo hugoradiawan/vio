@@ -11,8 +11,7 @@ import '../../gen/vio/v1/pullrequest.pbenum.dart' as pr_enum;
 
 extension TimestampExt on common_pb.Timestamp {
   /// Convert proto Timestamp to Dart DateTime.
-  DateTime toDateTime() =>
-      DateTime.fromMillisecondsSinceEpoch(millis.toInt());
+  DateTime toDateTime() => DateTime.fromMillisecondsSinceEpoch(millis.toInt());
 }
 
 /// Convert a nullable Timestamp to DateTime?.
@@ -31,12 +30,10 @@ extension BranchExt on branch_pb.Branch {
   DateTime? get updatedAtDateTime => timestampToDateTime(updatedAt);
 
   /// Returns null if description is empty.
-  String? get descriptionOrNull =>
-      description.isEmpty ? null : description;
+  String? get descriptionOrNull => description.isEmpty ? null : description;
 
   /// Returns null if headCommitId is empty.
-  String? get headCommitIdOrNull =>
-      headCommitId.isEmpty ? null : headCommitId;
+  String? get headCommitIdOrNull => headCommitId.isEmpty ? null : headCommitId;
 }
 
 // ============================================================================
@@ -61,8 +58,7 @@ extension PullRequestExt on pr_pb.PullRequest {
   DateTime? get closedAtDateTime => timestampToDateTime(closedAt);
 
   /// Returns null if description is empty.
-  String? get descriptionOrNull =>
-      description.isEmpty ? null : description;
+  String? get descriptionOrNull => description.isEmpty ? null : description;
 
   /// Check if pull request is open.
   bool get isOpen =>
@@ -92,11 +88,9 @@ extension PullRequestStatusDisplay on pr_enum.PullRequestStatus {
 
 extension MergeStrategyDisplay on common_enum.MergeStrategy {
   String get displayName => switch (this) {
-        common_enum.MergeStrategy.MERGE_STRATEGY_MERGE_COMMIT =>
-          'Merge Commit',
+        common_enum.MergeStrategy.MERGE_STRATEGY_MERGE_COMMIT => 'Merge Commit',
         common_enum.MergeStrategy.MERGE_STRATEGY_SQUASH => 'Squash',
-        common_enum.MergeStrategy.MERGE_STRATEGY_FAST_FORWARD =>
-          'Fast Forward',
+        common_enum.MergeStrategy.MERGE_STRATEGY_FAST_FORWARD => 'Fast Forward',
         _ => 'Unknown',
       };
 }

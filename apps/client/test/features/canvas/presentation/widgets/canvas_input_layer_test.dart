@@ -93,7 +93,7 @@ void main() {
             onPointerPanZoomUpdate: (_) {},
             onPointerPanZoomEnd: (_) {},
             onAssetAccept: (_) {},
-                  child: Container(color: Colors.transparent),
+            child: Container(color: Colors.transparent),
           ),
         ),
       ),

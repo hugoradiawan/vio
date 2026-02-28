@@ -94,9 +94,7 @@ class VersionControlState extends Equatable {
 
   /// Get open pull requests
   List<pr_pb.PullRequest> get openPullRequests {
-    return pullRequests
-        .where((pr) => pr.isOpen)
-        .toList();
+    return pullRequests.where((pr) => pr.isOpen).toList();
   }
 
   /// Check if operation is in progress

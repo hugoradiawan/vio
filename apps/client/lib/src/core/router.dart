@@ -26,8 +26,7 @@ GoRouter createRouter(AuthBloc authBloc) {
     refreshListenable: _AuthStateNotifier(authBloc),
     redirect: (context, state) {
       final authState = authBloc.state;
-      final isAuthenticated =
-          authState.status == AuthStatus.authenticated;
+      final isAuthenticated = authState.status == AuthStatus.authenticated;
       final isAuthRoute = state.matchedLocation == '/login' ||
           state.matchedLocation == '/register';
 

@@ -464,7 +464,7 @@ class CanvasState extends Equatable {
       initialRotationAngle: clearInitialRotationAngle
           ? null
           : (initialRotationAngle ?? this.initialRotationAngle),
-        selectionCursorKind: clearSelectionCursorKind
+      selectionCursorKind: clearSelectionCursorKind
           ? SelectionCursorKind.none
           : (selectionCursorKind ?? this.selectionCursorKind),
     );

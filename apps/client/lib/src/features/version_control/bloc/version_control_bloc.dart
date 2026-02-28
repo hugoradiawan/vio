@@ -724,8 +724,8 @@ class VersionControlBloc
       // Compute the committed shapes: base shapes + only staged changes.
       // Unstaged changes are NOT included in the commit snapshot.
       final committedShapes = _computeCommittedShapes();
-      final isPartialCommit = state.stagedShapeIds.length <
-          state.uncommittedChanges.length;
+      final isPartialCommit =
+          state.stagedShapeIds.length < state.uncommittedChanges.length;
 
       final request = commit_pb.CreateCommitRequest()
         ..projectId = state.projectId!
@@ -737,9 +737,7 @@ class VersionControlBloc
       // data so the backend doesn't read ALL shapes from the DB.
       if (isPartialCommit) {
         final snapshotJson = jsonEncode({
-          'shapes': committedShapes.values
-              .map(_shapeToSnapshotJson)
-              .toList(),
+          'shapes': committedShapes.values.map(_shapeToSnapshotJson).toList(),
         });
         request.snapshotData = utf8.encode(snapshotJson);
         VioLogger.info(
@@ -752,7 +750,8 @@ class VersionControlBloc
 
       // After commit, update base shapes to the committed state.
       // Unstaged changes remain as uncommitted.
-      final newUncommitted = _computeChanges(committedShapes, state.currentShapes);
+      final newUncommitted =
+          _computeChanges(committedShapes, state.currentShapes);
       emit(
         state.copyWith(
           stagedShapeIds: {},

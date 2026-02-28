@@ -108,3 +108,28 @@ melos:
     run:client:macos:
       run: cd apps/client && fvm flutter run -d macos --dart-define-from-file=config/dev.json
       description: Run client app on macOS (dev)
+
+    # Rust engine scripts
+    rust:test:
+      run: cd apps/client/rust && cargo test
+      description: Run Rust unit tests
+
+    rust:test:verbose:
+      run: cd apps/client/rust && cargo test -- --nocapture
+      description: Run Rust tests with stdout output
+
+    rust:bench:
+      run: cd apps/client/rust && cargo bench
+      description: Run Rust benchmarks
+
+    rust:clippy:
+      run: cd apps/client/rust && cargo clippy -- -D warnings
+      description: Run Rust linter (clippy)
+
+    rust:generate:
+      run: cd apps/client && flutter_rust_bridge_codegen generate
+      description: Generate Dart bindings from Rust API
+
+    rust:build:wasm:
+      run: cd apps/client/rust && cargo build --target wasm32-unknown-unknown --release
+      description: Build Rust crate for WASM (web)

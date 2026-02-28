@@ -206,9 +206,8 @@ class CanvasPerformanceDiagnostics {
       metrics: metrics,
       inputSource: 'pointer_pan_zoom',
       sessionId: _gestureSessionId,
-      sessionEventCount: isZoomSession
-          ? _gestureZoomEventCount
-          : _gesturePanEventCount,
+      sessionEventCount:
+          isZoomSession ? _gestureZoomEventCount : _gesturePanEventCount,
     );
 
     _gestureZoomStartMs = null;

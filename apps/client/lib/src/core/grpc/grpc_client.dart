@@ -96,8 +96,10 @@ class GrpcClient {
     // Initialize all service clients with auth interceptor
     final interceptors = [_authInterceptor];
     _assetClient = AssetServiceClient(_channel!, interceptors: interceptors);
-    _authClient = AuthServiceClient(_channel!); // No auth needed for auth service
-    _projectClient = ProjectServiceClient(_channel!, interceptors: interceptors);
+    _authClient =
+        AuthServiceClient(_channel!); // No auth needed for auth service
+    _projectClient =
+        ProjectServiceClient(_channel!, interceptors: interceptors);
     _branchClient = BranchServiceClient(_channel!, interceptors: interceptors);
     _commitClient = CommitServiceClient(_channel!, interceptors: interceptors);
     _shapeClient = ShapeServiceClient(_channel!, interceptors: interceptors);
@@ -186,8 +188,6 @@ class GrpcClient {
       return false;
     }
   }
-
-
 
   /// Get the asset service client
   AssetServiceClient get assetClient {

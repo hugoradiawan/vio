@@ -217,7 +217,9 @@ class _BranchListPanelState extends State<BranchListPanel> {
   }
 
   List<branch_pb.Branch> _filterBranches(
-      List<branch_pb.Branch> branches, String query,) {
+    List<branch_pb.Branch> branches,
+    String query,
+  ) {
     var filtered = branches;
 
     // Filter by search query

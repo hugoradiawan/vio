@@ -42,7 +42,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       final accessToken = await _tokenStorage.getAccessToken();
       debugPrint(
-          '[AuthBloc] Startup check: accessToken=${accessToken != null ? '${accessToken.substring(0, 10)}...' : 'null'}',);
+        '[AuthBloc] Startup check: accessToken=${accessToken != null ? '${accessToken.substring(0, 10)}...' : 'null'}',
+      );
       if (accessToken == null) {
         debugPrint('[AuthBloc] No stored token, going to unauthenticated');
         emit(state.copyWith(status: AuthStatus.unauthenticated));
@@ -50,9 +51,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
 
       // Validate the stored token with the backend
-      final response = await _authClient.validateToken(
-        ValidateTokenRequest()..accessToken = accessToken,
-      ).timeout(_startupAuthRpcTimeout);
+      final response = await _authClient
+          .validateToken(
+            ValidateTokenRequest()..accessToken = accessToken,
+          )
+          .timeout(_startupAuthRpcTimeout);
       debugPrint('[AuthBloc] ValidateToken response: valid=${response.valid}');
 
       if (response.valid && response.hasUser()) {
@@ -96,11 +99,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     try {
       debugPrint('[AuthBloc] Login RPC started');
-      final response = await _authClient.login(
-        LoginRequest()
-          ..email = event.email
-          ..password = event.password,
-      ).timeout(_interactiveAuthRpcTimeout);
+      final response = await _authClient
+          .login(
+            LoginRequest()
+              ..email = event.email
+              ..password = event.password,
+          )
+          .timeout(_interactiveAuthRpcTimeout);
       debugPrint('[AuthBloc] Login RPC completed');
 
       await _handleAuthResponse(response, emit);
@@ -139,12 +144,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     try {
       debugPrint('[AuthBloc] Register RPC started');
-      final response = await _authClient.register(
-        RegisterRequest()
-          ..email = event.email
-          ..password = event.password
-          ..name = event.name,
-      ).timeout(_interactiveAuthRpcTimeout);
+      final response = await _authClient
+          .register(
+            RegisterRequest()
+              ..email = event.email
+              ..password = event.password
+              ..name = event.name,
+          )
+          .timeout(_interactiveAuthRpcTimeout);
       debugPrint('[AuthBloc] Register RPC completed');
 
       await _handleAuthResponse(response, emit);
@@ -182,9 +189,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       final refreshToken = await _tokenStorage.getRefreshToken();
       if (refreshToken != null) {
-        await _authClient.logout(
-          LogoutRequest()..refreshToken = refreshToken,
-        ).timeout(_interactiveAuthRpcTimeout);
+        await _authClient
+            .logout(
+              LogoutRequest()..refreshToken = refreshToken,
+            )
+            .timeout(_interactiveAuthRpcTimeout);
       }
     } catch (_) {
       // Logout is best-effort; continue even if the server call fails
@@ -227,9 +236,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     try {
       debugPrint('[AuthBloc] Attempting token refresh...');
-      final response = await _authClient.refreshToken(
-        RefreshTokenRequest()..refreshToken = refreshToken,
-      ).timeout(_interactiveAuthRpcTimeout);
+      final response = await _authClient
+          .refreshToken(
+            RefreshTokenRequest()..refreshToken = refreshToken,
+          )
+          .timeout(_interactiveAuthRpcTimeout);
       debugPrint('[AuthBloc] Token refresh succeeded');
       await _handleAuthResponse(response, emit);
     } catch (e) {

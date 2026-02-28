@@ -45,11 +45,19 @@ dependencies:
   file_picker: ^10.3.10
   desktop_drop: ^0.7.0
   flutter_secure_storage: ^10.0.0
+  rust_lib_vio_client:
+    path: rust_builder
+  flutter_rust_bridge: 2.11.1
+  freezed_annotation: ^3.1.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  integration_test:
+    sdk: flutter
+  freezed: ^3.2.5
+  build_runner: ^2.11.1
 
 flutter:
   uses-material-design: true

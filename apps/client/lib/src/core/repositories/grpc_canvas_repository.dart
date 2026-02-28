@@ -262,8 +262,7 @@ class GrpcCanvasRepository {
     }
 
     final previousShape = _shapes[index];
-    final requiresImmediateSync =
-        previousShape.frameId != shape.frameId ||
+    final requiresImmediateSync = previousShape.frameId != shape.frameId ||
         previousShape.parentId != shape.parentId ||
         previousShape.transform != shape.transform ||
         previousShape.rotation != shape.rotation;
@@ -495,8 +494,8 @@ class GrpcCanvasRepository {
           _updateSyncStatus(SyncStatus.error);
         }
       } else {
-      VioLogger.error('GrpcCanvasRepository: Sync error - ${e.message}');
-      _updateSyncStatus(SyncStatus.error);
+        VioLogger.error('GrpcCanvasRepository: Sync error - ${e.message}');
+        _updateSyncStatus(SyncStatus.error);
       }
     } finally {
       _isSyncing = false;

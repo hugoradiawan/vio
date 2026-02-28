@@ -10,6 +10,7 @@ import 'config/app_config.dart';
 import 'grpc/grpc.dart';
 import 'repositories/repositories.dart';
 import 'services/preferences_service.dart';
+import 'services/rust_engine_service.dart';
 
 /// Service locator for gRPC services
 ///
@@ -32,6 +33,7 @@ class ServiceLocator {
   late final ShapeServiceClient _shapeService;
   late final GrpcCanvasRepository _canvasRepository;
   late final PreferencesService _preferencesService;
+  late final RustEngineService _rustEngineService;
 
   bool _initialized = false;
 
@@ -70,6 +72,9 @@ class ServiceLocator {
 
     // Create repositories
     _canvasRepository = GrpcCanvasRepository(canvasClient: _canvasService);
+
+    // Rust engine (already init'd via RustLib.init() in main)
+    _rustEngineService = RustEngineService.instance;
 
     _initialized = true;
   }
@@ -138,6 +143,12 @@ class ServiceLocator {
   PreferencesService get preferencesService {
     _ensureInitialized();
     return _preferencesService;
+  }
+
+  /// Get the Rust canvas engine service
+  RustEngineService get rustEngine {
+    _ensureInitialized();
+    return _rustEngineService;
   }
 
   void _ensureInitialized() {

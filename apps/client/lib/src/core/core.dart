@@ -7,3 +7,4 @@ export 'router.dart';
 export 'service_locator.dart';
 export 'services/image_cache_service.dart';
 export 'services/preferences_service.dart';
+export 'services/rust_engine_service.dart';

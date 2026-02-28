@@ -136,8 +136,7 @@ class LayerTree extends StatelessWidget {
                     // Prevent cycles: can't drop a parent into its
                     // own descendant.
                     if (isGroup) {
-                      final ancestors =
-                          LayerTreeBuilder.getAncestorIds(
+                      final ancestors = LayerTreeBuilder.getAncestorIds(
                         node.shape.id,
                         state.shapes,
                       );
@@ -155,10 +154,8 @@ class LayerTree extends StatelessWidget {
                     context.read<CanvasBloc>().add(
                           ShapesReparented(
                             shapeIds: ids,
-                            destinationFrameId:
-                                isFrame ? node.shape.id : null,
-                            destinationGroupId:
-                                isGroup ? node.shape.id : null,
+                            destinationFrameId: isFrame ? node.shape.id : null,
+                            destinationGroupId: isGroup ? node.shape.id : null,
                           ),
                         );
                   },

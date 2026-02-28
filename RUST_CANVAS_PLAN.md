@@ -1,0 +1,943 @@
+# Rust Canvas Performance Plan
+
+## Executive Summary
+
+Integrate Rust into Vio's Flutter canvas via `flutter_rust_bridge` (v2.11.1) to offload compute-heavy operations from the Dart UI thread. The Rust layer handles **scene graph management**, **spatial indexing**, **visibility culling**, **hit testing**, **render command generation**, **text measurement caching**, and optionally **off-screen tile rasterization** via `tiny-skia`. Flutter's `CustomPainter` becomes a thin executor of pre-computed draw commands rather than rebuilding the scene from scratch every frame.
+
+**Target:** maintain 60 FPS with 1,000+ shapes (mixed rectangles, ellipses, text, images, paths) on canvas.
+
+---
+
+## 1. Current Architecture & Bottlenecks
+
+### Rendering Pipeline (Today)
+
+```
+CanvasBloc (state) → CanvasSurface (widget) → CanvasPainter (CustomPainter)
+                                                  ↓
+                                              ShapePainter (static utility)
+                                                  ↓
+                                              Flutter Canvas (Skia)
+```
+
+### Identified Bottlenecks
+
+| # | Bottleneck | Impact | Where |
+|---|-----------|--------|-------|
+| 1 | **Single CustomPainter repaints all shapes** on any state change | O(n) per frame | `canvas_painter.dart` `paint()` |
+| 2 | **Containment tree rebuilt every paint call** — linear iterate all shapes to build parent→children map | O(n) per frame | `canvas_painter.dart` L90–L140 |
+| 3 | **No spatial index** — visibility culling is per-shape AABB check against viewport, but tree structure isn't leveraged | O(n) | `_isShapeVisible()` |
+| 4 | **TextPainter.layout() called every paint** for every visible text shape — no caching of laid-out paragraphs | Expensive per text shape | `shape_painter.dart` `_paintText()` |
+| 5 | **Hit testing is linear scan** — pointer events search all shapes | O(n) per pointer event | `canvas_bloc_interaction.dart` |
+| 6 | **saveLayer() for effects** — opacity, blur, inner shadow each allocate GPU offscreen buffers | GPU memory pressure | `shape_painter.dart` |
+| 7 | **No render caching** — every shape painted from scratch every frame, no `Picture` or layer caching for static shapes | Redundant GPU work | `shape_painter.dart` |
+| 8 | **Hover lookup is linear scan** — `shapes.where((s) => s.id == hoveredId)` | O(n) | `canvas_painter.dart` |
+
+### What Rust Can Fix
+
+Rust excels at **CPU-bound computation** — building data structures, number crunching transforms, spatial queries. It runs on a **separate thread** (via `flutter_rust_bridge`'s async mode), keeping the Dart UI thread free. The bridge supports **zero-copy** for `Vec<u8>` → `Uint8List`, making pixel buffer transfer efficient.
+
+Rust **cannot** directly call Flutter's `Canvas` API (which is a Skia wrapper). The strategy is therefore:
+
+1. Rust computes *what* to draw (geometry, colors, transforms, visibility) → sends **draw commands**
+2. Flutter's `CustomPainter` executes those commands against `Canvas` (minimal logic)
+3. For heavy static content, Rust can **rasterize to pixel buffers** via `tiny-skia` and send `Uint8List` RGBA data for Flutter to display as images
+
+---
+
+## 2. Integration Architecture
+
+### Directory Structure
+
+```
+apps/client/
+├── rust/                          # ← NEW: Rust crate
+│   ├── Cargo.toml
+│   └── src/
+│       ├── lib.rs
+│       ├── api/                   # flutter_rust_bridge API surface
+│       │   ├── mod.rs
+│       │   ├── scene.rs           # Scene graph CRUD + queries
+│       │   ├── render.rs          # Generate draw commands
+│       │   ├── hit_test.rs        # Hit testing API
+│       │   └── rasterize.rs       # Off-screen rasterization API
+│       ├── scene_graph/           # Internal: scene graph + spatial index
+│       │   ├── mod.rs
+│       │   ├── shape.rs           # Rust Shape mirror
+│       │   ├── tree.rs            # Parent-child hierarchy
+│       │   └── spatial_index.rs   # R-tree implementation
+│       ├── render/                # Internal: render pipeline
+│       │   ├── mod.rs
+│       │   ├── commands.rs        # DrawCommand enum
+│       │   ├── culling.rs         # Viewport frustum culling
+│       │   ├── sort.rs            # Z-order + depth sorting
+│       │   └── text_cache.rs      # Text measurement cache
+│       ├── rasterizer/            # Internal: off-screen rasterization
+│       │   ├── mod.rs
+│       │   ├── tiles.rs           # Tile-based rasterization
+│       │   └── compositor.rs      # Compositing static tiles
+│       └── math/
+│           ├── mod.rs
+│           ├── matrix2d.rs        # Affine transform ops
+│           └── aabb.rs            # Axis-aligned bounding box
+├── rust_builder/                  # ← NEW: Build glue (generated by frb)
+│   ├── pubspec.yaml
+│   ├── cargokit/
+│   └── ...
+├── lib/
+│   └── src/
+│       ├── rust_bridge/           # ← NEW: Dart bridge layer
+│       │   ├── rust_bridge.dart   # Init + singleton
+│       │   ├── scene_bridge.dart  # Dart ↔ Rust scene sync
+│       │   └── render_bridge.dart # Draw command consumer
+│       └── gen/                   # (existing gRPC gen)
+└── ...
+```
+
+### flutter_rust_bridge Setup
+
+```bash
+# 1. Install codegen tool
+cargo install flutter_rust_bridge_codegen
+
+# 2. Integrate into existing project (run from apps/client/)
+cd apps/client
+flutter_rust_bridge_codegen integrate
+
+# 3. Add dependency to pubspec.yaml
+# flutter_rust_bridge: ^2.11.1  (added automatically by integrate)
+
+# 4. Generate bindings after Rust code changes
+flutter_rust_bridge_codegen generate
+# Or with watch mode during development:
+flutter_rust_bridge_codegen generate --watch
+```
+
+### Melos Integration
+
+Add to root `pubspec.yaml` melos scripts:
+
+```yaml
+scripts:
+  rust:generate:
+    run: cd apps/client && flutter_rust_bridge_codegen generate
+    description: Generate Rust-Dart bridge bindings
+
+  rust:generate:watch:
+    run: cd apps/client && flutter_rust_bridge_codegen generate --watch
+    description: Watch and auto-generate Rust-Dart bridge bindings
+
+  rust:test:
+    run: cd apps/client/rust && cargo test
+    description: Run Rust unit tests
+
+  rust:bench:
+    run: cd apps/client/rust && cargo bench
+    description: Run Rust benchmarks
+```
+
+---
+
+## 3. Rust Crate Design
+
+### 3.1 Cargo.toml
+
+```toml
+[package]
+name = "vio_canvas_engine"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+flutter_rust_bridge = "=2.11.1"
+rstar = "0.12"           # R-tree spatial index
+tiny-skia = "0.11"       # Software rasterizer (Skia subset)
+euclid = "0.22"          # 2D geometry primitives
+serde = { version = "1", features = ["derive"] }
+rayon = "1.10"            # Parallel iteration
+parking_lot = "0.12"     # Fast mutexes
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+proptest = "1"            # Property-based testing
+approx = "0.5"           # Float comparison in tests
+
+[[bench]]
+name = "scene_bench"
+harness = false
+```
+
+### 3.2 Core Types — Rust Shape Mirror
+
+Mirror the Dart `Shape` hierarchy in Rust. The Rust side owns the canonical scene graph during rendering; Dart syncs changes via bridge calls.
+
+```rust
+// rust/src/scene_graph/shape.rs
+
+/// Mirrors packages/core Shape hierarchy.
+/// Only rendering-relevant fields — no BLoC state, no undo history.
+#[derive(Debug, Clone)]
+pub struct RenderShape {
+    pub id: String,
+    pub shape_type: ShapeType,
+    pub transform: Matrix2D,
+    pub parent_id: Option<String>,
+    pub frame_id: Option<String>,
+    pub sort_order: i32,
+    pub opacity: f64,
+    pub hidden: bool,
+    pub rotation: f64,
+    pub fills: Vec<ShapeFill>,
+    pub strokes: Vec<ShapeStroke>,
+    pub shadow: Option<ShapeShadow>,
+    pub blur: Option<ShapeBlur>,
+    pub geometry: ShapeGeometry,
+}
+
+#[derive(Debug, Clone)]
+pub enum ShapeType {
+    Rectangle, Ellipse, Text, Frame, Group, Path, Image, Svg, Bool,
+}
+
+/// Type-specific geometric data
+#[derive(Debug, Clone)]
+pub enum ShapeGeometry {
+    Rectangle { width: f64, height: f64, r1: f64, r2: f64, r3: f64, r4: f64 },
+    Ellipse { width: f64, height: f64 },
+    Text { width: f64, height: f64, text: String, font_size: f64,
+           font_family: String, font_weight: u16, line_height: f64,
+           letter_spacing_percent: f64, text_align: TextAlign },
+    Frame { width: f64, height: f64, clip_content: bool },
+    Group { width: f64, height: f64 },
+    Path { width: f64, height: f64, path_data: String, closed: bool },
+    Image { width: f64, height: f64, asset_id: String },
+    Svg { width: f64, height: f64, svg_content: String },
+    Bool { width: f64, height: f64, operation: BoolOp },
+}
+
+#[derive(Debug, Clone)]
+pub struct Matrix2D {
+    pub a: f64, pub b: f64, pub c: f64,
+    pub d: f64, pub e: f64, pub f: f64,
+}
+
+// ShapeFill, ShapeStroke, ShapeShadow, ShapeBlur, ShapeGradient
+// mirror the Dart equivalents exactly
+```
+
+### 3.3 Scene Graph + R-Tree Spatial Index
+
+```rust
+// rust/src/scene_graph/spatial_index.rs
+use rstar::{RTree, RTreeObject, AABB};
+
+/// Wraps a shape's AABB for R-tree insertion
+pub struct ShapeEnvelope {
+    pub id: String,
+    pub aabb: AABB<[f64; 2]>,
+}
+
+impl RTreeObject for ShapeEnvelope {
+    type Envelope = AABB<[f64; 2]>;
+    fn envelope(&self) -> Self::Envelope { self.aabb }
+}
+
+pub struct SpatialIndex {
+    tree: RTree<ShapeEnvelope>,
+}
+
+impl SpatialIndex {
+    /// Bulk-load from all shapes — O(n log n)
+    pub fn build(shapes: &[RenderShape]) -> Self { ... }
+
+    /// Query shapes overlapping a viewport rect — O(log n + k)
+    pub fn query_visible(&self, viewport: &AABB<[f64; 2]>) -> Vec<&str> { ... }
+
+    /// Point query for hit testing — O(log n + k)
+    pub fn query_point(&self, x: f64, y: f64) -> Vec<&str> { ... }
+
+    /// Incremental update: insert/remove/move single shapes
+    pub fn insert(&mut self, shape: &RenderShape) { ... }
+    pub fn remove(&mut self, id: &str) { ... }
+}
+```
+
+### 3.4 Draw Command Pipeline
+
+Instead of Dart's `ShapePainter` computing everything in `paint()`, Rust pre-computes a flat list of `DrawCommand`s that Flutter's `CustomPainter` executes sequentially.
+
+```rust
+// rust/src/render/commands.rs
+
+/// A flat, serializable draw instruction for Flutter's Canvas API.
+/// Sent as a Vec<DrawCommand> per frame.
+#[derive(Debug, Clone)]
+pub enum DrawCommand {
+    /// Push a transform matrix onto the canvas stack
+    PushTransform { matrix: [f64; 6] },
+    /// Pop the last transform
+    PopTransform,
+    /// Save canvas state
+    Save,
+    /// Save canvas state with layer (for opacity, blur)
+    SaveLayer { bounds: [f64; 4], opacity: f64 },
+    /// Restore canvas state
+    Restore,
+    /// Clip to rectangle
+    ClipRect { rect: [f64; 4] },
+    /// Clip to rounded rectangle
+    ClipRRect { rect: [f64; 4], radii: [f64; 4] },
+    /// Clip to oval
+    ClipOval { rect: [f64; 4] },
+    /// Draw filled rectangle
+    DrawRect {
+        rect: [f64; 4],           // [x, y, w, h]
+        color: u32,               // ARGB
+    },
+    /// Draw filled rounded rectangle
+    DrawRRect {
+        rect: [f64; 4],
+        radii: [f64; 4],          // [r1, r2, r3, r4]
+        color: u32,
+    },
+    /// Draw fill with gradient
+    DrawRRectGradient {
+        rect: [f64; 4],
+        radii: [f64; 4],
+        gradient: GradientData,
+    },
+    /// Draw stroked rounded rectangle
+    DrawRRectStroke {
+        rect: [f64; 4],
+        radii: [f64; 4],
+        color: u32,
+        stroke_width: f64,
+        stroke_alignment: u8,     // 0=center, 1=inside, 2=outside
+    },
+    /// Draw filled oval
+    DrawOval { rect: [f64; 4], color: u32 },
+    /// Draw oval with gradient
+    DrawOvalGradient { rect: [f64; 4], gradient: GradientData },
+    /// Draw stroked oval
+    DrawOvalStroke { rect: [f64; 4], color: u32, stroke_width: f64 },
+    /// Draw text (Dart handles actual TextPainter, but Rust tells it where/what)
+    DrawText {
+        text: String,
+        rect: [f64; 4],
+        font_size: f64,
+        font_family: String,
+        font_weight: u16,
+        color: u32,
+        line_height: f64,
+        letter_spacing: f64,
+        text_align: u8,
+    },
+    /// Draw cached image by asset ID
+    DrawImage {
+        asset_id: String,
+        src_rect: [f64; 4],
+        dst_rect: [f64; 4],
+        filter_quality: u8,       // 0=none, 1=low, 2=medium
+    },
+    /// Draw rasterized tile (pixel buffer rendered by Rust's tiny-skia)
+    DrawRasterTile {
+        tile_id: u32,
+        dst_rect: [f64; 4],
+    },
+    /// Draw drop shadow
+    DrawShadow {
+        path_type: u8,            // 0=rect, 1=rrect, 2=oval
+        rect: [f64; 4],
+        radii: [f64; 4],
+        color: u32,
+        blur_sigma: f64,
+        offset: [f64; 2],
+        spread: f64,
+    },
+    /// Apply blur filter (wraps subsequent commands in saveLayer + blur)
+    PushBlur { sigma_x: f64, sigma_y: f64, bounds: [f64; 4] },
+    PopBlur,
+    /// Draw SVG path
+    DrawPath { path_data: String, color: u32, stroke: Option<StrokeData> },
+}
+
+#[derive(Debug, Clone)]
+pub struct GradientData {
+    pub gradient_type: u8,    // 0=linear, 1=radial
+    pub colors: Vec<u32>,
+    pub stops: Vec<f64>,
+    pub start: [f64; 2],
+    pub end: [f64; 2],
+}
+
+#[derive(Debug, Clone)]
+pub struct StrokeData {
+    pub width: f64,
+    pub color: u32,
+    pub cap: u8,
+    pub join: u8,
+}
+```
+
+### 3.5 Render Pipeline
+
+```rust
+// rust/src/api/render.rs — exposed to Dart via flutter_rust_bridge
+
+use crate::scene_graph::{SceneGraph, SpatialIndex};
+use crate::render::commands::DrawCommand;
+
+/// The main render engine, held as an opaque Rust type in Dart.
+pub struct CanvasEngine {
+    scene: SceneGraph,
+    spatial_index: SpatialIndex,
+    text_cache: TextMeasurementCache,
+    dirty_shapes: HashSet<String>,
+    last_viewport: Option<ViewportRect>,
+    last_commands: Vec<DrawCommand>,
+}
+
+impl CanvasEngine {
+    /// Create a new engine instance (called once at app startup)
+    #[flutter_rust_bridge::frb(sync)]
+    pub fn new() -> CanvasEngine { ... }
+
+    /// Sync a batch of shape changes from Dart → Rust
+    /// Called when CanvasBloc emits a new state
+    pub fn sync_shapes(&mut self, added: Vec<RenderShape>,
+                       updated: Vec<RenderShape>,
+                       removed: Vec<String>) {
+        // Update scene graph
+        // Mark dirty shapes
+        // Incrementally update R-tree
+    }
+
+    /// Generate draw commands for the current viewport.
+    /// This is the hot path — called every frame from CustomPainter.
+    #[flutter_rust_bridge::frb(sync)]
+    pub fn generate_draw_commands(
+        &self,
+        viewport_x: f64, viewport_y: f64,
+        viewport_w: f64, viewport_h: f64,
+        view_matrix: [f64; 6],
+        simplify: bool,
+    ) -> Vec<DrawCommand> {
+        // 1. Query R-tree for shapes overlapping viewport
+        // 2. Build containment tree (cached, only rebuilt on dirty)
+        // 3. Depth-sort by sortOrder
+        // 4. For each visible shape, emit DrawCommands
+        //    - Skip hidden shapes
+        //    - Apply simplification (drop shadows/blur) if simplify=true
+        //    - Emit transform push/pop around each shape
+        //    - Emit fill commands (solid or gradient)
+        //    - Emit stroke commands
+        //    - Emit shadow/blur commands
+        // 5. Return flat Vec<DrawCommand>
+    }
+
+    /// Hit test: find topmost shape at (x, y) in canvas coords
+    #[flutter_rust_bridge::frb(sync)]
+    pub fn hit_test(&self, x: f64, y: f64) -> Option<String> {
+        // 1. R-tree point query → candidate shapes
+        // 2. For each candidate (top-to-bottom z-order):
+        //    - Transform point into shape-local coords via inverse matrix
+        //    - Check if point is inside shape geometry
+        // 3. Return first hit
+    }
+
+    /// Hit test: find all shapes in a rectangle (for drag-select)
+    #[flutter_rust_bridge::frb(sync)]
+    pub fn hit_test_rect(&self, x: f64, y: f64,
+                         w: f64, h: f64) -> Vec<String> { ... }
+
+    /// Get cached text measurements (width, height, baseline)
+    #[flutter_rust_bridge::frb(sync)]
+    pub fn measure_text(&mut self, text: &str, font_size: f64,
+                        font_family: &str, max_width: f64) -> TextMetrics { ... }
+}
+```
+
+### 3.6 Off-Screen Rasterization (Phase 3)
+
+For canvases with many static shapes, Rust can pre-render tiles using `tiny-skia`:
+
+```rust
+// rust/src/rasterizer/tiles.rs
+
+pub struct TileCache {
+    tiles: HashMap<TileKey, Vec<u8>>,  // RGBA pixel data
+    tile_size: u32,                     // e.g. 512px
+    dirty_tiles: HashSet<TileKey>,
+}
+
+impl TileCache {
+    /// Rasterize all dirty tiles. Returns RGBA buffers.
+    /// These are sent to Dart as zero-copy Uint8List and drawn via
+    /// canvas.drawImage() using ui.decodeImageFromPixels().
+    pub fn rasterize_dirty(&mut self, scene: &SceneGraph) -> Vec<TileResult> {
+        // Use rayon for parallel tile rasterization
+        self.dirty_tiles.par_iter().map(|tile_key| {
+            let mut pixmap = tiny_skia::Pixmap::new(self.tile_size, self.tile_size).unwrap();
+            // Paint shapes that overlap this tile
+            // Return TileResult { key, rgba_data: pixmap.take() }
+        }).collect()
+    }
+}
+```
+
+Zero-copy transfer of `Vec<u8>` (RGBA pixel data) from Rust → Dart is natively supported by `flutter_rust_bridge` — no copies needed for `Uint8List`.
+
+---
+
+## 4. Dart Integration Layer
+
+### 4.1 Bridge Initialization
+
+```dart
+// lib/src/rust_bridge/rust_bridge.dart
+import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
+import '../gen/frb_generated.dart';  // auto-generated
+
+class RustBridge {
+  static final RustBridge _instance = RustBridge._();
+  static RustBridge get instance => _instance;
+  RustBridge._();
+
+  late final CanvasEngine _engine;
+  bool _initialized = false;
+
+  Future<void> init() async {
+    if (_initialized) return;
+    await RustLib.init();          // flutter_rust_bridge init
+    _engine = CanvasEngine();      // Create Rust engine
+    _initialized = true;
+  }
+
+  CanvasEngine get engine => _engine;
+}
+```
+
+### 4.2 Scene Sync (BLoC → Rust)
+
+```dart
+// lib/src/rust_bridge/scene_bridge.dart
+
+class SceneBridge {
+  final CanvasEngine _engine;
+
+  SceneBridge(this._engine);
+
+  /// Called when CanvasBloc emits new state.
+  /// Diffs old vs new shapes and sends delta to Rust.
+  void syncState(CanvasState oldState, CanvasState newState) {
+    if (identical(oldState.shapes, newState.shapes)) return;
+
+    final oldIds = oldState.shapesById.keys.toSet();
+    final newIds = newState.shapesById.keys.toSet();
+
+    final added = newIds.difference(oldIds)
+        .map((id) => _toRenderShape(newState.shapesById[id]!))
+        .toList();
+    final removed = oldIds.difference(newIds).toList();
+    final updated = newIds.intersection(oldIds)
+        .where((id) => oldState.shapesById[id] != newState.shapesById[id])
+        .map((id) => _toRenderShape(newState.shapesById[id]!))
+        .toList();
+
+    if (added.isEmpty && updated.isEmpty && removed.isEmpty) return;
+    _engine.syncShapes(added: added, updated: updated, removed: removed);
+  }
+
+  RenderShape _toRenderShape(Shape shape) {
+    // Convert Dart Shape → Rust RenderShape (auto-generated types)
+  }
+}
+```
+
+### 4.3 New CanvasPainter (Command Executor)
+
+```dart
+// Replaces current ShapePainter dispatch with command execution
+
+class RustCanvasPainter extends CustomPainter {
+  final CanvasEngine engine;
+  final Matrix2D viewMatrix;
+  final Size viewportSize;
+  final bool simplifyForInteraction;
+  final ImageCacheService imageCache;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final commands = engine.generateDrawCommands(
+      viewportX: ..., viewportY: ...,
+      viewportW: size.width, viewportH: size.height,
+      viewMatrix: [viewMatrix.a, viewMatrix.b, viewMatrix.c,
+                   viewMatrix.d, viewMatrix.e, viewMatrix.f],
+      simplify: simplifyForInteraction,
+    );
+
+    for (final cmd in commands) {
+      _executeCommand(canvas, cmd);
+    }
+  }
+
+  void _executeCommand(Canvas canvas, DrawCommand cmd) {
+    switch (cmd) {
+      case DrawCommand_PushTransform(:final matrix):
+        canvas.save();
+        canvas.transform(Float64List.fromList([
+          matrix[0], matrix[1], 0, 0,
+          matrix[2], matrix[3], 0, 0,
+          0, 0, 1, 0,
+          matrix[4], matrix[5], 0, 1,
+        ]));
+      case DrawCommand_PopTransform():
+        canvas.restore();
+      case DrawCommand_DrawRRect(:final rect, :final radii, :final color):
+        final rrect = RRect.fromLTRBAndCorners(
+          rect[0], rect[1], rect[0] + rect[2], rect[1] + rect[3],
+          topLeft: Radius.circular(radii[0]),
+          topRight: Radius.circular(radii[1]),
+          bottomRight: Radius.circular(radii[2]),
+          bottomLeft: Radius.circular(radii[3]),
+        );
+        canvas.drawRRect(rrect, Paint()..color = Color(color));
+      case DrawCommand_DrawImage(:final assetId, :final dstRect, ...):
+        final image = imageCache.getImage(assetId);
+        if (image != null) {
+          canvas.drawImageRect(image, ...);
+        }
+      // ... other commands
+    }
+  }
+}
+```
+
+---
+
+## 5. Phased Implementation Plan
+
+### Phase 0: Foundation (Week 1–2)
+
+| Task | Description |
+|------|-------------|
+| Install Rust toolchain | `rustup` + targets for macOS, Web (wasm32) |
+| Integrate flutter_rust_bridge | `flutter_rust_bridge_codegen integrate` in `apps/client/` |
+| Verify hello-world | Simple Rust fn callable from Dart, runs on macOS + Web |
+| Set up CI | `cargo test` + `cargo clippy` in GitHub Actions |
+| Add melos scripts | `rust:generate`, `rust:test`, `rust:bench` |
+| Create Rust crate skeleton | `vio_canvas_engine` with module structure |
+
+**Deliverable:** Dart can call `greet("Vio")` → returns `"Hello, Vio!"` from Rust.
+
+### Phase 1: Scene Graph + Spatial Index (Week 3–5)
+
+| Task | Description |
+|------|-------------|
+| Implement `RenderShape` + `ShapeGeometry` | Rust mirror of Dart Shape types |
+| Implement `Matrix2D` in Rust | Affine transform: multiply, invert, transform point |
+| Implement `SceneGraph` | HashMap of shapes + parent→children tree |
+| Implement `SpatialIndex` with `rstar` | R-tree with insert/remove/query_visible/query_point |
+| Implement `sync_shapes()` API | Dart→Rust delta sync |
+| Implement `hit_test()` / `hit_test_rect()` | R-tree query + geometry-precise testing |
+| Dart `SceneBridge` | Diff CanvasState, call sync_shapes |
+| **Tests:** 50+ Rust unit tests | Shape CRUD, R-tree queries, hit testing, matrix ops |
+
+**Deliverable:** Hit testing runs through Rust. Canvas still renders via existing Dart painters.
+
+### Phase 2: Draw Command Pipeline (Week 6–9)
+
+| Task | Description |
+|------|-------------|
+| Define `DrawCommand` enum | All command variants (30+ types) |
+| Implement `generate_draw_commands()` | R-tree query → tree sort → command emission |
+| Implement fill/stroke/shadow/blur command generation | Per-shape command sequences matching current ShapePainter |
+| Implement `simplifyForInteraction` mode | Skip shadows/blur, flatten gradients |
+| Implement `RustCanvasPainter` in Dart | Command executor — switch over DrawCommand variants |
+| Wire into `CanvasSurface` | Replace `CanvasPainter` with `RustCanvasPainter` |
+| Implement dirty tracking | Only regenerate commands when shapes change |
+| Text measurement cache | Cache `measure_text()` results, invalidate on text/font changes |
+| **Tests:** 40+ Rust unit tests | Command generation correctness, culling, sorting |
+| **Tests:** Flutter widget tests | `RustCanvasPainter` renders correctly |
+
+**Deliverable:** Full rendering pipeline goes through Rust. Visual output matches current renderer.
+
+### Phase 3: Off-Screen Rasterization (Week 10–12) — Optional
+
+| Task | Description |
+|------|-------------|
+| Integrate `tiny-skia` | Software rasterizer for simple shapes (rect, ellipse, path) |
+| Tile-based caching | Divide canvas into 512×512 tiles, rasterize static shapes |
+| Dirty tile tracking | Only re-rasterize tiles whose shapes changed |
+| Zero-copy tile transfer | `Vec<u8>` → `Uint8List` via flutter_rust_bridge |
+| `ui.decodeImageFromPixels()` | Convert RGBA buffer to `ui.Image` for `canvas.drawImage()` |
+| Parallel rasterization | Use `rayon` to rasterize multiple tiles concurrently |
+| **Tests:** Tile cache correctness | Tile invalidation, boundary shapes spanning tiles |
+
+**Deliverable:** Static shapes rendered from cached tiles. Only interactive/dirty shapes painted live.
+
+### Phase 4: Advanced Optimizations (Week 13+)
+
+| Task | Description |
+|------|-------------|
+| Streaming updates via `StreamSink` | Rust pushes incremental command patches when shapes change |
+| Multi-threaded scene sync | Background thread syncs shapes while main thread renders |
+| LOD (Level of Detail) | At low zoom, replace complex shapes with simplified geometry |
+| Batched rendering | Merge adjacent same-color fills into single draw calls |
+| Path caching | Cache parsed SVG path data, avoid re-parsing per frame |
+| Benchmark suite | Criterion benchmarks for 100, 1K, 10K shapes |
+
+---
+
+## 6. Rust Test Strategy
+
+### Unit Tests (in `rust/src/`)
+
+Every module gets `#[cfg(test)] mod tests { ... }` with thorough coverage:
+
+```rust
+// Example: rust/src/math/matrix2d.rs
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn identity_transform_preserves_point() {
+        let m = Matrix2D::identity();
+        let (x, y) = m.transform_point(10.0, 20.0);
+        assert_relative_eq!(x, 10.0);
+        assert_relative_eq!(y, 20.0);
+    }
+
+    #[test]
+    fn translation_moves_point() {
+        let m = Matrix2D::translation(100.0, 200.0);
+        let (x, y) = m.transform_point(10.0, 20.0);
+        assert_relative_eq!(x, 110.0);
+        assert_relative_eq!(y, 220.0);
+    }
+
+    #[test]
+    fn multiply_then_invert_is_identity() {
+        let m = Matrix2D::new(2.0, 0.5, -0.3, 1.5, 100.0, 200.0);
+        let inv = m.invert().unwrap();
+        let result = m.multiply(&inv);
+        assert_relative_eq!(result.a, 1.0, epsilon = 1e-10);
+        assert_relative_eq!(result.d, 1.0, epsilon = 1e-10);
+        assert_relative_eq!(result.e, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn rotation_90_degrees() {
+        let m = Matrix2D::rotation(90.0);
+        let (x, y) = m.transform_point(1.0, 0.0);
+        assert_relative_eq!(x, 0.0, epsilon = 1e-10);
+        assert_relative_eq!(y, 1.0, epsilon = 1e-10);
+    }
+}
+```
+
+### Test Categories
+
+| Category | Count (Target) | What's Tested |
+|----------|----------------|---------------|
+| `math::matrix2d` | 15+ | Identity, translation, rotation, scale, invert, multiply, singular matrix, transform_point |
+| `math::aabb` | 10+ | Intersection, contains, union, from_transformed_rect, inflate |
+| `scene_graph::shape` | 15+ | Construction, bounds calculation, geometry variants |
+| `scene_graph::tree` | 15+ | Insert/remove/reparent, children ordering, root shapes, depth traversal |
+| `scene_graph::spatial_index` | 20+ | Bulk build, incremental insert/remove, viewport query, point query, edge cases (empty, single, overlapping) |
+| `render::culling` | 10+ | Viewport fully inside, outside, partial overlap, rotated shapes, frames with clip |
+| `render::commands` | 20+ | Command generation for each shape type, fill/stroke/shadow variants, simplify mode |
+| `render::sort` | 10+ | Z-order sorting, nested groups, frame children |
+| `render::text_cache` | 10+ | Cache hit/miss, invalidation on text change, font change, max-width change |
+| `rasterizer::tiles` (Phase 3) | 15+ | Tile boundary, dirty tracking, RGBA output correctness |
+| **Integration tests** | 10+ | Full pipeline: sync shapes → generate commands → verify output |
+| **Property tests** | 10+ | proptest: random shapes always produce valid commands, hit test consistency |
+
+### Benchmark Tests (Criterion)
+
+```rust
+// rust/benches/scene_bench.rs
+
+use criterion::{criterion_group, criterion_main, Criterion, BenchmarkId};
+use vio_canvas_engine::*;
+
+fn bench_visibility_query(c: &mut Criterion) {
+    let mut group = c.benchmark_group("visibility_query");
+    for shape_count in [100, 500, 1000, 5000, 10000] {
+        let shapes = generate_random_shapes(shape_count);
+        let index = SpatialIndex::build(&shapes);
+        let viewport = AABB::from_corners([0.0, 0.0], [1920.0, 1080.0]);
+
+        group.bench_with_input(
+            BenchmarkId::from_parameter(shape_count),
+            &shape_count,
+            |b, _| b.iter(|| index.query_visible(&viewport)),
+        );
+    }
+    group.finish();
+}
+
+fn bench_generate_commands(c: &mut Criterion) {
+    // Benchmark full pipeline: 1000 shapes → draw commands
+}
+
+fn bench_hit_test(c: &mut Criterion) {
+    // Benchmark hit testing with 1000+ shapes
+}
+
+criterion_group!(benches, bench_visibility_query, bench_generate_commands, bench_hit_test);
+criterion_main!(benches);
+```
+
+---
+
+## 7. Web (WASM) Considerations
+
+`flutter_rust_bridge` supports Web via WASM compilation. Key notes:
+
+- Rust is compiled to `wasm32-unknown-unknown` target
+- `rayon` (multi-threading) does **not** work in WASM — use single-threaded fallback
+- `tiny-skia` works in WASM (pure Rust, no system deps)
+- Zero-copy is not available on Web — data is serialized across the JS boundary
+- Add conditional compilation:
+
+```rust
+#[cfg(not(target_arch = "wasm32"))]
+use rayon::prelude::*;
+
+pub fn rasterize_tiles(&mut self) -> Vec<TileResult> {
+    #[cfg(not(target_arch = "wasm32"))]
+    { self.dirty_tiles.par_iter().map(|t| self.rasterize_tile(t)).collect() }
+
+    #[cfg(target_arch = "wasm32")]
+    { self.dirty_tiles.iter().map(|t| self.rasterize_tile(t)).collect() }
+}
+```
+
+### WASM Build Setup
+
+```bash
+# Install wasm target
+rustup target add wasm32-unknown-unknown
+
+# flutter_rust_bridge handles WASM building automatically via cargokit
+# when running `flutter build web` or `flutter run -d chrome`
+```
+
+---
+
+## 8. Migration Strategy
+
+The migration is **incremental** — each phase adds value without breaking the existing renderer.
+
+### Phase 1 (Additive)
+- Rust hit testing runs alongside existing Dart hit testing
+- A/B toggle: `useRustHitTest` flag in `CanvasBloc`
+- Compare results, log discrepancies, switch once 100% parity
+
+### Phase 2 (Replacement)
+- `RustCanvasPainter` runs alongside `CanvasPainter`
+- Debug mode renders both, overlays diff to catch visual mismatches
+- Feature flag: `useRustRenderer` in dev config
+- Once validated, remove old `CanvasPainter` code
+
+### Phase 3 (Enhancement)
+- Tile rasterization is purely additive — cached tiles displayed behind live shapes
+- Falls back gracefully: if tile rasterization is slow or unavailable (e.g., memory pressure), renders everything live
+
+### Rollback
+- Every phase is behind a feature flag
+- Old code kept until Rust path is validated for 2+ weeks
+- `dart-define` flag: `VIO_USE_RUST_CANVAS=true|false`
+
+---
+
+## 9. Expected Performance Gains
+
+| Metric | Before (Dart only) | After (Rust) | Improvement |
+|--------|-------------------|-------------|-------------|
+| Visibility culling (1K shapes) | O(n) ~2ms | O(log n + k) ~0.1ms via R-tree | **20×** |
+| Hit testing (1K shapes) | O(n) ~1.5ms | O(log n) ~0.05ms via R-tree | **30×** |
+| Containment tree build | O(n) per frame ~1ms | Cached, O(1) if unchanged | **∞** (amortized) |
+| Draw command generation | N/A (integrated in paint) | ~0.3ms pre-computed | Frees UI thread |
+| Text measurement | Per-frame layout | Cached, ~0 if unchanged | **10×** for repeat frames |
+| Static shape rendering (Phase 3) | Per-frame paint | Rasterized tile, single drawImage | **5-10×** for static content |
+| Memory (R-tree overhead) | None | ~64 bytes/shape | Acceptable |
+
+---
+
+## 10. Dependencies Summary
+
+### Rust Crates
+
+| Crate | Version | Purpose | WASM-safe |
+|-------|---------|---------|-----------|
+| `flutter_rust_bridge` | 2.11.1 | FFI bridge | Yes |
+| `rstar` | 0.12 | R-tree spatial index | Yes |
+| `tiny-skia` | 0.11 | Software rasterizer | Yes |
+| `euclid` | 0.22 | 2D geometry types | Yes |
+| `serde` | 1.x | Type serialization | Yes |
+| `rayon` | 1.10 | Parallel computation | **No** (desktop only) |
+| `parking_lot` | 0.12 | Fast mutexes | Yes |
+
+### Dart Packages
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `flutter_rust_bridge` | ^2.11.1 | Dart FFI runtime |
+
+### Build Tools
+
+| Tool | Purpose |
+|------|---------|
+| `flutter_rust_bridge_codegen` | Generate Dart↔Rust bindings |
+| `cargo` | Rust build system |
+| `rustup` | Rust toolchain manager |
+| `wasm-pack` (optional) | WASM build tooling |
+
+---
+
+## 11. File Checklist (New Files to Create)
+
+### Rust (`apps/client/rust/`)
+- [ ] `Cargo.toml`
+- [ ] `src/lib.rs`
+- [ ] `src/api/mod.rs`
+- [ ] `src/api/scene.rs`
+- [ ] `src/api/render.rs`
+- [ ] `src/api/hit_test.rs`
+- [ ] `src/api/rasterize.rs`
+- [ ] `src/scene_graph/mod.rs`
+- [ ] `src/scene_graph/shape.rs`
+- [ ] `src/scene_graph/tree.rs`
+- [ ] `src/scene_graph/spatial_index.rs`
+- [ ] `src/render/mod.rs`
+- [ ] `src/render/commands.rs`
+- [ ] `src/render/culling.rs`
+- [ ] `src/render/sort.rs`
+- [ ] `src/render/text_cache.rs`
+- [ ] `src/rasterizer/mod.rs`
+- [ ] `src/rasterizer/tiles.rs`
+- [ ] `src/rasterizer/compositor.rs`
+- [ ] `src/math/mod.rs`
+- [ ] `src/math/matrix2d.rs`
+- [ ] `src/math/aabb.rs`
+- [ ] `benches/scene_bench.rs`
+
+### Dart (`apps/client/lib/src/`)
+- [ ] `rust_bridge/rust_bridge.dart`
+- [ ] `rust_bridge/scene_bridge.dart`
+- [ ] `rust_bridge/render_bridge.dart`
+- [ ] `features/canvas/presentation/painters/rust_canvas_painter.dart`
+
+### Config
+- [ ] Update `apps/client/pubspec.yaml` — add `flutter_rust_bridge: ^2.11.1`
+- [ ] Update root `pubspec.yaml` — add melos scripts
+- [ ] Update `apps/client/config/dev.json` — add `VIO_USE_RUST_CANVAS` flag
+- [ ] `.github/workflows/ci.yml` — add `cargo test` + `cargo clippy` steps

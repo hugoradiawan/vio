@@ -933,7 +933,8 @@ class MergePullRequestDialog extends StatefulWidget {
 
   final pr_pb.PullRequest pullRequest;
   final bool isMergeable;
-  final void Function(common_enum.MergeStrategy strategy, String? commitMessage) onMerge;
+  final void Function(common_enum.MergeStrategy strategy, String? commitMessage)
+      onMerge;
 
   @override
   State<MergePullRequestDialog> createState() => _MergePullRequestDialogState();
@@ -941,7 +942,8 @@ class MergePullRequestDialog extends StatefulWidget {
 
 class _MergePullRequestDialogState extends State<MergePullRequestDialog> {
   final _messageController = TextEditingController();
-  common_enum.MergeStrategy _strategy = common_enum.MergeStrategy.MERGE_STRATEGY_MERGE_COMMIT;
+  common_enum.MergeStrategy _strategy =
+      common_enum.MergeStrategy.MERGE_STRATEGY_MERGE_COMMIT;
 
   @override
   void initState() {
@@ -1076,16 +1078,20 @@ class _StrategySelector extends StatelessWidget {
           strategy: common_enum.MergeStrategy.MERGE_STRATEGY_MERGE_COMMIT,
           title: 'Merge Commit',
           description: 'Create a merge commit to combine branches',
-          isSelected: value == common_enum.MergeStrategy.MERGE_STRATEGY_MERGE_COMMIT,
-          onTap: () => onChanged(common_enum.MergeStrategy.MERGE_STRATEGY_MERGE_COMMIT),
+          isSelected:
+              value == common_enum.MergeStrategy.MERGE_STRATEGY_MERGE_COMMIT,
+          onTap: () =>
+              onChanged(common_enum.MergeStrategy.MERGE_STRATEGY_MERGE_COMMIT),
         ),
         const SizedBox(height: 8),
         _StrategyOption(
           strategy: common_enum.MergeStrategy.MERGE_STRATEGY_FAST_FORWARD,
           title: 'Fast Forward',
           description: 'Move branch pointer without merge commit',
-          isSelected: value == common_enum.MergeStrategy.MERGE_STRATEGY_FAST_FORWARD,
-          onTap: () => onChanged(common_enum.MergeStrategy.MERGE_STRATEGY_FAST_FORWARD),
+          isSelected:
+              value == common_enum.MergeStrategy.MERGE_STRATEGY_FAST_FORWARD,
+          onTap: () =>
+              onChanged(common_enum.MergeStrategy.MERGE_STRATEGY_FAST_FORWARD),
         ),
         const SizedBox(height: 8),
         _StrategyOption(
@@ -1093,7 +1099,8 @@ class _StrategySelector extends StatelessWidget {
           title: 'Squash',
           description: 'Combine all commits into a single commit',
           isSelected: value == common_enum.MergeStrategy.MERGE_STRATEGY_SQUASH,
-          onTap: () => onChanged(common_enum.MergeStrategy.MERGE_STRATEGY_SQUASH),
+          onTap: () =>
+              onChanged(common_enum.MergeStrategy.MERGE_STRATEGY_SQUASH),
         ),
       ],
     );

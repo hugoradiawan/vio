@@ -32,12 +32,12 @@ class _RegisterPageState extends State<RegisterPage> {
     if (!_formKey.currentState!.validate()) return;
 
     context.read<AuthBloc>().add(
-      AuthRegisterRequested(
-        name: _nameController.text.trim(),
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      ),
-    );
+          AuthRegisterRequested(
+            name: _nameController.text.trim(),
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          ),
+        );
   }
 
   @override
@@ -78,13 +78,11 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 12),
                     Text(
                       'Vio',
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineMedium
-                          ?.copyWith(
-                            color: VioColors.textPrimary,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      style:
+                          Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                color: VioColors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                              ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -177,11 +175,9 @@ class _RegisterPageState extends State<RegisterPage> {
 
                     // ── Register Button ───────────────────────
                     BlocBuilder<AuthBloc, AuthState>(
-                      buildWhen: (prev, curr) =>
-                          prev.status != curr.status,
+                      buildWhen: (prev, curr) => prev.status != curr.status,
                       builder: (context, state) {
-                        final isLoading =
-                            state.status == AuthStatus.loading;
+                        final isLoading = state.status == AuthStatus.loading;
                         return SizedBox(
                           width: double.infinity,
                           height: 44,

@@ -121,7 +121,8 @@ class _WorkspacePageState extends State<WorkspacePage> {
                                         Positioned(
                                           right: VioSpacing.md,
                                           bottom: VioSpacing.sm,
-                                          child: _buildCanvasBottomRightControls(
+                                          child:
+                                              _buildCanvasBottomRightControls(
                                             context,
                                           ),
                                         ),
@@ -131,8 +132,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
                                           right: 0,
                                           child: Center(
                                             child: ConstrainedBox(
-                                              constraints:
-                                                  const BoxConstraints(
+                                              constraints: const BoxConstraints(
                                                 maxWidth: 640,
                                               ),
                                               child:
@@ -158,8 +158,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
                                 width: 12,
                                 child: ResizablePanelHandle(
                                   onDragUpdate: (delta) {
-                                    final bloc =
-                                        context.read<WorkspaceBloc>();
+                                    final bloc = context.read<WorkspaceBloc>();
                                     final currentWidth =
                                         bloc.state.leftPanelWidth;
                                     bloc.add(
@@ -185,8 +184,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
                                 child: ResizablePanelHandle(
                                   isLeftSide: false,
                                   onDragUpdate: (delta) {
-                                    final bloc =
-                                        context.read<WorkspaceBloc>();
+                                    final bloc = context.read<WorkspaceBloc>();
                                     final currentWidth =
                                         bloc.state.rightPanelWidth;
                                     bloc.add(
@@ -492,10 +490,8 @@ class _WorkspacePageState extends State<WorkspacePage> {
           const _LeftPanelToggleIntent(),
 
       // Zoom shortcuts
-      platformSingleActivator(LogicalKeyboardKey.equal):
-          const _ZoomInIntent(),
-      platformSingleActivator(LogicalKeyboardKey.minus):
-          const _ZoomOutIntent(),
+      platformSingleActivator(LogicalKeyboardKey.equal): const _ZoomInIntent(),
+      platformSingleActivator(LogicalKeyboardKey.minus): const _ZoomOutIntent(),
       platformSingleActivator(LogicalKeyboardKey.digit0):
           const _ZoomResetIntent(),
       platformSingleActivator(LogicalKeyboardKey.digit1):

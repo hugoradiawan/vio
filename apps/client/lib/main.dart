@@ -6,12 +6,17 @@ import 'package:vio_core/vio_core.dart';
 
 import 'src/app.dart';
 import 'src/core/core.dart';
+import 'src/rust/frb_generated.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize logger
   VioLogger.initialize();
+
+  // Initialize Rust engine (flutter_rust_bridge)
+  await RustLib.init();
+  VioLogger.info('Rust engine initialized');
 
   // Build environment config from --dart-define-from-file values
   final appConfig = AppConfig.fromEnvironment();

@@ -178,8 +178,7 @@ void main(List<String> args) async {
     final jankRate = item['jankRate'];
     final uiJankRate = item['uiJankRate'];
     final rasterJankRate = item['rasterJankRate'];
-    final jankCell =
-        '${jankRate == null ? '-' : '$jankRate%'} / '
+    final jankCell = '${jankRate == null ? '-' : '$jankRate%'} / '
         '${uiJankRate == null ? '-' : '$uiJankRate%'} / '
         '${rasterJankRate == null ? '-' : '$rasterJankRate%'}';
     final worstP95 = _single(worstFrame?['p95']);
@@ -346,9 +345,8 @@ _ParsedLogLine? _parseLogLine(String line) {
   final inputSource = metricSource is String
       ? metricSource
       : (contextSource is String ? contextSource : null);
-  final sessionId = sessionMap['id'] is String
-      ? sessionMap['id'] as String
-      : null;
+  final sessionId =
+      sessionMap['id'] is String ? sessionMap['id'] as String : null;
 
   return _ParsedLogLine(
     operation: operation,

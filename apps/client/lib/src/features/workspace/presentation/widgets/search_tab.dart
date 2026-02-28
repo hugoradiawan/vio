@@ -40,7 +40,9 @@ class _SearchTabState extends State<SearchTab>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<VersionControlBloc>().add(const PullRequestsRefreshRequested());
+      context
+          .read<VersionControlBloc>()
+          .add(const PullRequestsRefreshRequested());
     });
   }
 
@@ -107,8 +109,9 @@ class _SearchTabState extends State<SearchTab>
                 subtitle: asset.path.isEmpty
                     ? asset.mimeType
                     : '${asset.path} · ${asset.mimeType}',
-                icon:
-                    asset.isSvg ? Icons.data_object_outlined : Icons.image_outlined,
+                icon: asset.isSvg
+                    ? Icons.data_object_outlined
+                    : Icons.image_outlined,
               ),
             )
             .toList(growable: false);
@@ -200,8 +203,7 @@ class _SearchTabState extends State<SearchTab>
             )
             .toList(growable: false);
 
-    final totalResults =
-        layerResults.length +
+    final totalResults = layerResults.length +
         assetResults.length +
         colorResults.length +
         branchResults.length +
@@ -221,12 +223,13 @@ class _SearchTabState extends State<SearchTab>
               Expanded(
                 child: TextField(
                   controller: _controller,
-                  style: VioTypography.body2.copyWith(color: VioColors.textPrimary),
+                  style: VioTypography.body2
+                      .copyWith(color: VioColors.textPrimary),
                   decoration: InputDecoration(
                     isDense: true,
                     hintText: 'Search workspace…',
-                    hintStyle:
-                        VioTypography.body2.copyWith(color: VioColors.textTertiary),
+                    hintStyle: VioTypography.body2
+                        .copyWith(color: VioColors.textTertiary),
                     border: InputBorder.none,
                     prefixIcon: const Icon(
                       Icons.search,
@@ -254,7 +257,8 @@ class _SearchTabState extends State<SearchTab>
               : totalResults == 0
                   ? const _NoResultsState()
                   : ListView(
-                      padding: const EdgeInsets.symmetric(vertical: VioSpacing.xs),
+                      padding:
+                          const EdgeInsets.symmetric(vertical: VioSpacing.xs),
                       children: [
                         _SearchMetaRow(total: totalResults),
                         _SearchSection(
@@ -384,14 +388,14 @@ class _SearchSection extends StatelessWidget {
               const SizedBox(width: VioSpacing.xs),
               Text(
                 title,
-                style:
-                    VioTypography.caption.copyWith(color: VioColors.textTertiary),
+                style: VioTypography.caption
+                    .copyWith(color: VioColors.textTertiary),
               ),
               const SizedBox(width: VioSpacing.xs),
               Text(
                 '${items.length}',
-                style:
-                    VioTypography.caption.copyWith(color: VioColors.textTertiary),
+                style: VioTypography.caption
+                    .copyWith(color: VioColors.textTertiary),
               ),
             ],
           ),

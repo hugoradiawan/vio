@@ -50,9 +50,28 @@ Bun + Elysia backend with Git-like version control for design projects.
 | `bun run db:migrate` | Run migrations |
 | `bun run db:push` | Push schema to database |
 | `bun run db:studio` | Open Drizzle Studio |
+| `bun run db:seed` | Seed default demo project |
+| `bun run db:seed:stress:small` | Seed stress dataset (small) |
+| `bun run db:seed:stress:medium` | Seed stress dataset (medium) |
+| `bun run db:seed:stress:large` | Seed stress dataset (large) |
 | `bun run test` | Run tests |
 | `bun run lint` | Lint code |
 | `bun run format` | Format code |
+
+## Stress Seed Datasets
+
+Stress seed scripts create separate projects and use image binaries from the repository-level `images/` folder.
+
+- `small`: ~12 frames, ~2.1k shape rows, 30 assets, 2 branches, 24 commits
+- `medium`: ~36 frames, ~8.6k shape rows, 100 assets, 3 branches, 54 commits
+- `large`: ~96 frames, ~28.9k shape rows, 300 assets, 5 branches, 120 commits
+
+Recommended flow:
+
+```bash
+bun run db:push
+bun run db:seed:stress:small
+```
 
 ## API Endpoints
 

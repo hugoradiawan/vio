@@ -37,6 +37,16 @@
       "deviceId": "macos",
       "toolArgs": ["--dart-define-from-file=config/dev.json"]
     },
+        {
+      "name": "Vio Client (macOS Desktop) profile mode",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/apps/client",
+      "deviceId": "macos",
+      "flutterMode": "profile",
+      "toolArgs": ["--dart-define-from-file=config/dev.json"]
+    },
     {
       "name": "Vio Client (Linux Desktop)",
       "type": "dart",

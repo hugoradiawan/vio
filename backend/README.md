@@ -44,6 +44,7 @@ Bun + Elysia backend with Git-like version control for design projects.
 | Command | Description |
 |---------|-------------|
 | `bun run dev` | Start development server with hot reload |
+| `bun run dev:diagnostics` | Start server with performance diagnostics JSONL logging |
 | `bun run start` | Start production server |
 | `bun run build` | Build for production |
 | `bun run db:generate` | Generate Drizzle migrations |
@@ -72,6 +73,26 @@ Recommended flow:
 bun run db:push
 bun run db:seed:stress:small
 ```
+
+## Performance Diagnostics Logs
+
+To capture backend performance diagnostics while you interact with the app:
+
+```bash
+bun run dev:diagnostics
+```
+
+This writes JSON Lines logs to:
+
+- `backend/logs/perf-diagnostics.jsonl` (default)
+
+You can customize the output path:
+
+```bash
+PERF_DIAGNOSTICS=1 PERF_DIAGNOSTICS_FILE=./logs/my-run.jsonl bun run dev
+```
+
+Each log line contains operation name, duration in ms, request context, and any error metadata.
 
 ## API Endpoints
 

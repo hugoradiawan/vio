@@ -8,13 +8,17 @@ import type { ServiceImpl } from "@connectrpc/connect";
 import { and, asc, eq } from "drizzle-orm";
 import { db, schema } from "../db";
 import {
-	CanvasService,
+	type CanvasService,
 	CanvasStateSchema,
+	type CanvasUpdate,
 	CanvasUpdateSchema,
 	ClearWorkingCopyResponseSchema,
+	type CollaborateResponse,
 	CollaborateResponseSchema,
 	CursorMovedSchema,
+	type CursorPosition,
 	CursorPositionSchema,
+	type GetCanvasStateResponse,
 	GetCanvasStateResponseSchema,
 	OperationType,
 	RestoreFromSnapshotResponseSchema,
@@ -24,35 +28,32 @@ import {
 	ShapeDeletedSchema,
 	ShapeUpdatedSchema,
 	SyncAckSchema,
+	type SyncChangesResponse,
 	SyncChangesResponseSchema,
+	type SyncOperation,
 	UserJoinedSchema,
 	UserLeftSchema,
-	UserPresenceSchema,
-	type CanvasUpdate,
-	type CollaborateResponse,
-	type CursorPosition,
-	type GetCanvasStateResponse,
-	type SyncChangesResponse,
-	type SyncOperation,
 	type UserPresence,
+	UserPresenceSchema,
 } from "../gen/vio/v1/canvas_pb.js";
 import {
+	type Fill,
 	FillSchema,
+	type Gradient,
+	Gradient_Type,
 	GradientSchema,
 	GradientStopSchema,
-	Gradient_Type,
+	type Stroke,
 	StrokeAlignment,
 	StrokeCap,
 	StrokeJoin,
 	StrokeSchema,
+	type Timestamp,
 	TimestampSchema,
 	TransformSchema,
-	type Fill,
-	type Gradient,
-	type Stroke,
-	type Timestamp,
 } from "../gen/vio/v1/common_pb.js";
-import { ShapeSchema, ShapeType, type Shape } from "../gen/vio/v1/shape_pb.js";
+import { type Shape, ShapeSchema, ShapeType } from "../gen/vio/v1/shape_pb.js";
+import { startPerfSpan } from "../utils/perf-diagnostics.js";
 import { invalidArgument, notFound } from "./errors.js";
 
 // ============================================================================
@@ -474,81 +475,95 @@ export const canvasServiceImpl: ServiceImpl<typeof CanvasService> = {
 	// changes synced via auto-sync. Falls back to HEAD commit snapshot if the
 	// shapes table has no entries for this project.
 	async getCanvasState(req): Promise<GetCanvasStateResponse> {
-		if (!req.projectId || !req.branchId) {
-			throw invalidArgument("Project ID and Branch ID are required");
-		}
-
-		// Verify project exists
-		const project = await db.query.projects.findFirst({
-			where: eq(schema.projects.id, req.projectId),
+		const perfSpan = startPerfSpan("canvas.getCanvasState", {
+			projectId: req.projectId,
+			branchId: req.branchId,
 		});
+		let source: "workingCopy" | "snapshot" | "empty" = "empty";
+		let shapeCount = 0;
+		let perfError: unknown;
 
-		if (!project) {
-			throw notFound("Project not found");
-		}
+		try {
+			if (!req.projectId || !req.branchId) {
+				throw invalidArgument("Project ID and Branch ID are required");
+			}
 
-		// Get branch for version info
-		const branch = await db.query.branches.findFirst({
-			where: and(
-				eq(schema.branches.id, req.branchId),
-				eq(schema.branches.projectId, req.projectId),
-			),
-		});
-
-		if (!branch) {
-			throw notFound("Branch not found");
-		}
-
-		const version = branch.updatedAt
-			? BigInt(new Date(branch.updatedAt).getTime())
-			: BigInt(Date.now());
-
-		// First, try loading from the shapes table (working copy)
-		// This preserves uncommitted changes that were synced before the last restart
-		const workingCopyShapes = await db
-			.select()
-			.from(schema.shapes)
-			.where(eq(schema.shapes.projectId, req.projectId))
-			.orderBy(asc(schema.shapes.sortOrder));
-
-		if (workingCopyShapes.length > 0) {
-			const state = create(CanvasStateSchema, {
-				shapes: workingCopyShapes.map(toProtoShape),
-				version,
-				lastModified: branch.updatedAt
-					? new Date(branch.updatedAt).toISOString()
-					: new Date().toISOString(),
+			// Verify project exists
+			const project = await db.query.projects.findFirst({
+				where: eq(schema.projects.id, req.projectId),
 			});
 
-			return create(GetCanvasStateResponseSchema, { state });
-		}
+			if (!project) {
+				throw notFound("Project not found");
+			}
 
-		// No shapes in working copy — fall back to HEAD commit snapshot
-		if (branch.headCommitId) {
-			const commit = await db.query.commits.findFirst({
-				where: eq(schema.commits.id, branch.headCommitId),
+			// Get branch for version info
+			const branch = await db.query.branches.findFirst({
+				where: and(
+					eq(schema.branches.id, req.branchId),
+					eq(schema.branches.projectId, req.projectId),
+				),
 			});
 
-			if (commit?.snapshotId) {
-				const snapshot = await db.query.snapshots.findFirst({
-					where: eq(schema.snapshots.id, commit.snapshotId),
+			if (!branch) {
+				throw notFound("Branch not found");
+			}
+
+			const version = branch.updatedAt
+				? BigInt(new Date(branch.updatedAt).getTime())
+				: BigInt(Date.now());
+
+			// First, try loading from the shapes table (working copy)
+			// This preserves uncommitted changes that were synced before the last restart
+			const workingCopyShapes = await db
+				.select()
+				.from(schema.shapes)
+				.where(eq(schema.shapes.projectId, req.projectId))
+				.orderBy(asc(schema.shapes.sortOrder));
+
+			if (workingCopyShapes.length > 0) {
+				source = "workingCopy";
+				shapeCount = workingCopyShapes.length;
+				const state = create(CanvasStateSchema, {
+					shapes: workingCopyShapes.map(toProtoShape),
+					version,
+					lastModified: branch.updatedAt
+						? new Date(branch.updatedAt).toISOString()
+						: new Date().toISOString(),
 				});
 
-				if (snapshot) {
-					const snapshotData = snapshot.data as {
-						shapes?: Array<Record<string, unknown>>;
-					};
-					const snapshotShapes = snapshotData.shapes ?? [];
+				return create(GetCanvasStateResponseSchema, { state });
+			}
 
-					// Convert snapshot shapes to proto format
-					const protoShapes: Shape[] = snapshotShapes.map((shape) => {
-						// Parse fills and strokes from snapshot format
-						const fills: Fill[] = ((shape.fills as DbFill[]) || []).map(
-							dbToFill,
-						);
+			// No shapes in working copy — fall back to HEAD commit snapshot
+			if (branch.headCommitId) {
+				const commit = await db.query.commits.findFirst({
+					where: eq(schema.commits.id, branch.headCommitId),
+				});
 
-						const strokes: Stroke[] = ((shape.strokes as DbStroke[]) || []).map(
-							(st) =>
+				if (commit?.snapshotId) {
+					const snapshot = await db.query.snapshots.findFirst({
+						where: eq(schema.snapshots.id, commit.snapshotId),
+					});
+
+					if (snapshot) {
+						const snapshotData = snapshot.data as {
+							shapes?: Array<Record<string, unknown>>;
+						};
+						const snapshotShapes = snapshotData.shapes ?? [];
+						source = "snapshot";
+						shapeCount = snapshotShapes.length;
+
+						// Convert snapshot shapes to proto format
+						const protoShapes: Shape[] = snapshotShapes.map((shape) => {
+							// Parse fills and strokes from snapshot format
+							const fills: Fill[] = ((shape.fills as DbFill[]) || []).map(
+								dbToFill,
+							);
+
+							const strokes: Stroke[] = (
+								(shape.strokes as DbStroke[]) || []
+							).map((st) =>
 								create(StrokeSchema, {
 									color: st.color ?? 0,
 									width: st.width ?? 1.0,
@@ -557,162 +572,197 @@ export const canvasServiceImpl: ServiceImpl<typeof CanvasService> = {
 									cap: StrokeCap.ROUND,
 									join: StrokeJoin.ROUND,
 								}),
-						);
+							);
 
-						return create(ShapeSchema, {
-							id: shape.id as string,
-							projectId: req.projectId,
-							frameId: (shape.frameId as string) || undefined,
-							parentId: (shape.parentId as string) || undefined,
-							type: stringToShapeType((shape.type as string) || "rectangle"),
-							name: (shape.name as string) || "Shape",
-							x: (shape.x as number) || 0,
-							y: (shape.y as number) || 0,
-							width: (shape.width as number) || 100,
-							height: (shape.height as number) || 100,
-							rotation: (shape.rotation as number) || 0,
-							transform: create(TransformSchema, {
-								a: (shape.transformA as number) ?? 1,
-								b: (shape.transformB as number) ?? 0,
-								c: (shape.transformC as number) ?? 0,
-								d: (shape.transformD as number) ?? 1,
-								e: (shape.transformE as number) ?? 0,
-								f: (shape.transformF as number) ?? 0,
-							}),
-							fills,
-							strokes,
-							opacity: (shape.opacity as number) ?? 1,
-							hidden: (shape.hidden as boolean) ?? false,
-							blocked: (shape.blocked as boolean) ?? false,
-							sortOrder: (shape.sortOrder as number) ?? 0,
-							properties: new TextEncoder().encode(
-								JSON.stringify(
-									(shape.properties as Record<string, unknown>) || {},
+							return create(ShapeSchema, {
+								id: shape.id as string,
+								projectId: req.projectId,
+								frameId: (shape.frameId as string) || undefined,
+								parentId: (shape.parentId as string) || undefined,
+								type: stringToShapeType((shape.type as string) || "rectangle"),
+								name: (shape.name as string) || "Shape",
+								x: (shape.x as number) || 0,
+								y: (shape.y as number) || 0,
+								width: (shape.width as number) || 100,
+								height: (shape.height as number) || 100,
+								rotation: (shape.rotation as number) || 0,
+								transform: create(TransformSchema, {
+									a: (shape.transformA as number) ?? 1,
+									b: (shape.transformB as number) ?? 0,
+									c: (shape.transformC as number) ?? 0,
+									d: (shape.transformD as number) ?? 1,
+									e: (shape.transformE as number) ?? 0,
+									f: (shape.transformF as number) ?? 0,
+								}),
+								fills,
+								strokes,
+								opacity: (shape.opacity as number) ?? 1,
+								hidden: (shape.hidden as boolean) ?? false,
+								blocked: (shape.blocked as boolean) ?? false,
+								sortOrder: (shape.sortOrder as number) ?? 0,
+								properties: new TextEncoder().encode(
+									JSON.stringify(
+										(shape.properties as Record<string, unknown>) || {},
+									),
 								),
-							),
-							createdAt: toProtoTimestamp(new Date()),
-							updatedAt: toProtoTimestamp(new Date()),
+								createdAt: toProtoTimestamp(new Date()),
+								updatedAt: toProtoTimestamp(new Date()),
+							});
 						});
-					});
 
-					const state = create(CanvasStateSchema, {
-						shapes: protoShapes,
-						version,
-						lastModified: branch.updatedAt
-							? new Date(branch.updatedAt).toISOString()
-							: new Date().toISOString(),
-					});
+						const state = create(CanvasStateSchema, {
+							shapes: protoShapes,
+							version,
+							lastModified: branch.updatedAt
+								? new Date(branch.updatedAt).toISOString()
+								: new Date().toISOString(),
+						});
 
-					return create(GetCanvasStateResponseSchema, { state });
+						return create(GetCanvasStateResponseSchema, { state });
+					}
 				}
 			}
+
+			// No head commit (empty branch) - return empty state
+			const state = create(CanvasStateSchema, {
+				shapes: [],
+				version,
+				lastModified: branch.updatedAt
+					? new Date(branch.updatedAt).toISOString()
+					: new Date().toISOString(),
+			});
+
+			return create(GetCanvasStateResponseSchema, { state });
+		} catch (error) {
+			perfError = error;
+			throw error;
+		} finally {
+			await perfSpan.finish(
+				{
+					source,
+					shapeCount,
+				},
+				perfError,
+			);
 		}
-
-		// No head commit (empty branch) - return empty state
-		const state = create(CanvasStateSchema, {
-			shapes: [],
-			version,
-			lastModified: branch.updatedAt
-				? new Date(branch.updatedAt).toISOString()
-				: new Date().toISOString(),
-		});
-
-		return create(GetCanvasStateResponseSchema, { state });
 	},
 
 	// Sync changes from client
 	async syncChanges(req): Promise<SyncChangesResponse> {
-		if (!req.projectId || !req.branchId) {
-			throw invalidArgument("Project ID and Branch ID are required");
-		}
-
-		// Get current server version
-		const branch = await db.query.branches.findFirst({
-			where: eq(schema.branches.id, req.branchId),
+		const perfSpan = startPerfSpan("canvas.syncChanges", {
+			projectId: req.projectId,
+			branchId: req.branchId,
+			operationCount: req.operations.length,
 		});
-		const serverVersion = branch?.updatedAt
-			? BigInt(new Date(branch.updatedAt).getTime())
-			: BigInt(0);
+		let needsRefresh = false;
+		let refreshedShapesCount = 0;
+		let perfError: unknown;
 
-		// Process all operations and broadcast updates
-		for (const op of req.operations) {
-			const shape = await processOperation(op, req.projectId);
-			const now = Date.now();
-
-			// Broadcast the change to other subscribers
-			if (op.type === OperationType.CREATE && shape) {
-				const update = create(CanvasUpdateSchema, {
-					update: {
-						case: "shapeCreated",
-						value: create(ShapeCreatedSchema, {
-							shape,
-							createdBy: "sync",
-						}),
-					},
-					version: BigInt(now),
-					timestamp: new Date(now).toISOString(),
-				});
-				broadcastUpdate(req.projectId, req.branchId, update);
-			} else if (op.type === OperationType.UPDATE && shape) {
-				const update = create(CanvasUpdateSchema, {
-					update: {
-						case: "shapeUpdated",
-						value: create(ShapeUpdatedSchema, {
-							shape,
-							updatedBy: "sync",
-						}),
-					},
-					version: BigInt(now),
-					timestamp: new Date(now).toISOString(),
-				});
-				broadcastUpdate(req.projectId, req.branchId, update);
-			} else if (op.type === OperationType.DELETE) {
-				const update = create(CanvasUpdateSchema, {
-					update: {
-						case: "shapeDeleted",
-						value: create(ShapeDeletedSchema, {
-							shapeId: op.shapeId,
-							deletedBy: "sync",
-						}),
-					},
-					version: BigInt(now),
-					timestamp: new Date(now).toISOString(),
-				});
-				broadcastUpdate(req.projectId, req.branchId, update);
+		try {
+			if (!req.projectId || !req.branchId) {
+				throw invalidArgument("Project ID and Branch ID are required");
 			}
-		}
 
-		// Update branch timestamp
-		const newVersion = BigInt(Date.now());
-		await db
-			.update(schema.branches)
-			.set({ updatedAt: new Date(Number(newVersion)) })
-			.where(eq(schema.branches.id, req.branchId));
+			// Get current server version
+			const branch = await db.query.branches.findFirst({
+				where: eq(schema.branches.id, req.branchId),
+			});
+			const serverVersion = branch?.updatedAt
+				? BigInt(new Date(branch.updatedAt).getTime())
+				: BigInt(0);
 
-		// Check if client needs full refresh
-		const needsRefresh = req.localVersion < serverVersion;
+			// Process all operations and broadcast updates
+			for (const op of req.operations) {
+				const shape = await processOperation(op, req.projectId);
+				const now = Date.now();
 
-		if (needsRefresh) {
-			const updatedShapes = await db
-				.select()
-				.from(schema.shapes)
-				.where(eq(schema.shapes.projectId, req.projectId))
-				.orderBy(asc(schema.shapes.sortOrder));
+				// Broadcast the change to other subscribers
+				if (op.type === OperationType.CREATE && shape) {
+					const update = create(CanvasUpdateSchema, {
+						update: {
+							case: "shapeCreated",
+							value: create(ShapeCreatedSchema, {
+								shape,
+								createdBy: "sync",
+							}),
+						},
+						version: BigInt(now),
+						timestamp: new Date(now).toISOString(),
+					});
+					broadcastUpdate(req.projectId, req.branchId, update);
+				} else if (op.type === OperationType.UPDATE && shape) {
+					const update = create(CanvasUpdateSchema, {
+						update: {
+							case: "shapeUpdated",
+							value: create(ShapeUpdatedSchema, {
+								shape,
+								updatedBy: "sync",
+							}),
+						},
+						version: BigInt(now),
+						timestamp: new Date(now).toISOString(),
+					});
+					broadcastUpdate(req.projectId, req.branchId, update);
+				} else if (op.type === OperationType.DELETE) {
+					const update = create(CanvasUpdateSchema, {
+						update: {
+							case: "shapeDeleted",
+							value: create(ShapeDeletedSchema, {
+								shapeId: op.shapeId,
+								deletedBy: "sync",
+							}),
+						},
+						version: BigInt(now),
+						timestamp: new Date(now).toISOString(),
+					});
+					broadcastUpdate(req.projectId, req.branchId, update);
+				}
+			}
+
+			// Update branch timestamp
+			const newVersion = BigInt(Date.now());
+			await db
+				.update(schema.branches)
+				.set({ updatedAt: new Date(Number(newVersion)) })
+				.where(eq(schema.branches.id, req.branchId));
+
+			// Check if client needs full refresh
+			needsRefresh = req.localVersion < serverVersion;
+
+			if (needsRefresh) {
+				const updatedShapes = await db
+					.select()
+					.from(schema.shapes)
+					.where(eq(schema.shapes.projectId, req.projectId))
+					.orderBy(asc(schema.shapes.sortOrder));
+				refreshedShapesCount = updatedShapes.length;
+
+				return create(SyncChangesResponseSchema, {
+					success: true,
+					serverVersion: newVersion,
+					shapes: updatedShapes.map(toProtoShape),
+					message: "Synced with server refresh",
+				});
+			}
 
 			return create(SyncChangesResponseSchema, {
 				success: true,
 				serverVersion: newVersion,
-				shapes: updatedShapes.map(toProtoShape),
-				message: "Synced with server refresh",
+				shapes: [],
+				message: "Synced successfully",
 			});
+		} catch (error) {
+			perfError = error;
+			throw error;
+		} finally {
+			await perfSpan.finish(
+				{
+					needsRefresh,
+					refreshedShapesCount,
+				},
+				perfError,
+			);
 		}
-
-		return create(SyncChangesResponseSchema, {
-			success: true,
-			serverVersion: newVersion,
-			shapes: [],
-			message: "Synced successfully",
-		});
 	},
 
 	// Server streaming: real-time updates
@@ -1113,76 +1163,91 @@ export const canvasServiceImpl: ServiceImpl<typeof CanvasService> = {
 	// Restore working copy from a snapshot (branch switch)
 	// Uses a transaction to ensure atomicity - either all shapes are replaced or none
 	async restoreFromSnapshot(req) {
-		if (!req.projectId || !req.snapshotId) {
-			throw invalidArgument("Project ID and Snapshot ID are required");
-		}
-
-		// Get the snapshot
-		const snapshot = await db.query.snapshots.findFirst({
-			where: and(
-				eq(schema.snapshots.id, req.snapshotId),
-				eq(schema.snapshots.projectId, req.projectId),
-			),
+		const perfSpan = startPerfSpan("canvas.restoreFromSnapshot", {
+			projectId: req.projectId,
+			snapshotId: req.snapshotId,
 		});
+		let snapshotShapeCount = 0;
+		let perfError: unknown;
 
-		if (!snapshot) {
-			throw notFound("Snapshot not found");
-		}
-
-		// Parse shapes from snapshot
-		const snapshotData = snapshot.data as {
-			shapes?: Array<Record<string, unknown>>;
-		};
-		const snapshotShapes = snapshotData.shapes ?? [];
-
-		// Use a transaction to ensure atomicity
-		// This prevents partial state if the operation fails mid-way
-		await db.transaction(async (tx) => {
-			// Delete all existing shapes for this project
-			await tx
-				.delete(schema.shapes)
-				.where(eq(schema.shapes.projectId, req.projectId));
-
-			// Insert shapes from the snapshot
-			if (snapshotShapes.length > 0) {
-				const shapesToInsert = snapshotShapes.map(
-					(shape: Record<string, unknown>) => ({
-						id: shape.id as string,
-						projectId: req.projectId,
-						frameId: (shape.frameId as string) || null,
-						parentId: (shape.parentId as string) || null,
-						type: shape.type as string,
-						name: shape.name as string,
-						x: shape.x as number,
-						y: shape.y as number,
-						width: shape.width as number,
-						height: shape.height as number,
-						rotation: (shape.rotation as number) || 0,
-						transformA: (shape.transformA as number) ?? 1,
-						transformB: (shape.transformB as number) ?? 0,
-						transformC: (shape.transformC as number) ?? 0,
-						transformD: (shape.transformD as number) ?? 1,
-						transformE: (shape.transformE as number) ?? 0,
-						transformF: (shape.transformF as number) ?? 0,
-						fills: (shape.fills as Array<unknown>) || [],
-						strokes: (shape.strokes as Array<unknown>) || [],
-						opacity: (shape.opacity as number) ?? 1,
-						hidden: (shape.hidden as boolean) ?? false,
-						blocked: (shape.blocked as boolean) ?? false,
-						properties: (shape.properties as Record<string, unknown>) ?? {},
-						sortOrder: (shape.sortOrder as number) ?? 0,
-					}),
-				);
-
-				await tx.insert(schema.shapes).values(shapesToInsert);
+		try {
+			if (!req.projectId || !req.snapshotId) {
+				throw invalidArgument("Project ID and Snapshot ID are required");
 			}
-		});
 
-		return create(RestoreFromSnapshotResponseSchema, {
-			success: true,
-			shapeCount: snapshotShapes.length,
-			message: `Restored ${snapshotShapes.length} shapes from snapshot`,
-		});
+			// Get the snapshot
+			const snapshot = await db.query.snapshots.findFirst({
+				where: and(
+					eq(schema.snapshots.id, req.snapshotId),
+					eq(schema.snapshots.projectId, req.projectId),
+				),
+			});
+
+			if (!snapshot) {
+				throw notFound("Snapshot not found");
+			}
+
+			// Parse shapes from snapshot
+			const snapshotData = snapshot.data as {
+				shapes?: Array<Record<string, unknown>>;
+			};
+			const snapshotShapes = snapshotData.shapes ?? [];
+			snapshotShapeCount = snapshotShapes.length;
+
+			// Use a transaction to ensure atomicity
+			// This prevents partial state if the operation fails mid-way
+			await db.transaction(async (tx) => {
+				// Delete all existing shapes for this project
+				await tx
+					.delete(schema.shapes)
+					.where(eq(schema.shapes.projectId, req.projectId));
+
+				// Insert shapes from the snapshot
+				if (snapshotShapes.length > 0) {
+					const shapesToInsert = snapshotShapes.map(
+						(shape: Record<string, unknown>) => ({
+							id: shape.id as string,
+							projectId: req.projectId,
+							frameId: (shape.frameId as string) || null,
+							parentId: (shape.parentId as string) || null,
+							type: shape.type as string,
+							name: shape.name as string,
+							x: shape.x as number,
+							y: shape.y as number,
+							width: shape.width as number,
+							height: shape.height as number,
+							rotation: (shape.rotation as number) || 0,
+							transformA: (shape.transformA as number) ?? 1,
+							transformB: (shape.transformB as number) ?? 0,
+							transformC: (shape.transformC as number) ?? 0,
+							transformD: (shape.transformD as number) ?? 1,
+							transformE: (shape.transformE as number) ?? 0,
+							transformF: (shape.transformF as number) ?? 0,
+							fills: (shape.fills as Array<unknown>) || [],
+							strokes: (shape.strokes as Array<unknown>) || [],
+							opacity: (shape.opacity as number) ?? 1,
+							hidden: (shape.hidden as boolean) ?? false,
+							blocked: (shape.blocked as boolean) ?? false,
+							properties: (shape.properties as Record<string, unknown>) ?? {},
+							sortOrder: (shape.sortOrder as number) ?? 0,
+						}),
+					);
+
+					await tx.insert(schema.shapes).values(shapesToInsert);
+				}
+			});
+
+			return create(RestoreFromSnapshotResponseSchema, {
+				success: true,
+				shapeCount: snapshotShapes.length,
+				message: `Restored ${snapshotShapes.length} shapes from snapshot`,
+			});
+		} catch (error) {
+			perfError = error;
+			throw error;
+		} finally {
+			await perfSpan.finish({ snapshotShapeCount }, perfError);
+		}
 	},
 
 	// Clear working copy (for empty branches)

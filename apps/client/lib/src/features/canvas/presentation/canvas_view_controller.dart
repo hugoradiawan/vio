@@ -176,20 +176,20 @@ mixin _CanvasViewController on State<CanvasView> {
   }
 
   MouseCursor? _cursorForSelectionKind(SelectionCursorKind kind) {
-    final isMacDesktop = !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
+    final isMacDesktop =
+        !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
 
     return switch (kind) {
       SelectionCursorKind.none => null,
-      SelectionCursorKind.resizeHorizontal => SystemMouseCursors.resizeLeftRight,
+      SelectionCursorKind.resizeHorizontal =>
+        SystemMouseCursors.resizeLeftRight,
       SelectionCursorKind.resizeVertical => SystemMouseCursors.resizeUpDown,
-      SelectionCursorKind.resizeDiagonalPrimary =>
-        isMacDesktop
-            ? SystemMouseCursors.resizeLeftRight
-            : SystemMouseCursors.resizeUpLeftDownRight,
-      SelectionCursorKind.resizeDiagonalSecondary =>
-        isMacDesktop
-            ? SystemMouseCursors.resizeUpDown
-            : SystemMouseCursors.resizeUpRightDownLeft,
+      SelectionCursorKind.resizeDiagonalPrimary => isMacDesktop
+          ? SystemMouseCursors.resizeLeftRight
+          : SystemMouseCursors.resizeUpLeftDownRight,
+      SelectionCursorKind.resizeDiagonalSecondary => isMacDesktop
+          ? SystemMouseCursors.resizeUpDown
+          : SystemMouseCursors.resizeUpRightDownLeft,
       SelectionCursorKind.rotate => SystemMouseCursors.grab,
     };
   }
@@ -270,6 +270,10 @@ mixin _CanvasViewController on State<CanvasView> {
     if (event.buttons == kMiddleMouseButton ||
         (state._isSpacePressed && event.buttons == kPrimaryButton) ||
         workspaceState.activeTool == CanvasTool.hand) {
+      state._perfDiagnostics.onDragPanStart(
+        context.read<CanvasBloc>().state,
+        source: 'pointer_drag',
+      );
       state.setState(() {
         state._isPanning = true;
         state._lastPanPosition = event.localPosition;
@@ -290,13 +294,14 @@ mixin _CanvasViewController on State<CanvasView> {
       );
 
       final nowMs = DateTime.now().millisecondsSinceEpoch;
-      final withinTime =
-          (nowMs - state._lastPrimaryClickMs) <= _CanvasViewState._doubleClickThresholdMs;
+      final withinTime = (nowMs - state._lastPrimaryClickMs) <=
+          _CanvasViewState._doubleClickThresholdMs;
       final withinDistance = state._lastPrimaryClickPosition == null
           ? false
           : (event.localPosition - state._lastPrimaryClickPosition!).distance <=
               _CanvasViewState._doubleClickMaxDistancePx;
-      final sameShape = hitShape != null && hitShape.id == state._lastPrimaryClickShapeId;
+      final sameShape =
+          hitShape != null && hitShape.id == state._lastPrimaryClickShapeId;
 
       if (withinTime && withinDistance && sameShape) {
         context.read<CanvasBloc>().add(
@@ -517,6 +522,10 @@ mixin _CanvasViewController on State<CanvasView> {
     final state = this as _CanvasViewState;
     if (state._isPanning && state._lastPanPosition != null) {
       final delta = event.localPosition - state._lastPanPosition!;
+      state._perfDiagnostics.onDragPanUpdate(
+        delta,
+        context.read<CanvasBloc>().state,
+      );
       context.read<CanvasBloc>().add(
             ViewportPanned(
               deltaX: delta.dx,
@@ -545,6 +554,7 @@ mixin _CanvasViewController on State<CanvasView> {
   void _handlePointerUp(BuildContext context, PointerUpEvent event) {
     final state = this as _CanvasViewState;
     if (state._isPanning) {
+      state._perfDiagnostics.onDragPanEnd(context.read<CanvasBloc>().state);
       state.setState(() {
         state._isPanning = false;
         state._lastPanPosition = null;
@@ -632,7 +642,9 @@ mixin _CanvasViewController on State<CanvasView> {
           !ImageCacheService.instance.isPending(shape.assetId) &&
           !viewState._requestedAssetIds.contains(shape.assetId)) {
         viewState._requestedAssetIds.add(shape.assetId);
-        context.read<AssetBloc>().add(AssetDataRequested(assetId: shape.assetId));
+        context
+            .read<AssetBloc>()
+            .add(AssetDataRequested(assetId: shape.assetId));
       }
     }
   }
@@ -703,7 +715,10 @@ mixin _CanvasViewController on State<CanvasView> {
   }
 
   void _handlePointerSignal(BuildContext context, PointerSignalEvent event) {
+    final state = this as _CanvasViewState;
+
     if (event is PointerScrollEvent) {
+      final canvasState = context.read<CanvasBloc>().state;
       final isZoomGesture = isPlatformModifierPressed();
       final isShiftScroll = HardwareKeyboard.instance.isShiftPressed;
 
@@ -711,6 +726,10 @@ mixin _CanvasViewController on State<CanvasView> {
         const zoomSensitivity = 0.002;
         final scaleFactor = 1.0 - (event.scrollDelta.dy * zoomSensitivity);
         final clampedScale = scaleFactor.clamp(0.5, 2.0);
+        state._perfDiagnostics.onWheelZoom(
+          scaleFactor: clampedScale,
+          canvasState: canvasState,
+        );
 
         context.read<CanvasBloc>().add(
               ViewportZoomed(
@@ -726,6 +745,11 @@ mixin _CanvasViewController on State<CanvasView> {
                 : event.scrollDelta.dy)
             : -event.scrollDelta.dx;
         final deltaY = isShiftScroll ? 0.0 : -event.scrollDelta.dy;
+        state._perfDiagnostics.onWheelPan(
+          deltaX: deltaX,
+          deltaY: deltaY,
+          canvasState: canvasState,
+        );
 
         context.read<CanvasBloc>().add(
               ViewportPanned(
@@ -735,6 +759,10 @@ mixin _CanvasViewController on State<CanvasView> {
             );
       }
     } else if (event is PointerScaleEvent) {
+      state._perfDiagnostics.onWheelZoom(
+        scaleFactor: event.scale,
+        canvasState: context.read<CanvasBloc>().state,
+      );
       context.read<CanvasBloc>().add(
             ViewportZoomed(
               scaleFactor: event.scale,

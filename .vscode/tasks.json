@@ -77,6 +77,36 @@
         "cwd": "${workspaceFolder}"
       },
       "problemMatcher": []
+    },
+    {
+      "label": "Run Client (Web) + Capture Canvas Perf",
+      "type": "shell",
+      "command": "flutter run -d chrome --dart-define-from-file=config/dev.json --dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true 2>&1 | tee canvas-run.log | grep --line-buffered 'CANVAS_PERF' | tee canvas-perf.log",
+      "options": {
+        "cwd": "${workspaceFolder}/apps/client"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "group": "client"
+      }
+    },
+    {
+      "label": "Run Client (macOS) + Capture Canvas Perf",
+      "type": "shell",
+      "command": "flutter run -d macos --dart-define-from-file=config/dev.json --dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true 2>&1 | tee canvas-run.log | grep --line-buffered 'CANVAS_PERF' | tee canvas-perf.log",
+      "options": {
+        "cwd": "${workspaceFolder}/apps/client"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "group": "client"
+      }
     }
   ]
 }

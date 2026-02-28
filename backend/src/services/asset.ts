@@ -11,37 +11,38 @@ import sharp from "sharp";
 import { db } from "../db/index.js";
 import { projectAssets, projectColors } from "../db/schema/index.js";
 import {
-	AssetSchema,
-	AssetService,
-	CreateColorResponseSchema,
-	GetAssetResponseSchema,
-	ListAssetsResponseSchema,
-	ListColorsResponseSchema,
-	ProjectColorSchema,
-	UpdateAssetResponseSchema,
-	UpdateColorResponseSchema,
-	UploadAssetResponseSchema,
 	type Asset,
+	AssetSchema,
+	type AssetService,
 	type CreateColorRequest,
+	CreateColorResponseSchema,
 	type DeleteAssetRequest,
 	type DeleteColorRequest,
 	type GetAssetRequest,
+	GetAssetResponseSchema,
 	type ListAssetsRequest,
+	ListAssetsResponseSchema,
 	type ListColorsRequest,
+	ListColorsResponseSchema,
 	type ProjectColor,
+	ProjectColorSchema,
 	type UpdateAssetRequest,
+	UpdateAssetResponseSchema,
 	type UpdateColorRequest,
+	UpdateColorResponseSchema,
 	type UploadAssetRequest,
+	UploadAssetResponseSchema,
 } from "../gen/vio/v1/asset_pb.js";
 import {
 	EmptySchema,
+	type Gradient,
+	Gradient_Type,
 	GradientSchema,
 	GradientStopSchema,
-	Gradient_Type,
-	TimestampSchema,
-	type Gradient,
 	type Timestamp,
+	TimestampSchema,
 } from "../gen/vio/v1/common_pb.js";
+import { startPerfSpan } from "../utils/perf-diagnostics.js";
 import { notFound } from "./errors.js";
 
 // =============================================================================
@@ -294,141 +295,192 @@ export const assetServiceImpl: ServiceImpl<typeof AssetService> = {
 	// ─── Upload Asset ──────────────────────────────────────────────────────
 
 	async uploadAsset(req: UploadAssetRequest) {
-		// Validate
-		if (!req.projectId) {
-			throw new ConnectError("project_id is required", Code.InvalidArgument);
-		}
-		if (!req.name) {
-			throw new ConnectError("name is required", Code.InvalidArgument);
-		}
-		if (!req.mimeType || !ALLOWED_MIME_TYPES.has(req.mimeType)) {
-			throw new ConnectError(
-				`Unsupported MIME type: ${req.mimeType}. Allowed: ${[...ALLOWED_MIME_TYPES].join(", ")}`,
-				Code.InvalidArgument,
-			);
-		}
-		if (!req.data || req.data.length === 0) {
-			throw new ConnectError("data is required", Code.InvalidArgument);
-		}
-		if (req.data.length > MAX_FILE_SIZE) {
-			throw new ConnectError(
-				`File too large: ${req.data.length} bytes (max ${MAX_FILE_SIZE} bytes)`,
-				Code.InvalidArgument,
-			);
-		}
-
-		// Extract dimensions
-		const dims = extractDimensions(req.data, req.mimeType);
-
-		// Generate thumbnail
-		let thumbnailBuffer: Buffer | null = null;
-		if (req.mimeType !== "image/svg+xml") {
-			try {
-				thumbnailBuffer = await sharp(Buffer.from(req.data))
-					.resize(200, 200, { fit: "inside", withoutEnlargement: true })
-					.png({ quality: 80 })
-					.toBuffer();
-			} catch (e) {
-				console.warn("Thumbnail generation failed:", e);
-			}
-		} else {
-			// SVGs are typically small; store original as thumbnail
-			thumbnailBuffer = Buffer.from(req.data);
-		}
-
-		// Insert into DB
-		const [inserted] = await db
-			.insert(projectAssets)
-			.values({
-				projectId: req.projectId,
-				name: req.name,
-				path: req.path || null,
-				mimeType: req.mimeType,
-				width: dims.width,
-				height: dims.height,
-				data: Buffer.from(req.data),
-				thumbnail: thumbnailBuffer,
-				fileSize: req.data.length,
-			})
-			.returning();
-
-		return create(UploadAssetResponseSchema, {
-			asset: toProtoAsset(inserted),
+		const perfSpan = startPerfSpan("asset.uploadAsset", {
+			projectId: req.projectId,
+			mimeType: req.mimeType,
+			inputBytes: req.data?.length ?? 0,
 		});
+		let perfError: unknown;
+
+		try {
+			// Validate
+			if (!req.projectId) {
+				throw new ConnectError("project_id is required", Code.InvalidArgument);
+			}
+			if (!req.name) {
+				throw new ConnectError("name is required", Code.InvalidArgument);
+			}
+			if (!req.mimeType || !ALLOWED_MIME_TYPES.has(req.mimeType)) {
+				throw new ConnectError(
+					`Unsupported MIME type: ${req.mimeType}. Allowed: ${[...ALLOWED_MIME_TYPES].join(", ")}`,
+					Code.InvalidArgument,
+				);
+			}
+			if (!req.data || req.data.length === 0) {
+				throw new ConnectError("data is required", Code.InvalidArgument);
+			}
+			if (req.data.length > MAX_FILE_SIZE) {
+				throw new ConnectError(
+					`File too large: ${req.data.length} bytes (max ${MAX_FILE_SIZE} bytes)`,
+					Code.InvalidArgument,
+				);
+			}
+
+			// Extract dimensions
+			const dims = extractDimensions(req.data, req.mimeType);
+
+			// Generate thumbnail
+			let thumbnailBuffer: Buffer | null = null;
+			if (req.mimeType !== "image/svg+xml") {
+				try {
+					thumbnailBuffer = await sharp(Buffer.from(req.data))
+						.resize(200, 200, { fit: "inside", withoutEnlargement: true })
+						.png({ quality: 80 })
+						.toBuffer();
+				} catch (e) {
+					console.warn("Thumbnail generation failed:", e);
+				}
+			} else {
+				// SVGs are typically small; store original as thumbnail
+				thumbnailBuffer = Buffer.from(req.data);
+			}
+
+			// Insert into DB
+			const [inserted] = await db
+				.insert(projectAssets)
+				.values({
+					projectId: req.projectId,
+					name: req.name,
+					path: req.path || null,
+					mimeType: req.mimeType,
+					width: dims.width,
+					height: dims.height,
+					data: Buffer.from(req.data),
+					thumbnail: thumbnailBuffer,
+					fileSize: req.data.length,
+				})
+				.returning();
+
+			return create(UploadAssetResponseSchema, {
+				asset: toProtoAsset(inserted),
+			});
+		} catch (error) {
+			perfError = error;
+			throw error;
+		} finally {
+			await perfSpan.finish(undefined, perfError);
+		}
 	},
 
 	// ─── List Assets ───────────────────────────────────────────────────────
 
 	async listAssets(req: ListAssetsRequest) {
-		if (!req.projectId) {
-			throw new ConnectError("project_id is required", Code.InvalidArgument);
+		const perfSpan = startPerfSpan("asset.listAssets", {
+			projectId: req.projectId,
+			pathPrefix: req.pathPrefix,
+		});
+		let assetCount = 0;
+		let perfError: unknown;
+
+		try {
+			if (!req.projectId) {
+				throw new ConnectError("project_id is required", Code.InvalidArgument);
+			}
+
+			const conditions = [eq(projectAssets.projectId, req.projectId)];
+			if (req.pathPrefix) {
+				conditions.push(like(projectAssets.path, `${req.pathPrefix}%`));
+			}
+
+			const rows = await db
+				.select({
+					id: projectAssets.id,
+					projectId: projectAssets.projectId,
+					name: projectAssets.name,
+					path: projectAssets.path,
+					mimeType: projectAssets.mimeType,
+					width: projectAssets.width,
+					height: projectAssets.height,
+					fileSize: projectAssets.fileSize,
+					thumbnail: projectAssets.thumbnail,
+					createdAt: projectAssets.createdAt,
+					updatedAt: projectAssets.updatedAt,
+				})
+				.from(projectAssets)
+				.where(and(...conditions));
+			assetCount = rows.length;
+
+			// Map rows to proto (without full data)
+			const assets = rows.map((row) =>
+				create(AssetSchema, {
+					id: row.id,
+					projectId: row.projectId,
+					name: row.name,
+					path: row.path ?? "",
+					mimeType: row.mimeType,
+					width: row.width,
+					height: row.height,
+					fileSize: row.fileSize,
+					thumbnail: row.thumbnail
+						? new Uint8Array(row.thumbnail)
+						: new Uint8Array(0),
+					data: new Uint8Array(0), // Don't include full data in list
+					createdAt: toProtoTimestamp(row.createdAt),
+					updatedAt: toProtoTimestamp(row.updatedAt),
+				}),
+			);
+
+			return create(ListAssetsResponseSchema, { assets });
+		} catch (error) {
+			perfError = error;
+			throw error;
+		} finally {
+			await perfSpan.finish({ assetCount }, perfError);
 		}
-
-		const conditions = [eq(projectAssets.projectId, req.projectId)];
-		if (req.pathPrefix) {
-			conditions.push(like(projectAssets.path, `${req.pathPrefix}%`));
-		}
-
-		const rows = await db
-			.select({
-				id: projectAssets.id,
-				projectId: projectAssets.projectId,
-				name: projectAssets.name,
-				path: projectAssets.path,
-				mimeType: projectAssets.mimeType,
-				width: projectAssets.width,
-				height: projectAssets.height,
-				fileSize: projectAssets.fileSize,
-				thumbnail: projectAssets.thumbnail,
-				createdAt: projectAssets.createdAt,
-				updatedAt: projectAssets.updatedAt,
-			})
-			.from(projectAssets)
-			.where(and(...conditions));
-
-		// Map rows to proto (without full data)
-		const assets = rows.map((row) =>
-			create(AssetSchema, {
-				id: row.id,
-				projectId: row.projectId,
-				name: row.name,
-				path: row.path ?? "",
-				mimeType: row.mimeType,
-				width: row.width,
-				height: row.height,
-				fileSize: row.fileSize,
-				thumbnail: row.thumbnail
-					? new Uint8Array(row.thumbnail)
-					: new Uint8Array(0),
-				data: new Uint8Array(0), // Don't include full data in list
-				createdAt: toProtoTimestamp(row.createdAt),
-				updatedAt: toProtoTimestamp(row.updatedAt),
-			}),
-		);
-
-		return create(ListAssetsResponseSchema, { assets });
 	},
 
 	// ─── Get Asset ─────────────────────────────────────────────────────────
 
 	async getAsset(req: GetAssetRequest) {
-		if (!req.id) {
-			throw new ConnectError("id is required", Code.InvalidArgument);
-		}
-
-		const [row] = await db
-			.select()
-			.from(projectAssets)
-			.where(eq(projectAssets.id, req.id))
-			.limit(1);
-
-		if (!row) {
-			throw notFound(`Asset ${req.id} not found`);
-		}
-
-		return create(GetAssetResponseSchema, {
-			asset: toProtoAsset(row, true), // Include full data
+		const perfSpan = startPerfSpan("asset.getAsset", {
+			assetId: req.id,
 		});
+		let returnedBytes = 0;
+		let mimeType: string | null = null;
+		let perfError: unknown;
+
+		try {
+			if (!req.id) {
+				throw new ConnectError("id is required", Code.InvalidArgument);
+			}
+
+			const [row] = await db
+				.select()
+				.from(projectAssets)
+				.where(eq(projectAssets.id, req.id))
+				.limit(1);
+
+			if (!row) {
+				throw notFound(`Asset ${req.id} not found`);
+			}
+			returnedBytes = row.fileSize;
+			mimeType = row.mimeType;
+
+			return create(GetAssetResponseSchema, {
+				asset: toProtoAsset(row, true), // Include full data
+			});
+		} catch (error) {
+			perfError = error;
+			throw error;
+		} finally {
+			await perfSpan.finish(
+				{
+					returnedBytes,
+					mimeType,
+				},
+				perfError,
+			);
+		}
 	},
 
 	// ─── Update Asset ──────────────────────────────────────────────────────
@@ -513,23 +565,38 @@ export const assetServiceImpl: ServiceImpl<typeof AssetService> = {
 	// ─── List Colors ───────────────────────────────────────────────────────
 
 	async listColors(req: ListColorsRequest) {
-		if (!req.projectId) {
-			throw new ConnectError("project_id is required", Code.InvalidArgument);
-		}
-
-		const conditions = [eq(projectColors.projectId, req.projectId)];
-		if (req.pathPrefix) {
-			conditions.push(like(projectColors.path, `${req.pathPrefix}%`));
-		}
-
-		const rows = await db
-			.select()
-			.from(projectColors)
-			.where(and(...conditions));
-
-		return create(ListColorsResponseSchema, {
-			colors: rows.map(toProtoColor),
+		const perfSpan = startPerfSpan("asset.listColors", {
+			projectId: req.projectId,
+			pathPrefix: req.pathPrefix,
 		});
+		let colorCount = 0;
+		let perfError: unknown;
+
+		try {
+			if (!req.projectId) {
+				throw new ConnectError("project_id is required", Code.InvalidArgument);
+			}
+
+			const conditions = [eq(projectColors.projectId, req.projectId)];
+			if (req.pathPrefix) {
+				conditions.push(like(projectColors.path, `${req.pathPrefix}%`));
+			}
+
+			const rows = await db
+				.select()
+				.from(projectColors)
+				.where(and(...conditions));
+			colorCount = rows.length;
+
+			return create(ListColorsResponseSchema, {
+				colors: rows.map(toProtoColor),
+			});
+		} catch (error) {
+			perfError = error;
+			throw error;
+		} finally {
+			await perfSpan.finish({ colorCount }, perfError);
+		}
 	},
 
 	// ─── Update Color ──────────────────────────────────────────────────────

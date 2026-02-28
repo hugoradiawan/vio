@@ -8,7 +8,10 @@
       "program": "lib/main.dart",
       "cwd": "${workspaceFolder}/apps/client",
       "deviceId": "chrome",
-      "toolArgs": ["--dart-define-from-file=config/dev.json"]
+      "toolArgs": [
+        "--dart-define-from-file=config/dev.json",
+        "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true"
+      ]
     },
     {
       "name": "Vio Client (Web - Edge)",
@@ -17,7 +20,10 @@
       "program": "lib/main.dart",
       "cwd": "${workspaceFolder}/apps/client",
       "deviceId": "edge",
-      "toolArgs": ["--dart-define-from-file=config/dev.json"]
+      "toolArgs": [
+        "--dart-define-from-file=config/dev.json",
+        "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true"
+      ]
     },
     {
       "name": "Vio Client (Windows Desktop)",
@@ -26,7 +32,10 @@
       "program": "lib/main.dart",
       "cwd": "${workspaceFolder}/apps/client",
       "deviceId": "windows",
-      "toolArgs": ["--dart-define-from-file=config/dev.json"]
+      "toolArgs": [
+        "--dart-define-from-file=config/dev.json",
+        "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true"
+      ]
     },
     {
       "name": "Vio Client (macOS Desktop)",
@@ -35,7 +44,10 @@
       "program": "lib/main.dart",
       "cwd": "${workspaceFolder}/apps/client",
       "deviceId": "macos",
-      "toolArgs": ["--dart-define-from-file=config/dev.json"]
+      "toolArgs": [
+        "--dart-define-from-file=config/dev.json",
+        "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true"
+      ]
     },
         {
       "name": "Vio Client (macOS Desktop) profile mode",
@@ -45,7 +57,10 @@
       "cwd": "${workspaceFolder}/apps/client",
       "deviceId": "macos",
       "flutterMode": "profile",
-      "toolArgs": ["--dart-define-from-file=config/dev.json"]
+      "toolArgs": [
+        "--dart-define-from-file=config/dev.json",
+        "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true"
+      ]
     },
     {
       "name": "Vio Client (Linux Desktop)",
@@ -54,7 +69,10 @@
       "program": "lib/main.dart",
       "cwd": "${workspaceFolder}/apps/client",
       "deviceId": "linux",
-      "toolArgs": ["--dart-define-from-file=config/dev.json"]
+      "toolArgs": [
+        "--dart-define-from-file=config/dev.json",
+        "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true"
+      ]
     },
     {
       "name": "Vio Client (Web - Chrome) - Profile Mode",
@@ -64,7 +82,10 @@
       "cwd": "${workspaceFolder}/apps/client",
       "deviceId": "chrome",
       "flutterMode": "profile",
-      "toolArgs": ["--dart-define-from-file=config/dev.json"]
+      "toolArgs": [
+        "--dart-define-from-file=config/dev.json",
+        "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true"
+      ]
     },
     {
       "name": "Vio Client (Windows) - Profile Mode",
@@ -74,7 +95,10 @@
       "cwd": "${workspaceFolder}/apps/client",
       "deviceId": "windows",
       "flutterMode": "profile",
-      "toolArgs": ["--dart-define-from-file=config/dev.json"]
+      "toolArgs": [
+        "--dart-define-from-file=config/dev.json",
+        "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true"
+      ]
     },
     {
       "name": "Vio Client (Windows) - Release Mode",
@@ -84,7 +108,22 @@
       "cwd": "${workspaceFolder}/apps/client",
       "deviceId": "windows",
       "flutterMode": "release",
-      "toolArgs": ["--dart-define-from-file=config/production.json"]
+      "toolArgs": [
+        "--dart-define-from-file=config/production.json",
+        "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true"
+      ]
+    },
+    {
+      "name": "Capture Canvas Perf (Web - Chrome)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "cd ${workspaceFolder}/apps/client && flutter run -d chrome --dart-define-from-file=config/dev.json --dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true 2>&1 | tee canvas-run.log | grep --line-buffered 'CANVAS_PERF' | tee canvas-perf.log"
+    },
+    {
+      "name": "Capture Canvas Perf (macOS)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "cd ${workspaceFolder}/apps/client && flutter run -d macos --dart-define-from-file=config/dev.json --dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true 2>&1 | tee canvas-run.log | grep --line-buffered 'CANVAS_PERF' | tee canvas-perf.log"
     }
   ],
   "compounds": [

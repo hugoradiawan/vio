@@ -36,6 +36,31 @@ melos run run:client:web
 melos run run:client:windows
 ```
 
+## Canvas Performance Diagnostics
+
+Enable frontend canvas diagnostics logs (scroll/pan/zoom + frame timing):
+
+```bash
+flutter run -d chrome --dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true
+```
+
+Logs are emitted as structured JSON lines via `VioLogger` with prefix:
+
+- `CANVAS_PERF { ...json... }`
+
+Capture and share these lines after reproducing heavy-canvas interactions.
+
+Summarize logs (p50/p95 by operation):
+
+```bash
+dart run tool/canvas_perf_summary.dart --input ./canvas-perf.log
+```
+
+Optional flags:
+
+- `--operation wheel_zoom` to filter operations
+- `--json` for machine-readable output
+
 ## Key Dependencies
 
 - **flutter_bloc** - State management

@@ -3,29 +3,30 @@ import type { ServiceImpl } from "@connectrpc/connect";
 import { and, asc, desc, eq } from "drizzle-orm";
 import { db, schema } from "../db";
 import {
+	type CheckoutCommitResponse,
 	CheckoutCommitResponseSchema,
+	type CherryPickResponse,
 	CherryPickResponseSchema,
+	type Commit,
 	CommitSchema,
-	CommitService,
+	type CommitService,
 	CommitSummarySchema,
+	type CreateCommitResponse,
 	CreateCommitResponseSchema,
 	DiffResultSchema,
-	GetCommitResponseSchema,
-	GetDiffResponseSchema,
-	ListCommitsResponseSchema,
-	RevertCommitResponseSchema,
-	SnapshotSchema,
-	type CheckoutCommitResponse,
-	type CherryPickResponse,
-	type Commit,
-	type CreateCommitResponse,
 	type GetCommitResponse,
+	GetCommitResponseSchema,
 	type GetDiffResponse,
+	GetDiffResponseSchema,
 	type ListCommitsResponse,
+	ListCommitsResponseSchema,
 	type RevertCommitResponse,
+	RevertCommitResponseSchema,
 	type Snapshot,
+	SnapshotSchema,
 } from "../gen/vio/v1/commit_pb.js";
-import { TimestampSchema, type Timestamp } from "../gen/vio/v1/common_pb.js";
+import { type Timestamp, TimestampSchema } from "../gen/vio/v1/common_pb.js";
+import { startPerfSpan } from "../utils/perf-diagnostics.js";
 import { failedPrecondition, internal, notFound } from "./errors.js";
 import {
 	getSnapshotData,
@@ -110,70 +111,94 @@ export const commitServiceImpl: ServiceImpl<typeof CommitService> = {
 	},
 
 	async createCommit(req): Promise<CreateCommitResponse> {
-		// Determine snapshot data: use client-provided data if available,
-		// otherwise fall back to reading all shapes from the DB.
-		// Client sends snapshot_data for partial commits (only staged changes).
-		let snapshotData: { shapes: unknown[] };
-
-		if (req.snapshotData && req.snapshotData.length > 0) {
-			// Client provided explicit snapshot data (partial commit with staged changes only)
-			snapshotData = JSON.parse(new TextDecoder().decode(req.snapshotData));
-		} else {
-			// Default: read all current shapes from DB (full commit)
-			const shapes = await db
-				.select()
-				.from(schema.shapes)
-				.where(eq(schema.shapes.projectId, req.projectId))
-				.orderBy(asc(schema.shapes.sortOrder));
-			snapshotData = { shapes };
-		}
-
-		// Get current branch head commit
-		const branch = await db.query.branches.findFirst({
-			where: and(
-				eq(schema.branches.id, req.branchId),
-				eq(schema.branches.projectId, req.projectId),
-			),
+		const perfSpan = startPerfSpan("commit.createCommit", {
+			projectId: req.projectId,
+			branchId: req.branchId,
 		});
+		let snapshotSource: "client" | "db" = "db";
+		let shapeCount = 0;
+		let perfError: unknown;
 
-		if (!branch) {
-			throw notFound("Branch not found");
+		try {
+			// Determine snapshot data: use client-provided data if available,
+			// otherwise fall back to reading all shapes from the DB.
+			// Client sends snapshot_data for partial commits (only staged changes).
+			let snapshotData: { shapes: unknown[] };
+
+			if (req.snapshotData && req.snapshotData.length > 0) {
+				// Client provided explicit snapshot data (partial commit with staged changes only)
+				snapshotData = JSON.parse(new TextDecoder().decode(req.snapshotData));
+				snapshotSource = "client";
+				shapeCount = snapshotData.shapes.length;
+			} else {
+				// Default: read all current shapes from DB (full commit)
+				const shapes = await db
+					.select()
+					.from(schema.shapes)
+					.where(eq(schema.shapes.projectId, req.projectId))
+					.orderBy(asc(schema.shapes.sortOrder));
+				snapshotData = { shapes };
+				shapeCount = shapes.length;
+			}
+
+			// Get current branch head commit
+			const branch = await db.query.branches.findFirst({
+				where: and(
+					eq(schema.branches.id, req.branchId),
+					eq(schema.branches.projectId, req.projectId),
+				),
+			});
+
+			if (!branch) {
+				throw notFound("Branch not found");
+			}
+
+			// Create snapshot
+			const [snapshot] = await db
+				.insert(schema.snapshots)
+				.values({
+					projectId: req.projectId,
+					data: snapshotData,
+				})
+				.returning();
+
+			// Create commit
+			const [commit] = await db
+				.insert(schema.commits)
+				.values({
+					projectId: req.projectId,
+					branchId: req.branchId,
+					parentId: branch.headCommitId,
+					message: req.message,
+					authorId: req.authorId,
+					snapshotId: snapshot.id,
+				})
+				.returning();
+
+			// Update branch head
+			await db
+				.update(schema.branches)
+				.set({
+					headCommitId: commit.id,
+					updatedAt: new Date(),
+				})
+				.where(eq(schema.branches.id, req.branchId));
+
+			return create(CreateCommitResponseSchema, {
+				commit: toProtoCommit(commit),
+			});
+		} catch (error) {
+			perfError = error;
+			throw error;
+		} finally {
+			await perfSpan.finish(
+				{
+					snapshotSource,
+					shapeCount,
+				},
+				perfError,
+			);
 		}
-
-		// Create snapshot
-		const [snapshot] = await db
-			.insert(schema.snapshots)
-			.values({
-				projectId: req.projectId,
-				data: snapshotData,
-			})
-			.returning();
-
-		// Create commit
-		const [commit] = await db
-			.insert(schema.commits)
-			.values({
-				projectId: req.projectId,
-				branchId: req.branchId,
-				parentId: branch.headCommitId,
-				message: req.message,
-				authorId: req.authorId,
-				snapshotId: snapshot.id,
-			})
-			.returning();
-
-		// Update branch head
-		await db
-			.update(schema.branches)
-			.set({
-				headCommitId: commit.id,
-				updatedAt: new Date(),
-			})
-			.where(eq(schema.branches.id, req.branchId));
-
-		return create(CreateCommitResponseSchema, {
-			commit: toProtoCommit(commit),
-		});
 	},
 
 	async getDiff(req): Promise<GetDiffResponse> {

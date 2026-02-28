@@ -16,6 +16,7 @@ import 'package:vio_client/src/features/workspace/bloc/workspace_bloc.dart';
 import 'package:vio_core/vio_core.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
+import 'canvas_performance_diagnostics.dart';
 import 'widgets/canvas_input_layer.dart';
 import 'widgets/canvas_surface.dart';
 
@@ -48,6 +49,8 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
   bool _isPanning = false;
   Offset? _lastPanPosition;
   double _lastScale = 1.0;
+  final CanvasPerformanceDiagnostics _perfDiagnostics =
+      CanvasPerformanceDiagnostics();
 
   // Double-click tracking (for text edit activation)
   int _lastPrimaryClickMs = 0;
@@ -133,6 +136,9 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
     _textController.removeListener(_onTextControllerChanged);
     _textController.dispose();
     _textFocusNode.dispose();
+    if (_perfDiagnostics.isEnabled) {
+      _perfDiagnostics.dispose(lastState: context.read<CanvasBloc>().state);
+    }
     super.dispose();
   }
 
@@ -298,11 +304,16 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
                                 _handlePointerSignal(context, event),
                             onPointerPanZoomStart: (event) {
                               _lastScale = 1.0;
+                              _perfDiagnostics.onGestureZoomStart(canvasState);
                             },
                             onPointerPanZoomUpdate: (event) {
                               if (event.scale != 1.0) {
                                 final scaleChange = event.scale / _lastScale;
                                 _lastScale = event.scale;
+                                _perfDiagnostics.onGestureZoomUpdate(
+                                  scaleChange,
+                                  canvasState,
+                                );
                                 context.read<CanvasBloc>().add(
                                       ViewportZoomed(
                                         scaleFactor: scaleChange,
@@ -311,6 +322,14 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
                                       ),
                                     );
                               } else if (event.panDelta != Offset.zero) {
+                                _perfDiagnostics.onGesturePanUpdate(
+                                  event.panDelta,
+                                  canvasState,
+                                );
+                                _perfDiagnostics.onDragPanUpdate(
+                                  event.panDelta,
+                                  canvasState,
+                                );
                                 context.read<CanvasBloc>().add(
                                       ViewportPanned(
                                         deltaX: event.panDelta.dx,
@@ -321,6 +340,7 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
                             },
                             onPointerPanZoomEnd: (event) {
                               _lastScale = 1.0;
+                              _perfDiagnostics.onGestureZoomEnd(canvasState);
                             },
                             onAssetAccept: (details) {
                               _handleAssetDrop(
@@ -387,6 +407,4 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
       ),
     );
   }
-
 }
-

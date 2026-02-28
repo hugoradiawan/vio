@@ -5,7 +5,7 @@
  * Supports Connect protocol (HTTP/1.1 + JSON) and gRPC-Web for Flutter web.
  */
 
-import { type ConnectRouter } from "@connectrpc/connect";
+import type { ConnectRouter } from "@connectrpc/connect";
 import { connectNodeAdapter } from "@connectrpc/connect-node";
 import { readFileSync } from "node:fs";
 import {
@@ -36,6 +36,7 @@ import {
 	pullRequestServiceImpl,
 	shapeServiceImpl,
 } from "./services/index.js";
+import { getPerfDiagnosticsConfig } from "./utils/perf-diagnostics.js";
 
 // ============================================================================
 // Server Setup
@@ -47,6 +48,7 @@ const __dirname = dirname(__filename);
 const PORT = Number(process.env.PORT) || 4000;
 const WEB_PORT = Number(process.env.WEB_PORT) || 4001;
 const USE_TLS = process.env.USE_TLS === "true";
+const perfDiagnostics = getPerfDiagnosticsConfig();
 
 // Create ConnectRPC router with all services
 function createRoutes(router: ConnectRouter) {
@@ -203,6 +205,12 @@ if (USE_TLS) {
 	http1Server.listen(WEB_PORT, "0.0.0.0", () => {
 		console.log(`   ✓ HTTP/1.1 server on port ${WEB_PORT} (Web - gRPC-Web)`);
 	});
+
+	if (perfDiagnostics.enabled) {
+		console.log(
+			`   ✓ Performance diagnostics enabled: ${perfDiagnostics.filePath}`,
+		);
+	}
 
 	console.log(`
 🎨 Vio Backend is running

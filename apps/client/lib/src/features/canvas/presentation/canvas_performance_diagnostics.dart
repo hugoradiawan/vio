@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:vio_client/src/features/canvas/bloc/canvas_bloc.dart';
+import 'package:vio_core/vio_core.dart';
 
 class CanvasPerformanceDiagnostics {
   static const bool _enabled = bool.fromEnvironment(
@@ -11,32 +13,42 @@ class CanvasPerformanceDiagnostics {
   );
 
   static const Duration _wheelSessionGap = Duration(milliseconds: 180);
+  static const String _legacyMarker = 'CANVAS_PERF';
+  static const String _v2Marker = 'CANVAS_PERF_V2';
 
   bool get isEnabled => _enabled;
+
+  int _sessionSequence = 0;
 
   int? _dragPanStartMs;
   int _dragPanEventCount = 0;
   double _dragPanDistance = 0;
+  String? _dragPanSessionId;
 
   int? _gestureZoomStartMs;
   int _gestureZoomEventCount = 0;
   int _gesturePanEventCount = 0;
   double _gestureZoomScaleProduct = 1;
   double _gesturePanDistance = 0;
+  String? _gestureSessionId;
 
   int? _wheelPanStartMs;
   int _wheelPanEventCount = 0;
   double _wheelPanDistance = 0;
   Timer? _wheelPanFlushTimer;
+  String? _wheelPanSessionId;
 
   int? _wheelZoomStartMs;
   int _wheelZoomEventCount = 0;
   double _wheelZoomScaleProduct = 1;
   Timer? _wheelZoomFlushTimer;
+  String? _wheelZoomSessionId;
 
   bool _frameTrackingActive = false;
   int _trackedFrameCount = 0;
   int _jankFrameCount = 0;
+  int _uiJankFrameCount = 0;
+  int _rasterJankFrameCount = 0;
   Duration _sumFrameTotal = Duration.zero;
   Duration _sumBuild = Duration.zero;
   Duration _sumRaster = Duration.zero;
@@ -48,11 +60,14 @@ class CanvasPerformanceDiagnostics {
     _dragPanStartMs = DateTime.now().millisecondsSinceEpoch;
     _dragPanEventCount = 0;
     _dragPanDistance = 0;
+    _dragPanSessionId = _newSessionId('drag-pan');
 
     _emit(
       operation: 'canvas.drag_pan.start',
       canvasState: canvasState,
       metrics: {'source': source},
+      inputSource: source,
+      sessionId: _dragPanSessionId,
     );
   }
 
@@ -69,6 +84,9 @@ class CanvasPerformanceDiagnostics {
           'eventCount': _dragPanEventCount,
           'distancePx': _round(_dragPanDistance),
         },
+        inputSource: 'pointer_drag',
+        sessionId: _dragPanSessionId,
+        sessionEventCount: _dragPanEventCount,
       );
     }
   }
@@ -86,11 +104,15 @@ class CanvasPerformanceDiagnostics {
         'distancePx': _round(_dragPanDistance),
         ..._frameSummary(),
       },
+      inputSource: 'pointer_drag',
+      sessionId: _dragPanSessionId,
+      sessionEventCount: _dragPanEventCount,
     );
 
     _dragPanStartMs = null;
     _dragPanEventCount = 0;
     _dragPanDistance = 0;
+    _dragPanSessionId = null;
     _stopFrameTracking();
   }
 
@@ -102,10 +124,13 @@ class CanvasPerformanceDiagnostics {
     _gesturePanEventCount = 0;
     _gestureZoomScaleProduct = 1;
     _gesturePanDistance = 0;
+    _gestureSessionId = _newSessionId('gesture');
 
     _emit(
       operation: 'canvas.gesture_zoom.start',
       canvasState: canvasState,
+      inputSource: 'pointer_pan_zoom',
+      sessionId: _gestureSessionId,
     );
   }
 
@@ -122,6 +147,9 @@ class CanvasPerformanceDiagnostics {
           'eventCount': _gestureZoomEventCount,
           'scaleProduct': _round(_gestureZoomScaleProduct),
         },
+        inputSource: 'pointer_pan_zoom',
+        sessionId: _gestureSessionId,
+        sessionEventCount: _gestureZoomEventCount,
       );
     }
   }
@@ -139,6 +167,9 @@ class CanvasPerformanceDiagnostics {
           'eventCount': _gesturePanEventCount,
           'distancePx': _round(_gesturePanDistance),
         },
+        inputSource: 'pointer_pan_zoom',
+        sessionId: _gestureSessionId,
+        sessionEventCount: _gesturePanEventCount,
       );
     }
   }
@@ -169,13 +200,23 @@ class CanvasPerformanceDiagnostics {
       });
     }
 
-    _emit(operation: operation, canvasState: canvasState, metrics: metrics);
+    _emit(
+      operation: operation,
+      canvasState: canvasState,
+      metrics: metrics,
+      inputSource: 'pointer_pan_zoom',
+      sessionId: _gestureSessionId,
+      sessionEventCount: isZoomSession
+          ? _gestureZoomEventCount
+          : _gesturePanEventCount,
+    );
 
     _gestureZoomStartMs = null;
     _gestureZoomEventCount = 0;
     _gesturePanEventCount = 0;
     _gestureZoomScaleProduct = 1;
     _gesturePanDistance = 0;
+    _gestureSessionId = null;
     _stopFrameTracking();
   }
 
@@ -188,6 +229,7 @@ class CanvasPerformanceDiagnostics {
 
     _startFrameTracking();
     _wheelPanStartMs ??= DateTime.now().millisecondsSinceEpoch;
+    _wheelPanSessionId ??= _newSessionId('wheel-pan');
     _wheelPanEventCount += 1;
     _wheelPanDistance += Offset(deltaX, deltaY).distance;
 
@@ -205,6 +247,7 @@ class CanvasPerformanceDiagnostics {
 
     _startFrameTracking();
     _wheelZoomStartMs ??= DateTime.now().millisecondsSinceEpoch;
+    _wheelZoomSessionId ??= _newSessionId('wheel-zoom');
     _wheelZoomEventCount += 1;
     _wheelZoomScaleProduct *= scaleFactor;
 
@@ -248,11 +291,15 @@ class CanvasPerformanceDiagnostics {
         'distancePx': _round(_wheelPanDistance),
         ..._frameSummary(),
       },
+      inputSource: 'wheel_scroll',
+      sessionId: _wheelPanSessionId,
+      sessionEventCount: _wheelPanEventCount,
     );
 
     _wheelPanStartMs = null;
     _wheelPanEventCount = 0;
     _wheelPanDistance = 0;
+    _wheelPanSessionId = null;
     _stopFrameTracking();
   }
 
@@ -270,11 +317,15 @@ class CanvasPerformanceDiagnostics {
         'scaleProduct': _round(_wheelZoomScaleProduct),
         ..._frameSummary(),
       },
+      inputSource: 'wheel_zoom',
+      sessionId: _wheelZoomSessionId,
+      sessionEventCount: _wheelZoomEventCount,
     );
 
     _wheelZoomStartMs = null;
     _wheelZoomEventCount = 0;
     _wheelZoomScaleProduct = 1;
+    _wheelZoomSessionId = null;
     _stopFrameTracking();
   }
 
@@ -284,6 +335,8 @@ class CanvasPerformanceDiagnostics {
     _frameTrackingActive = true;
     _trackedFrameCount = 0;
     _jankFrameCount = 0;
+    _uiJankFrameCount = 0;
+    _rasterJankFrameCount = 0;
     _sumFrameTotal = Duration.zero;
     _sumBuild = Duration.zero;
     _sumRaster = Duration.zero;
@@ -321,6 +374,12 @@ class CanvasPerformanceDiagnostics {
       if (total.inMicroseconds > 16667) {
         _jankFrameCount += 1;
       }
+      if (timing.buildDuration.inMicroseconds > 16667) {
+        _uiJankFrameCount += 1;
+      }
+      if (timing.rasterDuration.inMicroseconds > 16667) {
+        _rasterJankFrameCount += 1;
+      }
     }
   }
 
@@ -329,6 +388,8 @@ class CanvasPerformanceDiagnostics {
       return {
         'frameCount': 0,
         'jankCount': 0,
+        'uiJankCount': 0,
+        'rasterJankCount': 0,
         'avgFrameMs': 0,
         'avgBuildMs': 0,
         'avgRasterMs': 0,
@@ -344,6 +405,8 @@ class CanvasPerformanceDiagnostics {
     return {
       'frameCount': frameCount,
       'jankCount': _jankFrameCount,
+      'uiJankCount': _uiJankFrameCount,
+      'rasterJankCount': _rasterJankFrameCount,
       'avgFrameMs': _round(avgFrameMs),
       'avgBuildMs': _round(avgBuildMs),
       'avgRasterMs': _round(avgRasterMs),
@@ -355,6 +418,9 @@ class CanvasPerformanceDiagnostics {
     required String operation,
     required CanvasState canvasState,
     Map<String, Object?> metrics = const {},
+    String? inputSource,
+    String? sessionId,
+    int? sessionEventCount,
   }) {
     if (!_enabled) return;
 
@@ -370,10 +436,148 @@ class CanvasPerformanceDiagnostics {
       'metrics': metrics,
     };
 
+    final v2Payload = {
+      'type': 'canvas_perf',
+      'schemaVersion': 2,
+      'timestamp': payload['timestamp'],
+      'operation': operation,
+      'session': {
+        'id': sessionId,
+        'eventCount': sessionEventCount,
+      },
+      'context': _buildContext(
+        canvasState,
+        inputSource: inputSource,
+      ),
+      'metrics': metrics,
+    };
+
     // Use direct print so diagnostics work in debug/profile/release when
     // VIO_CANVAS_PERF_DIAGNOSTICS=true, independent of VioLogger debug gating.
     // ignore: avoid_print
-    print('CANVAS_PERF ${jsonEncode(payload)}');
+    print('$_legacyMarker ${jsonEncode(payload)}');
+    // ignore: avoid_print
+    print('$_v2Marker ${jsonEncode(v2Payload)}');
+  }
+
+  Map<String, Object?> _buildContext(
+    CanvasState canvasState, {
+    String? inputSource,
+  }) {
+    var textShapeCount = 0;
+    var imageShapeCount = 0;
+    var frameShapeCount = 0;
+    var groupShapeCount = 0;
+    var svgShapeCount = 0;
+    var pathShapeCount = 0;
+    var boolShapeCount = 0;
+    var rectangleShapeCount = 0;
+    var ellipseShapeCount = 0;
+
+    var blurShapeCount = 0;
+    var shadowShapeCount = 0;
+    var gradientFillCount = 0;
+    var clippingFrameCount = 0;
+
+    for (final shape in canvasState.shapeList) {
+      switch (shape.type) {
+        case ShapeType.rectangle:
+          rectangleShapeCount += 1;
+          break;
+        case ShapeType.ellipse:
+          ellipseShapeCount += 1;
+          break;
+        case ShapeType.path:
+          pathShapeCount += 1;
+          break;
+        case ShapeType.text:
+          textShapeCount += 1;
+          break;
+        case ShapeType.frame:
+          frameShapeCount += 1;
+          break;
+        case ShapeType.group:
+          groupShapeCount += 1;
+          break;
+        case ShapeType.image:
+          imageShapeCount += 1;
+          break;
+        case ShapeType.svg:
+          svgShapeCount += 1;
+          break;
+        case ShapeType.bool:
+          boolShapeCount += 1;
+          break;
+      }
+
+      final blur = shape.blur;
+      if (blur != null && !blur.hidden && blur.value > 0) {
+        blurShapeCount += 1;
+      }
+
+      final shadow = shape.shadow;
+      if (shadow != null && !shadow.hidden && shadow.opacity > 0) {
+        shadowShapeCount += 1;
+      }
+
+      for (final fill in shape.fills) {
+        if (fill.hidden) {
+          continue;
+        }
+        if (fill.gradient != null) {
+          gradientFillCount += 1;
+        }
+      }
+
+      if (shape is FrameShape && shape.clipContent) {
+        clippingFrameCount += 1;
+      }
+    }
+
+    return {
+      'inputSource': inputSource,
+      'platform': defaultTargetPlatform.name,
+      'isWeb': kIsWeb,
+      'viewport': {
+        'zoom': _round(canvasState.zoom),
+        'offsetX': _round(canvasState.viewportOffset.dx),
+        'offsetY': _round(canvasState.viewportOffset.dy),
+        'width': _round(canvasState.viewportSize.width),
+        'height': _round(canvasState.viewportSize.height),
+      },
+      'state': {
+        'interactionMode': canvasState.interactionMode.name,
+        'selectedCount': canvasState.selectedShapeIds.length,
+        'hasSelection': canvasState.hasSelection,
+        'snapLinesCount': canvasState.snapLines.length,
+        'snapPointsCount': canvasState.snapPoints.length,
+      },
+      'scene': {
+        'shapeCount': canvasState.shapeList.length,
+        'shapesByType': {
+          'rectangle': rectangleShapeCount,
+          'ellipse': ellipseShapeCount,
+          'path': pathShapeCount,
+          'text': textShapeCount,
+          'frame': frameShapeCount,
+          'group': groupShapeCount,
+          'image': imageShapeCount,
+          'svg': svgShapeCount,
+          'bool': boolShapeCount,
+        },
+        'effectCounts': {
+          'blurShapes': blurShapeCount,
+          'shadowShapes': shadowShapeCount,
+          'gradientFills': gradientFillCount,
+          'clippingFrames': clippingFrameCount,
+        },
+      },
+    };
+  }
+
+  String _newSessionId(String prefix) {
+    _sessionSequence += 1;
+    return '$prefix-$_sessionSequence';
   }
 
   double _round(num value) => double.parse(value.toStringAsFixed(3));

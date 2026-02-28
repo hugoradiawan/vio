@@ -1,3 +1,4 @@
 {
-  "dart.flutterSdkPath": ".fvm/versions/3.38.9"
+  "dart.flutterSdkPath": ".fvm/versions/3.38.9",
+  "cmake.sourceDirectory": "/Users/mymac/Documents/GitHub/vio/apps/client/windows"
 }

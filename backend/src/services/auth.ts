@@ -13,25 +13,26 @@ import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db, schema } from "../db/index.js";
 import {
-	AuthResponseSchema,
-	AuthService,
-	UserSchema,
-	ValidateTokenResponseSchema,
 	type AuthResponse,
+	AuthResponseSchema,
+	type AuthService,
 	type User,
+	UserSchema,
 	type ValidateTokenResponse,
+	ValidateTokenResponseSchema,
 } from "../gen/vio/v1/auth_pb.js";
 import {
-	EmptySchema,
-	TimestampSchema,
 	type Empty,
+	EmptySchema,
 	type Timestamp,
+	TimestampSchema,
 } from "../gen/vio/v1/common_pb.js";
 import {
 	alreadyExists,
 	invalidArgument,
 	notFound,
 	unauthenticated,
+	unavailable,
 } from "./errors.js";
 
 // ============================================================================
@@ -67,6 +68,10 @@ const REFRESH_TOKEN_DURATION = getDurationMsFromEnv(
 	7 * 24 * 60 * 60 * 1000, // 7 days
 );
 const BCRYPT_ROUNDS = 12;
+const DB_OPERATION_TIMEOUT_MS = getDurationMsFromEnv(
+	"DB_OPERATION_TIMEOUT_MS",
+	5000,
+);
 
 // ============================================================================
 // Helper Functions
@@ -103,13 +108,39 @@ function generateAccessToken(userId: string): string {
 	return token;
 }
 
+async function withDbTimeout<T>(
+	operationName: string,
+	query: Promise<T>,
+): Promise<T> {
+	let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+
+	const timeoutPromise = new Promise<T>((_, reject) => {
+		timeoutHandle = setTimeout(() => {
+			reject(
+				unavailable(`Database timeout while ${operationName}. Please retry.`),
+			);
+		}, DB_OPERATION_TIMEOUT_MS);
+	});
+
+	try {
+		return await Promise.race([query, timeoutPromise]);
+	} finally {
+		if (timeoutHandle !== undefined) {
+			clearTimeout(timeoutHandle);
+		}
+	}
+}
+
 async function generateRefreshToken(userId: string): Promise<string> {
 	const token = `vio_rt_${nanoid(48)}`;
-	await db.insert(schema.refreshTokens).values({
-		token,
-		userId,
-		expiresAt: new Date(Date.now() + REFRESH_TOKEN_DURATION),
-	});
+	await withDbTimeout(
+		"creating refresh token",
+		db.insert(schema.refreshTokens).values({
+			token,
+			userId,
+			expiresAt: new Date(Date.now() + REFRESH_TOKEN_DURATION),
+		}),
+	);
 	return token;
 }
 
@@ -129,23 +160,29 @@ export const authServiceImpl: ServiceImpl<typeof AuthService> = {
 		}
 
 		// Check if email is already taken
-		const existing = await db.query.users.findFirst({
-			where: eq(schema.users.email, req.email.toLowerCase()),
-		});
+		const existing = await withDbTimeout(
+			"checking existing user",
+			db.query.users.findFirst({
+				where: eq(schema.users.email, req.email.toLowerCase()),
+			}),
+		);
 		if (existing) {
 			throw alreadyExists("Email already registered");
 		}
 
 		// Create user
 		const passwordHash = await bcrypt.hash(req.password, BCRYPT_ROUNDS);
-		const [user] = await db
-			.insert(schema.users)
-			.values({
-				email: req.email.toLowerCase(),
-				name: req.name,
-				passwordHash,
-			})
-			.returning();
+		const [user] = await withDbTimeout(
+			"creating user",
+			db
+				.insert(schema.users)
+				.values({
+					email: req.email.toLowerCase(),
+					name: req.name,
+					passwordHash,
+				})
+				.returning(),
+		);
 
 		// Generate tokens
 		const accessToken = generateAccessToken(user.id);
@@ -166,9 +203,12 @@ export const authServiceImpl: ServiceImpl<typeof AuthService> = {
 		}
 
 		// Find user
-		const user = await db.query.users.findFirst({
-			where: eq(schema.users.email, req.email.toLowerCase()),
-		});
+		const user = await withDbTimeout(
+			"loading user for login",
+			db.query.users.findFirst({
+				where: eq(schema.users.email, req.email.toLowerCase()),
+			}),
+		);
 		if (!user) {
 			throw unauthenticated("Invalid email or password");
 		}
@@ -198,34 +238,46 @@ export const authServiceImpl: ServiceImpl<typeof AuthService> = {
 		}
 
 		// Find the refresh token in DB
-		const tokenRecord = await db.query.refreshTokens.findFirst({
-			where: eq(schema.refreshTokens.token, req.refreshToken),
-		});
+		const tokenRecord = await withDbTimeout(
+			"loading refresh token",
+			db.query.refreshTokens.findFirst({
+				where: eq(schema.refreshTokens.token, req.refreshToken),
+			}),
+		);
 		if (!tokenRecord) {
 			throw unauthenticated("Invalid refresh token");
 		}
 
 		if (new Date() > tokenRecord.expiresAt) {
 			// Clean up expired token
-			await db
-				.delete(schema.refreshTokens)
-				.where(eq(schema.refreshTokens.id, tokenRecord.id));
+			await withDbTimeout(
+				"deleting expired refresh token",
+				db
+					.delete(schema.refreshTokens)
+					.where(eq(schema.refreshTokens.id, tokenRecord.id)),
+			);
 			throw unauthenticated("Refresh token expired");
 		}
 
-		const user = await db.query.users.findFirst({
-			where: eq(schema.users.id, tokenRecord.userId),
-			// Preserve historical contract: refreshToken does not return user data
-			// user: undefined,
-		});
+		const user = await withDbTimeout(
+			"loading user from refresh token",
+			db.query.users.findFirst({
+				where: eq(schema.users.id, tokenRecord.userId),
+				// Preserve historical contract: refreshToken does not return user data
+				// user: undefined,
+			}),
+		);
 		if (!user) {
 			throw notFound("User not found");
 		}
 
 		// Revoke old refresh token
-		await db
-			.delete(schema.refreshTokens)
-			.where(eq(schema.refreshTokens.id, tokenRecord.id));
+		await withDbTimeout(
+			"revoking used refresh token",
+			db
+				.delete(schema.refreshTokens)
+				.where(eq(schema.refreshTokens.id, tokenRecord.id)),
+		);
 
 		// Generate new tokens
 		const accessToken = generateAccessToken(user.id);
@@ -262,9 +314,12 @@ export const authServiceImpl: ServiceImpl<typeof AuthService> = {
 			});
 		}
 
-		const user = await db.query.users.findFirst({
-			where: eq(schema.users.id, tokenData.userId),
-		});
+		const user = await withDbTimeout(
+			"loading user for token validation",
+			db.query.users.findFirst({
+				where: eq(schema.users.id, tokenData.userId),
+			}),
+		);
 		if (!user) {
 			return create(ValidateTokenResponseSchema, {
 				valid: false,
@@ -281,9 +336,12 @@ export const authServiceImpl: ServiceImpl<typeof AuthService> = {
 	async logout(req): Promise<Empty> {
 		// Revoke refresh token from DB
 		if (req.refreshToken) {
-			await db
-				.delete(schema.refreshTokens)
-				.where(eq(schema.refreshTokens.token, req.refreshToken));
+			await withDbTimeout(
+				"revoking refresh token on logout",
+				db
+					.delete(schema.refreshTokens)
+					.where(eq(schema.refreshTokens.token, req.refreshToken)),
+			);
 		}
 
 		return create(EmptySchema, {});
@@ -310,9 +368,12 @@ export async function validateAccessToken(
 		return null;
 	}
 
-	const user = await db.query.users.findFirst({
-		where: eq(schema.users.id, tokenData.userId),
-	});
+	const user = await withDbTimeout(
+		"loading user for access-token validation",
+		db.query.users.findFirst({
+			where: eq(schema.users.id, tokenData.userId),
+		}),
+	);
 	if (!user) return null;
 
 	return { id: user.id, email: user.email, name: user.name };
@@ -331,16 +392,22 @@ const ADMIN_NAME = "Admin";
  * Called on server startup — creates the admin only if no users exist.
  */
 export async function ensureAdminUser(): Promise<void> {
-	const existingUsers = await db.query.users.findFirst();
+	const existingUsers = await withDbTimeout(
+		"checking admin bootstrap state",
+		db.query.users.findFirst(),
+	);
 	if (existingUsers) return; // Users exist, skip
 
 	const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, BCRYPT_ROUNDS);
-	await db.insert(schema.users).values({
-		email: ADMIN_EMAIL,
-		name: ADMIN_NAME,
-		passwordHash,
-		isAdmin: true,
-	});
+	await withDbTimeout(
+		"creating default admin user",
+		db.insert(schema.users).values({
+			email: ADMIN_EMAIL,
+			name: ADMIN_NAME,
+			passwordHash,
+			isAdmin: true,
+		}),
+	);
 
 	console.log(`
 ✅ Default admin user created:

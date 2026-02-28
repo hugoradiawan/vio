@@ -12,7 +12,11 @@ class ShapePainter {
   ShapePainter._();
 
   /// Paint a shape onto the canvas
-  static void paintShape(Canvas canvas, Shape shape) {
+  static void paintShape(
+    Canvas canvas,
+    Shape shape, {
+    bool simplifyForInteraction = false,
+  }) {
     if (shape.hidden || shape.opacity <= 0) return;
 
     canvas.save();
@@ -22,20 +26,28 @@ class ShapePainter {
 
     // Text shapes have a custom paint path (fills act as text color)
     if (shape is TextShape) {
-      _paintText(canvas, shape);
+      _paintText(
+        canvas,
+        shape,
+        simplifyForInteraction: simplifyForInteraction,
+      );
       canvas.restore();
       return;
     }
 
     // Image shapes render the decoded bitmap (or a placeholder)
     if (shape is ImageShape) {
-      _paintImageShape(canvas, shape);
+      _paintImageShape(
+        canvas,
+        shape,
+        simplifyForInteraction: simplifyForInteraction,
+      );
       canvas.restore();
       return;
     }
 
     // Apply opacity
-    if (shape.opacity < 1.0) {
+    if (shape.opacity < 1.0 && !simplifyForInteraction) {
       canvas.saveLayer(
         null,
         Paint()..color = Colors.white.withValues(alpha: shape.opacity),
@@ -49,6 +61,7 @@ class ShapePainter {
     final shadow = shape.shadow;
     if (shadow != null &&
         !shadow.hidden &&
+        !simplifyForInteraction &&
         shadow.style == ShadowStyle.dropShadow) {
       _paintDropShadow(canvas, path, shadow, shape.bounds);
     }
@@ -57,6 +70,7 @@ class ShapePainter {
     final blur = shape.blur;
     final hasBackgroundBlur = blur != null &&
         !blur.hidden &&
+        !simplifyForInteraction &&
         blur.type == BlurType.background &&
         blur.value > 0;
 
@@ -66,29 +80,45 @@ class ShapePainter {
 
     // 3. Draw fills (bottom to top)
     for (final fill in shape.fills) {
-      _paintFill(canvas, path, fill, shape);
+      _paintFill(
+        canvas,
+        path,
+        fill,
+        shape,
+        shapeOpacity: simplifyForInteraction ? shape.opacity : 1.0,
+        simplifyForInteraction: simplifyForInteraction,
+      );
     }
 
     // 4. Draw inner shadow (after fills, clipped to shape)
     if (shadow != null &&
         !shadow.hidden &&
+        !simplifyForInteraction &&
         shadow.style == ShadowStyle.innerShadow) {
       _paintInnerShadow(canvas, path, shadow, shape.bounds);
     }
 
     // 5. Draw strokes (bottom to top)
     for (final stroke in shape.strokes) {
-      _paintStroke(canvas, path, stroke, shape);
+      _paintStroke(
+        canvas,
+        path,
+        stroke,
+        shape,
+        shapeOpacity: simplifyForInteraction ? shape.opacity : 1.0,
+        simplifyForInteraction: simplifyForInteraction,
+      );
     }
 
     // Restore opacity layer
-    if (shape.opacity < 1.0) {
+    if (shape.opacity < 1.0 && !simplifyForInteraction) {
       canvas.restore();
     }
 
     // 6. Apply layer blur (blurs entire shape including fills/strokes)
     final hasLayerBlur = blur != null &&
         !blur.hidden &&
+        !simplifyForInteraction &&
         blur.type == BlurType.layer &&
         blur.value > 0;
 
@@ -321,12 +351,16 @@ class ShapePainter {
   }
 
   /// Paint an image shape — draws the decoded bitmap if cached, else a placeholder.
-  static void _paintImageShape(Canvas canvas, ImageShape shape) {
+  static void _paintImageShape(
+    Canvas canvas,
+    ImageShape shape, {
+    bool simplifyForInteraction = false,
+  }) {
     final bounds = shape.bounds;
     final assetId = shape.assetId;
 
     // Apply opacity
-    if (shape.opacity < 1.0) {
+    if (shape.opacity < 1.0 && !simplifyForInteraction) {
       canvas.saveLayer(
         null,
         Paint()..color = Colors.white.withValues(alpha: shape.opacity),
@@ -345,13 +379,21 @@ class ShapePainter {
         cachedImage.width.toDouble(),
         cachedImage.height.toDouble(),
       );
-      final paint = Paint()..filterQuality = FilterQuality.medium;
+      final paint = Paint()
+        ..filterQuality = simplifyForInteraction
+            ? FilterQuality.low
+            : FilterQuality.medium;
+      if (simplifyForInteraction && shape.opacity < 1.0) {
+        paint.color = Colors.white.withValues(alpha: shape.opacity);
+      }
       canvas.drawImageRect(cachedImage, srcRect, bounds, paint);
     } else {
       // Placeholder: light gray rectangle with image icon indicator
-      final bgPaint = Paint()..color = const Color(0xFF2D333B);
+      final bgAlpha = simplifyForInteraction ? shape.opacity : 1.0;
+      final bgPaint = Paint()
+        ..color = const Color(0xFF2D333B).withValues(alpha: bgAlpha);
       final borderPaint = Paint()
-        ..color = const Color(0xFF444C56)
+        ..color = const Color(0xFF444C56).withValues(alpha: bgAlpha)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1;
 
@@ -361,7 +403,7 @@ class ShapePainter {
       // Draw a small image icon in the center
       final iconSize = (bounds.shortestSide * 0.3).clamp(16.0, 48.0);
       final crossPaint = Paint()
-        ..color = const Color(0xFF768390)
+        ..color = const Color(0xFF768390).withValues(alpha: bgAlpha)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5;
       final cx = bounds.center.dx;
@@ -389,16 +431,26 @@ class ShapePainter {
     // Draw strokes on top
     final path = Path()..addRect(bounds);
     for (final stroke in shape.strokes) {
-      _paintStroke(canvas, path, stroke, shape);
+      _paintStroke(
+        canvas,
+        path,
+        stroke,
+        shape,
+        shapeOpacity: simplifyForInteraction ? shape.opacity : 1.0,
+      );
     }
 
     // Restore opacity layer
-    if (shape.opacity < 1.0) {
+    if (shape.opacity < 1.0 && !simplifyForInteraction) {
       canvas.restore();
     }
   }
 
-  static void _paintText(Canvas canvas, TextShape shape) {
+  static void _paintText(
+    Canvas canvas,
+    TextShape shape, {
+    bool simplifyForInteraction = false,
+  }) {
     final bounds = shape.bounds;
     final text = shape.text;
     if (text.isEmpty) {
@@ -413,9 +465,15 @@ class ShapePainter {
 
     // Use the first fill as text color, otherwise default to white.
     final fill = shape.fills.isNotEmpty ? shape.fills.first : null;
+    final effectiveFillAlpha = fill == null
+      ? (simplifyForInteraction ? shape.opacity : 1.0)
+      : _combinedAlpha(
+        fill.opacity,
+        simplifyForInteraction ? shape.opacity : 1.0,
+        );
     final color = fill != null
-        ? Color(fill.color).withValues(alpha: fill.opacity)
-        : Colors.white;
+      ? Color(fill.color).withValues(alpha: effectiveFillAlpha)
+      : Colors.white.withValues(alpha: effectiveFillAlpha);
 
     FontWeight? fontWeight;
     final weightValue = shape.fontWeight;
@@ -469,7 +527,7 @@ class ShapePainter {
       );
 
     // Apply overall shape opacity (paintShape doesn't wrap text in saveLayer)
-    if (shape.opacity < 1.0) {
+    if (shape.opacity < 1.0 && !simplifyForInteraction) {
       canvas.saveLayer(
         bounds,
         Paint()..color = Colors.white.withValues(alpha: shape.opacity),
@@ -579,17 +637,34 @@ class ShapePainter {
     Canvas canvas,
     Path path,
     ShapeFill fill,
-    Shape shape,
-  ) {
+    Shape shape, {
+    double shapeOpacity = 1.0,
+    bool simplifyForInteraction = false,
+  }) {
     if (fill.hidden || fill.opacity <= 0) return;
 
     final paint = Paint()..style = PaintingStyle.fill;
 
     // Check for gradient first
     if (fill.gradient != null) {
-      paint.shader = _createGradientShader(fill.gradient!, shape.bounds);
+      if (simplifyForInteraction) {
+        final firstStop = fill.gradient!.stops.isEmpty
+            ? null
+            : fill.gradient!.stops.first;
+        paint.color = (firstStop == null ? Color(fill.color) : Color(firstStop.color))
+            .withValues(
+              alpha: _combinedAlpha(
+                firstStop?.opacity ?? fill.opacity,
+                shapeOpacity,
+              ),
+            );
+      } else {
+        paint.shader = _createGradientShader(fill.gradient!, shape.bounds);
+      }
     } else {
-      paint.color = Color(fill.color).withValues(alpha: fill.opacity);
+      paint.color = Color(fill.color).withValues(
+        alpha: _combinedAlpha(fill.opacity, shapeOpacity),
+      );
     }
 
     canvas.drawPath(path, paint);
@@ -600,19 +675,26 @@ class ShapePainter {
     Canvas canvas,
     Path path,
     ShapeStroke stroke,
-    Shape shape,
-  ) {
+    Shape shape, {
+    double shapeOpacity = 1.0,
+    bool simplifyForInteraction = false,
+  }) {
     if (stroke.hidden || stroke.opacity <= 0 || stroke.width <= 0) return;
 
     final paint = Paint()
       ..style = PaintingStyle.stroke
-      ..color = Color(stroke.color).withValues(alpha: stroke.opacity)
+      ..color = Color(stroke.color).withValues(
+        alpha: _combinedAlpha(stroke.opacity, shapeOpacity),
+      )
       ..strokeWidth = stroke.width
       ..strokeCap = _mapStrokeCap(stroke.cap)
       ..strokeJoin = _mapStrokeJoin(stroke.join);
 
     // Handle stroke alignment
-    switch (stroke.alignment) {
+    final alignment = simplifyForInteraction
+        ? StrokeAlignment.center
+        : stroke.alignment;
+    switch (alignment) {
       case StrokeAlignment.center:
         canvas.drawPath(path, paint);
       case StrokeAlignment.inside:
@@ -695,5 +777,12 @@ class ShapePainter {
       StrokeJoin.round => ui.StrokeJoin.round,
       StrokeJoin.bevel => ui.StrokeJoin.bevel,
     };
+  }
+
+  static double _combinedAlpha(double a, double b) {
+    final alpha = a * b;
+    if (alpha < 0) return 0;
+    if (alpha > 1) return 1;
+    return alpha;
   }
 }

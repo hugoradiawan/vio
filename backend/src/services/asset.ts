@@ -11,45 +11,49 @@ import sharp from "sharp";
 import { db } from "../db/index.js";
 import { projectAssets, projectColors } from "../db/schema/index.js";
 import {
-	type Asset,
-	AssetSchema,
-	type AssetService,
-	type CreateColorRequest,
-	CreateColorResponseSchema,
-	type DeleteAssetRequest,
-	type DeleteColorRequest,
-	type GetAssetRequest,
-	GetAssetResponseSchema,
-	type ListAssetsRequest,
-	ListAssetsResponseSchema,
-	type ListColorsRequest,
-	ListColorsResponseSchema,
-	type ProjectColor,
-	ProjectColorSchema,
-	type UpdateAssetRequest,
-	UpdateAssetResponseSchema,
-	type UpdateColorRequest,
-	UpdateColorResponseSchema,
-	type UploadAssetRequest,
-	UploadAssetResponseSchema,
+    type Asset,
+    AssetSchema,
+    type AssetService,
+    type CreateColorRequest,
+    CreateColorResponseSchema,
+    type DeleteAssetRequest,
+    type DeleteColorRequest,
+    type GetAssetRequest,
+    GetAssetResponseSchema,
+    type ListAssetsRequest,
+    ListAssetsResponseSchema,
+    type ListColorsRequest,
+    ListColorsResponseSchema,
+    type ProjectColor,
+    ProjectColorSchema,
+    type UpdateAssetRequest,
+    UpdateAssetResponseSchema,
+    type UpdateColorRequest,
+    UpdateColorResponseSchema,
+    type UploadAssetRequest,
+    UploadAssetResponseSchema,
 } from "../gen/vio/v1/asset_pb.js";
 import {
-	EmptySchema,
-	type Gradient,
-	Gradient_Type,
-	GradientSchema,
-	GradientStopSchema,
-	type Timestamp,
-	TimestampSchema,
+    EmptySchema,
+    type Gradient,
+    Gradient_Type,
+    GradientSchema,
+    GradientStopSchema,
+    type Timestamp,
+    TimestampSchema,
 } from "../gen/vio/v1/common_pb.js";
 import { startPerfSpan } from "../utils/perf-diagnostics.js";
-import { notFound } from "./errors.js";
+import { notFound, unavailable } from "./errors.js";
 
 // =============================================================================
 // Constants
 // =============================================================================
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const DB_OPERATION_TIMEOUT_MS = Number.parseInt(
+	process.env.DB_OPERATION_TIMEOUT_MS ?? "5000",
+	10,
+);
 
 const ALLOWED_MIME_TYPES = new Set([
 	"image/png",
@@ -65,6 +69,33 @@ const ALLOWED_MIME_TYPES = new Set([
 
 function toProtoTimestamp(date: Date): Timestamp {
 	return create(TimestampSchema, { millis: BigInt(date.getTime()) });
+}
+
+async function withDbTimeout<T>(
+	operationName: string,
+	query: Promise<T>,
+): Promise<T> {
+	const timeoutMs =
+		Number.isFinite(DB_OPERATION_TIMEOUT_MS) && DB_OPERATION_TIMEOUT_MS > 0
+			? DB_OPERATION_TIMEOUT_MS
+			: 5000;
+
+	let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+	const timeoutPromise = new Promise<T>((_, reject) => {
+		timeoutHandle = setTimeout(() => {
+			reject(
+				unavailable(`Database timeout while ${operationName}. Please retry.`),
+			);
+		}, timeoutMs);
+	});
+
+	try {
+		return await Promise.race([query, timeoutPromise]);
+	} finally {
+		if (timeoutHandle !== undefined) {
+			clearTimeout(timeoutHandle);
+		}
+	}
 }
 
 /** Convert DB gradient JSON to proto Gradient */
@@ -454,11 +485,14 @@ export const assetServiceImpl: ServiceImpl<typeof AssetService> = {
 				throw new ConnectError("id is required", Code.InvalidArgument);
 			}
 
-			const [row] = await db
-				.select()
-				.from(projectAssets)
-				.where(eq(projectAssets.id, req.id))
-				.limit(1);
+			const [row] = await withDbTimeout(
+				"loading asset data",
+				db
+					.select()
+					.from(projectAssets)
+					.where(eq(projectAssets.id, req.id))
+					.limit(1),
+			);
 
 			if (!row) {
 				throw notFound(`Asset ${req.id} not found`);
@@ -471,7 +505,12 @@ export const assetServiceImpl: ServiceImpl<typeof AssetService> = {
 			});
 		} catch (error) {
 			perfError = error;
-			throw error;
+			if (error instanceof ConnectError) {
+				throw error;
+			}
+			throw unavailable(
+				"Unable to fetch asset data right now. Please retry.",
+			);
 		} finally {
 			await perfSpan.finish(
 				{

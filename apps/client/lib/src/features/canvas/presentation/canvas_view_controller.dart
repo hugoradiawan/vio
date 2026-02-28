@@ -1,6 +1,109 @@
 part of 'canvas_view.dart';
 
 mixin _CanvasViewController on State<CanvasView> {
+  void _resetBufferedPanZoom(Offset focalPoint) {
+    final state = this as _CanvasViewState;
+    state._bufferedPanZoomDelta = Offset.zero;
+    state._bufferedPanZoomScale = 1.0;
+    state._bufferedPanZoomFocal = focalPoint;
+    state._lastPanZoomFlushTimestamp =
+        DateTime.now().millisecondsSinceEpoch;
+  }
+
+  void _bufferPanZoomViewportUpdate(
+    BuildContext context, {
+    required double scaleFactor,
+    required Offset panDelta,
+    required Offset focalPoint,
+  }) {
+    final state = this as _CanvasViewState;
+    final zoomDrift = (scaleFactor - 1.0).abs();
+
+    if (zoomDrift >= _CanvasViewState._panZoomScaleDriftEpsilon) {
+      state._bufferedPanZoomScale *= scaleFactor;
+    }
+    if (panDelta != Offset.zero) {
+      state._bufferedPanZoomDelta += panDelta;
+    }
+    state._bufferedPanZoomFocal = focalPoint;
+
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (now - state._lastPanZoomFlushTimestamp >=
+        _CanvasViewState._panZoomFlushThrottleMs) {
+      _flushBufferedPanZoom(context);
+    }
+  }
+
+  void _flushBufferedPanZoom(BuildContext context, {bool force = false}) {
+    final state = this as _CanvasViewState;
+    final canvasBloc = context.read<CanvasBloc>();
+
+    final scale = state._bufferedPanZoomScale;
+    final hasMeaningfulZoom =
+        (scale - 1.0).abs() >= _CanvasViewState._panZoomScaleDriftEpsilon;
+    if (hasMeaningfulZoom) {
+      canvasBloc.add(
+        ViewportZoomed(
+          scaleFactor: scale,
+          focalX: state._bufferedPanZoomFocal.dx,
+          focalY: state._bufferedPanZoomFocal.dy,
+        ),
+      );
+      state._bufferedPanZoomScale = 1.0;
+    }
+
+    final panDelta = state._bufferedPanZoomDelta;
+    if (panDelta != Offset.zero) {
+      canvasBloc.add(
+        ViewportPanned(
+          deltaX: panDelta.dx,
+          deltaY: panDelta.dy,
+        ),
+      );
+      state._bufferedPanZoomDelta = Offset.zero;
+    }
+
+    state._lastPanZoomFlushTimestamp =
+        DateTime.now().millisecondsSinceEpoch;
+  }
+
+  void _setViewportInteractionActive({Duration? holdFor}) {
+    final state = this as _CanvasViewState;
+
+    state._viewportInteractionTimer?.cancel();
+    if (!state._isViewportInteractionActive) {
+      state.setState(() {
+        state._isViewportInteractionActive = true;
+      });
+    }
+
+    if (holdFor != null) {
+      state._viewportInteractionTimer = Timer(holdFor, () {
+        if (!mounted) return;
+        if (state._isPanning) return;
+
+        _flushBufferedPanZoom(context, force: true);
+
+        state.setState(() {
+          state._isViewportInteractionActive = false;
+        });
+      });
+    }
+  }
+
+  void _setViewportInteractionInactive() {
+    final state = this as _CanvasViewState;
+    state._viewportInteractionTimer?.cancel();
+    _flushBufferedPanZoom(context, force: true);
+    if (!state._isViewportInteractionActive) {
+      return;
+    }
+
+    state.setState(() {
+      state._isViewportInteractionActive = false;
+    });
+  }
+
   void _onTextControllerChanged() {
     final state = this as _CanvasViewState;
     final shapeId = state._editingTextShapeId;
@@ -270,6 +373,7 @@ mixin _CanvasViewController on State<CanvasView> {
     if (event.buttons == kMiddleMouseButton ||
         (state._isSpacePressed && event.buttons == kPrimaryButton) ||
         workspaceState.activeTool == CanvasTool.hand) {
+      _setViewportInteractionActive();
       state._perfDiagnostics.onDragPanStart(
         context.read<CanvasBloc>().state,
         source: 'pointer_drag',
@@ -521,6 +625,7 @@ mixin _CanvasViewController on State<CanvasView> {
   ) {
     final state = this as _CanvasViewState;
     if (state._isPanning && state._lastPanPosition != null) {
+      _setViewportInteractionActive();
       final delta = event.localPosition - state._lastPanPosition!;
       state._perfDiagnostics.onDragPanUpdate(
         delta,
@@ -559,6 +664,7 @@ mixin _CanvasViewController on State<CanvasView> {
         state._isPanning = false;
         state._lastPanPosition = null;
       });
+      _setViewportInteractionInactive();
       return;
     }
 
@@ -575,6 +681,11 @@ mixin _CanvasViewController on State<CanvasView> {
     PointerHoverEvent event,
     WorkspaceState workspaceState,
   ) {
+    final state = this as _CanvasViewState;
+    if (state._isViewportInteractionActive || state._isPanning) {
+      return;
+    }
+
     context.read<CanvasBloc>().add(
           PointerMove(
             x: event.localPosition.dx,
@@ -726,18 +837,19 @@ mixin _CanvasViewController on State<CanvasView> {
         const zoomSensitivity = 0.002;
         final scaleFactor = 1.0 - (event.scrollDelta.dy * zoomSensitivity);
         final clampedScale = scaleFactor.clamp(0.5, 2.0);
+        _setViewportInteractionActive(
+          holdFor: const Duration(milliseconds: 180),
+        );
         state._perfDiagnostics.onWheelZoom(
           scaleFactor: clampedScale,
           canvasState: canvasState,
         );
-
-        context.read<CanvasBloc>().add(
-              ViewportZoomed(
-                scaleFactor: clampedScale,
-                focalX: event.localPosition.dx,
-                focalY: event.localPosition.dy,
-              ),
-            );
+        _bufferPanZoomViewportUpdate(
+          context,
+          scaleFactor: clampedScale,
+          panDelta: Offset.zero,
+          focalPoint: event.localPosition,
+        );
       } else {
         final deltaX = isShiftScroll
             ? -(event.scrollDelta.dx != 0
@@ -745,31 +857,40 @@ mixin _CanvasViewController on State<CanvasView> {
                 : event.scrollDelta.dy)
             : -event.scrollDelta.dx;
         final deltaY = isShiftScroll ? 0.0 : -event.scrollDelta.dy;
+        _setViewportInteractionActive(
+          holdFor: const Duration(milliseconds: 180),
+        );
         state._perfDiagnostics.onWheelPan(
           deltaX: deltaX,
           deltaY: deltaY,
           canvasState: canvasState,
         );
-
-        context.read<CanvasBloc>().add(
-              ViewportPanned(
-                deltaX: deltaX,
-                deltaY: deltaY,
-              ),
-            );
+        _bufferPanZoomViewportUpdate(
+          context,
+          scaleFactor: 1.0,
+          panDelta: Offset(deltaX, deltaY),
+          focalPoint: event.localPosition,
+        );
       }
     } else if (event is PointerScaleEvent) {
+      final scaleDrift = (event.scale - 1.0).abs();
+      if (scaleDrift < _CanvasViewState._pointerScaleGestureEpsilon) {
+        return;
+      }
+
+      _setViewportInteractionActive(
+        holdFor: const Duration(milliseconds: 180),
+      );
       state._perfDiagnostics.onWheelZoom(
         scaleFactor: event.scale,
         canvasState: context.read<CanvasBloc>().state,
       );
-      context.read<CanvasBloc>().add(
-            ViewportZoomed(
-              scaleFactor: event.scale,
-              focalX: event.localPosition.dx,
-              focalY: event.localPosition.dy,
-            ),
-          );
+      _bufferPanZoomViewportUpdate(
+        context,
+        scaleFactor: event.scale,
+        panDelta: Offset.zero,
+        focalPoint: event.localPosition,
+      );
     }
   }
 

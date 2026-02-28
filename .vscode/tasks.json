@@ -5,7 +5,7 @@
       "label": "Start Backend Server",
       "type": "shell",
       "command": "bun",
-      "args": ["run", "dev"],
+      "args": ["run", "dev:ready"],
       "options": {
         "cwd": "${workspaceFolder}/backend"
       },

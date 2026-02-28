@@ -91,6 +91,35 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
   /// Last known drag position for OS file drops.
   Offset? _lastOsDragOffset;
 
+  /// True while viewport interactions are active (pan/zoom/wheel) to allow
+  /// temporary render simplifications on very large canvases.
+  bool _isViewportInteractionActive = false;
+
+  /// Debounce timer used for wheel/trackpad interactions.
+  Timer? _viewportInteractionTimer;
+
+  /// Buffered pan delta for high-frequency pointer pan/zoom events.
+  Offset _bufferedPanZoomDelta = Offset.zero;
+
+  /// Buffered zoom multiplier for high-frequency pointer pan/zoom events.
+  double _bufferedPanZoomScale = 1.0;
+
+  /// Latest focal point for buffered zoom flush.
+  Offset _bufferedPanZoomFocal = Offset.zero;
+
+  /// Last flush timestamp for buffered pointer pan/zoom updates.
+  int _lastPanZoomFlushTimestamp = 0;
+
+  /// Throttle interval for pointer pan/zoom viewport updates (~60fps).
+  static const int _panZoomFlushThrottleMs = 16;
+
+  /// Ignore micro zoom drift from high-frequency pointer events.
+  static const double _panZoomScaleDriftEpsilon = 0.0015;
+
+  /// Ignore small pointer-scale drift to avoid accidental zoom from trackpad
+  /// scrolling while still allowing intentional pinch zoom.
+  static const double _pointerScaleGestureEpsilon = 0.06;
+
   @override
   void initState() {
     super.initState();
@@ -133,6 +162,7 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
 
     _imageDecodeSub?.cancel();
     _textLayoutDebounce?.cancel();
+    _viewportInteractionTimer?.cancel();
     _textController.removeListener(_onTextControllerChanged);
     _textController.dispose();
     _textFocusNode.dispose();
@@ -304,9 +334,12 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
                                 _handlePointerSignal(context, event),
                             onPointerPanZoomStart: (event) {
                               _lastScale = 1.0;
+                              _resetBufferedPanZoom(event.localPosition);
+                              _setViewportInteractionActive();
                               _perfDiagnostics.onGestureZoomStart(canvasState);
                             },
                             onPointerPanZoomUpdate: (event) {
+                              _setViewportInteractionActive();
                               if (event.scale != 1.0) {
                                 final scaleChange = event.scale / _lastScale;
                                 _lastScale = event.scale;
@@ -314,13 +347,12 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
                                   scaleChange,
                                   canvasState,
                                 );
-                                context.read<CanvasBloc>().add(
-                                      ViewportZoomed(
-                                        scaleFactor: scaleChange,
-                                        focalX: event.localPosition.dx,
-                                        focalY: event.localPosition.dy,
-                                      ),
-                                    );
+                                _bufferPanZoomViewportUpdate(
+                                  context,
+                                  scaleFactor: scaleChange,
+                                  panDelta: Offset.zero,
+                                  focalPoint: event.localPosition,
+                                );
                               } else if (event.panDelta != Offset.zero) {
                                 _perfDiagnostics.onGesturePanUpdate(
                                   event.panDelta,
@@ -330,17 +362,19 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
                                   event.panDelta,
                                   canvasState,
                                 );
-                                context.read<CanvasBloc>().add(
-                                      ViewportPanned(
-                                        deltaX: event.panDelta.dx,
-                                        deltaY: event.panDelta.dy,
-                                      ),
-                                    );
+                                _bufferPanZoomViewportUpdate(
+                                  context,
+                                  scaleFactor: 1.0,
+                                  panDelta: event.panDelta,
+                                  focalPoint: event.localPosition,
+                                );
                               }
                             },
                             onPointerPanZoomEnd: (event) {
                               _lastScale = 1.0;
+                              _flushBufferedPanZoom(context, force: true);
                               _perfDiagnostics.onGestureZoomEnd(canvasState);
+                              _setViewportInteractionInactive();
                             },
                             onAssetAccept: (details) {
                               _handleAssetDrop(
@@ -357,6 +391,8 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
                               editingTextShapeId: _editingTextShapeId,
                               textController: _textController,
                               textFocusNode: _textFocusNode,
+                              isViewportInteractionActive:
+                                  _isViewportInteractionActive,
                             ),
                           ),
                         );

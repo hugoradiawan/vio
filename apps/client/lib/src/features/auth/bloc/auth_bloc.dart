@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,6 +14,9 @@ part 'auth_state.dart';
 
 /// Manages authentication state: login, register, logout, and token restore.
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
+  static const Duration _startupAuthRpcTimeout = Duration(seconds: 8);
+  static const Duration _interactiveAuthRpcTimeout = Duration(seconds: 10);
+
   AuthBloc({
     required AuthServiceClient authClient,
     TokenStorage? tokenStorage,
@@ -47,7 +52,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       // Validate the stored token with the backend
       final response = await _authClient.validateToken(
         ValidateTokenRequest()..accessToken = accessToken,
-      );
+      ).timeout(_startupAuthRpcTimeout);
       debugPrint('[AuthBloc] ValidateToken response: valid=${response.valid}');
 
       if (response.valid && response.hasUser()) {
@@ -74,6 +79,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } on GrpcError catch (e) {
       debugPrint('[AuthBloc] Token check failed: $e');
       emit(state.copyWith(status: AuthStatus.unauthenticated));
+    } catch (e) {
+      debugPrint('[AuthBloc] Startup auth check unexpected failure: $e');
+      await _tokenStorage.clearTokens();
+      GrpcClient.instance.clearAuthToken();
+      emit(state.copyWith(status: AuthStatus.unauthenticated));
     }
   }
 
@@ -85,13 +95,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(state.copyWith(status: AuthStatus.loading));
 
     try {
+      debugPrint('[AuthBloc] Login RPC started');
       final response = await _authClient.login(
         LoginRequest()
           ..email = event.email
           ..password = event.password,
-      );
+      ).timeout(_interactiveAuthRpcTimeout);
+      debugPrint('[AuthBloc] Login RPC completed');
 
       await _handleAuthResponse(response, emit);
+    } on TimeoutException {
+      debugPrint('[AuthBloc] Login RPC timed out');
+      emit(
+        state.copyWith(
+          status: AuthStatus.failure,
+          errorMessage: 'Login timed out. Please try again.',
+        ),
+      );
     } on GrpcError catch (e) {
       emit(
         state.copyWith(
@@ -118,14 +138,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(state.copyWith(status: AuthStatus.loading));
 
     try {
+      debugPrint('[AuthBloc] Register RPC started');
       final response = await _authClient.register(
         RegisterRequest()
           ..email = event.email
           ..password = event.password
           ..name = event.name,
-      );
+      ).timeout(_interactiveAuthRpcTimeout);
+      debugPrint('[AuthBloc] Register RPC completed');
 
       await _handleAuthResponse(response, emit);
+    } on TimeoutException {
+      debugPrint('[AuthBloc] Register RPC timed out');
+      emit(
+        state.copyWith(
+          status: AuthStatus.failure,
+          errorMessage: 'Registration timed out. Please try again.',
+        ),
+      );
     } on GrpcError catch (e) {
       emit(
         state.copyWith(
@@ -154,7 +184,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       if (refreshToken != null) {
         await _authClient.logout(
           LogoutRequest()..refreshToken = refreshToken,
-        );
+        ).timeout(_interactiveAuthRpcTimeout);
       }
     } catch (_) {
       // Logout is best-effort; continue even if the server call fails
@@ -199,7 +229,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       debugPrint('[AuthBloc] Attempting token refresh...');
       final response = await _authClient.refreshToken(
         RefreshTokenRequest()..refreshToken = refreshToken,
-      );
+      ).timeout(_interactiveAuthRpcTimeout);
       debugPrint('[AuthBloc] Token refresh succeeded');
       await _handleAuthResponse(response, emit);
     } catch (e) {

@@ -11,7 +11,7 @@ Bun + Elysia backend with Git-like version control for design projects.
 
 1. **Start PostgreSQL**
    ```bash
-   docker-compose up -d postgres
+   podman compose up -d postgres
    ```
 
 2. **Install dependencies**
@@ -31,7 +31,7 @@ Bun + Elysia backend with Git-like version control for design projects.
 
 5. **Start development server**
    ```bash
-   bun run dev
+   bun run dev:ready
    ```
 
 6. **Open Swagger docs**
@@ -44,7 +44,10 @@ Bun + Elysia backend with Git-like version control for design projects.
 | Command | Description |
 |---------|-------------|
 | `bun run dev` | Start development server with hot reload |
+| `bun run dev:preflight` | Ensure Podman/Postgres/DB readiness for local dev |
+| `bun run dev:ready` | Run preflight, then start development server |
 | `bun run dev:diagnostics` | Start server with performance diagnostics JSONL logging |
+| `bun run dev:diagnostics:ready` | Run preflight, then diagnostics server |
 | `bun run start` | Start production server |
 | `bun run build` | Build for production |
 | `bun run db:generate` | Generate Drizzle migrations |

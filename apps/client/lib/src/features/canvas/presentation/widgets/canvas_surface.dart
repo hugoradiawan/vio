@@ -23,6 +23,7 @@ class CanvasSurface extends StatelessWidget {
     required this.editingTextShapeId,
     required this.textController,
     required this.textFocusNode,
+    required this.isViewportInteractionActive,
     super.key,
   });
 
@@ -33,6 +34,7 @@ class CanvasSurface extends StatelessWidget {
   final String? editingTextShapeId;
   final TextEditingController textController;
   final FocusNode textFocusNode;
+  final bool isViewportInteractionActive;
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +46,7 @@ class CanvasSurface extends StatelessWidget {
               color: VioColors.canvasBackground,
             ),
           ),
-          if (workspaceState.showGrid)
+          if (workspaceState.showGrid && !isViewportInteractionActive)
             Positioned.fill(
               child: RepaintBoundary(
                 child: CustomPaint(
@@ -68,17 +70,19 @@ class CanvasSurface extends StatelessWidget {
                 painter: CanvasPainter(
                   viewMatrix: canvasState.viewMatrix,
                   shapes: orderedShapes,
+                  shapesById: canvasState.shapes,
                   dragRect: canvasState.dragRect,
                   dragOffset: canvasState.dragOffset,
                   selectedShapeIds: canvasState.selectedShapeIds,
                   hoveredShapeId: canvasState.hoveredShapeId,
                   hoveredLayerId: canvasState.hoveredLayerId,
                   editingTextShapeId: editingTextShapeId,
+                  simplifyForInteraction: isViewportInteractionActive,
                 ),
               ),
             ),
           ),
-          if (canvasState.hasSelection)
+          if (canvasState.hasSelection && !isViewportInteractionActive)
             Positioned.fill(
               child: RepaintBoundary(
                 child: CustomPaint(
@@ -96,8 +100,9 @@ class CanvasSurface extends StatelessWidget {
                 ),
               ),
             ),
-          if (canvasState.snapLines.isNotEmpty ||
-              canvasState.snapPoints.isNotEmpty)
+          if (!isViewportInteractionActive &&
+              (canvasState.snapLines.isNotEmpty ||
+                  canvasState.snapPoints.isNotEmpty))
             Positioned.fill(
               child: RepaintBoundary(
                 child: CustomPaint(
@@ -111,7 +116,9 @@ class CanvasSurface extends StatelessWidget {
                 ),
               ),
             ),
-          if (canvasState.hasSelection && selectionRect != null)
+          if (!isViewportInteractionActive &&
+              canvasState.hasSelection &&
+              selectionRect != null)
             Positioned.fill(
               child: RepaintBoundary(
                 child: CustomPaint(
@@ -123,7 +130,7 @@ class CanvasSurface extends StatelessWidget {
                 ),
               ),
             ),
-          if (workspaceState.showRulers) ...[
+          if (workspaceState.showRulers && !isViewportInteractionActive) ...[
             Positioned(
               top: 0,
               left: 20,

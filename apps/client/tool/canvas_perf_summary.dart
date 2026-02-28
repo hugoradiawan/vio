@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-const _marker = 'CANVAS_PERF ';
+const _markers = ['CANVAS_PERF_V2 ', 'CANVAS_PERF '];
 
 void main(List<String> args) async {
   final cli = _parseArgs(args);
@@ -26,16 +26,17 @@ void main(List<String> args) async {
   var totalLines = 0;
   var parsedEvents = 0;
 
-  final stream = inputFile
-      .openRead()
-      .transform(utf8.decoder)
-      .transform(const LineSplitter());
+  final lines = await inputFile.readAsLines();
+  totalLines = lines.length;
+  final hasV2Entries = lines.any((line) => line.contains(_markers.first));
 
-  await for (final line in stream) {
-    totalLines += 1;
-
+  for (final line in lines) {
     final parsed = _parseLogLine(line);
     if (parsed == null) {
+      continue;
+    }
+
+    if (hasV2Entries && parsed.sourceSchema == _PerfSchema.legacyCanvasPerf) {
       continue;
     }
 
@@ -76,11 +77,26 @@ void main(List<String> args) async {
 
     final frameCount = _asInt(parsed.metrics['frameCount']);
     final jankCount = _asInt(parsed.metrics['jankCount']);
+    final uiJankCount = _asInt(parsed.metrics['uiJankCount']);
+    final rasterJankCount = _asInt(parsed.metrics['rasterJankCount']);
     if (frameCount != null && frameCount >= 0) {
       samples.frameCountTotal += frameCount;
     }
     if (jankCount != null && jankCount >= 0) {
       samples.jankCountTotal += jankCount;
+    }
+    if (uiJankCount != null && uiJankCount >= 0) {
+      samples.uiJankCountTotal += uiJankCount;
+    }
+    if (rasterJankCount != null && rasterJankCount >= 0) {
+      samples.rasterJankCountTotal += rasterJankCount;
+    }
+
+    if (parsed.inputSource != null && parsed.inputSource!.isNotEmpty) {
+      samples.inputSources.add(parsed.inputSource!);
+    }
+    if (parsed.sessionId != null && parsed.sessionId!.isNotEmpty) {
+      samples.sessionIds.add(parsed.sessionId!);
     }
 
     parsedEvents += 1;
@@ -109,8 +125,20 @@ void main(List<String> args) async {
       'jankRate': samples.frameCountTotal > 0
           ? _round((samples.jankCountTotal / samples.frameCountTotal) * 100)
           : null,
+      'uiJankRate': samples.frameCountTotal > 0
+          ? _round((samples.uiJankCountTotal / samples.frameCountTotal) * 100)
+          : null,
+      'rasterJankRate': samples.frameCountTotal > 0
+          ? _round(
+              (samples.rasterJankCountTotal / samples.frameCountTotal) * 100,
+            )
+          : null,
       'totalFrames': samples.frameCountTotal,
       'totalJankFrames': samples.jankCountTotal,
+      'totalUiJankFrames': samples.uiJankCountTotal,
+      'totalRasterJankFrames': samples.rasterJankCountTotal,
+      'sessions': samples.sessionIds.length,
+      'inputSources': samples.inputSources.toList()..sort(),
     };
   }
 
@@ -132,7 +160,7 @@ void main(List<String> args) async {
   stdout.writeln('Events parsed: $parsedEvents');
   stdout.writeln();
   stdout.writeln(
-    'operation | events | dur p50/p95 | frame p50/p95 | build p50/p95 | raster p50/p95 | jank rate | worst p95',
+    'operation | events | sessions | dur p50/p95 | frame p50/p95 | build p50/p95 | raster p50/p95 | jank/ui/raster | worst p95 | sources',
   );
 
   for (final op in keys) {
@@ -147,11 +175,21 @@ void main(List<String> args) async {
     final frameCell = _pair(avgFrame);
     final buildCell = _pair(avgBuild);
     final rasterCell = _pair(avgRaster);
-    final jankCell = item['jankRate'] == null ? '-' : '${item['jankRate']}%';
+    final jankRate = item['jankRate'];
+    final uiJankRate = item['uiJankRate'];
+    final rasterJankRate = item['rasterJankRate'];
+    final jankCell =
+        '${jankRate == null ? '-' : '$jankRate%'} / '
+        '${uiJankRate == null ? '-' : '$uiJankRate%'} / '
+        '${rasterJankRate == null ? '-' : '$rasterJankRate%'}';
     final worstP95 = _single(worstFrame?['p95']);
+    final sessions = item['sessions'] ?? '-';
+    final sources = (item['inputSources'] as List<dynamic>? ?? const [])
+        .map((source) => source.toString())
+        .join(',');
 
     stdout.writeln(
-      '$op | ${item['events']} | $durCell | $frameCell | $buildCell | $rasterCell | $jankCell | $worstP95',
+      '$op | ${item['events']} | $sessions | $durCell | $frameCell | $buildCell | $rasterCell | $jankCell | $worstP95 | ${sources.isEmpty ? '-' : sources}',
     );
   }
 }
@@ -233,28 +271,51 @@ class _Samples {
   final List<double> worstFrameMs = [];
   int frameCountTotal = 0;
   int jankCountTotal = 0;
+  int uiJankCountTotal = 0;
+  int rasterJankCountTotal = 0;
+  final Set<String> sessionIds = {};
+  final Set<String> inputSources = {};
 }
 
 class _ParsedLogLine {
   _ParsedLogLine({
     required this.operation,
     required this.metrics,
+    required this.sourceSchema,
+    this.inputSource,
+    this.sessionId,
   });
 
   final String operation;
   final Map<String, dynamic> metrics;
+  final _PerfSchema sourceSchema;
+  final String? inputSource;
+  final String? sessionId;
+}
+
+enum _PerfSchema {
+  none,
+  legacyCanvasPerf,
+  canvasPerfV2,
 }
 
 _ParsedLogLine? _parseLogLine(String line) {
   Map<String, dynamic>? payload;
+  var sourceSchema = _PerfSchema.none;
 
-  final markerIndex = line.indexOf(_marker);
-  if (markerIndex >= 0) {
-    final jsonPart = line.substring(markerIndex + _marker.length).trim();
-    payload = _decodeMap(jsonPart);
-  } else {
-    payload = _decodeMap(line.trim());
+  for (final marker in _markers) {
+    final markerIndex = line.indexOf(marker);
+    if (markerIndex >= 0) {
+      final jsonPart = line.substring(markerIndex + marker.length).trim();
+      payload = _decodeMap(jsonPart);
+      sourceSchema = marker == _markers.first
+          ? _PerfSchema.canvasPerfV2
+          : _PerfSchema.legacyCanvasPerf;
+      break;
+    }
   }
+
+  payload ??= _decodeMap(line.trim());
 
   if (payload == null) return null;
 
@@ -271,9 +332,30 @@ _ParsedLogLine? _parseLogLine(String line) {
     metricsMap['durationMs'] = rootDuration;
   }
 
+  final context = payload['context'];
+  final contextMap = context is Map<Object?, Object?>
+      ? context.cast<String, dynamic>()
+      : <String, dynamic>{};
+  final session = payload['session'];
+  final sessionMap = session is Map<Object?, Object?>
+      ? session.cast<String, dynamic>()
+      : <String, dynamic>{};
+
+  final metricSource = metricsMap['source'];
+  final contextSource = contextMap['inputSource'];
+  final inputSource = metricSource is String
+      ? metricSource
+      : (contextSource is String ? contextSource : null);
+  final sessionId = sessionMap['id'] is String
+      ? sessionMap['id'] as String
+      : null;
+
   return _ParsedLogLine(
     operation: operation,
     metrics: metricsMap,
+    sourceSchema: sourceSchema,
+    inputSource: inputSource,
+    sessionId: sessionId,
   );
 }
 
@@ -299,6 +381,7 @@ Map<String, dynamic>? _distribution(List<double> values) {
     'min': _round(sorted.first),
     'p50': _round(_percentile(sorted, 0.50)),
     'p95': _round(_percentile(sorted, 0.95)),
+    'p99': _round(_percentile(sorted, 0.99)),
     'max': _round(sorted.last),
   };
 }

@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:grpc/grpc.dart';
 import 'package:uuid/uuid.dart';
 import 'package:vio_core/vio_core.dart';
 
@@ -309,18 +310,43 @@ class AssetBloc extends Bloc<AssetEvent, AssetState> {
         pb_asset.GetAssetRequest()..id = event.assetId,
       );
 
-      if (response.asset.data.isNotEmpty) {
-        final bytes = Uint8List.fromList(response.asset.data);
-        final updatedCache = Map<String, Uint8List>.from(state.assetDataCache)
-          ..[event.assetId] = bytes;
-
-        emit(state.copyWith(assetDataCache: updatedCache));
-
-        // Decode the image into the paint cache so ShapePainter can use it.
-        // This fires ImageCacheService.onImageDecoded on completion,
-        // which triggers a canvas repaint.
-        await ImageCacheService.instance.decode(event.assetId, bytes);
+      if (response.asset.data.isEmpty) {
+        emit(
+          state.copyWith(
+            errorMessage:
+                'Asset data is empty for ${event.assetId}. Please re-upload the asset.',
+          ),
+        );
+        return;
       }
+
+      final bytes = Uint8List.fromList(response.asset.data);
+      final updatedCache = Map<String, Uint8List>.from(state.assetDataCache)
+        ..[event.assetId] = bytes;
+
+      emit(state.copyWith(assetDataCache: updatedCache));
+
+      try {
+        await ImageCacheService.instance.decode(event.assetId, bytes);
+      } catch (e) {
+        emit(
+          state.copyWith(
+            errorMessage: 'Failed to decode asset image ${event.assetId}: $e',
+          ),
+        );
+      }
+    } on GrpcError catch (e) {
+      final errorMessage = switch (e.code) {
+        StatusCode.notFound =>
+          'Asset ${event.assetId} was not found. It may have been deleted.',
+        StatusCode.unavailable ||
+        StatusCode.deadlineExceeded ||
+        StatusCode.unknown =>
+          'Asset service is temporarily unavailable. Please retry in a moment.',
+        _ => 'Failed to fetch asset data: $e',
+      };
+
+      emit(state.copyWith(errorMessage: errorMessage));
     } catch (e) {
       emit(
         state.copyWith(

@@ -37,6 +37,13 @@ export function unauthenticated(message: string): ConnectError {
 }
 
 /**
+ * Create an UNAVAILABLE error
+ */
+export function unavailable(message: string): ConnectError {
+	return new ConnectError(message, Code.Unavailable);
+}
+
+/**
  * Create a PERMISSION_DENIED error
  */
 export function permissionDenied(message: string): ConnectError {

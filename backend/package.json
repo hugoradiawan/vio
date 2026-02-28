@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "bun run --watch src/index.ts",
+    "dev:preflight": "sh ./scripts/dev-preflight.sh",
+    "dev:ready": "bun run dev:preflight && bun run dev",
     "dev:diagnostics": "PERF_DIAGNOSTICS=1 bun run --watch src/index.ts",
+    "dev:diagnostics:ready": "bun run dev:preflight && bun run dev:diagnostics",
     "start": "bun run src/index.ts",
     "build": "bun build src/index.ts --outdir ./dist --target bun",
     "db:generate": "drizzle-kit generate",

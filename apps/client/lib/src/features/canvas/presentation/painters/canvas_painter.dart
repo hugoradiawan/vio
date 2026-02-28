@@ -11,12 +11,14 @@ class CanvasPainter extends CustomPainter {
   CanvasPainter({
     required this.viewMatrix,
     required this.shapes,
+    required this.shapesById,
     this.dragRect,
     this.dragOffset,
     this.selectedShapeIds = const [],
     this.hoveredShapeId,
     this.hoveredLayerId,
     this.editingTextShapeId,
+    this.simplifyForInteraction = false,
   });
 
   /// Transformation matrix for viewport
@@ -24,6 +26,9 @@ class CanvasPainter extends CustomPainter {
 
   /// All shapes to render
   final List<Shape> shapes;
+
+  /// Shape lookup map from state (reused to avoid per-frame map rebuild).
+  final Map<String, Shape> shapesById;
 
   /// Current drag selection rectangle (in canvas coordinates)
   final Rect? dragRect;
@@ -43,6 +48,9 @@ class CanvasPainter extends CustomPainter {
   /// ID of the text shape currently being edited (rendered by overlay)
   final String? editingTextShapeId;
 
+  /// Enables a lower-cost rendering path while panning/zooming.
+  final bool simplifyForInteraction;
+
   double get _zoom {
     final zoom = viewMatrix.a.abs();
     return zoom <= 0 ? 1.0 : zoom;
@@ -54,6 +62,10 @@ class CanvasPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    final visibleCanvasRect = _visibleCanvasRect(size).inflate(
+      simplifyForInteraction ? 320 : 160,
+    );
+
     // Apply view transformation
     canvas.save();
     canvas.transform(
@@ -81,20 +93,9 @@ class CanvasPainter extends CustomPainter {
         dragOffset != null && selectedShapeIds.isNotEmpty;
     final selectedIdSet = selectedShapeIds.toSet();
 
-    // Build a simple containment map using existing absolute coordinates.
-    // - If a shape has a valid parentId that points to a group, it is rendered
-    //   as a child of that group.
-    // - Otherwise, if a shape has a valid frameId, it is rendered as a child
-    //   of that frame.
-    final shapesById = <String, Shape>{for (final s in shapes) s.id: s};
+    // Build containment map in already-ordered sequence from state.
     final childrenByContainerId = <String, List<Shape>>{};
     final rootShapes = <Shape>[];
-
-    int compareZ(Shape a, Shape b) {
-      final byOrder = a.sortOrder.compareTo(b.sortOrder);
-      if (byOrder != 0) return byOrder;
-      return a.id.compareTo(b.id);
-    }
 
     for (final shape in shapes) {
       final parentId = shape.parentId;
@@ -112,11 +113,6 @@ class CanvasPainter extends CustomPainter {
         rootShapes.add(shape);
       }
     }
-
-    for (final list in childrenByContainerId.values) {
-      list.sort(compareZ);
-    }
-    rootShapes.sort(compareZ);
 
     // During dragging, if a container (group/frame) is selected, also move its
     // descendants in the drag overlay so children don't appear to detach.
@@ -145,17 +141,38 @@ class CanvasPainter extends CustomPainter {
         return;
       }
 
+      final children = childrenByContainerId[shape.id];
+      final isVisible = _isShapeVisible(shape, visibleCanvasRect);
+
+      if (!isVisible) {
+        // For clipped frames, skip subtree entirely when frame is offscreen.
+        if (shape is FrameShape && shape.clipContent) {
+          return;
+        }
+
+        // For non-clipped containers, descendants might still overlap viewport.
+        if (children != null && children.isNotEmpty) {
+          for (final child in children) {
+            paintShapeTree(child);
+          }
+        }
+        return;
+      }
+
       // When a text shape is being edited, an overlay EditableText renders it.
       // Skip painting it here to avoid double-rendered (duplicated) text.
       if (shape is! TextShape || shape.id != editingTextShapeId) {
-        ShapePainter.paintShape(canvas, shape);
+        ShapePainter.paintShape(
+          canvas,
+          shape,
+          simplifyForInteraction: simplifyForInteraction,
+        );
       }
 
-      if (shape is FrameShape) {
+      if (shape is FrameShape && !simplifyForInteraction) {
         _drawFrameLabel(canvas, shape);
       }
 
-      final children = childrenByContainerId[shape.id];
       if (children == null || children.isEmpty) {
         return;
       }
@@ -238,9 +255,13 @@ class CanvasPainter extends CustomPainter {
           }
 
           if (shape is! TextShape || shape.id != editingTextShapeId) {
-            ShapePainter.paintShape(canvas, shape);
+            ShapePainter.paintShape(
+              canvas,
+              shape,
+              simplifyForInteraction: simplifyForInteraction,
+            );
           }
-          if (shape is FrameShape) {
+          if (shape is FrameShape && !simplifyForInteraction) {
             _drawFrameLabel(canvas, shape);
           }
 
@@ -282,11 +303,13 @@ class CanvasPainter extends CustomPainter {
       canvas.restore();
     }
 
-    // Draw hover outline (from canvas or layer panel)
-    _drawHoverOutline(canvas);
+    if (!simplifyForInteraction) {
+      // Draw hover outline (from canvas or layer panel)
+      _drawHoverOutline(canvas);
 
-    // Draw selection outlines for selected shapes
-    _drawSelectionOutlines(canvas);
+      // Draw selection outlines for selected shapes
+      _drawSelectionOutlines(canvas);
+    }
 
     canvas.restore();
 
@@ -299,7 +322,6 @@ class CanvasPainter extends CustomPainter {
   void _drawSelectionOutlines(Canvas canvas) {
     if (selectedShapeIds.isEmpty) return;
 
-    final shapesById = <String, Shape>{for (final s in shapes) s.id: s};
     final selectedIdSet = selectedShapeIds.toSet();
 
     final outlinePaint = Paint()
@@ -463,6 +485,46 @@ class CanvasPainter extends CustomPainter {
     return Offset(result.x, result.y);
   }
 
+  Rect _visibleCanvasRect(Size size) {
+    final zoom = viewMatrix.a == 0 ? 1.0 : viewMatrix.a;
+    final left = -viewMatrix.e / zoom;
+    final top = -viewMatrix.f / zoom;
+    return Rect.fromLTWH(
+      left,
+      top,
+      size.width / zoom,
+      size.height / zoom,
+    );
+  }
+
+  bool _isShapeVisible(Shape shape, Rect visibleCanvasRect) {
+    if (shape.hidden || shape.opacity <= 0) return false;
+
+    final bounds = shape.bounds;
+    final corners = [
+      shape.transformPoint(Offset(bounds.left, bounds.top)),
+      shape.transformPoint(Offset(bounds.right, bounds.top)),
+      shape.transformPoint(Offset(bounds.right, bounds.bottom)),
+      shape.transformPoint(Offset(bounds.left, bounds.bottom)),
+    ];
+
+    var minX = corners.first.dx;
+    var maxX = corners.first.dx;
+    var minY = corners.first.dy;
+    var maxY = corners.first.dy;
+
+    for (var i = 1; i < corners.length; i++) {
+      final corner = corners[i];
+      if (corner.dx < minX) minX = corner.dx;
+      if (corner.dx > maxX) maxX = corner.dx;
+      if (corner.dy < minY) minY = corner.dy;
+      if (corner.dy > maxY) maxY = corner.dy;
+    }
+
+    final transformedBounds = Rect.fromLTRB(minX, minY, maxX, maxY);
+    return transformedBounds.overlaps(visibleCanvasRect);
+  }
+
   void _drawFrameLabel(Canvas canvas, FrameShape frame) {
     final bounds = frame.bounds;
     final isSelected = selectedShapeIds.contains(frame.id);
@@ -527,6 +589,7 @@ class CanvasPainter extends CustomPainter {
         dragRect != oldDelegate.dragRect ||
         !listEquals(selectedShapeIds, oldDelegate.selectedShapeIds) ||
         hoveredShapeId != oldDelegate.hoveredShapeId ||
-        hoveredLayerId != oldDelegate.hoveredLayerId;
+        hoveredLayerId != oldDelegate.hoveredLayerId ||
+        simplifyForInteraction != oldDelegate.simplifyForInteraction;
   }
 }

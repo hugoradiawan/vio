@@ -49,6 +49,52 @@ const PORT = Number(process.env.PORT) || 4000;
 const WEB_PORT = Number(process.env.WEB_PORT) || 4001;
 const USE_TLS = process.env.USE_TLS === "true";
 const perfDiagnostics = getPerfDiagnosticsConfig();
+const ADMIN_BOOTSTRAP_RETRY_COUNT = Number(
+	process.env.ADMIN_BOOTSTRAP_RETRY_COUNT ?? 10,
+);
+const ADMIN_BOOTSTRAP_RETRY_DELAY_MS = Number(
+	process.env.ADMIN_BOOTSTRAP_RETRY_DELAY_MS ?? 1500,
+);
+
+function sleep(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function ensureAdminUserWithRetry(): Promise<void> {
+	let lastError: unknown;
+
+	for (let attempt = 1; attempt <= ADMIN_BOOTSTRAP_RETRY_COUNT; attempt++) {
+		try {
+			await ensureAdminUser();
+			if (attempt > 1) {
+				console.log(
+					`   ✓ Admin bootstrap succeeded on retry ${attempt}/${ADMIN_BOOTSTRAP_RETRY_COUNT}`,
+				);
+			}
+			return;
+		} catch (error) {
+			lastError = error;
+			const shouldRetry = attempt < ADMIN_BOOTSTRAP_RETRY_COUNT;
+			const reason = error instanceof Error ? error.message : String(error);
+
+			if (!shouldRetry) {
+				break;
+			}
+
+			console.warn(
+				`⚠️  Admin bootstrap failed (attempt ${attempt}/${ADMIN_BOOTSTRAP_RETRY_COUNT}): ${reason}`,
+			);
+			console.warn(`   Retrying in ${ADMIN_BOOTSTRAP_RETRY_DELAY_MS}ms...`);
+			await sleep(ADMIN_BOOTSTRAP_RETRY_DELAY_MS);
+		}
+	}
+
+	throw new Error(
+		`Admin bootstrap failed after ${ADMIN_BOOTSTRAP_RETRY_COUNT} attempts: ${
+			lastError instanceof Error ? lastError.message : String(lastError)
+		}`,
+	);
+}
 
 // Create ConnectRPC router with all services
 function createRoutes(router: ConnectRouter) {
@@ -136,7 +182,7 @@ const handler = (
 };
 
 // Bootstrap admin user on startup
-await ensureAdminUser();
+await ensureAdminUserWithRetry();
 
 // Create and start server
 // For development: Use HTTP/1.1 for easy testing with curl/Postman

@@ -10,6 +10,7 @@ import '../../gen/vio/v1/commit.pbgrpc.dart';
 import '../../gen/vio/v1/project.pbgrpc.dart';
 import '../../gen/vio/v1/pullrequest.pbgrpc.dart';
 import '../../gen/vio/v1/shape.pbgrpc.dart';
+import '../auth/token_storage.dart';
 import '../config/app_config.dart';
 import 'grpc_channel.dart';
 
@@ -122,6 +123,7 @@ class GrpcClient {
   // ============== Auth Token Management ==============
 
   String? _authToken;
+  Future<bool>? _ongoingTokenRefresh;
 
   /// The auth interceptor used by all service clients.
   late final _AuthInterceptor _authInterceptor = _AuthInterceptor(this);
@@ -136,6 +138,53 @@ class GrpcClient {
   void clearAuthToken() {
     _authToken = null;
     debugPrint('[GrpcClient] Auth token cleared');
+  }
+
+  /// Refresh access token using stored refresh token.
+  ///
+  /// Coalesces concurrent refresh attempts into one request.
+  Future<bool> refreshAuthToken() {
+    final ongoing = _ongoingTokenRefresh;
+    if (ongoing != null) {
+      return ongoing;
+    }
+
+    final refreshFuture = _refreshAuthTokenInternal();
+    _ongoingTokenRefresh = refreshFuture;
+
+    return refreshFuture.whenComplete(() {
+      if (identical(_ongoingTokenRefresh, refreshFuture)) {
+        _ongoingTokenRefresh = null;
+      }
+    });
+  }
+
+  Future<bool> _refreshAuthTokenInternal() async {
+    try {
+      final refreshToken = await TokenStorage.instance.getRefreshToken();
+      if (refreshToken == null || refreshToken.isEmpty) {
+        debugPrint('[GrpcClient] Token refresh skipped: no refresh token');
+        return false;
+      }
+
+      final response = await authClient.refreshToken(
+        RefreshTokenRequest()..refreshToken = refreshToken,
+      );
+
+      await TokenStorage.instance.saveTokens(
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
+      );
+
+      setAuthToken(response.accessToken);
+      debugPrint('[GrpcClient] Access token refreshed');
+      return true;
+    } catch (error) {
+      debugPrint('[GrpcClient] Token refresh failed: $error');
+      await TokenStorage.instance.clearTokens();
+      clearAuthToken();
+      return false;
+    }
   }
 
 

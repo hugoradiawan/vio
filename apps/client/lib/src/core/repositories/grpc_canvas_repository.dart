@@ -6,6 +6,7 @@ import 'package:vio_core/vio_core.dart';
 
 import '../../gen/vio/v1/canvas.pb.dart' as pb;
 import '../../gen/vio/v1/canvas.pbgrpc.dart';
+import '../grpc/grpc_client.dart';
 import '../grpc/proto_converter.dart';
 
 /// Repository that manages canvas state with gRPC sync to the backend
@@ -401,7 +402,7 @@ class GrpcCanvasRepository {
   }
 
   /// Sync pending changes to server via gRPC
-  Future<void> _syncToServer() async {
+  Future<void> _syncToServer({bool retryAfterRefresh = true}) async {
     if (_projectId == null || _branchId == null) {
       VioLogger.warning(
         'GrpcCanvasRepository: _syncToServer skipped - projectId=$_projectId, branchId=$_branchId',
@@ -425,6 +426,7 @@ class GrpcCanvasRepository {
 
     _isSyncing = true;
     _updateSyncStatus(SyncStatus.syncing);
+    var shouldRetryAfterRefresh = false;
 
     final operationsToSync = List<_PendingOp>.from(_pendingOperations);
 
@@ -478,10 +480,30 @@ class GrpcCanvasRepository {
         _updateSyncStatus(SyncStatus.error);
       }
     } on GrpcError catch (e) {
+      if (e.code == StatusCode.unauthenticated && retryAfterRefresh) {
+        VioLogger.warning(
+          'GrpcCanvasRepository: Sync unauthenticated, attempting token refresh',
+        );
+
+        final refreshed = await GrpcClient.instance.refreshAuthToken();
+        if (refreshed) {
+          shouldRetryAfterRefresh = true;
+        } else {
+          VioLogger.error(
+            'GrpcCanvasRepository: Sync error - authentication refresh failed',
+          );
+          _updateSyncStatus(SyncStatus.error);
+        }
+      } else {
       VioLogger.error('GrpcCanvasRepository: Sync error - ${e.message}');
       _updateSyncStatus(SyncStatus.error);
+      }
     } finally {
       _isSyncing = false;
+    }
+
+    if (shouldRetryAfterRefresh) {
+      await _syncToServer(retryAfterRefresh: false);
     }
   }
 

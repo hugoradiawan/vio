@@ -17,6 +17,7 @@ import 'package:vio_core/vio_core.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import 'canvas_performance_diagnostics.dart';
+import 'viewport_notifier.dart';
 import 'widgets/canvas_input_layer.dart';
 import 'widgets/canvas_surface.dart';
 
@@ -98,6 +99,15 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
   /// Debounce timer used for wheel/trackpad interactions.
   Timer? _viewportInteractionTimer;
 
+  /// Lightweight notifier for viewport state that drives RustCanvasPainter
+  /// repaints without widget rebuilds or FFI calls.
+  final ViewportNotifier _viewportNotifier = ViewportNotifier();
+
+  /// Separate notifier for interaction state (active/inactive).
+  /// CanvasSurface's ListenableBuilder listens to this — fires only when
+  /// interaction starts/stops (2× per gesture), not on every viewport frame.
+  final ValueNotifier<bool> _interactionNotifier = ValueNotifier(false);
+
   /// Buffered pan delta for high-frequency pointer pan/zoom events.
   Offset _bufferedPanZoomDelta = Offset.zero;
 
@@ -150,6 +160,19 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
     _imageDecodeSub = ImageCacheService.instance.onImageDecoded.listen((_) {
       if (mounted) setState(() {});
     });
+
+    // Seed the viewport notifier with the initial BLoC state so the painter
+    // has correct values on the very first frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final s = context.read<CanvasBloc>().state;
+      _viewportNotifier.update(
+        zoom: s.zoom,
+        offset: s.viewportOffset,
+        size: s.viewportSize,
+        viewMatrix: s.viewMatrix,
+      );
+    });
   }
 
   @override
@@ -163,6 +186,8 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
     _imageDecodeSub?.cancel();
     _textLayoutDebounce?.cancel();
     _viewportInteractionTimer?.cancel();
+    _viewportNotifier.dispose();
+    _interactionNotifier.dispose();
     _textController.removeListener(_onTextControllerChanged);
     _textController.dispose();
     _textFocusNode.dispose();
@@ -207,220 +232,235 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
                     ),
                   );
                 });
-                return BlocBuilder<CanvasBloc, CanvasState>(
-                  buildWhen: (prev, curr) =>
-                      // Rendering-affecting changes only — skip rebuilds for
-                      // sync status, server version, expanded layers, etc.
+                return BlocListener<CanvasBloc, CanvasState>(
+                  listenWhen: (prev, curr) =>
                       prev.zoom != curr.zoom ||
                       prev.viewportOffset != curr.viewportOffset ||
-                      prev.viewportSize != curr.viewportSize ||
-                      prev.interactionMode != curr.interactionMode ||
-                      prev.dragStart != curr.dragStart ||
-                      prev.currentPointer != curr.currentPointer ||
-                      prev.dragOffset != curr.dragOffset ||
-                      !identical(prev.shapes, curr.shapes) ||
-                      prev.selectedShapeIds != curr.selectedShapeIds ||
-                      prev.hoveredShapeId != curr.hoveredShapeId ||
-                      prev.hoveredLayerId != curr.hoveredLayerId ||
-                      prev.editingTextShapeId != curr.editingTextShapeId ||
-                      prev.snapLines != curr.snapLines ||
-                      prev.snapPoints != curr.snapPoints ||
-                      prev.activeCornerIndex != curr.activeCornerIndex ||
-                      prev.hoveredCornerIndex != curr.hoveredCornerIndex ||
-                      prev.selectionCursorKind != curr.selectionCursorKind ||
-                      prev.syncStatus != curr.syncStatus ||
-                      prev.syncError != curr.syncError,
-                  builder: (context, canvasState) {
-                    return BlocBuilder<WorkspaceBloc, WorkspaceState>(
-                      buildWhen: (prev, curr) =>
-                          prev.showGrid != curr.showGrid ||
-                          prev.showRulers != curr.showRulers ||
-                          prev.gridSize != curr.gridSize ||
-                          prev.activeTool != curr.activeTool,
-                      builder: (context, workspaceState) {
-                        final selectionRect = canvasState.selectionRect;
-                        final orderedShapes = canvasState.shapeList;
-
-                        return MultiBlocListener(
-                          listeners: [
-                            BlocListener<CanvasBloc, CanvasState>(
-                              listenWhen: (prev, curr) =>
-                                  prev.interactionMode ==
-                                      InteractionMode.drawing &&
-                                  curr.interactionMode !=
-                                      InteractionMode.drawing,
-                              listener: (context, canvasState) {
-                                final tool = context
-                                    .read<WorkspaceBloc>()
-                                    .state
-                                    .activeTool;
-                                final isBoxTool =
-                                    tool == CanvasTool.rectangle ||
-                                        tool == CanvasTool.ellipse ||
-                                        tool == CanvasTool.frame;
-
-                                if (isBoxTool) {
-                                  context.read<WorkspaceBloc>().add(
-                                        const ToolSelected(CanvasTool.select),
-                                      );
-                                }
-                              },
-                            ),
-                            BlocListener<CanvasBloc, CanvasState>(
-                              listenWhen: (prev, curr) =>
-                                  prev.editingTextShapeId !=
-                                  curr.editingTextShapeId,
-                              listener: (context, canvasState) {
-                                final id = canvasState.editingTextShapeId;
-                                setState(() {
-                                  _editingTextShapeId = id;
-                                });
-
-                                _lastSentTextWidth = null;
-                                _lastSentTextHeight = null;
-
-                                if (id == null) {
-                                  return;
-                                }
-
-                                // After creating a new text element, immediately switch
-                                // back to Select (Penpot-like behavior). Only do this
-                                // for draft text shapes so editing existing text doesn't
-                                // unexpectedly change tools.
-                                if (canvasState.draftTextShapeIds
-                                    .contains(id)) {
-                                  final workspaceBloc =
-                                      context.read<WorkspaceBloc>();
-                                  if (workspaceBloc.state.activeTool ==
-                                      CanvasTool.text) {
-                                    workspaceBloc.add(
-                                      const ToolSelected(CanvasTool.select),
-                                    );
-                                  }
-                                }
-
-                                final shape = canvasState.shapes[id];
-                                if (shape is! TextShape) {
-                                  return;
-                                }
-
-                                _textController.text = shape.text;
-                                _textController.selection =
-                                    TextSelection.fromPosition(
-                                  TextPosition(
-                                    offset: _textController.text.length,
-                                  ),
-                                );
-
-                                WidgetsBinding.instance
-                                    .addPostFrameCallback((_) {
-                                  if (mounted) {
-                                    _textFocusNode.requestFocus();
-                                  }
-                                });
-
-                                // If this is a Google font, it may load async and change
-                                // metrics after we've measured. Trigger a relayout once
-                                // the font is ready so text never overflows the box.
-                                _relayoutEditingTextAfterFontLoad(
-                                  shapeId: id,
-                                  shape: shape,
-                                );
-                              },
-                            ),
-                          ],
-                          child: CanvasInputLayer(
-                            cursor: _getCursor(
-                              workspaceState.activeTool,
-                              canvasState,
-                            ),
-                            onHover: (event) => _handlePointerHover(
-                              context,
-                              event,
-                              workspaceState,
-                            ),
-                            onExit: () => _handlePointerExit(context),
-                            onPointerDown: (event) => _handlePointerDown(
-                              context,
-                              event,
-                              workspaceState,
-                            ),
-                            onPointerMove: (event) => _handlePointerMove(
-                              context,
-                              event,
-                              workspaceState,
-                            ),
-                            onPointerUp: (event) =>
-                                _handlePointerUp(context, event),
-                            onPointerSignal: (event) =>
-                                _handlePointerSignal(context, event),
-                            onPointerPanZoomStart: (event) {
-                              _lastScale = 1.0;
-                              _resetBufferedPanZoom(event.localPosition);
-                              _setViewportInteractionActive();
-                              _perfDiagnostics.onGestureZoomStart(canvasState);
-                            },
-                            onPointerPanZoomUpdate: (event) {
-                              _setViewportInteractionActive();
-                              if (event.scale != 1.0) {
-                                final scaleChange = event.scale / _lastScale;
-                                _lastScale = event.scale;
-                                _perfDiagnostics.onGestureZoomUpdate(
-                                  scaleChange,
-                                  canvasState,
-                                );
-                                _bufferPanZoomViewportUpdate(
-                                  context,
-                                  scaleFactor: scaleChange,
-                                  panDelta: Offset.zero,
-                                  focalPoint: event.localPosition,
-                                );
-                              } else if (event.panDelta != Offset.zero) {
-                                _perfDiagnostics.onGesturePanUpdate(
-                                  event.panDelta,
-                                  canvasState,
-                                );
-                                _perfDiagnostics.onDragPanUpdate(
-                                  event.panDelta,
-                                  canvasState,
-                                );
-                                _bufferPanZoomViewportUpdate(
-                                  context,
-                                  scaleFactor: 1.0,
-                                  panDelta: event.panDelta,
-                                  focalPoint: event.localPosition,
-                                );
-                              }
-                            },
-                            onPointerPanZoomEnd: (event) {
-                              _lastScale = 1.0;
-                              _flushBufferedPanZoom(context, force: true);
-                              _perfDiagnostics.onGestureZoomEnd(canvasState);
-                              _setViewportInteractionInactive();
-                            },
-                            onAssetAccept: (details) {
-                              _handleAssetDrop(
-                                context,
-                                details,
-                                canvasState,
-                              );
-                            },
-                            child: CanvasSurface(
-                              canvasState: canvasState,
-                              workspaceState: workspaceState,
-                              orderedShapes: orderedShapes,
-                              selectionRect: selectionRect,
-                              editingTextShapeId: _editingTextShapeId,
-                              textController: _textController,
-                              textFocusNode: _textFocusNode,
-                              isViewportInteractionActive:
-                                  _isViewportInteractionActive,
-                            ),
-                          ),
-                        );
-                      },
+                      prev.viewportSize != curr.viewportSize,
+                  listener: (context, state) {
+                    // Push viewport changes to the lightweight notifier.
+                    // This fires RustCanvasPainter.repaint without rebuilding
+                    // the widget tree or calling FFI.
+                    _viewportNotifier.update(
+                      zoom: state.zoom,
+                      offset: state.viewportOffset,
+                      size: state.viewportSize,
+                      viewMatrix: state.viewMatrix,
                     );
                   },
+                  child: BlocBuilder<CanvasBloc, CanvasState>(
+                    buildWhen: (prev, curr) =>
+                        // Rendering-affecting changes only — viewport changes
+                        // are handled by ViewportNotifier without a rebuild.
+                        prev.interactionMode != curr.interactionMode ||
+                        prev.dragStart != curr.dragStart ||
+                        prev.currentPointer != curr.currentPointer ||
+                        prev.dragOffset != curr.dragOffset ||
+                        !identical(prev.shapes, curr.shapes) ||
+                        prev.selectedShapeIds != curr.selectedShapeIds ||
+                        prev.hoveredShapeId != curr.hoveredShapeId ||
+                        prev.hoveredLayerId != curr.hoveredLayerId ||
+                        prev.editingTextShapeId != curr.editingTextShapeId ||
+                        prev.snapLines != curr.snapLines ||
+                        prev.snapPoints != curr.snapPoints ||
+                        prev.activeCornerIndex != curr.activeCornerIndex ||
+                        prev.hoveredCornerIndex != curr.hoveredCornerIndex ||
+                        prev.selectionCursorKind != curr.selectionCursorKind ||
+                        prev.syncStatus != curr.syncStatus ||
+                        prev.syncError != curr.syncError,
+                    builder: (context, canvasState) {
+                      return BlocBuilder<WorkspaceBloc, WorkspaceState>(
+                        buildWhen: (prev, curr) =>
+                            prev.showGrid != curr.showGrid ||
+                            prev.showRulers != curr.showRulers ||
+                            prev.gridSize != curr.gridSize ||
+                            prev.activeTool != curr.activeTool,
+                        builder: (context, workspaceState) {
+                          final selectionRect = canvasState.selectionRect;
+                          final orderedShapes = canvasState.shapeList;
+
+                          return MultiBlocListener(
+                            listeners: [
+                              BlocListener<CanvasBloc, CanvasState>(
+                                listenWhen: (prev, curr) =>
+                                    prev.interactionMode ==
+                                        InteractionMode.drawing &&
+                                    curr.interactionMode !=
+                                        InteractionMode.drawing,
+                                listener: (context, canvasState) {
+                                  final tool = context
+                                      .read<WorkspaceBloc>()
+                                      .state
+                                      .activeTool;
+                                  final isBoxTool =
+                                      tool == CanvasTool.rectangle ||
+                                          tool == CanvasTool.ellipse ||
+                                          tool == CanvasTool.frame;
+
+                                  if (isBoxTool) {
+                                    context.read<WorkspaceBloc>().add(
+                                          const ToolSelected(CanvasTool.select),
+                                        );
+                                  }
+                                },
+                              ),
+                              BlocListener<CanvasBloc, CanvasState>(
+                                listenWhen: (prev, curr) =>
+                                    prev.editingTextShapeId !=
+                                    curr.editingTextShapeId,
+                                listener: (context, canvasState) {
+                                  final id = canvasState.editingTextShapeId;
+                                  setState(() {
+                                    _editingTextShapeId = id;
+                                  });
+
+                                  _lastSentTextWidth = null;
+                                  _lastSentTextHeight = null;
+
+                                  if (id == null) {
+                                    return;
+                                  }
+
+                                  // After creating a new text element, immediately switch
+                                  // back to Select (Penpot-like behavior). Only do this
+                                  // for draft text shapes so editing existing text doesn't
+                                  // unexpectedly change tools.
+                                  if (canvasState.draftTextShapeIds
+                                      .contains(id)) {
+                                    final workspaceBloc =
+                                        context.read<WorkspaceBloc>();
+                                    if (workspaceBloc.state.activeTool ==
+                                        CanvasTool.text) {
+                                      workspaceBloc.add(
+                                        const ToolSelected(CanvasTool.select),
+                                      );
+                                    }
+                                  }
+
+                                  final shape = canvasState.shapes[id];
+                                  if (shape is! TextShape) {
+                                    return;
+                                  }
+
+                                  _textController.text = shape.text;
+                                  _textController.selection =
+                                      TextSelection.fromPosition(
+                                    TextPosition(
+                                      offset: _textController.text.length,
+                                    ),
+                                  );
+
+                                  WidgetsBinding.instance
+                                      .addPostFrameCallback((_) {
+                                    if (mounted) {
+                                      _textFocusNode.requestFocus();
+                                    }
+                                  });
+
+                                  // If this is a Google font, it may load async and change
+                                  // metrics after we've measured. Trigger a relayout once
+                                  // the font is ready so text never overflows the box.
+                                  _relayoutEditingTextAfterFontLoad(
+                                    shapeId: id,
+                                    shape: shape,
+                                  );
+                                },
+                              ),
+                            ],
+                            child: CanvasInputLayer(
+                              cursor: _getCursor(
+                                workspaceState.activeTool,
+                                canvasState,
+                              ),
+                              onHover: (event) => _handlePointerHover(
+                                context,
+                                event,
+                                workspaceState,
+                              ),
+                              onExit: () => _handlePointerExit(context),
+                              onPointerDown: (event) => _handlePointerDown(
+                                context,
+                                event,
+                                workspaceState,
+                              ),
+                              onPointerMove: (event) => _handlePointerMove(
+                                context,
+                                event,
+                                workspaceState,
+                              ),
+                              onPointerUp: (event) =>
+                                  _handlePointerUp(context, event),
+                              onPointerSignal: (event) =>
+                                  _handlePointerSignal(context, event),
+                              onPointerPanZoomStart: (event) {
+                                _lastScale = 1.0;
+                                _resetBufferedPanZoom(event.localPosition);
+                                _setViewportInteractionActive();
+                                _perfDiagnostics
+                                    .onGestureZoomStart(canvasState);
+                              },
+                              onPointerPanZoomUpdate: (event) {
+                                _setViewportInteractionActive();
+                                if (event.scale != 1.0) {
+                                  final scaleChange = event.scale / _lastScale;
+                                  _lastScale = event.scale;
+                                  _perfDiagnostics.onGestureZoomUpdate(
+                                    scaleChange,
+                                    canvasState,
+                                  );
+                                  _bufferPanZoomViewportUpdate(
+                                    context,
+                                    scaleFactor: scaleChange,
+                                    panDelta: Offset.zero,
+                                    focalPoint: event.localPosition,
+                                  );
+                                } else if (event.panDelta != Offset.zero) {
+                                  _perfDiagnostics.onGesturePanUpdate(
+                                    event.panDelta,
+                                    canvasState,
+                                  );
+                                  _perfDiagnostics.onDragPanUpdate(
+                                    event.panDelta,
+                                    canvasState,
+                                  );
+                                  _bufferPanZoomViewportUpdate(
+                                    context,
+                                    scaleFactor: 1.0,
+                                    panDelta: event.panDelta,
+                                    focalPoint: event.localPosition,
+                                  );
+                                }
+                              },
+                              onPointerPanZoomEnd: (event) {
+                                _lastScale = 1.0;
+                                _flushBufferedPanZoom(context, force: true);
+                                _perfDiagnostics.onGestureZoomEnd(canvasState);
+                                _setViewportInteractionInactive();
+                              },
+                              onAssetAccept: (details) {
+                                _handleAssetDrop(
+                                  context,
+                                  details,
+                                  canvasState,
+                                );
+                              },
+                              child: CanvasSurface(
+                                canvasState: canvasState,
+                                workspaceState: workspaceState,
+                                orderedShapes: orderedShapes,
+                                selectionRect: selectionRect,
+                                editingTextShapeId: _editingTextShapeId,
+                                textController: _textController,
+                                textFocusNode: _textFocusNode,
+                                viewportNotifier: _viewportNotifier,
+                                interactionNotifier: _interactionNotifier,
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
                 );
               },
             ),

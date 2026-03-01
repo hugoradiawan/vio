@@ -279,7 +279,7 @@ async function seedDemoProject(): Promise<void> {
 		{
 			id: SHAPE_RECT_1_ID,
 			projectId: DEMO_PROJECT_ID,
-			frameId: null,
+			frameId: SHAPE_FRAME_ID,
 			parentId: null,
 			type: "rectangle",
 			name: "Rectangle 1",
@@ -299,7 +299,7 @@ async function seedDemoProject(): Promise<void> {
 		{
 			id: SHAPE_RECT_2_ID,
 			projectId: DEMO_PROJECT_ID,
-			frameId: null,
+			frameId: SHAPE_FRAME_ID,
 			parentId: null,
 			type: "rectangle",
 			name: "Rectangle 2",
@@ -335,7 +335,7 @@ async function seedDemoProject(): Promise<void> {
 		{
 			id: SHAPE_ELLIPSE_1_ID,
 			projectId: DEMO_PROJECT_ID,
-			frameId: null,
+			frameId: SHAPE_FRAME_ID,
 			parentId: null,
 			type: "ellipse",
 			name: "Ellipse 1",
@@ -355,7 +355,7 @@ async function seedDemoProject(): Promise<void> {
 		{
 			id: SHAPE_RECT_3_ID,
 			projectId: DEMO_PROJECT_ID,
-			frameId: null,
+			frameId: SHAPE_FRAME_ID,
 			parentId: null,
 			type: "rectangle",
 			name: "Rectangle 3",
@@ -375,7 +375,7 @@ async function seedDemoProject(): Promise<void> {
 		{
 			id: SHAPE_ELLIPSE_2_ID,
 			projectId: DEMO_PROJECT_ID,
-			frameId: null,
+			frameId: SHAPE_FRAME_ID,
 			parentId: null,
 			type: "ellipse",
 			name: "Circle 1",
@@ -447,7 +447,7 @@ async function seedDemoProject(): Promise<void> {
 		y: shape.y,
 		width: shape.width,
 		height: shape.height,
-		frameId: null,
+		frameId: shape.frameId,
 		parentId: shape.parentId,
 		sortOrder: shape.sortOrder,
 		transformA: 1,

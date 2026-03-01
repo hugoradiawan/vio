@@ -12,6 +12,7 @@ import 'package:vio_core/vio_core.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../../../core/services/rust_engine_service.dart';
+import '../viewport_notifier.dart';
 import 'canvas_status_widgets.dart';
 import 'canvas_text_editor_overlay.dart';
 import 'rust_canvas_layer.dart';
@@ -49,7 +50,8 @@ class CanvasSurface extends StatelessWidget {
     required this.editingTextShapeId,
     required this.textController,
     required this.textFocusNode,
-    required this.isViewportInteractionActive,
+    required this.viewportNotifier,
+    required this.interactionNotifier,
     super.key,
   });
 
@@ -60,19 +62,31 @@ class CanvasSurface extends StatelessWidget {
   final String? editingTextShapeId;
   final TextEditingController textController;
   final FocusNode textFocusNode;
-  final bool isViewportInteractionActive;
+  final ViewportNotifier viewportNotifier;
+
+  /// Fires only when interaction starts/stops (2× per gesture).
+  /// Used by ListenableBuilder to conditionally show/hide overlays.
+  final ValueNotifier<bool> interactionNotifier;
 
   @override
   Widget build(BuildContext context) {
     return ClipRect(
-      child: Stack(
+      // ListenableBuilder rebuilds only the Stack when ViewportNotifier
+      // fires (interaction active/inactive). The parent widget tree is
+      // NOT rebuilt — this eliminates the 256ms build cost during
+      // pan/zoom gestures.
+      child: ListenableBuilder(
+        listenable: interactionNotifier,
+        builder: (context, _) {
+          final isInteracting = interactionNotifier.value;
+          return Stack(
         children: [
           Positioned.fill(
             child: Container(
               color: VioColors.canvasBackground,
             ),
           ),
-          if (workspaceState.showGrid && !isViewportInteractionActive)
+          if (workspaceState.showGrid && !isInteracting)
             Positioned.fill(
               child: RepaintBoundary(
                 child: CustomPaint(
@@ -102,7 +116,8 @@ class CanvasSurface extends StatelessWidget {
                     canvasState: canvasState,
                     orderedShapes: orderedShapes,
                     editingTextShapeId: editingTextShapeId,
-                    isViewportInteractionActive: isViewportInteractionActive,
+                    viewportNotifier: viewportNotifier,
+                    interactionNotifier: interactionNotifier,
                   )
                 : RepaintBoundary(
                     child: CustomPaint(
@@ -119,12 +134,12 @@ class CanvasSurface extends StatelessWidget {
                         hoveredShapeId: canvasState.hoveredShapeId,
                         hoveredLayerId: canvasState.hoveredLayerId,
                         editingTextShapeId: editingTextShapeId,
-                        simplifyForInteraction: isViewportInteractionActive,
+                        simplifyForInteraction: isInteracting,
                       ),
                     ),
                   ),
           ),
-          if (canvasState.hasSelection && !isViewportInteractionActive)
+          if (canvasState.hasSelection && !isInteracting)
             Positioned.fill(
               child: RepaintBoundary(
                 child: CustomPaint(
@@ -142,7 +157,7 @@ class CanvasSurface extends StatelessWidget {
                 ),
               ),
             ),
-          if (!isViewportInteractionActive &&
+          if (!isInteracting &&
               (canvasState.snapLines.isNotEmpty ||
                   canvasState.snapPoints.isNotEmpty))
             Positioned.fill(
@@ -158,7 +173,7 @@ class CanvasSurface extends StatelessWidget {
                 ),
               ),
             ),
-          if (!isViewportInteractionActive &&
+          if (!isInteracting &&
               canvasState.hasSelection &&
               selectionRect != null)
             Positioned.fill(
@@ -172,7 +187,7 @@ class CanvasSurface extends StatelessWidget {
                 ),
               ),
             ),
-          if (workspaceState.showRulers && !isViewportInteractionActive) ...[
+          if (workspaceState.showRulers && !isInteracting) ...[
             Positioned(
               top: 0,
               left: 20,
@@ -236,6 +251,8 @@ class CanvasSurface extends StatelessWidget {
               canvasState: canvasState,
             ),
         ],
+      );
+        },
       ),
     );
   }

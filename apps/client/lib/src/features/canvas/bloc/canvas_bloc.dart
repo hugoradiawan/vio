@@ -72,7 +72,9 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState>
     on<CanvasInitialized>(_onInitialized);
     on<ViewportPanned>(_onViewportPanned);
     on<ViewportZoomed>(_onViewportZoomed);
+    on<ViewportTransformed>(_onViewportTransformed);
     on<ViewportReset>(_onViewportReset);
+    on<ViewportSynced>(_onViewportSynced);
     on<ZoomIn>(_onZoomIn);
     on<ZoomOut>(_onZoomOut);
     on<ZoomSet>(_onZoomSet);

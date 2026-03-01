@@ -108,8 +108,8 @@ GoRouter createRouter(AuthBloc authBloc) {
 }
 
 // Demo project ID (matching backend seed script)
-// const _demoProjectId = '00000000-0000-0000-0000-000000000001';
-const _demoProjectId = '11111111-0000-0000-0000-000000000003';
+const _demoProjectId = '00000000-0000-0000-0000-000000000001';
+// const _demoProjectId = '11111111-0000-0000-0000-000000000003';
 // const _demoProjectId = '11111111-0000-0000-0000-000000000002';
 // const _demoProjectId = '11111111-0000-0000-0000-000000000001';
 

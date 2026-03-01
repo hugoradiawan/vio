@@ -35,34 +35,60 @@ mixin _CanvasViewController on State<CanvasView> {
 
   void _flushBufferedPanZoom(BuildContext context, {bool force = false}) {
     final state = this as _CanvasViewState;
-    final canvasBloc = context.read<CanvasBloc>();
 
     final scale = state._bufferedPanZoomScale;
     final hasMeaningfulZoom =
         (scale - 1.0).abs() >= _CanvasViewState._panZoomScaleDriftEpsilon;
-    if (hasMeaningfulZoom) {
-      canvasBloc.add(
-        ViewportZoomed(
-          scaleFactor: scale,
-          focalX: state._bufferedPanZoomFocal.dx,
-          focalY: state._bufferedPanZoomFocal.dy,
-        ),
-      );
-      state._bufferedPanZoomScale = 1.0;
+    final panDelta = state._bufferedPanZoomDelta;
+    final hasPan = panDelta != Offset.zero;
+
+    if (!hasMeaningfulZoom && !hasPan) {
+      state._lastPanZoomFlushTimestamp = DateTime.now().millisecondsSinceEpoch;
+      return;
     }
 
-    final panDelta = state._bufferedPanZoomDelta;
-    if (panDelta != Offset.zero) {
-      canvasBloc.add(
-        ViewportPanned(
-          deltaX: panDelta.dx,
-          deltaY: panDelta.dy,
-        ),
+    // During interaction: update the ViewportNotifier directly — no BLoC
+    // round-trip, no widget rebuild, no buildWhen evaluation.
+    // At gesture end, _syncViewportToBloc() pushes the final state back.
+    final vp = state._viewportNotifier;
+
+    if (hasMeaningfulZoom && hasPan) {
+      vp.applyTransform(
+        dx: panDelta.dx,
+        dy: panDelta.dy,
+        scaleFactor: scale,
+        focalX: state._bufferedPanZoomFocal.dx,
+        focalY: state._bufferedPanZoomFocal.dy,
       );
+      state._bufferedPanZoomScale = 1.0;
+      state._bufferedPanZoomDelta = Offset.zero;
+    } else if (hasMeaningfulZoom) {
+      vp.applyZoom(
+        scale,
+        state._bufferedPanZoomFocal.dx,
+        state._bufferedPanZoomFocal.dy,
+      );
+      state._bufferedPanZoomScale = 1.0;
+    } else if (hasPan) {
+      vp.applyPan(panDelta.dx, panDelta.dy);
       state._bufferedPanZoomDelta = Offset.zero;
     }
 
     state._lastPanZoomFlushTimestamp = DateTime.now().millisecondsSinceEpoch;
+  }
+
+  /// Push the ViewportNotifier's authoritative zoom/offset into the BLoC
+  /// in a single event. Called once at gesture end.
+  void _syncViewportToBloc(BuildContext context) {
+    final state = this as _CanvasViewState;
+    final vp = state._viewportNotifier;
+    context.read<CanvasBloc>().add(
+          ViewportSynced(
+            zoom: vp.zoom,
+            offsetX: vp.offset.dx,
+            offsetY: vp.offset.dy,
+          ),
+        );
   }
 
   void _setViewportInteractionActive({Duration? holdFor}) {
@@ -70,9 +96,11 @@ mixin _CanvasViewController on State<CanvasView> {
 
     state._viewportInteractionTimer?.cancel();
     if (!state._isViewportInteractionActive) {
-      state.setState(() {
-        state._isViewportInteractionActive = true;
-      });
+      state._isViewportInteractionActive = true;
+      // Only the interaction notifier fires — triggers CanvasSurface
+      // ListenableBuilder rebuild (hide overlays). ViewportNotifier is
+      // NOT notified here, avoiding per-frame widget rebuilds.
+      state._interactionNotifier.value = true;
     }
 
     if (holdFor != null) {
@@ -81,10 +109,10 @@ mixin _CanvasViewController on State<CanvasView> {
         if (state._isPanning) return;
 
         _flushBufferedPanZoom(context, force: true);
+        _syncViewportToBloc(context);
 
-        state.setState(() {
-          state._isViewportInteractionActive = false;
-        });
+        state._isViewportInteractionActive = false;
+        state._interactionNotifier.value = false;
       });
     }
   }
@@ -93,13 +121,13 @@ mixin _CanvasViewController on State<CanvasView> {
     final state = this as _CanvasViewState;
     state._viewportInteractionTimer?.cancel();
     _flushBufferedPanZoom(context, force: true);
+    _syncViewportToBloc(context);
     if (!state._isViewportInteractionActive) {
       return;
     }
 
-    state.setState(() {
-      state._isViewportInteractionActive = false;
-    });
+    state._isViewportInteractionActive = false;
+    state._interactionNotifier.value = false;
   }
 
   void _onTextControllerChanged() {
@@ -157,7 +185,7 @@ mixin _CanvasViewController on State<CanvasView> {
           return false;
         }
 
-        state.setState(() => state._isSpacePressed = true);
+        state._isSpacePressed = true;
         return true;
       }
 
@@ -219,10 +247,8 @@ mixin _CanvasViewController on State<CanvasView> {
           return false;
         }
 
-        state.setState(() {
-          state._isSpacePressed = false;
-          state._isPanning = false;
-        });
+        state._isSpacePressed = false;
+        state._isPanning = false;
         return true;
       }
     }
@@ -376,10 +402,10 @@ mixin _CanvasViewController on State<CanvasView> {
         context.read<CanvasBloc>().state,
         source: 'pointer_drag',
       );
-      state.setState(() {
-        state._isPanning = true;
-        state._lastPanPosition = event.localPosition;
-      });
+      // No setState — _isPanning is only used in controller logic,
+      // not in the widget tree.
+      state._isPanning = true;
+      state._lastPanPosition = event.localPosition;
       return;
     }
 
@@ -629,13 +655,17 @@ mixin _CanvasViewController on State<CanvasView> {
         delta,
         context.read<CanvasBloc>().state,
       );
-      context.read<CanvasBloc>().add(
-            ViewportPanned(
-              deltaX: delta.dx,
-              deltaY: delta.dy,
-            ),
-          );
+      // Buffer pointer-drag panning the same way trackpad events are buffered
+      // to avoid flooding the BLoC at 120-240Hz on macOS.
+      state._bufferedPanZoomDelta += delta;
+      state._bufferedPanZoomFocal = event.localPosition;
       state._lastPanPosition = event.localPosition;
+
+      final now = DateTime.now().millisecondsSinceEpoch;
+      if (now - state._lastPanZoomFlushTimestamp >=
+          _CanvasViewState._panZoomFlushThrottleMs) {
+        _flushBufferedPanZoom(context);
+      }
       return;
     }
 
@@ -658,10 +688,8 @@ mixin _CanvasViewController on State<CanvasView> {
     final state = this as _CanvasViewState;
     if (state._isPanning) {
       state._perfDiagnostics.onDragPanEnd(context.read<CanvasBloc>().state);
-      state.setState(() {
-        state._isPanning = false;
-        state._lastPanPosition = null;
-      });
+      state._isPanning = false;
+      state._lastPanPosition = null;
       _setViewportInteractionInactive();
       return;
     }

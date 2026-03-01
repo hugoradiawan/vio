@@ -110,7 +110,9 @@ class RustEngineService {
   /// When [simplify] is true, shadows/blurs/gradients are elided.
   /// When [skipTileRasterized] is true, shapes already rendered into tiles are
   /// excluded from the returned command list.
-  Future<List<DrawCommand>> generateDrawCommands({
+  ///
+  /// Generate draw commands synchronously (Rust side uses `#[frb(sync)]`).
+  List<DrawCommand> generateDrawCommands({
     required double viewportMinX,
     required double viewportMinY,
     required double viewportMaxX,

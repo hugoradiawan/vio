@@ -27,20 +27,7 @@ mixin _CanvasViewportMixin on Bloc<CanvasEvent, CanvasState> {
     ViewportZoomed event,
     Emitter<CanvasState> emit,
   ) {
-    // Calculate new zoom level
     final newZoom = (state.zoom * event.scaleFactor).clamp(0.01, 64.0);
-
-    // Zoom towards the focal point (mouse position in screen coordinates)
-    // The point under the mouse should stay in the same position after zoom
-    //
-    // Before zoom: canvasPoint = (screenPoint - offset) / oldZoom
-    // After zoom:  canvasPoint = (screenPoint - newOffset) / newZoom
-    //
-    // We want the same canvas point under the mouse, so:
-    // (focalPoint - offset) / oldZoom = (focalPoint - newOffset) / newZoom
-    //
-    // Solving for newOffset:
-    // newOffset = focalPoint - (focalPoint - offset) * (newZoom / oldZoom)
 
     final zoomRatio = newZoom / state.zoom;
     final newOffset = Offset(
@@ -56,6 +43,44 @@ mixin _CanvasViewportMixin on Bloc<CanvasEvent, CanvasState> {
     );
   }
 
+  /// Combined pan + zoom in a single state emission (eliminates the double
+  /// emit from separate ViewportPanned + ViewportZoomed events).
+  void _onViewportTransformed(
+    ViewportTransformed event,
+    Emitter<CanvasState> emit,
+  ) {
+    // Apply zoom first (with focal-point centering), then pan.
+    var currentZoom = state.zoom;
+    var currentOffset = state.viewportOffset;
+
+    // Zoom
+    final hasMeaningfulZoom = (event.scaleFactor - 1.0).abs() > 0.0001;
+    if (hasMeaningfulZoom) {
+      final newZoom = (currentZoom * event.scaleFactor).clamp(0.01, 64.0);
+      final zoomRatio = newZoom / currentZoom;
+      currentOffset = Offset(
+        event.focalX - (event.focalX - currentOffset.dx) * zoomRatio,
+        event.focalY - (event.focalY - currentOffset.dy) * zoomRatio,
+      );
+      currentZoom = newZoom;
+    }
+
+    // Pan
+    if (event.deltaX != 0.0 || event.deltaY != 0.0) {
+      currentOffset = Offset(
+        currentOffset.dx + event.deltaX,
+        currentOffset.dy + event.deltaY,
+      );
+    }
+
+    emit(
+      state.copyWith(
+        zoom: currentZoom,
+        viewportOffset: currentOffset,
+      ),
+    );
+  }
+
   void _onViewportReset(
     ViewportReset event,
     Emitter<CanvasState> emit,
@@ -64,6 +89,20 @@ mixin _CanvasViewportMixin on Bloc<CanvasEvent, CanvasState> {
       state.copyWith(
         zoom: 1.0,
         viewportOffset: const Offset(0, 0),
+      ),
+    );
+  }
+
+  /// Sync the ViewportNotifier's authoritative state back into the BLoC.
+  /// Called once when a gesture ends.
+  void _onViewportSynced(
+    ViewportSynced event,
+    Emitter<CanvasState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        zoom: event.zoom,
+        viewportOffset: Offset(event.offsetX, event.offsetY),
       ),
     );
   }

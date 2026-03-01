@@ -75,9 +75,50 @@ class ViewportZoomed extends CanvasEvent {
   List<Object?> get props => [scaleFactor, focalX, focalY];
 }
 
+/// Combined viewport pan + zoom in a single event (avoids 2 state emissions).
+///
+/// Used by the trackpad buffering path when both pan and zoom are accumulated
+/// in the same flush interval.
+class ViewportTransformed extends CanvasEvent {
+  const ViewportTransformed({
+    required this.deltaX,
+    required this.deltaY,
+    required this.scaleFactor,
+    required this.focalX,
+    required this.focalY,
+  });
+
+  final double deltaX;
+  final double deltaY;
+  final double scaleFactor;
+  final double focalX;
+  final double focalY;
+
+  @override
+  List<Object?> get props => [deltaX, deltaY, scaleFactor, focalX, focalY];
+}
+
 /// Fired to reset viewport to default state
 class ViewportReset extends CanvasEvent {
   const ViewportReset();
+}
+
+/// Fired once at gesture end to sync the ViewportNotifier's authoritative
+/// zoom/offset back into the BLoC state (so the rest of the app sees the
+/// updated viewport without per-frame BLoC emissions during gestures).
+class ViewportSynced extends CanvasEvent {
+  const ViewportSynced({
+    required this.zoom,
+    required this.offsetX,
+    required this.offsetY,
+  });
+
+  final double zoom;
+  final double offsetX;
+  final double offsetY;
+
+  @override
+  List<Object?> get props => [zoom, offsetX, offsetY];
 }
 
 /// Fired when pointer/mouse is pressed down on canvas

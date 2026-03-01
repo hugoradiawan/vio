@@ -3,12 +3,10 @@
 
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
-import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
-import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
-
 import '../frb_generated.dart';
 import '../math/matrix2d.dart';
-
+import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 part 'shape.freezed.dart';
 
 /// Blur type.
@@ -78,17 +76,17 @@ class RenderShape {
     required this.id,
     required this.shapeType,
     required this.transform,
+    this.parentId,
+    this.frameId,
     required this.sortOrder,
     required this.opacity,
     required this.hidden,
     required this.rotation,
     required this.fills,
     required this.strokes,
-    required this.geometry,
-    this.parentId,
-    this.frameId,
     this.shadow,
     this.blur,
+    required this.geometry,
   });
 
   @override

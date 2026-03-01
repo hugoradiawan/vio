@@ -185,6 +185,7 @@ impl CanvasEngine {
     ///
     /// When `skip_tile_rasterized` is `true`, shapes that have been
     /// rendered into cached tiles are excluded from the draw command list.
+    #[flutter_rust_bridge::frb(sync)]
     pub fn generate_draw_commands(
         &self,
         viewport_min_x: f64,

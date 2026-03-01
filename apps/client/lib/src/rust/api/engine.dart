@@ -3,13 +3,12 @@
 
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
-import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
-
 import '../frb_generated.dart';
 import '../lib.dart';
 import '../math/matrix2d.dart';
 import '../render/commands.dart';
 import '../scene_graph/shape.dart';
+import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `point_in_shape`
 
@@ -32,7 +31,7 @@ abstract class CanvasEngine implements RustOpaqueInterface {
   ///
   /// When `skip_tile_rasterized` is `true`, shapes that have been
   /// rendered into cached tiles are excluded from the draw command list.
-  Future<List<DrawCommand>> generateDrawCommands(
+  List<DrawCommand> generateDrawCommands(
       {required double viewportMinX,
       required double viewportMinY,
       required double viewportMaxX,

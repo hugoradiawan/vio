@@ -37,24 +37,24 @@ pub fn generate_draw_commands_excluding(
 fn generate_draw_commands_impl(
     tree: &SceneTree,
     viewport: &Aabb,
-    view_matrix: &[f64; 6],
+    _view_matrix: &[f64; 6],
     simplify: bool,
     skip_ids: Option<&HashSet<String>>,
 ) -> Vec<DrawCommand> {
     let capacity = tree.len() * 6; // rough estimate
     let mut cmds = Vec::with_capacity(capacity);
 
-    // Push the view transform once at the top.
-    cmds.push(DrawCommand::PushTransform {
-        matrix: *view_matrix,
-    });
+    // NOTE: The view matrix is NOT baked into the commands. Commands are
+    // generated in world (canvas) coordinates so they can be cached and
+    // replayed with different view transforms on the Dart side during
+    // pan/zoom without regenerating. The view_matrix parameter is still
+    // used above for viewport culling only.
 
     // Walk the tree depth-first starting from roots.
     for root_id in tree.root_ids() {
         emit_shape_tree(tree, root_id, viewport, simplify, &mut cmds, skip_ids);
     }
 
-    cmds.push(DrawCommand::PopTransform);
     cmds
 }
 
@@ -118,13 +118,13 @@ fn emit_shape_tree(
 
     if shape.clips_content() {
         let (w, h) = shape.geometry.dimensions();
-        let t = &shape.transform;
+        // Compute the world-space AABB of the frame by transforming its
+        // local rect [0,0,w,h] through the full affine matrix. This
+        // correctly handles translation, scale, and rotation (via AABB).
+        let (bx, by, bw, bh) = shape.transform.transform_rect(0.0, 0.0, w, h);
         cmds.push(DrawCommand::Save);
-        // Clip in world coordinates — matches how the Dart painter clips
-        // frames. Using world coords avoids the PushTransform/PopTransform
-        // problem where canvas.restore() would undo the clip.
         cmds.push(DrawCommand::ClipRect {
-            rect: [t.e, t.f, w, h],
+            rect: [bx, by, bw, bh],
         });
 
         for child_id in children {

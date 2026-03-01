@@ -5,22 +5,22 @@ import '../../../../core/services/rust_engine_service.dart';
 import '../../../../rust/render/commands.dart';
 import '../../bloc/canvas_bloc.dart';
 import '../painters/rust_canvas_painter.dart';
+import '../viewport_notifier.dart';
 
 /// Stateful wrapper that manages asynchronous draw-command generation from the
 /// Rust engine and feeds the result into [RustCanvasPainter].
 ///
-/// On every rebuild (triggered by new [CanvasState]) it kicks off
-/// `generateDrawCommands` and, once the future completes, calls `setState` to
-/// repaint with the fresh command list.
-///
-/// While the first frame is loading, a transparent placeholder is shown so
-/// layout is not blocked.
+/// **Viewport fast path:** The [viewportNotifier] drives repaint without
+/// widget rebuild. Only shape/selection/hover changes trigger
+/// `_regenerateCommands`. During pan/zoom the painter replays cached draw
+/// commands with the updated view matrix — zero FFI calls per frame.
 class RustCanvasLayer extends StatefulWidget {
   const RustCanvasLayer({
     required this.canvasState,
     required this.orderedShapes,
     required this.editingTextShapeId,
-    required this.isViewportInteractionActive,
+    required this.viewportNotifier,
+    required this.interactionNotifier,
     this.skipTileRasterized = false,
     super.key,
   });
@@ -28,7 +28,15 @@ class RustCanvasLayer extends StatefulWidget {
   final CanvasState canvasState;
   final List<Shape> orderedShapes;
   final String? editingTextShapeId;
-  final bool isViewportInteractionActive;
+
+  /// Lightweight notifier for viewport changes (zoom / offset).
+  /// The painter listens to this as its `repaint` listenable so viewport-only
+  /// changes repaint without crossing FFI or rebuilding widgets.
+  final ViewportNotifier viewportNotifier;
+
+  /// Separate notifier for interaction state. Fires only 2× per gesture
+  /// (start/stop) — used by the painter to toggle simplification.
+  final ValueNotifier<bool> interactionNotifier;
 
   /// When `true`, shapes that are rendered into cached tiles by the Rust engine
   /// are excluded from the draw command list (because they are painted by
@@ -66,36 +74,44 @@ class _RustCanvasLayerState extends State<RustCanvasLayer> {
   @override
   void didUpdateWidget(RustCanvasLayer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Always regenerate — draw commands depend on shapes, viewport, zoom, etc.
-    _regenerateCommands();
+
+    // Only regenerate commands when non-viewport state changed (shapes,
+    // selection, hover, etc.). Viewport changes are handled by
+    // ViewportNotifier → repaint without FFI.
+    final needsRegenerate = !identical(
+          widget.canvasState.shapes,
+          oldWidget.canvasState.shapes,
+        ) ||
+        widget.editingTextShapeId != oldWidget.editingTextShapeId ||
+        widget.skipTileRasterized != oldWidget.skipTileRasterized;
+
+    if (needsRegenerate) {
+      _regenerateCommands();
+    }
   }
 
   Future<void> _regenerateCommands() async {
     final gen = ++_generation;
-    final state = widget.canvasState;
-    final vm = state.viewMatrix;
-    final size = state.viewportSize;
+    final vp = widget.viewportNotifier;
+    final vm = vp.viewMatrix;
+    final isInteracting = widget.interactionNotifier.value;
 
-    // Compute visible canvas rect (inverse of view matrix)
-    final zoom = vm.a.abs();
-    final effectiveZoom = zoom <= 0 ? 1.0 : zoom;
-    final canvasLeft = -vm.e / effectiveZoom;
-    final canvasTop = -vm.f / effectiveZoom;
-    final canvasRight = canvasLeft + size.width / effectiveZoom;
-    final canvasBottom = canvasTop + size.height / effectiveZoom;
-
-    // Inflate a bit to include partially-visible shapes
-    final inflate = widget.isViewportInteractionActive ? 320.0 : 160.0;
-    final inflatedZoom = inflate / effectiveZoom;
+    // Use a very large viewport so ALL shapes are included in the command
+    // list. Since commands are cached and replayed during pan/zoom, we
+    // cannot cull to the current viewport — the user might pan beyond it.
+    // Flutter's Canvas already clips to the screen, so off-screen draw
+    // calls are essentially free. For very large canvases (10k+ shapes)
+    // we can revisit with incremental re-culling.
+    const double inf = 1e9;
 
     try {
-      final commands = await RustEngineService.instance.generateDrawCommands(
-        viewportMinX: canvasLeft - inflatedZoom,
-        viewportMinY: canvasTop - inflatedZoom,
-        viewportMaxX: canvasRight + inflatedZoom,
-        viewportMaxY: canvasBottom + inflatedZoom,
+      final commands = RustEngineService.instance.generateDrawCommands(
+        viewportMinX: -inf,
+        viewportMinY: -inf,
+        viewportMaxX: inf,
+        viewportMaxY: inf,
         viewMatrix: [vm.a, vm.b, vm.c, vm.d, vm.e, vm.f],
-        simplify: widget.isViewportInteractionActive,
+        simplify: isInteracting,
         skipTileRasterized: widget.skipTileRasterized,
       );
 
@@ -118,17 +134,18 @@ class _RustCanvasLayerState extends State<RustCanvasLayer> {
         isComplex: true,
         willChange: true,
         painter: RustCanvasPainter(
+          repaintNotifier: widget.viewportNotifier,
           drawCommands: _commands,
           shapes: widget.orderedShapes,
           shapesById: state.shapes,
-          viewMatrix: state.viewMatrix,
+          viewportNotifier: widget.viewportNotifier,
+          interactionNotifier: widget.interactionNotifier,
           dragRect: state.dragRect,
           dragOffset: state.dragOffset,
           selectedShapeIds: state.selectedShapeIds,
           hoveredShapeId: state.hoveredShapeId,
           hoveredLayerId: state.hoveredLayerId,
           editingTextShapeId: widget.editingTextShapeId,
-          simplifyForInteraction: widget.isViewportInteractionActive,
         ),
       ),
     );

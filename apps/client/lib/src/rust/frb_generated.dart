@@ -3,18 +3,16 @@
 
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
-import 'dart:async';
-import 'dart:convert';
-
-import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
-
 import 'api/engine.dart';
 import 'api/simple.dart';
+import 'dart:async';
+import 'dart:convert';
 import 'frb_generated.dart';
 import 'frb_generated.io.dart'
     if (dart.library.js_interop) 'frb_generated.web.dart';
 import 'lib.dart';
 import 'math/matrix2d.dart';
+import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'render/commands.dart';
 import 'scene_graph/shape.dart';
 
@@ -90,7 +88,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 abstract class RustLibApi extends BaseApi {
   CanvasEngine crateApiEngineCanvasEngineCreate();
 
-  Future<List<DrawCommand>> crateApiEngineCanvasEngineGenerateDrawCommands(
+  List<DrawCommand> crateApiEngineCanvasEngineGenerateDrawCommands(
       {required CanvasEngine that,
       required double viewportMinX,
       required double viewportMinY,
@@ -171,32 +169,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   CanvasEngine crateApiEngineCanvasEngineCreate() {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData:
-              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiEngineCanvasEngineCreateConstMeta,
-        argValues: [],
-        apiImpl: this,
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData:
+            sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiEngineCanvasEngineCreateConstMeta,
+      argValues: [],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiEngineCanvasEngineCreateConstMeta =>
       const TaskConstMeta(
-        debugName: 'CanvasEngine_create',
+        debugName: "CanvasEngine_create",
         argNames: [],
       );
 
   @override
-  Future<List<DrawCommand>> crateApiEngineCanvasEngineGenerateDrawCommands(
+  List<DrawCommand> crateApiEngineCanvasEngineGenerateDrawCommands(
       {required CanvasEngine that,
       required double viewportMinX,
       required double viewportMinY,
@@ -205,85 +201,80 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       required List<double> viewMatrix,
       required bool simplify,
       required bool skipTileRasterized}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
-              that, serializer);
-          sse_encode_f_64(viewportMinX, serializer);
-          sse_encode_f_64(viewportMinY, serializer);
-          sse_encode_f_64(viewportMaxX, serializer);
-          sse_encode_f_64(viewportMaxY, serializer);
-          sse_encode_list_prim_f_64_loose(viewMatrix, serializer);
-          sse_encode_bool(simplify, serializer);
-          sse_encode_bool(skipTileRasterized, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer,
-              funcId: 2, port: port_);
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_list_draw_command,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiEngineCanvasEngineGenerateDrawCommandsConstMeta,
-        argValues: [
-          that,
-          viewportMinX,
-          viewportMinY,
-          viewportMaxX,
-          viewportMaxY,
-          viewMatrix,
-          simplify,
-          skipTileRasterized
-        ],
-        apiImpl: this,
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
+            that, serializer);
+        sse_encode_f_64(viewportMinX, serializer);
+        sse_encode_f_64(viewportMinY, serializer);
+        sse_encode_f_64(viewportMaxX, serializer);
+        sse_encode_f_64(viewportMaxY, serializer);
+        sse_encode_list_prim_f_64_loose(viewMatrix, serializer);
+        sse_encode_bool(simplify, serializer);
+        sse_encode_bool(skipTileRasterized, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 2)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_draw_command,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiEngineCanvasEngineGenerateDrawCommandsConstMeta,
+      argValues: [
+        that,
+        viewportMinX,
+        viewportMinY,
+        viewportMaxX,
+        viewportMaxY,
+        viewMatrix,
+        simplify,
+        skipTileRasterized
+      ],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiEngineCanvasEngineGenerateDrawCommandsConstMeta =>
       const TaskConstMeta(
-        debugName: 'CanvasEngine_generate_draw_commands',
+        debugName: "CanvasEngine_generate_draw_commands",
         argNames: [
-          'that',
-          'viewportMinX',
-          'viewportMinY',
-          'viewportMaxX',
-          'viewportMaxY',
-          'viewMatrix',
-          'simplify',
-          'skipTileRasterized'
+          "that",
+          "viewportMinX",
+          "viewportMinY",
+          "viewportMaxX",
+          "viewportMaxY",
+          "viewMatrix",
+          "simplify",
+          "skipTileRasterized"
         ],
       );
 
   @override
   List<String> crateApiEngineCanvasEngineHitTestPoint(
       {required CanvasEngine that, required double x, required double y}) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
-              that, serializer);
-          sse_encode_f_64(x, serializer);
-          sse_encode_f_64(y, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_list_String,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiEngineCanvasEngineHitTestPointConstMeta,
-        argValues: [that, x, y],
-        apiImpl: this,
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
+            that, serializer);
+        sse_encode_f_64(x, serializer);
+        sse_encode_f_64(y, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_String,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiEngineCanvasEngineHitTestPointConstMeta,
+      argValues: [that, x, y],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiEngineCanvasEngineHitTestPointConstMeta =>
       const TaskConstMeta(
-        debugName: 'CanvasEngine_hit_test_point',
-        argNames: ['that', 'x', 'y'],
+        debugName: "CanvasEngine_hit_test_point",
+        argNames: ["that", "x", "y"],
       );
 
   @override
@@ -293,120 +284,112 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       required double y,
       required double w,
       required double h}) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
-              that, serializer);
-          sse_encode_f_64(x, serializer);
-          sse_encode_f_64(y, serializer);
-          sse_encode_f_64(w, serializer);
-          sse_encode_f_64(h, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_list_String,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiEngineCanvasEngineHitTestRectConstMeta,
-        argValues: [that, x, y, w, h],
-        apiImpl: this,
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
+            that, serializer);
+        sse_encode_f_64(x, serializer);
+        sse_encode_f_64(y, serializer);
+        sse_encode_f_64(w, serializer);
+        sse_encode_f_64(h, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_String,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiEngineCanvasEngineHitTestRectConstMeta,
+      argValues: [that, x, y, w, h],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiEngineCanvasEngineHitTestRectConstMeta =>
       const TaskConstMeta(
-        debugName: 'CanvasEngine_hit_test_rect',
-        argNames: ['that', 'x', 'y', 'w', 'h'],
+        debugName: "CanvasEngine_hit_test_rect",
+        argNames: ["that", "x", "y", "w", "h"],
       );
 
   @override
   Future<void> crateApiEngineCanvasEngineLoadAllShapes(
       {required CanvasEngine that, required List<RenderShape> shapes}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
-              that, serializer);
-          sse_encode_list_render_shape(shapes, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer,
-              funcId: 5, port: port_);
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiEngineCanvasEngineLoadAllShapesConstMeta,
-        argValues: [that, shapes],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
+            that, serializer);
+        sse_encode_list_render_shape(shapes, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 5, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiEngineCanvasEngineLoadAllShapesConstMeta,
+      argValues: [that, shapes],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiEngineCanvasEngineLoadAllShapesConstMeta =>
       const TaskConstMeta(
-        debugName: 'CanvasEngine_load_all_shapes',
-        argNames: ['that', 'shapes'],
+        debugName: "CanvasEngine_load_all_shapes",
+        argNames: ["that", "shapes"],
       );
 
   @override
   Future<void> crateApiEngineCanvasEngineMarkAllTilesDirty(
       {required CanvasEngine that}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
-              that, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer,
-              funcId: 6, port: port_);
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiEngineCanvasEngineMarkAllTilesDirtyConstMeta,
-        argValues: [that],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
+            that, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 6, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiEngineCanvasEngineMarkAllTilesDirtyConstMeta,
+      argValues: [that],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiEngineCanvasEngineMarkAllTilesDirtyConstMeta =>
       const TaskConstMeta(
-        debugName: 'CanvasEngine_mark_all_tiles_dirty',
-        argNames: ['that'],
+        debugName: "CanvasEngine_mark_all_tiles_dirty",
+        argNames: ["that"],
       );
 
   @override
   List<String> crateApiEngineCanvasEnginePaintOrder(
       {required CanvasEngine that}) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
-              that, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_list_String,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiEngineCanvasEnginePaintOrderConstMeta,
-        argValues: [that],
-        apiImpl: this,
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
+            that, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_String,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiEngineCanvasEnginePaintOrderConstMeta,
+      argValues: [that],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiEngineCanvasEnginePaintOrderConstMeta =>
       const TaskConstMeta(
-        debugName: 'CanvasEngine_paint_order',
-        argNames: ['that'],
+        debugName: "CanvasEngine_paint_order",
+        argNames: ["that"],
       );
 
   @override
@@ -416,44 +399,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       required double viewportMinY,
       required double viewportMaxX,
       required double viewportMaxY}) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
-              that, serializer);
-          sse_encode_f_64(viewportMinX, serializer);
-          sse_encode_f_64(viewportMinY, serializer);
-          sse_encode_f_64(viewportMaxX, serializer);
-          sse_encode_f_64(viewportMaxY, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_list_String,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiEngineCanvasEngineQueryVisibleConstMeta,
-        argValues: [
-          that,
-          viewportMinX,
-          viewportMinY,
-          viewportMaxX,
-          viewportMaxY
-        ],
-        apiImpl: this,
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
+            that, serializer);
+        sse_encode_f_64(viewportMinX, serializer);
+        sse_encode_f_64(viewportMinY, serializer);
+        sse_encode_f_64(viewportMaxX, serializer);
+        sse_encode_f_64(viewportMaxY, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_String,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiEngineCanvasEngineQueryVisibleConstMeta,
+      argValues: [that, viewportMinX, viewportMinY, viewportMaxX, viewportMaxY],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiEngineCanvasEngineQueryVisibleConstMeta =>
       const TaskConstMeta(
-        debugName: 'CanvasEngine_query_visible',
+        debugName: "CanvasEngine_query_visible",
         argNames: [
-          'that',
-          'viewportMinX',
-          'viewportMinY',
-          'viewportMaxX',
-          'viewportMaxY'
+          "that",
+          "viewportMinX",
+          "viewportMinY",
+          "viewportMaxX",
+          "viewportMaxY"
         ],
       );
 
@@ -465,76 +440,72 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       required double viewportMaxX,
       required double viewportMaxY,
       required double zoom}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
-              that, serializer);
-          sse_encode_f_64(viewportMinX, serializer);
-          sse_encode_f_64(viewportMinY, serializer);
-          sse_encode_f_64(viewportMaxX, serializer);
-          sse_encode_f_64(viewportMaxY, serializer);
-          sse_encode_f_64(zoom, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer,
-              funcId: 9, port: port_);
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_list_tile_result,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiEngineCanvasEngineRasterizeDirtyTilesConstMeta,
-        argValues: [
-          that,
-          viewportMinX,
-          viewportMinY,
-          viewportMaxX,
-          viewportMaxY,
-          zoom
-        ],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
+            that, serializer);
+        sse_encode_f_64(viewportMinX, serializer);
+        sse_encode_f_64(viewportMinY, serializer);
+        sse_encode_f_64(viewportMaxX, serializer);
+        sse_encode_f_64(viewportMaxY, serializer);
+        sse_encode_f_64(zoom, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 9, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_tile_result,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiEngineCanvasEngineRasterizeDirtyTilesConstMeta,
+      argValues: [
+        that,
+        viewportMinX,
+        viewportMinY,
+        viewportMaxX,
+        viewportMaxY,
+        zoom
+      ],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiEngineCanvasEngineRasterizeDirtyTilesConstMeta =>
       const TaskConstMeta(
-        debugName: 'CanvasEngine_rasterize_dirty_tiles',
+        debugName: "CanvasEngine_rasterize_dirty_tiles",
         argNames: [
-          'that',
-          'viewportMinX',
-          'viewportMinY',
-          'viewportMaxX',
-          'viewportMaxY',
-          'zoom'
+          "that",
+          "viewportMinX",
+          "viewportMinY",
+          "viewportMaxX",
+          "viewportMaxY",
+          "zoom"
         ],
       );
 
   @override
   BigInt crateApiEngineCanvasEngineShapeCount({required CanvasEngine that}) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
-              that, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_usize,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiEngineCanvasEngineShapeCountConstMeta,
-        argValues: [that],
-        apiImpl: this,
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
+            that, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_usize,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiEngineCanvasEngineShapeCountConstMeta,
+      argValues: [that],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiEngineCanvasEngineShapeCountConstMeta =>
       const TaskConstMeta(
-        debugName: 'CanvasEngine_shape_count',
-        argNames: ['that'],
+        debugName: "CanvasEngine_shape_count",
+        argNames: ["that"],
       );
 
   @override
@@ -543,138 +514,128 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       required List<RenderShape> added,
       required List<RenderShape> updated,
       required List<String> removed}) {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
-              that, serializer);
-          sse_encode_list_render_shape(added, serializer);
-          sse_encode_list_render_shape(updated, serializer);
-          sse_encode_list_String(removed, serializer);
-          pdeCallFfi(generalizedFrbRustBinding, serializer,
-              funcId: 11, port: port_);
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiEngineCanvasEngineSyncShapesConstMeta,
-        argValues: [that, added, updated, removed],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
+            that, serializer);
+        sse_encode_list_render_shape(added, serializer);
+        sse_encode_list_render_shape(updated, serializer);
+        sse_encode_list_String(removed, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 11, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiEngineCanvasEngineSyncShapesConstMeta,
+      argValues: [that, added, updated, removed],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiEngineCanvasEngineSyncShapesConstMeta =>
       const TaskConstMeta(
-        debugName: 'CanvasEngine_sync_shapes',
-        argNames: ['that', 'added', 'updated', 'removed'],
+        debugName: "CanvasEngine_sync_shapes",
+        argNames: ["that", "added", "updated", "removed"],
       );
 
   @override
   Int32List crateApiEngineCanvasEngineTileCacheStats(
       {required CanvasEngine that}) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
-              that, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 12)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_list_prim_i_32_strict,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiEngineCanvasEngineTileCacheStatsConstMeta,
-        argValues: [that],
-        apiImpl: this,
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
+            that, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 12)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_list_prim_i_32_strict,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiEngineCanvasEngineTileCacheStatsConstMeta,
+      argValues: [that],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiEngineCanvasEngineTileCacheStatsConstMeta =>
       const TaskConstMeta(
-        debugName: 'CanvasEngine_tile_cache_stats',
-        argNames: ['that'],
+        debugName: "CanvasEngine_tile_cache_stats",
+        argNames: ["that"],
       );
 
   @override
   BigInt crateApiEngineCanvasEngineTileRasterizedCount(
       {required CanvasEngine that}) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
-              that, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_usize,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiEngineCanvasEngineTileRasterizedCountConstMeta,
-        argValues: [that],
-        apiImpl: this,
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine(
+            that, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_usize,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiEngineCanvasEngineTileRasterizedCountConstMeta,
+      argValues: [that],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiEngineCanvasEngineTileRasterizedCountConstMeta =>
       const TaskConstMeta(
-        debugName: 'CanvasEngine_tile_rasterized_count',
-        argNames: ['that'],
+        debugName: "CanvasEngine_tile_rasterized_count",
+        argNames: ["that"],
       );
 
   @override
   String crateApiSimpleGreet({required String name}) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_String(name, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 14)!;
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_String,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiSimpleGreetConstMeta,
-        argValues: [name],
-        apiImpl: this,
+    return handler.executeSync(SyncTask(
+      callFfi: () {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(name, serializer);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 14)!;
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_String,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiSimpleGreetConstMeta,
+      argValues: [name],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiSimpleGreetConstMeta => const TaskConstMeta(
-        debugName: 'greet',
-        argNames: ['name'],
+        debugName: "greet",
+        argNames: ["name"],
       );
 
   @override
   Future<void> crateApiSimpleInitApp() {
-    return handler.executeNormal(
-      NormalTask(
-        callFfi: (port_) {
-          final serializer = SseSerializer(generalizedFrbRustBinding);
-          pdeCallFfi(generalizedFrbRustBinding, serializer,
-              funcId: 15, port: port_);
-        },
-        codec: SseCodec(
-          decodeSuccessData: sse_decode_unit,
-          decodeErrorData: null,
-        ),
-        constMeta: kCrateApiSimpleInitAppConstMeta,
-        argValues: [],
-        apiImpl: this,
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 15, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_unit,
+        decodeErrorData: null,
       ),
-    );
+      constMeta: kCrateApiSimpleInitAppConstMeta,
+      argValues: [],
+      apiImpl: this,
+    ));
   }
 
   TaskConstMeta get kCrateApiSimpleInitAppConstMeta => const TaskConstMeta(
-        debugName: 'init_app',
+        debugName: "init_app",
         argNames: [],
       );
 
@@ -781,16 +742,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           matrix: dco_decode_f_64_array_6(raw[1]),
         );
       case 1:
-        return const DrawCommand_PopTransform();
+        return DrawCommand_PopTransform();
       case 2:
-        return const DrawCommand_Save();
+        return DrawCommand_Save();
       case 3:
         return DrawCommand_SaveLayer(
           bounds: dco_decode_f_64_array_4(raw[1]),
           opacity: dco_decode_f_64(raw[2]),
         );
       case 4:
-        return const DrawCommand_Restore();
+        return DrawCommand_Restore();
       case 5:
         return DrawCommand_ClipRect(
           rect: dco_decode_f_64_array_4(raw[1]),
@@ -880,7 +841,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           bounds: dco_decode_f_64_array_4(raw[3]),
         );
       case 19:
-        return const DrawCommand_PopBlur();
+        return DrawCommand_PopBlur();
       case 20:
         return DrawCommand_DrawPath(
           pathData: dco_decode_String(raw[1]),
@@ -888,7 +849,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           stroke: dco_decode_opt_box_autoadd_stroke_data(raw[3]),
         );
       default:
-        throw Exception('unreachable');
+        throw Exception("unreachable");
     }
   }
 
@@ -1197,7 +1158,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           operation: dco_decode_bool_op(raw[3]),
         );
       default:
-        throw Exception('unreachable');
+        throw Exception("unreachable");
     }
   }
 
@@ -1378,14 +1339,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   String sse_decode_String(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final inner = sse_decode_list_prim_u_8_strict(deserializer);
+    var inner = sse_decode_list_prim_u_8_strict(deserializer);
     return utf8.decoder.convert(inner);
   }
 
   @protected
   BlurType sse_decode_blur_type(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final inner = sse_decode_i_32(deserializer);
+    var inner = sse_decode_i_32(deserializer);
     return BlurType.values[inner];
   }
 
@@ -1398,7 +1359,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   BoolOp sse_decode_bool_op(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final inner = sse_decode_i_32(deserializer);
+    var inner = sse_decode_i_32(deserializer);
     return BoolOp.values[inner];
   }
 
@@ -1406,86 +1367,86 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   GradientData sse_decode_box_autoadd_gradient_data(
       SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    return sse_decode_gradient_data(deserializer);
+    return (sse_decode_gradient_data(deserializer));
   }
 
   @protected
   ShapeBlur sse_decode_box_autoadd_shape_blur(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    return sse_decode_shape_blur(deserializer);
+    return (sse_decode_shape_blur(deserializer));
   }
 
   @protected
   ShapeGradient sse_decode_box_autoadd_shape_gradient(
       SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    return sse_decode_shape_gradient(deserializer);
+    return (sse_decode_shape_gradient(deserializer));
   }
 
   @protected
   ShapeShadow sse_decode_box_autoadd_shape_shadow(
       SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    return sse_decode_shape_shadow(deserializer);
+    return (sse_decode_shape_shadow(deserializer));
   }
 
   @protected
   StrokeData sse_decode_box_autoadd_stroke_data(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    return sse_decode_stroke_data(deserializer);
+    return (sse_decode_stroke_data(deserializer));
   }
 
   @protected
   DrawCommand sse_decode_draw_command(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
-    final tag_ = sse_decode_i_32(deserializer);
+    var tag_ = sse_decode_i_32(deserializer);
     switch (tag_) {
       case 0:
-        final var_matrix = sse_decode_f_64_array_6(deserializer);
+        var var_matrix = sse_decode_f_64_array_6(deserializer);
         return DrawCommand_PushTransform(matrix: var_matrix);
       case 1:
-        return const DrawCommand_PopTransform();
+        return DrawCommand_PopTransform();
       case 2:
-        return const DrawCommand_Save();
+        return DrawCommand_Save();
       case 3:
-        final var_bounds = sse_decode_f_64_array_4(deserializer);
-        final var_opacity = sse_decode_f_64(deserializer);
+        var var_bounds = sse_decode_f_64_array_4(deserializer);
+        var var_opacity = sse_decode_f_64(deserializer);
         return DrawCommand_SaveLayer(bounds: var_bounds, opacity: var_opacity);
       case 4:
-        return const DrawCommand_Restore();
+        return DrawCommand_Restore();
       case 5:
-        final var_rect = sse_decode_f_64_array_4(deserializer);
+        var var_rect = sse_decode_f_64_array_4(deserializer);
         return DrawCommand_ClipRect(rect: var_rect);
       case 6:
-        final var_rect = sse_decode_f_64_array_4(deserializer);
-        final var_radii = sse_decode_f_64_array_4(deserializer);
+        var var_rect = sse_decode_f_64_array_4(deserializer);
+        var var_radii = sse_decode_f_64_array_4(deserializer);
         return DrawCommand_ClipRRect(rect: var_rect, radii: var_radii);
       case 7:
-        final var_rect = sse_decode_f_64_array_4(deserializer);
+        var var_rect = sse_decode_f_64_array_4(deserializer);
         return DrawCommand_ClipOval(rect: var_rect);
       case 8:
-        final var_rect = sse_decode_f_64_array_4(deserializer);
-        final var_color = sse_decode_u_32(deserializer);
+        var var_rect = sse_decode_f_64_array_4(deserializer);
+        var var_color = sse_decode_u_32(deserializer);
         return DrawCommand_DrawRect(rect: var_rect, color: var_color);
       case 9:
-        final var_rect = sse_decode_f_64_array_4(deserializer);
-        final var_radii = sse_decode_f_64_array_4(deserializer);
-        final var_color = sse_decode_u_32(deserializer);
+        var var_rect = sse_decode_f_64_array_4(deserializer);
+        var var_radii = sse_decode_f_64_array_4(deserializer);
+        var var_color = sse_decode_u_32(deserializer);
         return DrawCommand_DrawRRect(
             rect: var_rect, radii: var_radii, color: var_color);
       case 10:
-        final var_rect = sse_decode_f_64_array_4(deserializer);
-        final var_radii = sse_decode_f_64_array_4(deserializer);
-        final var_gradient = sse_decode_box_autoadd_gradient_data(deserializer);
+        var var_rect = sse_decode_f_64_array_4(deserializer);
+        var var_radii = sse_decode_f_64_array_4(deserializer);
+        var var_gradient = sse_decode_box_autoadd_gradient_data(deserializer);
         return DrawCommand_DrawRRectGradient(
             rect: var_rect, radii: var_radii, gradient: var_gradient);
       case 11:
-        final var_rect = sse_decode_f_64_array_4(deserializer);
-        final var_radii = sse_decode_f_64_array_4(deserializer);
-        final var_color = sse_decode_u_32(deserializer);
-        final var_strokeWidth = sse_decode_f_64(deserializer);
-        final var_strokeAlignment = sse_decode_u_8(deserializer);
+        var var_rect = sse_decode_f_64_array_4(deserializer);
+        var var_radii = sse_decode_f_64_array_4(deserializer);
+        var var_color = sse_decode_u_32(deserializer);
+        var var_strokeWidth = sse_decode_f_64(deserializer);
+        var var_strokeAlignment = sse_decode_u_8(deserializer);
         return DrawCommand_DrawRRectStroke(
             rect: var_rect,
             radii: var_radii,
@@ -1493,30 +1454,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             strokeWidth: var_strokeWidth,
             strokeAlignment: var_strokeAlignment);
       case 12:
-        final var_rect = sse_decode_f_64_array_4(deserializer);
-        final var_color = sse_decode_u_32(deserializer);
+        var var_rect = sse_decode_f_64_array_4(deserializer);
+        var var_color = sse_decode_u_32(deserializer);
         return DrawCommand_DrawOval(rect: var_rect, color: var_color);
       case 13:
-        final var_rect = sse_decode_f_64_array_4(deserializer);
-        final var_gradient = sse_decode_box_autoadd_gradient_data(deserializer);
+        var var_rect = sse_decode_f_64_array_4(deserializer);
+        var var_gradient = sse_decode_box_autoadd_gradient_data(deserializer);
         return DrawCommand_DrawOvalGradient(
             rect: var_rect, gradient: var_gradient);
       case 14:
-        final var_rect = sse_decode_f_64_array_4(deserializer);
-        final var_color = sse_decode_u_32(deserializer);
-        final var_strokeWidth = sse_decode_f_64(deserializer);
+        var var_rect = sse_decode_f_64_array_4(deserializer);
+        var var_color = sse_decode_u_32(deserializer);
+        var var_strokeWidth = sse_decode_f_64(deserializer);
         return DrawCommand_DrawOvalStroke(
             rect: var_rect, color: var_color, strokeWidth: var_strokeWidth);
       case 15:
-        final var_text = sse_decode_String(deserializer);
-        final var_rect = sse_decode_f_64_array_4(deserializer);
-        final var_fontSize = sse_decode_f_64(deserializer);
-        final var_fontFamily = sse_decode_String(deserializer);
-        final var_fontWeight = sse_decode_u_16(deserializer);
-        final var_color = sse_decode_u_32(deserializer);
-        final var_lineHeight = sse_decode_f_64(deserializer);
-        final var_letterSpacing = sse_decode_f_64(deserializer);
-        final var_textAlign = sse_decode_u_8(deserializer);
+        var var_text = sse_decode_String(deserializer);
+        var var_rect = sse_decode_f_64_array_4(deserializer);
+        var var_fontSize = sse_decode_f_64(deserializer);
+        var var_fontFamily = sse_decode_String(deserializer);
+        var var_fontWeight = sse_decode_u_16(deserializer);
+        var var_color = sse_decode_u_32(deserializer);
+        var var_lineHeight = sse_decode_f_64(deserializer);
+        var var_letterSpacing = sse_decode_f_64(deserializer);
+        var var_textAlign = sse_decode_u_8(deserializer);
         return DrawCommand_DrawText(
             text: var_text,
             rect: var_rect,
@@ -1528,21 +1489,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             letterSpacing: var_letterSpacing,
             textAlign: var_textAlign);
       case 16:
-        final var_assetId = sse_decode_String(deserializer);
-        final var_dstRect = sse_decode_f_64_array_4(deserializer);
-        final var_filterQuality = sse_decode_u_8(deserializer);
+        var var_assetId = sse_decode_String(deserializer);
+        var var_dstRect = sse_decode_f_64_array_4(deserializer);
+        var var_filterQuality = sse_decode_u_8(deserializer);
         return DrawCommand_DrawImage(
             assetId: var_assetId,
             dstRect: var_dstRect,
             filterQuality: var_filterQuality);
       case 17:
-        final var_pathType = sse_decode_u_8(deserializer);
-        final var_rect = sse_decode_f_64_array_4(deserializer);
-        final var_radii = sse_decode_f_64_array_4(deserializer);
-        final var_color = sse_decode_u_32(deserializer);
-        final var_blurSigma = sse_decode_f_64(deserializer);
-        final var_offset = sse_decode_f_64_array_2(deserializer);
-        final var_spread = sse_decode_f_64(deserializer);
+        var var_pathType = sse_decode_u_8(deserializer);
+        var var_rect = sse_decode_f_64_array_4(deserializer);
+        var var_radii = sse_decode_f_64_array_4(deserializer);
+        var var_color = sse_decode_u_32(deserializer);
+        var var_blurSigma = sse_decode_f_64(deserializer);
+        var var_offset = sse_decode_f_64_array_2(deserializer);
+        var var_spread = sse_decode_f_64(deserializer);
         return DrawCommand_DrawShadow(
             pathType: var_pathType,
             rect: var_rect,
@@ -1552,17 +1513,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             offset: var_offset,
             spread: var_spread);
       case 18:
-        final var_sigmaX = sse_decode_f_64(deserializer);
-        final var_sigmaY = sse_decode_f_64(deserializer);
-        final var_bounds = sse_decode_f_64_array_4(deserializer);
+        var var_sigmaX = sse_decode_f_64(deserializer);
+        var var_sigmaY = sse_decode_f_64(deserializer);
+        var var_bounds = sse_decode_f_64_array_4(deserializer);
         return DrawCommand_PushBlur(
             sigmaX: var_sigmaX, sigmaY: var_sigmaY, bounds: var_bounds);
       case 19:
-        return const DrawCommand_PopBlur();
+        return DrawCommand_PopBlur();
       case 20:
-        final var_pathData = sse_decode_String(deserializer);
-        final var_color = sse_decode_u_32(deserializer);
-        final var_stroke = sse_decode_opt_box_autoadd_stroke_data(deserializer);
+        var var_pathData = sse_decode_String(deserializer);
+        var var_color = sse_decode_u_32(deserializer);
+        var var_stroke = sse_decode_opt_box_autoadd_stroke_data(deserializer);
         return DrawCommand_DrawPath(
             pathData: var_pathData, color: var_color, stroke: var_stroke);
       default:
@@ -1579,32 +1540,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   F64Array2 sse_decode_f_64_array_2(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final inner = sse_decode_list_prim_f_64_strict(deserializer);
+    var inner = sse_decode_list_prim_f_64_strict(deserializer);
     return F64Array2(inner);
   }
 
   @protected
   F64Array4 sse_decode_f_64_array_4(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final inner = sse_decode_list_prim_f_64_strict(deserializer);
+    var inner = sse_decode_list_prim_f_64_strict(deserializer);
     return F64Array4(inner);
   }
 
   @protected
   F64Array6 sse_decode_f_64_array_6(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final inner = sse_decode_list_prim_f_64_strict(deserializer);
+    var inner = sse_decode_list_prim_f_64_strict(deserializer);
     return F64Array6(inner);
   }
 
   @protected
   GradientData sse_decode_gradient_data(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_gradientType = sse_decode_u_8(deserializer);
-    final var_colors = sse_decode_list_prim_u_32_strict(deserializer);
-    final var_stops = sse_decode_list_prim_f_64_strict(deserializer);
-    final var_start = sse_decode_f_64_array_2(deserializer);
-    final var_end = sse_decode_f_64_array_2(deserializer);
+    var var_gradientType = sse_decode_u_8(deserializer);
+    var var_colors = sse_decode_list_prim_u_32_strict(deserializer);
+    var var_stops = sse_decode_list_prim_f_64_strict(deserializer);
+    var var_start = sse_decode_f_64_array_2(deserializer);
+    var var_end = sse_decode_f_64_array_2(deserializer);
     return GradientData(
         gradientType: var_gradientType,
         colors: var_colors,
@@ -1616,15 +1577,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   GradientStop sse_decode_gradient_stop(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_offset = sse_decode_f_64(deserializer);
-    final var_color = sse_decode_u_32(deserializer);
+    var var_offset = sse_decode_f_64(deserializer);
+    var var_color = sse_decode_u_32(deserializer);
     return GradientStop(offset: var_offset, color: var_color);
   }
 
   @protected
   GradientType sse_decode_gradient_type(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final inner = sse_decode_i_32(deserializer);
+    var inner = sse_decode_i_32(deserializer);
     return GradientType.values[inner];
   }
 
@@ -1638,8 +1599,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<String> sse_decode_list_String(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
-    final len_ = sse_decode_i_32(deserializer);
-    final ans_ = <String>[];
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <String>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_String(deserializer));
     }
@@ -1650,8 +1611,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<DrawCommand> sse_decode_list_draw_command(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
-    final len_ = sse_decode_i_32(deserializer);
-    final ans_ = <DrawCommand>[];
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <DrawCommand>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_draw_command(deserializer));
     }
@@ -1663,8 +1624,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
-    final len_ = sse_decode_i_32(deserializer);
-    final ans_ = <GradientStop>[];
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <GradientStop>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_gradient_stop(deserializer));
     }
@@ -1674,35 +1635,35 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   List<double> sse_decode_list_prim_f_64_loose(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final len_ = sse_decode_i_32(deserializer);
+    var len_ = sse_decode_i_32(deserializer);
     return deserializer.buffer.getFloat64List(len_);
   }
 
   @protected
   Float64List sse_decode_list_prim_f_64_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final len_ = sse_decode_i_32(deserializer);
+    var len_ = sse_decode_i_32(deserializer);
     return deserializer.buffer.getFloat64List(len_);
   }
 
   @protected
   Int32List sse_decode_list_prim_i_32_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final len_ = sse_decode_i_32(deserializer);
+    var len_ = sse_decode_i_32(deserializer);
     return deserializer.buffer.getInt32List(len_);
   }
 
   @protected
   Uint32List sse_decode_list_prim_u_32_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final len_ = sse_decode_i_32(deserializer);
+    var len_ = sse_decode_i_32(deserializer);
     return deserializer.buffer.getUint32List(len_);
   }
 
   @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final len_ = sse_decode_i_32(deserializer);
+    var len_ = sse_decode_i_32(deserializer);
     return deserializer.buffer.getUint8List(len_);
   }
 
@@ -1710,8 +1671,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<RenderShape> sse_decode_list_render_shape(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
-    final len_ = sse_decode_i_32(deserializer);
-    final ans_ = <RenderShape>[];
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <RenderShape>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_render_shape(deserializer));
     }
@@ -1722,8 +1683,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<ShapeFill> sse_decode_list_shape_fill(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
-    final len_ = sse_decode_i_32(deserializer);
-    final ans_ = <ShapeFill>[];
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <ShapeFill>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_shape_fill(deserializer));
     }
@@ -1734,8 +1695,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<ShapeStroke> sse_decode_list_shape_stroke(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
-    final len_ = sse_decode_i_32(deserializer);
-    final ans_ = <ShapeStroke>[];
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <ShapeStroke>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_shape_stroke(deserializer));
     }
@@ -1746,8 +1707,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<TileResult> sse_decode_list_tile_result(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
-    final len_ = sse_decode_i_32(deserializer);
-    final ans_ = <TileResult>[];
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <TileResult>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_tile_result(deserializer));
     }
@@ -1757,12 +1718,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   Matrix2D sse_decode_matrix_2_d(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_a = sse_decode_f_64(deserializer);
-    final var_b = sse_decode_f_64(deserializer);
-    final var_c = sse_decode_f_64(deserializer);
-    final var_d = sse_decode_f_64(deserializer);
-    final var_e = sse_decode_f_64(deserializer);
-    final var_f = sse_decode_f_64(deserializer);
+    var var_a = sse_decode_f_64(deserializer);
+    var var_b = sse_decode_f_64(deserializer);
+    var var_c = sse_decode_f_64(deserializer);
+    var var_d = sse_decode_f_64(deserializer);
+    var var_e = sse_decode_f_64(deserializer);
+    var var_f = sse_decode_f_64(deserializer);
     return Matrix2D(a: var_a, b: var_b, c: var_c, d: var_d, e: var_e, f: var_f);
   }
 
@@ -1771,7 +1732,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     if (sse_decode_bool(deserializer)) {
-      return sse_decode_String(deserializer);
+      return (sse_decode_String(deserializer));
     } else {
       return null;
     }
@@ -1783,7 +1744,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     if (sse_decode_bool(deserializer)) {
-      return sse_decode_box_autoadd_shape_blur(deserializer);
+      return (sse_decode_box_autoadd_shape_blur(deserializer));
     } else {
       return null;
     }
@@ -1795,7 +1756,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     if (sse_decode_bool(deserializer)) {
-      return sse_decode_box_autoadd_shape_gradient(deserializer);
+      return (sse_decode_box_autoadd_shape_gradient(deserializer));
     } else {
       return null;
     }
@@ -1807,7 +1768,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     if (sse_decode_bool(deserializer)) {
-      return sse_decode_box_autoadd_shape_shadow(deserializer);
+      return (sse_decode_box_autoadd_shape_shadow(deserializer));
     } else {
       return null;
     }
@@ -1819,7 +1780,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
     if (sse_decode_bool(deserializer)) {
-      return sse_decode_box_autoadd_stroke_data(deserializer);
+      return (sse_decode_box_autoadd_stroke_data(deserializer));
     } else {
       return null;
     }
@@ -1828,20 +1789,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   RenderShape sse_decode_render_shape(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_id = sse_decode_String(deserializer);
-    final var_shapeType = sse_decode_shape_type(deserializer);
-    final var_transform = sse_decode_matrix_2_d(deserializer);
-    final var_parentId = sse_decode_opt_String(deserializer);
-    final var_frameId = sse_decode_opt_String(deserializer);
-    final var_sortOrder = sse_decode_i_32(deserializer);
-    final var_opacity = sse_decode_f_64(deserializer);
-    final var_hidden = sse_decode_bool(deserializer);
-    final var_rotation = sse_decode_f_64(deserializer);
-    final var_fills = sse_decode_list_shape_fill(deserializer);
-    final var_strokes = sse_decode_list_shape_stroke(deserializer);
-    final var_shadow = sse_decode_opt_box_autoadd_shape_shadow(deserializer);
-    final var_blur = sse_decode_opt_box_autoadd_shape_blur(deserializer);
-    final var_geometry = sse_decode_shape_geometry(deserializer);
+    var var_id = sse_decode_String(deserializer);
+    var var_shapeType = sse_decode_shape_type(deserializer);
+    var var_transform = sse_decode_matrix_2_d(deserializer);
+    var var_parentId = sse_decode_opt_String(deserializer);
+    var var_frameId = sse_decode_opt_String(deserializer);
+    var var_sortOrder = sse_decode_i_32(deserializer);
+    var var_opacity = sse_decode_f_64(deserializer);
+    var var_hidden = sse_decode_bool(deserializer);
+    var var_rotation = sse_decode_f_64(deserializer);
+    var var_fills = sse_decode_list_shape_fill(deserializer);
+    var var_strokes = sse_decode_list_shape_stroke(deserializer);
+    var var_shadow = sse_decode_opt_box_autoadd_shape_shadow(deserializer);
+    var var_blur = sse_decode_opt_box_autoadd_shape_blur(deserializer);
+    var var_geometry = sse_decode_shape_geometry(deserializer);
     return RenderShape(
         id: var_id,
         shapeType: var_shapeType,
@@ -1862,16 +1823,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   ShadowStyle sse_decode_shadow_style(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final inner = sse_decode_i_32(deserializer);
+    var inner = sse_decode_i_32(deserializer);
     return ShadowStyle.values[inner];
   }
 
   @protected
   ShapeBlur sse_decode_shape_blur(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_blurType = sse_decode_blur_type(deserializer);
-    final var_value = sse_decode_f_64(deserializer);
-    final var_hidden = sse_decode_bool(deserializer);
+    var var_blurType = sse_decode_blur_type(deserializer);
+    var var_value = sse_decode_f_64(deserializer);
+    var var_hidden = sse_decode_bool(deserializer);
     return ShapeBlur(
         blurType: var_blurType, value: var_value, hidden: var_hidden);
   }
@@ -1879,11 +1840,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   ShapeFill sse_decode_shape_fill(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_color = sse_decode_u_32(deserializer);
-    final var_opacity = sse_decode_f_64(deserializer);
-    final var_hidden = sse_decode_bool(deserializer);
-    final var_gradient =
-        sse_decode_opt_box_autoadd_shape_gradient(deserializer);
+    var var_color = sse_decode_u_32(deserializer);
+    var var_opacity = sse_decode_f_64(deserializer);
+    var var_hidden = sse_decode_bool(deserializer);
+    var var_gradient = sse_decode_opt_box_autoadd_shape_gradient(deserializer);
     return ShapeFill(
         color: var_color,
         opacity: var_opacity,
@@ -1895,15 +1855,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ShapeGeometry sse_decode_shape_geometry(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
-    final tag_ = sse_decode_i_32(deserializer);
+    var tag_ = sse_decode_i_32(deserializer);
     switch (tag_) {
       case 0:
-        final var_width = sse_decode_f_64(deserializer);
-        final var_height = sse_decode_f_64(deserializer);
-        final var_r1 = sse_decode_f_64(deserializer);
-        final var_r2 = sse_decode_f_64(deserializer);
-        final var_r3 = sse_decode_f_64(deserializer);
-        final var_r4 = sse_decode_f_64(deserializer);
+        var var_width = sse_decode_f_64(deserializer);
+        var var_height = sse_decode_f_64(deserializer);
+        var var_r1 = sse_decode_f_64(deserializer);
+        var var_r2 = sse_decode_f_64(deserializer);
+        var var_r3 = sse_decode_f_64(deserializer);
+        var var_r4 = sse_decode_f_64(deserializer);
         return ShapeGeometry_Rectangle(
             width: var_width,
             height: var_height,
@@ -1912,19 +1872,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             r3: var_r3,
             r4: var_r4);
       case 1:
-        final var_width = sse_decode_f_64(deserializer);
-        final var_height = sse_decode_f_64(deserializer);
+        var var_width = sse_decode_f_64(deserializer);
+        var var_height = sse_decode_f_64(deserializer);
         return ShapeGeometry_Ellipse(width: var_width, height: var_height);
       case 2:
-        final var_width = sse_decode_f_64(deserializer);
-        final var_height = sse_decode_f_64(deserializer);
-        final var_text = sse_decode_String(deserializer);
-        final var_fontSize = sse_decode_f_64(deserializer);
-        final var_fontFamily = sse_decode_String(deserializer);
-        final var_fontWeight = sse_decode_u_16(deserializer);
-        final var_lineHeight = sse_decode_f_64(deserializer);
-        final var_letterSpacingPercent = sse_decode_f_64(deserializer);
-        final var_textAlign = sse_decode_text_align(deserializer);
+        var var_width = sse_decode_f_64(deserializer);
+        var var_height = sse_decode_f_64(deserializer);
+        var var_text = sse_decode_String(deserializer);
+        var var_fontSize = sse_decode_f_64(deserializer);
+        var var_fontFamily = sse_decode_String(deserializer);
+        var var_fontWeight = sse_decode_u_16(deserializer);
+        var var_lineHeight = sse_decode_f_64(deserializer);
+        var var_letterSpacingPercent = sse_decode_f_64(deserializer);
+        var var_textAlign = sse_decode_text_align(deserializer);
         return ShapeGeometry_Text(
             width: var_width,
             height: var_height,
@@ -1936,41 +1896,41 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             letterSpacingPercent: var_letterSpacingPercent,
             textAlign: var_textAlign);
       case 3:
-        final var_width = sse_decode_f_64(deserializer);
-        final var_height = sse_decode_f_64(deserializer);
-        final var_clipContent = sse_decode_bool(deserializer);
+        var var_width = sse_decode_f_64(deserializer);
+        var var_height = sse_decode_f_64(deserializer);
+        var var_clipContent = sse_decode_bool(deserializer);
         return ShapeGeometry_Frame(
             width: var_width, height: var_height, clipContent: var_clipContent);
       case 4:
-        final var_width = sse_decode_f_64(deserializer);
-        final var_height = sse_decode_f_64(deserializer);
+        var var_width = sse_decode_f_64(deserializer);
+        var var_height = sse_decode_f_64(deserializer);
         return ShapeGeometry_Group(width: var_width, height: var_height);
       case 5:
-        final var_width = sse_decode_f_64(deserializer);
-        final var_height = sse_decode_f_64(deserializer);
-        final var_pathData = sse_decode_String(deserializer);
-        final var_closed = sse_decode_bool(deserializer);
+        var var_width = sse_decode_f_64(deserializer);
+        var var_height = sse_decode_f_64(deserializer);
+        var var_pathData = sse_decode_String(deserializer);
+        var var_closed = sse_decode_bool(deserializer);
         return ShapeGeometry_Path(
             width: var_width,
             height: var_height,
             pathData: var_pathData,
             closed: var_closed);
       case 6:
-        final var_width = sse_decode_f_64(deserializer);
-        final var_height = sse_decode_f_64(deserializer);
-        final var_assetId = sse_decode_String(deserializer);
+        var var_width = sse_decode_f_64(deserializer);
+        var var_height = sse_decode_f_64(deserializer);
+        var var_assetId = sse_decode_String(deserializer);
         return ShapeGeometry_Image(
             width: var_width, height: var_height, assetId: var_assetId);
       case 7:
-        final var_width = sse_decode_f_64(deserializer);
-        final var_height = sse_decode_f_64(deserializer);
-        final var_svgContent = sse_decode_String(deserializer);
+        var var_width = sse_decode_f_64(deserializer);
+        var var_height = sse_decode_f_64(deserializer);
+        var var_svgContent = sse_decode_String(deserializer);
         return ShapeGeometry_Svg(
             width: var_width, height: var_height, svgContent: var_svgContent);
       case 8:
-        final var_width = sse_decode_f_64(deserializer);
-        final var_height = sse_decode_f_64(deserializer);
-        final var_operation = sse_decode_bool_op(deserializer);
+        var var_width = sse_decode_f_64(deserializer);
+        var var_height = sse_decode_f_64(deserializer);
+        var var_operation = sse_decode_bool_op(deserializer);
         return ShapeGeometry_Bool(
             width: var_width, height: var_height, operation: var_operation);
       default:
@@ -1981,12 +1941,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   ShapeGradient sse_decode_shape_gradient(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_gradientType = sse_decode_gradient_type(deserializer);
-    final var_stops = sse_decode_list_gradient_stop(deserializer);
-    final var_startX = sse_decode_f_64(deserializer);
-    final var_startY = sse_decode_f_64(deserializer);
-    final var_endX = sse_decode_f_64(deserializer);
-    final var_endY = sse_decode_f_64(deserializer);
+    var var_gradientType = sse_decode_gradient_type(deserializer);
+    var var_stops = sse_decode_list_gradient_stop(deserializer);
+    var var_startX = sse_decode_f_64(deserializer);
+    var var_startY = sse_decode_f_64(deserializer);
+    var var_endX = sse_decode_f_64(deserializer);
+    var var_endY = sse_decode_f_64(deserializer);
     return ShapeGradient(
         gradientType: var_gradientType,
         stops: var_stops,
@@ -1999,14 +1959,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   ShapeShadow sse_decode_shape_shadow(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_style = sse_decode_shadow_style(deserializer);
-    final var_color = sse_decode_u_32(deserializer);
-    final var_opacity = sse_decode_f_64(deserializer);
-    final var_offsetX = sse_decode_f_64(deserializer);
-    final var_offsetY = sse_decode_f_64(deserializer);
-    final var_blur = sse_decode_f_64(deserializer);
-    final var_spread = sse_decode_f_64(deserializer);
-    final var_hidden = sse_decode_bool(deserializer);
+    var var_style = sse_decode_shadow_style(deserializer);
+    var var_color = sse_decode_u_32(deserializer);
+    var var_opacity = sse_decode_f_64(deserializer);
+    var var_offsetX = sse_decode_f_64(deserializer);
+    var var_offsetY = sse_decode_f_64(deserializer);
+    var var_blur = sse_decode_f_64(deserializer);
+    var var_spread = sse_decode_f_64(deserializer);
+    var var_hidden = sse_decode_bool(deserializer);
     return ShapeShadow(
         style: var_style,
         color: var_color,
@@ -2021,13 +1981,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   ShapeStroke sse_decode_shape_stroke(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_color = sse_decode_u_32(deserializer);
-    final var_width = sse_decode_f_64(deserializer);
-    final var_opacity = sse_decode_f_64(deserializer);
-    final var_hidden = sse_decode_bool(deserializer);
-    final var_alignment = sse_decode_stroke_alignment(deserializer);
-    final var_cap = sse_decode_stroke_cap(deserializer);
-    final var_join = sse_decode_stroke_join(deserializer);
+    var var_color = sse_decode_u_32(deserializer);
+    var var_width = sse_decode_f_64(deserializer);
+    var var_opacity = sse_decode_f_64(deserializer);
+    var var_hidden = sse_decode_bool(deserializer);
+    var var_alignment = sse_decode_stroke_alignment(deserializer);
+    var var_cap = sse_decode_stroke_cap(deserializer);
+    var var_join = sse_decode_stroke_join(deserializer);
     return ShapeStroke(
         color: var_color,
         width: var_width,
@@ -2041,31 +2001,31 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   ShapeType sse_decode_shape_type(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final inner = sse_decode_i_32(deserializer);
+    var inner = sse_decode_i_32(deserializer);
     return ShapeType.values[inner];
   }
 
   @protected
   StrokeAlignment sse_decode_stroke_alignment(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final inner = sse_decode_i_32(deserializer);
+    var inner = sse_decode_i_32(deserializer);
     return StrokeAlignment.values[inner];
   }
 
   @protected
   StrokeCap sse_decode_stroke_cap(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final inner = sse_decode_i_32(deserializer);
+    var inner = sse_decode_i_32(deserializer);
     return StrokeCap.values[inner];
   }
 
   @protected
   StrokeData sse_decode_stroke_data(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_width = sse_decode_f_64(deserializer);
-    final var_color = sse_decode_u_32(deserializer);
-    final var_cap = sse_decode_u_8(deserializer);
-    final var_join = sse_decode_u_8(deserializer);
+    var var_width = sse_decode_f_64(deserializer);
+    var var_color = sse_decode_u_32(deserializer);
+    var var_cap = sse_decode_u_8(deserializer);
+    var var_join = sse_decode_u_8(deserializer);
     return StrokeData(
         width: var_width, color: var_color, cap: var_cap, join: var_join);
   }
@@ -2073,23 +2033,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   StrokeJoin sse_decode_stroke_join(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final inner = sse_decode_i_32(deserializer);
+    var inner = sse_decode_i_32(deserializer);
     return StrokeJoin.values[inner];
   }
 
   @protected
   TextAlign sse_decode_text_align(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final inner = sse_decode_i_32(deserializer);
+    var inner = sse_decode_i_32(deserializer);
     return TextAlign.values[inner];
   }
 
   @protected
   TileResult sse_decode_tile_result(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    final var_col = sse_decode_i_32(deserializer);
-    final var_row = sse_decode_i_32(deserializer);
-    final var_pixels = sse_decode_list_prim_u_8_strict(deserializer);
+    var var_col = sse_decode_i_32(deserializer);
+    var var_row = sse_decode_i_32(deserializer);
+    var var_pixels = sse_decode_list_prim_u_8_strict(deserializer);
     return TileResult(col: var_col, row: var_row, pixels: var_pixels);
   }
 
@@ -2158,7 +2118,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           CanvasEngine self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_usize(
-        (self as CanvasEngineImpl).frbInternalSseEncode(), serializer);
+        (self as CanvasEngineImpl).frbInternalSseEncode(move: null),
+        serializer);
   }
 
   @protected
@@ -2886,7 +2847,7 @@ class CanvasEngineImpl extends RustOpaque implements CanvasEngine {
   ///
   /// When `skip_tile_rasterized` is `true`, shapes that have been
   /// rendered into cached tiles are excluded from the draw command list.
-  Future<List<DrawCommand>> generateDrawCommands(
+  List<DrawCommand> generateDrawCommands(
           {required double viewportMinX,
           required double viewportMinY,
           required double viewportMaxX,

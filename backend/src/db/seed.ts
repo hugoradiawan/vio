@@ -639,7 +639,7 @@ async function seedStressProject(level: StressLevel): Promise<void> {
 				shapeRows.push({
 					id: randomUUID(),
 					projectId: config.projectId,
-					frameId: null,
+					frameId,
 					parentId: null,
 					type: "rectangle",
 					name: `Rect ${globalIndex + 1}`,
@@ -675,7 +675,7 @@ async function seedStressProject(level: StressLevel): Promise<void> {
 				shapeRows.push({
 					id: randomUUID(),
 					projectId: config.projectId,
-					frameId: null,
+					frameId,
 					parentId: null,
 					type: "ellipse",
 					name: `Ellipse ${globalIndex + 1}`,
@@ -705,7 +705,7 @@ async function seedStressProject(level: StressLevel): Promise<void> {
 				shapeRows.push({
 					id: randomUUID(),
 					projectId: config.projectId,
-					frameId: null,
+					frameId,
 					parentId: null,
 					type: "text",
 					name: `Text ${globalIndex + 1}`,
@@ -742,7 +742,7 @@ async function seedStressProject(level: StressLevel): Promise<void> {
 			shapeRows.push({
 				id: randomUUID(),
 				projectId: config.projectId,
-				frameId: null,
+				frameId,
 				parentId: null,
 				type: "image",
 				name: `Image ${globalIndex + 1}`,

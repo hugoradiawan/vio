@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:vio_core/vio_core.dart';
 
 import '../../rust/api/engine.dart';
+import '../../rust/render/commands.dart';
 import '../../rust/scene_graph/shape.dart';
 
 /// Service wrapping the Rust [CanvasEngine] for the Flutter layer.
@@ -26,6 +28,12 @@ class RustEngineService {
   /// Whether the engine has been created yet.
   bool get isInitialized => _engine != null;
 
+  /// Notifier bumped after every successful shape sync (loadAllShapes /
+  /// syncShapes). Widgets can listen to this to regenerate draw commands
+  /// once the engine has been updated, avoiding a race where
+  /// `generateDrawCommands` runs before `loadAllShapes` completes.
+  final ValueNotifier<int> syncGeneration = ValueNotifier(0);
+
   // ---------------------------------------------------------------------------
   // Scene management
   // ---------------------------------------------------------------------------
@@ -34,8 +42,9 @@ class RustEngineService {
   /// content. Use this on initial project load or branch switch.
   Future<void> loadAllShapes(List<RenderShape> shapes) async {
     await engine.loadAllShapes(shapes: shapes);
+    syncGeneration.value++;
     VioLogger.debug(
-      'RustEngine: loaded ${shapes.length} shapes',
+      'RustEngine: loaded ${shapes.length} shapes (gen=${syncGeneration.value})',
     );
   }
 
@@ -52,6 +61,7 @@ class RustEngineService {
       updated: updated,
       removed: removed,
     );
+    syncGeneration.value++;
   }
 
   // ---------------------------------------------------------------------------
@@ -85,6 +95,67 @@ class RustEngineService {
 
   /// Paint order: depth-first shape IDs.
   List<String> paintOrder() => engine.paintOrder();
+
+  /// Generate draw commands for the visible area.
+  ///
+  /// [viewMatrix] is the 6-element affine `[a, b, c, d, e, f]`.
+  /// [viewportMinX..maxY] is the visible rect in canvas (world) coordinates.
+  /// When [simplify] is true, shadows/blurs/gradients are elided.
+  /// When [skipTileRasterized] is true, shapes already rendered into tiles are
+  /// excluded from the returned command list.
+  Future<List<DrawCommand>> generateDrawCommands({
+    required double viewportMinX,
+    required double viewportMinY,
+    required double viewportMaxX,
+    required double viewportMaxY,
+    required List<double> viewMatrix,
+    required bool simplify,
+    bool skipTileRasterized = false,
+  }) {
+    return engine.generateDrawCommands(
+      viewportMinX: viewportMinX,
+      viewportMinY: viewportMinY,
+      viewportMaxX: viewportMaxX,
+      viewportMaxY: viewportMaxY,
+      viewMatrix: viewMatrix,
+      simplify: simplify,
+      skipTileRasterized: skipTileRasterized,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Phase 3: Tile rasterization
+  // ---------------------------------------------------------------------------
+
+  /// Rasterize dirty tiles in the viewport.
+  ///
+  /// Returns a list of [TileResult]s containing the tile's pixel data and
+  /// grid position. After rasterization the tiles are cached internally;
+  /// subsequent calls only re-render tiles whose shapes have changed.
+  Future<List<TileResult>> rasterizeDirtyTiles({
+    required double viewportMinX,
+    required double viewportMinY,
+    required double viewportMaxX,
+    required double viewportMaxY,
+    required double zoom,
+  }) {
+    return engine.rasterizeDirtyTiles(
+      viewportMinX: viewportMinX,
+      viewportMinY: viewportMinY,
+      viewportMaxX: viewportMaxX,
+      viewportMaxY: viewportMaxY,
+      zoom: zoom,
+    );
+  }
+
+  /// Mark all cached tiles as dirty (e.g. after branch switch).
+  Future<void> markAllTilesDirty() => engine.markAllTilesDirty();
+
+  /// Tile cache stats: [cached, dirty, occupied].
+  Int32List get tileCacheStats => engine.tileCacheStats();
+
+  /// Number of shapes that are tile-rasterized.
+  int get tileRasterizedCount => engine.tileRasterizedCount().toInt();
 
   /// Total shape count.
   int get shapeCount => engine.shapeCount().toInt();

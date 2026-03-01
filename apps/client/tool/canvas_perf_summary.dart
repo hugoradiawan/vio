@@ -17,7 +17,7 @@ void main(List<String> args) async {
   }
 
   final inputFile = File(cli.inputPath!);
-  if (!await inputFile.exists()) {
+  if (!inputFile.existsSync()) {
     stderr.writeln('Input file not found: ${cli.inputPath}');
     exit(2);
   }

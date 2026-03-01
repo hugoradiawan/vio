@@ -17,11 +17,20 @@ class RenderShapeConverter {
   // ---------------------------------------------------------------------------
 
   /// Convert a single core [Shape] to a Rust [frb.RenderShape].
+  ///
+  /// The Dart model stores position in **both** `shape.x`/`shape.y` (local
+  /// bounding-box origin) and `shape.transform` (affine matrix with `e`/`f`
+  /// translation). The Rust pipeline draws everything at local origin
+  /// `(0, 0, w, h)`, so we must bake the `(x, y)` offset into the transform.
+  ///
+  /// Composed transform = original_transform × translation(x, y):
+  ///   new_e = a·x + c·y + e
+  ///   new_f = b·x + d·y + f
   static frb.RenderShape toRenderShape(Shape shape) {
     return frb.RenderShape(
       id: shape.id,
       shapeType: _convertShapeType(shape.type),
-      transform: _convertMatrix(shape.transform),
+      transform: _convertMatrixWithOffset(shape.transform, shape.x, shape.y),
       parentId: shape.parentId,
       frameId: shape.frameId,
       sortOrder: shape.sortOrder,
@@ -81,8 +90,28 @@ class RenderShapeConverter {
   // Type conversions
   // ---------------------------------------------------------------------------
 
-  static frb.Matrix2D _convertMatrix(Matrix2D m) {
-    return frb.Matrix2D(a: m.a, b: m.b, c: m.c, d: m.d, e: m.e, f: m.f);
+  // static frb.Matrix2D _convertMatrix(Matrix2D m) {
+  //   return frb.Matrix2D(a: m.a, b: m.b, c: m.c, d: m.d, e: m.e, f: m.f);
+  // }
+
+  /// Convert a [Matrix2D] while composing an additional (x, y) translation.
+  ///
+  /// Rust draws at `(0, 0)`, so shape.x/y must be folded into the matrix.
+  /// Result = transform × translate(x, y):
+  ///   e' = a·x + c·y + e,  f' = b·x + d·y + f
+  static frb.Matrix2D _convertMatrixWithOffset(
+    Matrix2D m,
+    double x,
+    double y,
+  ) {
+    return frb.Matrix2D(
+      a: m.a,
+      b: m.b,
+      c: m.c,
+      d: m.d,
+      e: m.a * x + m.c * y + m.e,
+      f: m.b * x + m.d * y + m.f,
+    );
   }
 
   static frb.ShapeType _convertShapeType(ShapeType type) {

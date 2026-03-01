@@ -12,7 +12,9 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_io.dart';
 import 'api/engine.dart';
 import 'api/simple.dart';
 import 'frb_generated.dart';
+import 'lib.dart';
 import 'math/matrix2d.dart';
+import 'render/commands.dart';
 import 'scene_graph/shape.dart';
 
 abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
@@ -60,6 +62,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   BoolOp dco_decode_bool_op(dynamic raw);
 
   @protected
+  GradientData dco_decode_box_autoadd_gradient_data(dynamic raw);
+
+  @protected
   ShapeBlur dco_decode_box_autoadd_shape_blur(dynamic raw);
 
   @protected
@@ -69,7 +74,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ShapeShadow dco_decode_box_autoadd_shape_shadow(dynamic raw);
 
   @protected
+  StrokeData dco_decode_box_autoadd_stroke_data(dynamic raw);
+
+  @protected
+  DrawCommand dco_decode_draw_command(dynamic raw);
+
+  @protected
   double dco_decode_f_64(dynamic raw);
+
+  @protected
+  F64Array2 dco_decode_f_64_array_2(dynamic raw);
+
+  @protected
+  F64Array4 dco_decode_f_64_array_4(dynamic raw);
+
+  @protected
+  F64Array6 dco_decode_f_64_array_6(dynamic raw);
+
+  @protected
+  GradientData dco_decode_gradient_data(dynamic raw);
 
   @protected
   GradientStop dco_decode_gradient_stop(dynamic raw);
@@ -84,7 +107,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<String> dco_decode_list_String(dynamic raw);
 
   @protected
+  List<DrawCommand> dco_decode_list_draw_command(dynamic raw);
+
+  @protected
   List<GradientStop> dco_decode_list_gradient_stop(dynamic raw);
+
+  @protected
+  List<double> dco_decode_list_prim_f_64_loose(dynamic raw);
+
+  @protected
+  Float64List dco_decode_list_prim_f_64_strict(dynamic raw);
+
+  @protected
+  Int32List dco_decode_list_prim_i_32_strict(dynamic raw);
+
+  @protected
+  Uint32List dco_decode_list_prim_u_32_strict(dynamic raw);
 
   @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
@@ -97,6 +135,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<ShapeStroke> dco_decode_list_shape_stroke(dynamic raw);
+
+  @protected
+  List<TileResult> dco_decode_list_tile_result(dynamic raw);
 
   @protected
   Matrix2D dco_decode_matrix_2_d(dynamic raw);
@@ -112,6 +153,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ShapeShadow? dco_decode_opt_box_autoadd_shape_shadow(dynamic raw);
+
+  @protected
+  StrokeData? dco_decode_opt_box_autoadd_stroke_data(dynamic raw);
 
   @protected
   RenderShape dco_decode_render_shape(dynamic raw);
@@ -147,10 +191,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   StrokeCap dco_decode_stroke_cap(dynamic raw);
 
   @protected
+  StrokeData dco_decode_stroke_data(dynamic raw);
+
+  @protected
   StrokeJoin dco_decode_stroke_join(dynamic raw);
 
   @protected
   TextAlign dco_decode_text_align(dynamic raw);
+
+  @protected
+  TileResult dco_decode_tile_result(dynamic raw);
 
   @protected
   int dco_decode_u_16(dynamic raw);
@@ -200,6 +250,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   BoolOp sse_decode_bool_op(SseDeserializer deserializer);
 
   @protected
+  GradientData sse_decode_box_autoadd_gradient_data(
+      SseDeserializer deserializer);
+
+  @protected
   ShapeBlur sse_decode_box_autoadd_shape_blur(SseDeserializer deserializer);
 
   @protected
@@ -210,7 +264,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ShapeShadow sse_decode_box_autoadd_shape_shadow(SseDeserializer deserializer);
 
   @protected
+  StrokeData sse_decode_box_autoadd_stroke_data(SseDeserializer deserializer);
+
+  @protected
+  DrawCommand sse_decode_draw_command(SseDeserializer deserializer);
+
+  @protected
   double sse_decode_f_64(SseDeserializer deserializer);
+
+  @protected
+  F64Array2 sse_decode_f_64_array_2(SseDeserializer deserializer);
+
+  @protected
+  F64Array4 sse_decode_f_64_array_4(SseDeserializer deserializer);
+
+  @protected
+  F64Array6 sse_decode_f_64_array_6(SseDeserializer deserializer);
+
+  @protected
+  GradientData sse_decode_gradient_data(SseDeserializer deserializer);
 
   @protected
   GradientStop sse_decode_gradient_stop(SseDeserializer deserializer);
@@ -225,8 +297,23 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<String> sse_decode_list_String(SseDeserializer deserializer);
 
   @protected
+  List<DrawCommand> sse_decode_list_draw_command(SseDeserializer deserializer);
+
+  @protected
   List<GradientStop> sse_decode_list_gradient_stop(
       SseDeserializer deserializer);
+
+  @protected
+  List<double> sse_decode_list_prim_f_64_loose(SseDeserializer deserializer);
+
+  @protected
+  Float64List sse_decode_list_prim_f_64_strict(SseDeserializer deserializer);
+
+  @protected
+  Int32List sse_decode_list_prim_i_32_strict(SseDeserializer deserializer);
+
+  @protected
+  Uint32List sse_decode_list_prim_u_32_strict(SseDeserializer deserializer);
 
   @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
@@ -239,6 +326,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<ShapeStroke> sse_decode_list_shape_stroke(SseDeserializer deserializer);
+
+  @protected
+  List<TileResult> sse_decode_list_tile_result(SseDeserializer deserializer);
 
   @protected
   Matrix2D sse_decode_matrix_2_d(SseDeserializer deserializer);
@@ -256,6 +346,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ShapeShadow? sse_decode_opt_box_autoadd_shape_shadow(
+      SseDeserializer deserializer);
+
+  @protected
+  StrokeData? sse_decode_opt_box_autoadd_stroke_data(
       SseDeserializer deserializer);
 
   @protected
@@ -292,10 +386,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   StrokeCap sse_decode_stroke_cap(SseDeserializer deserializer);
 
   @protected
+  StrokeData sse_decode_stroke_data(SseDeserializer deserializer);
+
+  @protected
   StrokeJoin sse_decode_stroke_join(SseDeserializer deserializer);
 
   @protected
   TextAlign sse_decode_text_align(SseDeserializer deserializer);
+
+  @protected
+  TileResult sse_decode_tile_result(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_16(SseDeserializer deserializer);
@@ -345,6 +445,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_bool_op(BoolOp self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_gradient_data(
+      GradientData self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_shape_blur(
       ShapeBlur self, SseSerializer serializer);
 
@@ -357,7 +461,26 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       ShapeShadow self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_stroke_data(
+      StrokeData self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_draw_command(DrawCommand self, SseSerializer serializer);
+
+  @protected
   void sse_encode_f_64(double self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_f_64_array_2(F64Array2 self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_f_64_array_4(F64Array4 self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_f_64_array_6(F64Array6 self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_gradient_data(GradientData self, SseSerializer serializer);
 
   @protected
   void sse_encode_gradient_stop(GradientStop self, SseSerializer serializer);
@@ -372,8 +495,28 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_String(List<String> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_draw_command(
+      List<DrawCommand> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_gradient_stop(
       List<GradientStop> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_prim_f_64_loose(
+      List<double> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_prim_f_64_strict(
+      Float64List self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_prim_i_32_strict(
+      Int32List self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_prim_u_32_strict(
+      Uint32List self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_prim_u_8_strict(
@@ -392,6 +535,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       List<ShapeStroke> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_tile_result(
+      List<TileResult> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_matrix_2_d(Matrix2D self, SseSerializer serializer);
 
   @protected
@@ -408,6 +555,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_opt_box_autoadd_shape_shadow(
       ShapeShadow? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_stroke_data(
+      StrokeData? self, SseSerializer serializer);
 
   @protected
   void sse_encode_render_shape(RenderShape self, SseSerializer serializer);
@@ -444,10 +595,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_stroke_cap(StrokeCap self, SseSerializer serializer);
 
   @protected
+  void sse_encode_stroke_data(StrokeData self, SseSerializer serializer);
+
+  @protected
   void sse_encode_stroke_join(StrokeJoin self, SseSerializer serializer);
 
   @protected
   void sse_encode_text_align(TextAlign self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_tile_result(TileResult self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_16(int self, SseSerializer serializer);

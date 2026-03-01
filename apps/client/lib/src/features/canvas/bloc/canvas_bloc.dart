@@ -8,7 +8,6 @@ import 'package:uuid/uuid.dart';
 import 'package:vio_core/vio_core.dart';
 
 import '../../../core/core.dart';
-import '../../../core/rust/render_shape_converter.dart';
 import '../models/handle_types.dart';
 import '../models/selection_handle_metrics.dart';
 import '../models/selection_hit_test.dart';

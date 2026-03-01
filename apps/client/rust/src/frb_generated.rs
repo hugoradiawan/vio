@@ -38,7 +38,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.11.1";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1150966451;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 2105087152;
 
 // Section: executor
 
@@ -72,6 +72,73 @@ fn wire__crate__api__engine__CanvasEngine_create_impl(
                 let output_ok = Result::<_, ()>::Ok(crate::api::engine::CanvasEngine::create())?;
                 Ok(output_ok)
             })())
+        },
+    )
+}
+fn wire__crate__api__engine__CanvasEngine_generate_draw_commands_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "CanvasEngine_generate_draw_commands",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<CanvasEngine>,
+            >>::sse_decode(&mut deserializer);
+            let api_viewport_min_x = <f64>::sse_decode(&mut deserializer);
+            let api_viewport_min_y = <f64>::sse_decode(&mut deserializer);
+            let api_viewport_max_x = <f64>::sse_decode(&mut deserializer);
+            let api_viewport_max_y = <f64>::sse_decode(&mut deserializer);
+            let api_view_matrix = <Vec<f64>>::sse_decode(&mut deserializer);
+            let api_simplify = <bool>::sse_decode(&mut deserializer);
+            let api_skip_tile_rasterized = <bool>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let mut api_that_guard = None;
+                    let decode_indices_ =
+                        flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                &api_that, 0, false,
+                            ),
+                        ]);
+                    for i in decode_indices_ {
+                        match i {
+                            0 => api_that_guard = Some(api_that.lockable_decode_sync_ref()),
+                            _ => unreachable!(),
+                        }
+                    }
+                    let api_that_guard = api_that_guard.unwrap();
+                    let output_ok = Result::<_, ()>::Ok(
+                        crate::api::engine::CanvasEngine::generate_draw_commands(
+                            &*api_that_guard,
+                            api_viewport_min_x,
+                            api_viewport_min_y,
+                            api_viewport_max_x,
+                            api_viewport_max_y,
+                            api_view_matrix,
+                            api_simplify,
+                            api_skip_tile_rasterized,
+                        ),
+                    )?;
+                    Ok(output_ok)
+                })())
+            }
         },
     )
 }
@@ -241,6 +308,59 @@ fn wire__crate__api__engine__CanvasEngine_load_all_shapes_impl(
         },
     )
 }
+fn wire__crate__api__engine__CanvasEngine_mark_all_tiles_dirty_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "CanvasEngine_mark_all_tiles_dirty",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<CanvasEngine>,
+            >>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let mut api_that_guard = None;
+                    let decode_indices_ =
+                        flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                &api_that, 0, true,
+                            ),
+                        ]);
+                    for i in decode_indices_ {
+                        match i {
+                            0 => api_that_guard = Some(api_that.lockable_decode_sync_ref_mut()),
+                            _ => unreachable!(),
+                        }
+                    }
+                    let mut api_that_guard = api_that_guard.unwrap();
+                    let output_ok = Result::<_, ()>::Ok({
+                        crate::api::engine::CanvasEngine::mark_all_tiles_dirty(
+                            &mut *api_that_guard,
+                        );
+                    })?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__engine__CanvasEngine_paint_order_impl(
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -343,6 +463,69 @@ fn wire__crate__api__engine__CanvasEngine_query_visible_impl(
                     ))?;
                 Ok(output_ok)
             })())
+        },
+    )
+}
+fn wire__crate__api__engine__CanvasEngine_rasterize_dirty_tiles_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "CanvasEngine_rasterize_dirty_tiles",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<CanvasEngine>,
+            >>::sse_decode(&mut deserializer);
+            let api_viewport_min_x = <f64>::sse_decode(&mut deserializer);
+            let api_viewport_min_y = <f64>::sse_decode(&mut deserializer);
+            let api_viewport_max_x = <f64>::sse_decode(&mut deserializer);
+            let api_viewport_max_y = <f64>::sse_decode(&mut deserializer);
+            let api_zoom = <f64>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let mut api_that_guard = None;
+                    let decode_indices_ =
+                        flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                            flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                &api_that, 0, true,
+                            ),
+                        ]);
+                    for i in decode_indices_ {
+                        match i {
+                            0 => api_that_guard = Some(api_that.lockable_decode_sync_ref_mut()),
+                            _ => unreachable!(),
+                        }
+                    }
+                    let mut api_that_guard = api_that_guard.unwrap();
+                    let output_ok = Result::<_, ()>::Ok(
+                        crate::api::engine::CanvasEngine::rasterize_dirty_tiles(
+                            &mut *api_that_guard,
+                            api_viewport_min_x,
+                            api_viewport_min_y,
+                            api_viewport_max_x,
+                            api_viewport_max_y,
+                            api_zoom,
+                        ),
+                    )?;
+                    Ok(output_ok)
+                })())
+            }
         },
     )
 }
@@ -452,6 +635,102 @@ fn wire__crate__api__engine__CanvasEngine_sync_shapes_impl(
                     Ok(output_ok)
                 })())
             }
+        },
+    )
+}
+fn wire__crate__api__engine__CanvasEngine_tile_cache_stats_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "CanvasEngine_tile_cache_stats",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<CanvasEngine>,
+            >>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let mut api_that_guard = None;
+                let decode_indices_ =
+                    flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                        flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                            &api_that, 0, false,
+                        ),
+                    ]);
+                for i in decode_indices_ {
+                    match i {
+                        0 => api_that_guard = Some(api_that.lockable_decode_sync_ref()),
+                        _ => unreachable!(),
+                    }
+                }
+                let api_that_guard = api_that_guard.unwrap();
+                let output_ok = Result::<_, ()>::Ok(
+                    crate::api::engine::CanvasEngine::tile_cache_stats(&*api_that_guard),
+                )?;
+                Ok(output_ok)
+            })())
+        },
+    )
+}
+fn wire__crate__api__engine__CanvasEngine_tile_rasterized_count_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "CanvasEngine_tile_rasterized_count",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<CanvasEngine>,
+            >>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let mut api_that_guard = None;
+                let decode_indices_ =
+                    flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![
+                        flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                            &api_that, 0, false,
+                        ),
+                    ]);
+                for i in decode_indices_ {
+                    match i {
+                        0 => api_that_guard = Some(api_that.lockable_decode_sync_ref()),
+                        _ => unreachable!(),
+                    }
+                }
+                let api_that_guard = api_that_guard.unwrap();
+                let output_ok = Result::<_, ()>::Ok(
+                    crate::api::engine::CanvasEngine::tile_rasterized_count(&*api_that_guard),
+                )?;
+                Ok(output_ok)
+            })())
         },
     )
 }
@@ -589,10 +868,245 @@ impl SseDecode for crate::scene_graph::shape::BoolOp {
     }
 }
 
+impl SseDecode for crate::render::commands::DrawCommand {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut tag_ = <i32>::sse_decode(deserializer);
+        match tag_ {
+            0 => {
+                let mut var_matrix = <[f64; 6]>::sse_decode(deserializer);
+                return crate::render::commands::DrawCommand::PushTransform { matrix: var_matrix };
+            }
+            1 => {
+                return crate::render::commands::DrawCommand::PopTransform;
+            }
+            2 => {
+                return crate::render::commands::DrawCommand::Save;
+            }
+            3 => {
+                let mut var_bounds = <[f64; 4]>::sse_decode(deserializer);
+                let mut var_opacity = <f64>::sse_decode(deserializer);
+                return crate::render::commands::DrawCommand::SaveLayer {
+                    bounds: var_bounds,
+                    opacity: var_opacity,
+                };
+            }
+            4 => {
+                return crate::render::commands::DrawCommand::Restore;
+            }
+            5 => {
+                let mut var_rect = <[f64; 4]>::sse_decode(deserializer);
+                return crate::render::commands::DrawCommand::ClipRect { rect: var_rect };
+            }
+            6 => {
+                let mut var_rect = <[f64; 4]>::sse_decode(deserializer);
+                let mut var_radii = <[f64; 4]>::sse_decode(deserializer);
+                return crate::render::commands::DrawCommand::ClipRRect {
+                    rect: var_rect,
+                    radii: var_radii,
+                };
+            }
+            7 => {
+                let mut var_rect = <[f64; 4]>::sse_decode(deserializer);
+                return crate::render::commands::DrawCommand::ClipOval { rect: var_rect };
+            }
+            8 => {
+                let mut var_rect = <[f64; 4]>::sse_decode(deserializer);
+                let mut var_color = <u32>::sse_decode(deserializer);
+                return crate::render::commands::DrawCommand::DrawRect {
+                    rect: var_rect,
+                    color: var_color,
+                };
+            }
+            9 => {
+                let mut var_rect = <[f64; 4]>::sse_decode(deserializer);
+                let mut var_radii = <[f64; 4]>::sse_decode(deserializer);
+                let mut var_color = <u32>::sse_decode(deserializer);
+                return crate::render::commands::DrawCommand::DrawRRect {
+                    rect: var_rect,
+                    radii: var_radii,
+                    color: var_color,
+                };
+            }
+            10 => {
+                let mut var_rect = <[f64; 4]>::sse_decode(deserializer);
+                let mut var_radii = <[f64; 4]>::sse_decode(deserializer);
+                let mut var_gradient =
+                    <crate::render::commands::GradientData>::sse_decode(deserializer);
+                return crate::render::commands::DrawCommand::DrawRRectGradient {
+                    rect: var_rect,
+                    radii: var_radii,
+                    gradient: var_gradient,
+                };
+            }
+            11 => {
+                let mut var_rect = <[f64; 4]>::sse_decode(deserializer);
+                let mut var_radii = <[f64; 4]>::sse_decode(deserializer);
+                let mut var_color = <u32>::sse_decode(deserializer);
+                let mut var_strokeWidth = <f64>::sse_decode(deserializer);
+                let mut var_strokeAlignment = <u8>::sse_decode(deserializer);
+                return crate::render::commands::DrawCommand::DrawRRectStroke {
+                    rect: var_rect,
+                    radii: var_radii,
+                    color: var_color,
+                    stroke_width: var_strokeWidth,
+                    stroke_alignment: var_strokeAlignment,
+                };
+            }
+            12 => {
+                let mut var_rect = <[f64; 4]>::sse_decode(deserializer);
+                let mut var_color = <u32>::sse_decode(deserializer);
+                return crate::render::commands::DrawCommand::DrawOval {
+                    rect: var_rect,
+                    color: var_color,
+                };
+            }
+            13 => {
+                let mut var_rect = <[f64; 4]>::sse_decode(deserializer);
+                let mut var_gradient =
+                    <crate::render::commands::GradientData>::sse_decode(deserializer);
+                return crate::render::commands::DrawCommand::DrawOvalGradient {
+                    rect: var_rect,
+                    gradient: var_gradient,
+                };
+            }
+            14 => {
+                let mut var_rect = <[f64; 4]>::sse_decode(deserializer);
+                let mut var_color = <u32>::sse_decode(deserializer);
+                let mut var_strokeWidth = <f64>::sse_decode(deserializer);
+                return crate::render::commands::DrawCommand::DrawOvalStroke {
+                    rect: var_rect,
+                    color: var_color,
+                    stroke_width: var_strokeWidth,
+                };
+            }
+            15 => {
+                let mut var_text = <String>::sse_decode(deserializer);
+                let mut var_rect = <[f64; 4]>::sse_decode(deserializer);
+                let mut var_fontSize = <f64>::sse_decode(deserializer);
+                let mut var_fontFamily = <String>::sse_decode(deserializer);
+                let mut var_fontWeight = <u16>::sse_decode(deserializer);
+                let mut var_color = <u32>::sse_decode(deserializer);
+                let mut var_lineHeight = <f64>::sse_decode(deserializer);
+                let mut var_letterSpacing = <f64>::sse_decode(deserializer);
+                let mut var_textAlign = <u8>::sse_decode(deserializer);
+                return crate::render::commands::DrawCommand::DrawText {
+                    text: var_text,
+                    rect: var_rect,
+                    font_size: var_fontSize,
+                    font_family: var_fontFamily,
+                    font_weight: var_fontWeight,
+                    color: var_color,
+                    line_height: var_lineHeight,
+                    letter_spacing: var_letterSpacing,
+                    text_align: var_textAlign,
+                };
+            }
+            16 => {
+                let mut var_assetId = <String>::sse_decode(deserializer);
+                let mut var_dstRect = <[f64; 4]>::sse_decode(deserializer);
+                let mut var_filterQuality = <u8>::sse_decode(deserializer);
+                return crate::render::commands::DrawCommand::DrawImage {
+                    asset_id: var_assetId,
+                    dst_rect: var_dstRect,
+                    filter_quality: var_filterQuality,
+                };
+            }
+            17 => {
+                let mut var_pathType = <u8>::sse_decode(deserializer);
+                let mut var_rect = <[f64; 4]>::sse_decode(deserializer);
+                let mut var_radii = <[f64; 4]>::sse_decode(deserializer);
+                let mut var_color = <u32>::sse_decode(deserializer);
+                let mut var_blurSigma = <f64>::sse_decode(deserializer);
+                let mut var_offset = <[f64; 2]>::sse_decode(deserializer);
+                let mut var_spread = <f64>::sse_decode(deserializer);
+                return crate::render::commands::DrawCommand::DrawShadow {
+                    path_type: var_pathType,
+                    rect: var_rect,
+                    radii: var_radii,
+                    color: var_color,
+                    blur_sigma: var_blurSigma,
+                    offset: var_offset,
+                    spread: var_spread,
+                };
+            }
+            18 => {
+                let mut var_sigmaX = <f64>::sse_decode(deserializer);
+                let mut var_sigmaY = <f64>::sse_decode(deserializer);
+                let mut var_bounds = <[f64; 4]>::sse_decode(deserializer);
+                return crate::render::commands::DrawCommand::PushBlur {
+                    sigma_x: var_sigmaX,
+                    sigma_y: var_sigmaY,
+                    bounds: var_bounds,
+                };
+            }
+            19 => {
+                return crate::render::commands::DrawCommand::PopBlur;
+            }
+            20 => {
+                let mut var_pathData = <String>::sse_decode(deserializer);
+                let mut var_color = <u32>::sse_decode(deserializer);
+                let mut var_stroke =
+                    <Option<crate::render::commands::StrokeData>>::sse_decode(deserializer);
+                return crate::render::commands::DrawCommand::DrawPath {
+                    path_data: var_pathData,
+                    color: var_color,
+                    stroke: var_stroke,
+                };
+            }
+            _ => {
+                unimplemented!("");
+            }
+        }
+    }
+}
+
 impl SseDecode for f64 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         deserializer.cursor.read_f64::<NativeEndian>().unwrap()
+    }
+}
+
+impl SseDecode for [f64; 2] {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <Vec<f64>>::sse_decode(deserializer);
+        return flutter_rust_bridge::for_generated::from_vec_to_array(inner);
+    }
+}
+
+impl SseDecode for [f64; 4] {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <Vec<f64>>::sse_decode(deserializer);
+        return flutter_rust_bridge::for_generated::from_vec_to_array(inner);
+    }
+}
+
+impl SseDecode for [f64; 6] {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <Vec<f64>>::sse_decode(deserializer);
+        return flutter_rust_bridge::for_generated::from_vec_to_array(inner);
+    }
+}
+
+impl SseDecode for crate::render::commands::GradientData {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_gradientType = <u8>::sse_decode(deserializer);
+        let mut var_colors = <Vec<u32>>::sse_decode(deserializer);
+        let mut var_stops = <Vec<f64>>::sse_decode(deserializer);
+        let mut var_start = <[f64; 2]>::sse_decode(deserializer);
+        let mut var_end = <[f64; 2]>::sse_decode(deserializer);
+        return crate::render::commands::GradientData {
+            gradient_type: var_gradientType,
+            colors: var_colors,
+            stops: var_stops,
+            start: var_start,
+            end: var_end,
+        };
     }
 }
 
@@ -639,6 +1153,20 @@ impl SseDecode for Vec<String> {
     }
 }
 
+impl SseDecode for Vec<crate::render::commands::DrawCommand> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = vec![];
+        for idx_ in 0..len_ {
+            ans_.push(<crate::render::commands::DrawCommand>::sse_decode(
+                deserializer,
+            ));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<crate::scene_graph::shape::GradientStop> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -648,6 +1176,42 @@ impl SseDecode for Vec<crate::scene_graph::shape::GradientStop> {
             ans_.push(<crate::scene_graph::shape::GradientStop>::sse_decode(
                 deserializer,
             ));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<f64> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = vec![];
+        for idx_ in 0..len_ {
+            ans_.push(<f64>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<i32> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = vec![];
+        for idx_ in 0..len_ {
+            ans_.push(<i32>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<u32> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = vec![];
+        for idx_ in 0..len_ {
+            ans_.push(<u32>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -702,6 +1266,18 @@ impl SseDecode for Vec<crate::scene_graph::shape::ShapeStroke> {
             ans_.push(<crate::scene_graph::shape::ShapeStroke>::sse_decode(
                 deserializer,
             ));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::engine::TileResult> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = vec![];
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::engine::TileResult>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -769,6 +1345,19 @@ impl SseDecode for Option<crate::scene_graph::shape::ShapeShadow> {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         if (<bool>::sse_decode(deserializer)) {
             return Some(<crate::scene_graph::shape::ShapeShadow>::sse_decode(
+                deserializer,
+            ));
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<crate::render::commands::StrokeData> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::render::commands::StrokeData>::sse_decode(
                 deserializer,
             ));
         } else {
@@ -1092,6 +1681,22 @@ impl SseDecode for crate::scene_graph::shape::StrokeCap {
     }
 }
 
+impl SseDecode for crate::render::commands::StrokeData {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_width = <f64>::sse_decode(deserializer);
+        let mut var_color = <u32>::sse_decode(deserializer);
+        let mut var_cap = <u8>::sse_decode(deserializer);
+        let mut var_join = <u8>::sse_decode(deserializer);
+        return crate::render::commands::StrokeData {
+            width: var_width,
+            color: var_color,
+            cap: var_cap,
+            join: var_join,
+        };
+    }
+}
+
 impl SseDecode for crate::scene_graph::shape::StrokeJoin {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1115,6 +1720,20 @@ impl SseDecode for crate::scene_graph::shape::TextAlign {
             2 => crate::scene_graph::shape::TextAlign::Right,
             3 => crate::scene_graph::shape::TextAlign::Justify,
             _ => unreachable!("Invalid variant for TextAlign: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::engine::TileResult {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_col = <i32>::sse_decode(deserializer);
+        let mut var_row = <i32>::sse_decode(deserializer);
+        let mut var_pixels = <Vec<u8>>::sse_decode(deserializer);
+        return crate::api::engine::TileResult {
+            col: var_col,
+            row: var_row,
+            pixels: var_pixels,
         };
     }
 }
@@ -1161,19 +1780,37 @@ fn pde_ffi_dispatcher_primary_impl(
 ) {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        4 => wire__crate__api__engine__CanvasEngine_load_all_shapes_impl(
+        2 => wire__crate__api__engine__CanvasEngine_generate_draw_commands_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        8 => wire__crate__api__engine__CanvasEngine_sync_shapes_impl(
+        5 => wire__crate__api__engine__CanvasEngine_load_all_shapes_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        10 => wire__crate__api__simple__init_app_impl(port, ptr, rust_vec_len, data_len),
+        6 => wire__crate__api__engine__CanvasEngine_mark_all_tiles_dirty_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        9 => wire__crate__api__engine__CanvasEngine_rasterize_dirty_tiles_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        11 => wire__crate__api__engine__CanvasEngine_sync_shapes_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        15 => wire__crate__api__simple__init_app_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1187,14 +1824,24 @@ fn pde_ffi_dispatcher_sync_impl(
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
         1 => wire__crate__api__engine__CanvasEngine_create_impl(ptr, rust_vec_len, data_len),
-        2 => {
+        3 => {
             wire__crate__api__engine__CanvasEngine_hit_test_point_impl(ptr, rust_vec_len, data_len)
         }
-        3 => wire__crate__api__engine__CanvasEngine_hit_test_rect_impl(ptr, rust_vec_len, data_len),
-        5 => wire__crate__api__engine__CanvasEngine_paint_order_impl(ptr, rust_vec_len, data_len),
-        6 => wire__crate__api__engine__CanvasEngine_query_visible_impl(ptr, rust_vec_len, data_len),
-        7 => wire__crate__api__engine__CanvasEngine_shape_count_impl(ptr, rust_vec_len, data_len),
-        9 => wire__crate__api__simple__greet_impl(ptr, rust_vec_len, data_len),
+        4 => wire__crate__api__engine__CanvasEngine_hit_test_rect_impl(ptr, rust_vec_len, data_len),
+        7 => wire__crate__api__engine__CanvasEngine_paint_order_impl(ptr, rust_vec_len, data_len),
+        8 => wire__crate__api__engine__CanvasEngine_query_visible_impl(ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__engine__CanvasEngine_shape_count_impl(ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__engine__CanvasEngine_tile_cache_stats_impl(
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        13 => wire__crate__api__engine__CanvasEngine_tile_rasterized_count_impl(
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        14 => wire__crate__api__simple__greet_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1257,6 +1904,213 @@ impl flutter_rust_bridge::IntoIntoDart<crate::scene_graph::shape::BoolOp>
     for crate::scene_graph::shape::BoolOp
 {
     fn into_into_dart(self) -> crate::scene_graph::shape::BoolOp {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::render::commands::DrawCommand {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            crate::render::commands::DrawCommand::PushTransform { matrix } => {
+                [0.into_dart(), matrix.into_into_dart().into_dart()].into_dart()
+            }
+            crate::render::commands::DrawCommand::PopTransform => [1.into_dart()].into_dart(),
+            crate::render::commands::DrawCommand::Save => [2.into_dart()].into_dart(),
+            crate::render::commands::DrawCommand::SaveLayer { bounds, opacity } => [
+                3.into_dart(),
+                bounds.into_into_dart().into_dart(),
+                opacity.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            crate::render::commands::DrawCommand::Restore => [4.into_dart()].into_dart(),
+            crate::render::commands::DrawCommand::ClipRect { rect } => {
+                [5.into_dart(), rect.into_into_dart().into_dart()].into_dart()
+            }
+            crate::render::commands::DrawCommand::ClipRRect { rect, radii } => [
+                6.into_dart(),
+                rect.into_into_dart().into_dart(),
+                radii.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            crate::render::commands::DrawCommand::ClipOval { rect } => {
+                [7.into_dart(), rect.into_into_dart().into_dart()].into_dart()
+            }
+            crate::render::commands::DrawCommand::DrawRect { rect, color } => [
+                8.into_dart(),
+                rect.into_into_dart().into_dart(),
+                color.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            crate::render::commands::DrawCommand::DrawRRect { rect, radii, color } => [
+                9.into_dart(),
+                rect.into_into_dart().into_dart(),
+                radii.into_into_dart().into_dart(),
+                color.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            crate::render::commands::DrawCommand::DrawRRectGradient {
+                rect,
+                radii,
+                gradient,
+            } => [
+                10.into_dart(),
+                rect.into_into_dart().into_dart(),
+                radii.into_into_dart().into_dart(),
+                gradient.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            crate::render::commands::DrawCommand::DrawRRectStroke {
+                rect,
+                radii,
+                color,
+                stroke_width,
+                stroke_alignment,
+            } => [
+                11.into_dart(),
+                rect.into_into_dart().into_dart(),
+                radii.into_into_dart().into_dart(),
+                color.into_into_dart().into_dart(),
+                stroke_width.into_into_dart().into_dart(),
+                stroke_alignment.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            crate::render::commands::DrawCommand::DrawOval { rect, color } => [
+                12.into_dart(),
+                rect.into_into_dart().into_dart(),
+                color.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            crate::render::commands::DrawCommand::DrawOvalGradient { rect, gradient } => [
+                13.into_dart(),
+                rect.into_into_dart().into_dart(),
+                gradient.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            crate::render::commands::DrawCommand::DrawOvalStroke {
+                rect,
+                color,
+                stroke_width,
+            } => [
+                14.into_dart(),
+                rect.into_into_dart().into_dart(),
+                color.into_into_dart().into_dart(),
+                stroke_width.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            crate::render::commands::DrawCommand::DrawText {
+                text,
+                rect,
+                font_size,
+                font_family,
+                font_weight,
+                color,
+                line_height,
+                letter_spacing,
+                text_align,
+            } => [
+                15.into_dart(),
+                text.into_into_dart().into_dart(),
+                rect.into_into_dart().into_dart(),
+                font_size.into_into_dart().into_dart(),
+                font_family.into_into_dart().into_dart(),
+                font_weight.into_into_dart().into_dart(),
+                color.into_into_dart().into_dart(),
+                line_height.into_into_dart().into_dart(),
+                letter_spacing.into_into_dart().into_dart(),
+                text_align.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            crate::render::commands::DrawCommand::DrawImage {
+                asset_id,
+                dst_rect,
+                filter_quality,
+            } => [
+                16.into_dart(),
+                asset_id.into_into_dart().into_dart(),
+                dst_rect.into_into_dart().into_dart(),
+                filter_quality.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            crate::render::commands::DrawCommand::DrawShadow {
+                path_type,
+                rect,
+                radii,
+                color,
+                blur_sigma,
+                offset,
+                spread,
+            } => [
+                17.into_dart(),
+                path_type.into_into_dart().into_dart(),
+                rect.into_into_dart().into_dart(),
+                radii.into_into_dart().into_dart(),
+                color.into_into_dart().into_dart(),
+                blur_sigma.into_into_dart().into_dart(),
+                offset.into_into_dart().into_dart(),
+                spread.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            crate::render::commands::DrawCommand::PushBlur {
+                sigma_x,
+                sigma_y,
+                bounds,
+            } => [
+                18.into_dart(),
+                sigma_x.into_into_dart().into_dart(),
+                sigma_y.into_into_dart().into_dart(),
+                bounds.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            crate::render::commands::DrawCommand::PopBlur => [19.into_dart()].into_dart(),
+            crate::render::commands::DrawCommand::DrawPath {
+                path_data,
+                color,
+                stroke,
+            } => [
+                20.into_dart(),
+                path_data.into_into_dart().into_dart(),
+                color.into_into_dart().into_dart(),
+                stroke.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            _ => {
+                unimplemented!("");
+            }
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::render::commands::DrawCommand
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::render::commands::DrawCommand>
+    for crate::render::commands::DrawCommand
+{
+    fn into_into_dart(self) -> crate::render::commands::DrawCommand {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::render::commands::GradientData {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.gradient_type.into_into_dart().into_dart(),
+            self.colors.into_into_dart().into_dart(),
+            self.stops.into_into_dart().into_dart(),
+            self.start.into_into_dart().into_dart(),
+            self.end.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::render::commands::GradientData
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::render::commands::GradientData>
+    for crate::render::commands::GradientData
+{
+    fn into_into_dart(self) -> crate::render::commands::GradientData {
         self
     }
 }
@@ -1707,6 +2561,29 @@ impl flutter_rust_bridge::IntoIntoDart<crate::scene_graph::shape::StrokeCap>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::render::commands::StrokeData {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.width.into_into_dart().into_dart(),
+            self.color.into_into_dart().into_dart(),
+            self.cap.into_into_dart().into_dart(),
+            self.join.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::render::commands::StrokeData
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::render::commands::StrokeData>
+    for crate::render::commands::StrokeData
+{
+    fn into_into_dart(self) -> crate::render::commands::StrokeData {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::scene_graph::shape::StrokeJoin {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         match self {
@@ -1748,6 +2625,28 @@ impl flutter_rust_bridge::IntoIntoDart<crate::scene_graph::shape::TextAlign>
     for crate::scene_graph::shape::TextAlign
 {
     fn into_into_dart(self) -> crate::scene_graph::shape::TextAlign {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::engine::TileResult {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.col.into_into_dart().into_dart(),
+            self.row.into_into_dart().into_dart(),
+            self.pixels.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::engine::TileResult
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::engine::TileResult>
+    for crate::api::engine::TileResult
+{
+    fn into_into_dart(self) -> crate::api::engine::TileResult {
         self
     }
 }
@@ -1818,10 +2717,230 @@ impl SseEncode for crate::scene_graph::shape::BoolOp {
     }
 }
 
+impl SseEncode for crate::render::commands::DrawCommand {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        match self {
+            crate::render::commands::DrawCommand::PushTransform { matrix } => {
+                <i32>::sse_encode(0, serializer);
+                <[f64; 6]>::sse_encode(matrix, serializer);
+            }
+            crate::render::commands::DrawCommand::PopTransform => {
+                <i32>::sse_encode(1, serializer);
+            }
+            crate::render::commands::DrawCommand::Save => {
+                <i32>::sse_encode(2, serializer);
+            }
+            crate::render::commands::DrawCommand::SaveLayer { bounds, opacity } => {
+                <i32>::sse_encode(3, serializer);
+                <[f64; 4]>::sse_encode(bounds, serializer);
+                <f64>::sse_encode(opacity, serializer);
+            }
+            crate::render::commands::DrawCommand::Restore => {
+                <i32>::sse_encode(4, serializer);
+            }
+            crate::render::commands::DrawCommand::ClipRect { rect } => {
+                <i32>::sse_encode(5, serializer);
+                <[f64; 4]>::sse_encode(rect, serializer);
+            }
+            crate::render::commands::DrawCommand::ClipRRect { rect, radii } => {
+                <i32>::sse_encode(6, serializer);
+                <[f64; 4]>::sse_encode(rect, serializer);
+                <[f64; 4]>::sse_encode(radii, serializer);
+            }
+            crate::render::commands::DrawCommand::ClipOval { rect } => {
+                <i32>::sse_encode(7, serializer);
+                <[f64; 4]>::sse_encode(rect, serializer);
+            }
+            crate::render::commands::DrawCommand::DrawRect { rect, color } => {
+                <i32>::sse_encode(8, serializer);
+                <[f64; 4]>::sse_encode(rect, serializer);
+                <u32>::sse_encode(color, serializer);
+            }
+            crate::render::commands::DrawCommand::DrawRRect { rect, radii, color } => {
+                <i32>::sse_encode(9, serializer);
+                <[f64; 4]>::sse_encode(rect, serializer);
+                <[f64; 4]>::sse_encode(radii, serializer);
+                <u32>::sse_encode(color, serializer);
+            }
+            crate::render::commands::DrawCommand::DrawRRectGradient {
+                rect,
+                radii,
+                gradient,
+            } => {
+                <i32>::sse_encode(10, serializer);
+                <[f64; 4]>::sse_encode(rect, serializer);
+                <[f64; 4]>::sse_encode(radii, serializer);
+                <crate::render::commands::GradientData>::sse_encode(gradient, serializer);
+            }
+            crate::render::commands::DrawCommand::DrawRRectStroke {
+                rect,
+                radii,
+                color,
+                stroke_width,
+                stroke_alignment,
+            } => {
+                <i32>::sse_encode(11, serializer);
+                <[f64; 4]>::sse_encode(rect, serializer);
+                <[f64; 4]>::sse_encode(radii, serializer);
+                <u32>::sse_encode(color, serializer);
+                <f64>::sse_encode(stroke_width, serializer);
+                <u8>::sse_encode(stroke_alignment, serializer);
+            }
+            crate::render::commands::DrawCommand::DrawOval { rect, color } => {
+                <i32>::sse_encode(12, serializer);
+                <[f64; 4]>::sse_encode(rect, serializer);
+                <u32>::sse_encode(color, serializer);
+            }
+            crate::render::commands::DrawCommand::DrawOvalGradient { rect, gradient } => {
+                <i32>::sse_encode(13, serializer);
+                <[f64; 4]>::sse_encode(rect, serializer);
+                <crate::render::commands::GradientData>::sse_encode(gradient, serializer);
+            }
+            crate::render::commands::DrawCommand::DrawOvalStroke {
+                rect,
+                color,
+                stroke_width,
+            } => {
+                <i32>::sse_encode(14, serializer);
+                <[f64; 4]>::sse_encode(rect, serializer);
+                <u32>::sse_encode(color, serializer);
+                <f64>::sse_encode(stroke_width, serializer);
+            }
+            crate::render::commands::DrawCommand::DrawText {
+                text,
+                rect,
+                font_size,
+                font_family,
+                font_weight,
+                color,
+                line_height,
+                letter_spacing,
+                text_align,
+            } => {
+                <i32>::sse_encode(15, serializer);
+                <String>::sse_encode(text, serializer);
+                <[f64; 4]>::sse_encode(rect, serializer);
+                <f64>::sse_encode(font_size, serializer);
+                <String>::sse_encode(font_family, serializer);
+                <u16>::sse_encode(font_weight, serializer);
+                <u32>::sse_encode(color, serializer);
+                <f64>::sse_encode(line_height, serializer);
+                <f64>::sse_encode(letter_spacing, serializer);
+                <u8>::sse_encode(text_align, serializer);
+            }
+            crate::render::commands::DrawCommand::DrawImage {
+                asset_id,
+                dst_rect,
+                filter_quality,
+            } => {
+                <i32>::sse_encode(16, serializer);
+                <String>::sse_encode(asset_id, serializer);
+                <[f64; 4]>::sse_encode(dst_rect, serializer);
+                <u8>::sse_encode(filter_quality, serializer);
+            }
+            crate::render::commands::DrawCommand::DrawShadow {
+                path_type,
+                rect,
+                radii,
+                color,
+                blur_sigma,
+                offset,
+                spread,
+            } => {
+                <i32>::sse_encode(17, serializer);
+                <u8>::sse_encode(path_type, serializer);
+                <[f64; 4]>::sse_encode(rect, serializer);
+                <[f64; 4]>::sse_encode(radii, serializer);
+                <u32>::sse_encode(color, serializer);
+                <f64>::sse_encode(blur_sigma, serializer);
+                <[f64; 2]>::sse_encode(offset, serializer);
+                <f64>::sse_encode(spread, serializer);
+            }
+            crate::render::commands::DrawCommand::PushBlur {
+                sigma_x,
+                sigma_y,
+                bounds,
+            } => {
+                <i32>::sse_encode(18, serializer);
+                <f64>::sse_encode(sigma_x, serializer);
+                <f64>::sse_encode(sigma_y, serializer);
+                <[f64; 4]>::sse_encode(bounds, serializer);
+            }
+            crate::render::commands::DrawCommand::PopBlur => {
+                <i32>::sse_encode(19, serializer);
+            }
+            crate::render::commands::DrawCommand::DrawPath {
+                path_data,
+                color,
+                stroke,
+            } => {
+                <i32>::sse_encode(20, serializer);
+                <String>::sse_encode(path_data, serializer);
+                <u32>::sse_encode(color, serializer);
+                <Option<crate::render::commands::StrokeData>>::sse_encode(stroke, serializer);
+            }
+            _ => {
+                unimplemented!("");
+            }
+        }
+    }
+}
+
 impl SseEncode for f64 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         serializer.cursor.write_f64::<NativeEndian>(self).unwrap();
+    }
+}
+
+impl SseEncode for [f64; 2] {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Vec<f64>>::sse_encode(
+            {
+                let boxed: Box<[_]> = Box::new(self);
+                boxed.into_vec()
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for [f64; 4] {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Vec<f64>>::sse_encode(
+            {
+                let boxed: Box<[_]> = Box::new(self);
+                boxed.into_vec()
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for [f64; 6] {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Vec<f64>>::sse_encode(
+            {
+                let boxed: Box<[_]> = Box::new(self);
+                boxed.into_vec()
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::render::commands::GradientData {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <u8>::sse_encode(self.gradient_type, serializer);
+        <Vec<u32>>::sse_encode(self.colors, serializer);
+        <Vec<f64>>::sse_encode(self.stops, serializer);
+        <[f64; 2]>::sse_encode(self.start, serializer);
+        <[f64; 2]>::sse_encode(self.end, serializer);
     }
 }
 
@@ -1866,12 +2985,52 @@ impl SseEncode for Vec<String> {
     }
 }
 
+impl SseEncode for Vec<crate::render::commands::DrawCommand> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::render::commands::DrawCommand>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<crate::scene_graph::shape::GradientStop> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <crate::scene_graph::shape::GradientStop>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<f64> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <f64>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<i32> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <i32>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<u32> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <u32>::sse_encode(item, serializer);
         }
     }
 }
@@ -1912,6 +3071,16 @@ impl SseEncode for Vec<crate::scene_graph::shape::ShapeStroke> {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <crate::scene_graph::shape::ShapeStroke>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::engine::TileResult> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::engine::TileResult>::sse_encode(item, serializer);
         }
     }
 }
@@ -1964,6 +3133,16 @@ impl SseEncode for Option<crate::scene_graph::shape::ShapeShadow> {
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
             <crate::scene_graph::shape::ShapeShadow>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for Option<crate::render::commands::StrokeData> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::render::commands::StrokeData>::sse_encode(value, serializer);
         }
     }
 }
@@ -2230,6 +3409,16 @@ impl SseEncode for crate::scene_graph::shape::StrokeCap {
     }
 }
 
+impl SseEncode for crate::render::commands::StrokeData {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <f64>::sse_encode(self.width, serializer);
+        <u32>::sse_encode(self.color, serializer);
+        <u8>::sse_encode(self.cap, serializer);
+        <u8>::sse_encode(self.join, serializer);
+    }
+}
+
 impl SseEncode for crate::scene_graph::shape::StrokeJoin {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -2262,6 +3451,15 @@ impl SseEncode for crate::scene_graph::shape::TextAlign {
             },
             serializer,
         );
+    }
+}
+
+impl SseEncode for crate::api::engine::TileResult {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.col, serializer);
+        <i32>::sse_encode(self.row, serializer);
+        <Vec<u8>>::sse_encode(self.pixels, serializer);
     }
 }
 

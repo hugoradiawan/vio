@@ -6,7 +6,9 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 import '../frb_generated.dart';
+import '../lib.dart';
 import '../math/matrix2d.dart';
+import '../render/commands.dart';
 import '../scene_graph/shape.dart';
 
 // These functions are ignored because they are not marked as `pub`: `point_in_shape`
@@ -16,6 +18,28 @@ abstract class CanvasEngine implements RustOpaqueInterface {
   /// Create a new empty engine instance.
   static CanvasEngine create() =>
       RustLib.instance.api.crateApiEngineCanvasEngineCreate();
+
+  /// Generate a flat list of draw commands for all visible shapes.
+  ///
+  /// `view_matrix` is the 6-element affine matrix `[a, b, c, d, e, f]`
+  /// representing the camera/zoom transform.
+  ///
+  /// `viewport` is `[min_x, min_y, max_x, max_y]` in canvas (world)
+  /// coordinates — i.e., the visible area *before* the view transform.
+  ///
+  /// When `simplify` is `true`, shadows, blurs, and gradients are
+  /// elided for cheaper rendering during pan/zoom interactions.
+  ///
+  /// When `skip_tile_rasterized` is `true`, shapes that have been
+  /// rendered into cached tiles are excluded from the draw command list.
+  Future<List<DrawCommand>> generateDrawCommands(
+      {required double viewportMinX,
+      required double viewportMinY,
+      required double viewportMaxX,
+      required double viewportMaxY,
+      required List<double> viewMatrix,
+      required bool simplify,
+      required bool skipTileRasterized});
 
   /// Hit test: find all shape IDs at a point (in canvas coordinates).
   /// Returns IDs sorted by z-order (topmost first).
@@ -31,6 +55,9 @@ abstract class CanvasEngine implements RustOpaqueInterface {
   /// Bulk-load all shapes (full sync). Replaces the entire scene.
   Future<void> loadAllShapes({required List<RenderShape> shapes});
 
+  /// Mark all cached tiles as dirty (e.g. after a branch switch).
+  Future<void> markAllTilesDirty();
+
   /// Get depth-first shape IDs in paint order.
   List<String> paintOrder();
 
@@ -41,6 +68,20 @@ abstract class CanvasEngine implements RustOpaqueInterface {
       required double viewportMaxX,
       required double viewportMaxY});
 
+  /// Rasterize dirty tiles that are visible within the current viewport.
+  ///
+  /// Updates the tile grid's zoom level (invalidating all tiles if zoom
+  /// changed) and returns pixel data for each tile that was re-rendered.
+  ///
+  /// Call this before `generate_draw_commands` with
+  /// `skip_tile_rasterized = true` to get the tile data.
+  Future<List<TileResult>> rasterizeDirtyTiles(
+      {required double viewportMinX,
+      required double viewportMinY,
+      required double viewportMaxX,
+      required double viewportMaxY,
+      required double zoom});
+
   /// Get shape count.
   BigInt shapeCount();
 
@@ -50,4 +91,40 @@ abstract class CanvasEngine implements RustOpaqueInterface {
       {required List<RenderShape> added,
       required List<RenderShape> updated,
       required List<String> removed});
+
+  /// Get tile cache statistics: (cached_count, dirty_count, occupied_count).
+  Int32List tileCacheStats();
+
+  /// Get the number of shapes that are tile-rasterized.
+  BigInt tileRasterizedCount();
+}
+
+/// Result of rasterizing a single tile, returned to Dart.
+class TileResult {
+  /// Tile grid column index.
+  final int col;
+
+  /// Tile grid row index.
+  final int row;
+
+  /// Premultiplied RGBA pixel data (512 × 512 × 4 bytes).
+  final Uint8List pixels;
+
+  const TileResult({
+    required this.col,
+    required this.row,
+    required this.pixels,
+  });
+
+  @override
+  int get hashCode => col.hashCode ^ row.hashCode ^ pixels.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TileResult &&
+          runtimeType == other.runtimeType &&
+          col == other.col &&
+          row == other.row &&
+          pixels == other.pixels;
 }

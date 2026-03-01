@@ -79,6 +79,7 @@ analyzer:
     - "**/*.pbjson.dart"
     - "**/*.pbgrpc.dart"
     - "lib/src/gen/**"
+    - "lib/src/rust/**"
   errors:
     invalid_annotation_target: ignore
   language:

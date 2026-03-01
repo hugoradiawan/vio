@@ -11,11 +11,21 @@ import '../../../../core/services/image_cache_service.dart';
 class ShapePainter {
   ShapePainter._();
 
+  // ---------------------------------------------------------------------------
+  // TextPainter cache — avoids expensive text layout every frame.
+  // Keyed by shape ID; invalidated when content/style/width changes.
+  // ---------------------------------------------------------------------------
+  static final _textPainterCache = <String, _CachedTextPainter>{};
+
+  /// Evict stale entries (call occasionally, e.g. after bulk shape changes).
+  static void clearTextPainterCache() => _textPainterCache.clear();
+
   /// Paint a shape onto the canvas
   static void paintShape(
     Canvas canvas,
     Shape shape, {
     bool simplifyForInteraction = false,
+    double zoom = 1.0,
   }) {
     if (shape.hidden || shape.opacity <= 0) return;
 
@@ -26,6 +36,13 @@ class ShapePainter {
 
     // Text shapes have a custom paint path (fills act as text color)
     if (shape is TextShape) {
+      // LOD: at very low zoom, render a colored placeholder rectangle
+      // instead of performing expensive text layout.
+      if (zoom < 0.2) {
+        _paintTextPlaceholder(canvas, shape);
+        canvas.restore();
+        return;
+      }
       _paintText(
         canvas,
         shape,
@@ -46,8 +63,15 @@ class ShapePainter {
       return;
     }
 
-    // Apply opacity
-    if (shape.opacity < 1.0 && !simplifyForInteraction) {
+    // Apply opacity — avoid expensive saveLayer when there are no compositing
+    // effects that require a separate layer (shadow, blur, inner shadow).
+    final hasShadowOrBlur = shape.shadow != null || shape.blur != null;
+    final needsCompositingLayer =
+        shape.opacity < 1.0 && !simplifyForInteraction && hasShadowOrBlur;
+    final applyOpacityDirectly =
+        shape.opacity < 1.0 && !simplifyForInteraction && !hasShadowOrBlur;
+
+    if (needsCompositingLayer) {
       canvas.saveLayer(
         null,
         Paint()..color = Colors.white.withValues(alpha: shape.opacity),
@@ -57,11 +81,15 @@ class ShapePainter {
     // Get the shape's path
     final path = _getShapePath(shape);
 
+    // LOD: skip expensive effects when zoomed out far enough that they're
+    // imperceptible.
+    final skipEffects = simplifyForInteraction || zoom < 0.25;
+
     // 1. Draw drop shadow (behind everything)
     final shadow = shape.shadow;
     if (shadow != null &&
         !shadow.hidden &&
-        !simplifyForInteraction &&
+        !skipEffects &&
         shadow.style == ShadowStyle.dropShadow) {
       _paintDropShadow(canvas, path, shadow, shape.bounds);
     }
@@ -70,7 +98,7 @@ class ShapePainter {
     final blur = shape.blur;
     final hasBackgroundBlur = blur != null &&
         !blur.hidden &&
-        !simplifyForInteraction &&
+        !skipEffects &&
         blur.type == BlurType.background &&
         blur.value > 0;
 
@@ -85,7 +113,9 @@ class ShapePainter {
         path,
         fill,
         shape,
-        shapeOpacity: simplifyForInteraction ? shape.opacity : 1.0,
+        shapeOpacity: (simplifyForInteraction || applyOpacityDirectly)
+            ? shape.opacity
+            : 1.0,
         simplifyForInteraction: simplifyForInteraction,
       );
     }
@@ -93,7 +123,7 @@ class ShapePainter {
     // 4. Draw inner shadow (after fills, clipped to shape)
     if (shadow != null &&
         !shadow.hidden &&
-        !simplifyForInteraction &&
+        !skipEffects &&
         shadow.style == ShadowStyle.innerShadow) {
       _paintInnerShadow(canvas, path, shadow, shape.bounds);
     }
@@ -105,20 +135,22 @@ class ShapePainter {
         path,
         stroke,
         shape,
-        shapeOpacity: simplifyForInteraction ? shape.opacity : 1.0,
+        shapeOpacity: (simplifyForInteraction || applyOpacityDirectly)
+            ? shape.opacity
+            : 1.0,
         simplifyForInteraction: simplifyForInteraction,
       );
     }
 
-    // Restore opacity layer
-    if (shape.opacity < 1.0 && !simplifyForInteraction) {
+    // Restore opacity compositing layer (only when we used saveLayer)
+    if (needsCompositingLayer) {
       canvas.restore();
     }
 
     // 6. Apply layer blur (blurs entire shape including fills/strokes)
     final hasLayerBlur = blur != null &&
         !blur.hidden &&
-        !simplifyForInteraction &&
+        !skipEffects &&
         blur.type == BlurType.layer &&
         blur.value > 0;
 
@@ -457,8 +489,6 @@ class ShapePainter {
     }
 
     // Always clip to the text box so glyphs never render outside the bounds.
-    // This also protects against brief mismatches while runtime-loaded fonts
-    // (GoogleFonts) are still resolving.
     canvas.save();
     canvas.clipRect(bounds);
 
@@ -486,46 +516,63 @@ class ShapePainter {
     final letterSpacing = shape.letterSpacingPercent == 0
         ? null
         : shape.fontSize * (shape.letterSpacingPercent / 100.0);
-    final baseStyle = TextStyle(
-      color: color,
-      fontSize: shape.fontSize,
-      fontWeight: fontWeight,
-      height: shape.lineHeight,
-      letterSpacing: letterSpacing,
-    );
-
-    TextStyle resolveFontStyle() {
-      final family = shape.fontFamily;
-      if (family == null || family.isEmpty) {
-        return baseStyle;
-      }
-      try {
-        return GoogleFonts.getFont(family, textStyle: baseStyle);
-      } catch (_) {
-        // Non-google/system font: fall back to raw fontFamily.
-        return baseStyle.copyWith(fontFamily: family);
-      }
-    }
 
     final maxWidth = bounds.width <= 1 ? 200.0 : bounds.width;
     final widthConstraint = maxWidth.isFinite ? maxWidth : double.infinity;
 
-    final painter = TextPainter(
-      text: TextSpan(
-        text: text,
-        style: resolveFontStyle(),
-      ),
+    // Build a cache key from the properties that affect layout.
+    final cacheKey = _TextPainterCacheKey(
+      text: text,
+      fontFamily: shape.fontFamily,
+      fontSize: shape.fontSize,
+      fontWeight: weightValue,
+      lineHeight: shape.lineHeight,
+      letterSpacingPercent: shape.letterSpacingPercent,
       textAlign: shape.textAlign,
-      textDirection: TextDirection.ltr,
-    )..layout(
-        // IMPORTANT: Force the paragraph width to be the text box width.
-        // Without this, TextPainter will size itself to the intrinsic text
-        // width and center/right alignment appears as left-aligned.
-        minWidth: widthConstraint.isFinite ? widthConstraint : 0,
-        maxWidth: widthConstraint,
+      widthConstraint: widthConstraint,
+      colorValue: color.toARGB32(),
+    );
+
+    // Try to reuse a cached TextPainter.
+    final cached = _textPainterCache[shape.id];
+    TextPainter painter;
+
+    if (cached != null && cached.key == cacheKey) {
+      painter = cached.painter;
+    } else {
+      final baseStyle = TextStyle(
+        color: color,
+        fontSize: shape.fontSize,
+        fontWeight: fontWeight,
+        height: shape.lineHeight,
+        letterSpacing: letterSpacing,
       );
 
-    // Apply overall shape opacity (paintShape doesn't wrap text in saveLayer)
+      TextStyle resolvedStyle;
+      final family = shape.fontFamily;
+      if (family == null || family.isEmpty) {
+        resolvedStyle = baseStyle;
+      } else {
+        try {
+          resolvedStyle = GoogleFonts.getFont(family, textStyle: baseStyle);
+        } catch (_) {
+          resolvedStyle = baseStyle.copyWith(fontFamily: family);
+        }
+      }
+
+      painter = TextPainter(
+        text: TextSpan(text: text, style: resolvedStyle),
+        textAlign: shape.textAlign,
+        textDirection: TextDirection.ltr,
+      )..layout(
+          minWidth: widthConstraint.isFinite ? widthConstraint : 0,
+          maxWidth: widthConstraint,
+        );
+
+      _textPainterCache[shape.id] = _CachedTextPainter(cacheKey, painter);
+    }
+
+    // Apply overall shape opacity — use saveLayer only when opacity < 1.
     if (shape.opacity < 1.0 && !simplifyForInteraction) {
       canvas.saveLayer(
         bounds,
@@ -538,6 +585,20 @@ class ShapePainter {
     }
 
     canvas.restore();
+  }
+
+  /// LOD placeholder: draws a flat colored rectangle in lieu of text at very
+  /// low zoom levels where individual glyphs are invisible.
+  static void _paintTextPlaceholder(Canvas canvas, TextShape shape) {
+    final bounds = shape.bounds;
+    final fill = shape.fills.isNotEmpty ? shape.fills.first : null;
+    final color = fill != null
+        ? Color(fill.color).withValues(alpha: _combinedAlpha(fill.opacity, shape.opacity))
+        : Colors.white.withValues(alpha: shape.opacity * 0.3);
+    final paint = Paint()
+      ..color = color.withValues(alpha: color.a * 0.35)
+      ..style = PaintingStyle.fill;
+    canvas.drawRect(bounds, paint);
   }
 
   /// Apply the shape's transformation matrix to the canvas
@@ -783,4 +844,68 @@ class ShapePainter {
     if (alpha > 1) return 1;
     return alpha;
   }
+}
+
+// ---------------------------------------------------------------------------
+// TextPainter cache helpers
+// ---------------------------------------------------------------------------
+
+/// Immutable key summarising the properties that affect TextPainter layout.
+class _TextPainterCacheKey {
+  const _TextPainterCacheKey({
+    required this.text,
+    required this.fontFamily,
+    required this.fontSize,
+    required this.fontWeight,
+    required this.lineHeight,
+    required this.letterSpacingPercent,
+    required this.textAlign,
+    required this.widthConstraint,
+    required this.colorValue,
+  });
+
+  final String text;
+  final String? fontFamily;
+  final double fontSize;
+  final int? fontWeight;
+  final double? lineHeight;
+  final double letterSpacingPercent;
+  final TextAlign textAlign;
+  final double widthConstraint;
+  final int colorValue;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _TextPainterCacheKey &&
+          text == other.text &&
+          fontFamily == other.fontFamily &&
+          fontSize == other.fontSize &&
+          fontWeight == other.fontWeight &&
+          lineHeight == other.lineHeight &&
+          letterSpacingPercent == other.letterSpacingPercent &&
+          textAlign == other.textAlign &&
+          widthConstraint == other.widthConstraint &&
+          colorValue == other.colorValue;
+
+  @override
+  int get hashCode => Object.hash(
+        text,
+        fontFamily,
+        fontSize,
+        fontWeight,
+        lineHeight,
+        letterSpacingPercent,
+        textAlign,
+        widthConstraint,
+        colorValue,
+      );
+}
+
+/// Pairs a [TextPainter] with the key it was created from so we can detect
+/// stale entries cheaply via `==` instead of re-building and comparing.
+class _CachedTextPainter {
+  const _CachedTextPainter(this.key, this.painter);
+  final _TextPainterCacheKey key;
+  final TextPainter painter;
 }

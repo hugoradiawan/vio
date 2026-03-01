@@ -13,6 +13,21 @@ import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import 'canvas_status_widgets.dart';
 import 'canvas_text_editor_overlay.dart';
+import 'rust_canvas_layer.dart';
+import 'tile_compositor_layer.dart';
+
+/// Feature flag: when `true`, the Rust engine generates draw commands and
+/// [RustCanvasPainter] executes them instead of the Dart-only [CanvasPainter].
+///
+/// Toggle via `--dart-define=VIO_USE_RUST_CANVAS=true`.
+const _useRustCanvas = bool.fromEnvironment('VIO_USE_RUST_CANVAS');
+
+/// Feature flag: when `true` (and `VIO_USE_RUST_CANVAS` is also `true`),
+/// static shapes are pre-rendered into cached 512×512 tiles by tiny-skia in
+/// Rust. Tiles are composited behind the live draw-command layer.
+///
+/// Toggle via `--dart-define=VIO_USE_RUST_TILES=true`.
+const _useRustTiles = bool.fromEnvironment('VIO_USE_RUST_TILES');
 
 class CanvasSurface extends StatelessWidget {
   const CanvasSurface({
@@ -62,25 +77,41 @@ class CanvasSurface extends StatelessWidget {
                 ),
               ),
             ),
-          Positioned.fill(
-            child: RepaintBoundary(
-              child: CustomPaint(
-                isComplex: true,
-                willChange: true,
-                painter: CanvasPainter(
-                  viewMatrix: canvasState.viewMatrix,
-                  shapes: orderedShapes,
-                  shapesById: canvasState.shapes,
-                  dragRect: canvasState.dragRect,
-                  dragOffset: canvasState.dragOffset,
-                  selectedShapeIds: canvasState.selectedShapeIds,
-                  hoveredShapeId: canvasState.hoveredShapeId,
-                  hoveredLayerId: canvasState.hoveredLayerId,
-                  editingTextShapeId: editingTextShapeId,
-                  simplifyForInteraction: isViewportInteractionActive,
-                ),
+          // Tile layer: renders static shapes from cached tiles (behind draw cmds)
+          if (_useRustCanvas && _useRustTiles)
+            Positioned.fill(
+              child: TileCompositorLayer(
+                canvasState: canvasState,
               ),
             ),
+          // Shape / draw-command layer
+          Positioned.fill(
+            child: _useRustCanvas
+                ? RustCanvasLayer(
+                    canvasState: canvasState,
+                    orderedShapes: orderedShapes,
+                    editingTextShapeId: editingTextShapeId,
+                    isViewportInteractionActive: isViewportInteractionActive,
+                  )
+                : RepaintBoundary(
+                    child: CustomPaint(
+                      isComplex: true,
+                      willChange: true,
+                      painter: CanvasPainter(
+                        viewMatrix: canvasState.viewMatrix,
+                        shapes: orderedShapes,
+                        shapesById: canvasState.shapes,
+                        containmentTree: canvasState.containmentTree,
+                        dragRect: canvasState.dragRect,
+                        dragOffset: canvasState.dragOffset,
+                        selectedShapeIds: canvasState.selectedShapeIds,
+                        hoveredShapeId: canvasState.hoveredShapeId,
+                        hoveredLayerId: canvasState.hoveredLayerId,
+                        editingTextShapeId: editingTextShapeId,
+                        simplifyForInteraction: isViewportInteractionActive,
+                      ),
+                    ),
+                  ),
           ),
           if (canvasState.hasSelection && !isViewportInteractionActive)
             Positioned.fill(

@@ -18,7 +18,16 @@ if ! podman ps >/dev/null 2>&1; then
 fi
 
 if ! podman ps >/dev/null 2>&1; then
-  echo "[preflight] ERROR: unable to connect to Podman after restart attempt."
+  echo "[preflight] Still unreachable — performing full stop/start cycle (stale SSH tunnel)..."
+  podman machine stop >/dev/null 2>&1 || true
+  if ! podman machine start >/dev/null 2>&1; then
+    echo "[preflight] ERROR: podman machine start failed after stop/start cycle."
+    exit 1
+  fi
+fi
+
+if ! podman ps >/dev/null 2>&1; then
+  echo "[preflight] ERROR: unable to connect to Podman after stop/start cycle."
   exit 1
 fi
 

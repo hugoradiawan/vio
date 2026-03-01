@@ -208,6 +208,28 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
                   );
                 });
                 return BlocBuilder<CanvasBloc, CanvasState>(
+                  buildWhen: (prev, curr) =>
+                      // Rendering-affecting changes only — skip rebuilds for
+                      // sync status, server version, expanded layers, etc.
+                      prev.zoom != curr.zoom ||
+                      prev.viewportOffset != curr.viewportOffset ||
+                      prev.viewportSize != curr.viewportSize ||
+                      prev.interactionMode != curr.interactionMode ||
+                      prev.dragStart != curr.dragStart ||
+                      prev.currentPointer != curr.currentPointer ||
+                      prev.dragOffset != curr.dragOffset ||
+                      !identical(prev.shapes, curr.shapes) ||
+                      prev.selectedShapeIds != curr.selectedShapeIds ||
+                      prev.hoveredShapeId != curr.hoveredShapeId ||
+                      prev.hoveredLayerId != curr.hoveredLayerId ||
+                      prev.editingTextShapeId != curr.editingTextShapeId ||
+                      prev.snapLines != curr.snapLines ||
+                      prev.snapPoints != curr.snapPoints ||
+                      prev.activeCornerIndex != curr.activeCornerIndex ||
+                      prev.hoveredCornerIndex != curr.hoveredCornerIndex ||
+                      prev.selectionCursorKind != curr.selectionCursorKind ||
+                      prev.syncStatus != curr.syncStatus ||
+                      prev.syncError != curr.syncError,
                   builder: (context, canvasState) {
                     return BlocBuilder<WorkspaceBloc, WorkspaceState>(
                       buildWhen: (prev, curr) =>

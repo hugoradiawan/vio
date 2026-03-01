@@ -40,6 +40,28 @@ enum SelectionCursorKind {
 // via the core.dart barrel file
 
 /// Represents the complete state of the canvas
+/// Pre-computed containment tree produced alongside [CanvasState.orderedShapes].
+///
+/// Caching this avoids O(n) map building inside [CanvasPainter.paint] every
+/// frame — the tree only changes when the shapes map changes.
+class ShapeContainmentTree {
+  const ShapeContainmentTree({
+    required this.rootShapes,
+    required this.childrenByContainerId,
+  });
+
+  /// Top-level (un-parented) shapes in sort order.
+  final List<Shape> rootShapes;
+
+  /// Container-id → direct children in sort order.
+  final Map<String, List<Shape>> childrenByContainerId;
+
+  static const empty = ShapeContainmentTree(
+    rootShapes: [],
+    childrenByContainerId: {},
+  );
+}
+
 class CanvasState extends Equatable {
   CanvasState({
     this.zoom = 1.0,
@@ -51,6 +73,7 @@ class CanvasState extends Equatable {
     this.dragOffset,
     this.shapes = const {},
     List<Shape>? orderedShapes,
+    ShapeContainmentTree? containmentTree,
     this.selectedShapeIds = const [],
     this.hoveredShapeId,
     this.enteredGroupId,
@@ -76,7 +99,8 @@ class CanvasState extends Equatable {
     this.hoveredCornerIndex,
     this.initialRotationAngle,
     this.selectionCursorKind = SelectionCursorKind.none,
-  }) : orderedShapes = orderedShapes ?? _buildShapeList(shapes);
+  })  : orderedShapes = orderedShapes ?? _buildShapeList(shapes),
+        containmentTree = containmentTree ?? _buildContainmentTree(shapes);
 
   /// Current zoom level (1.0 = 100%)
   final double zoom;
@@ -108,6 +132,12 @@ class CanvasState extends Equatable {
   /// This is intentionally stored in state so we don't rebuild/sort the list on
   /// every pointer-move state update when the underlying shapes didn't change.
   final List<Shape> orderedShapes;
+
+  /// Cached containment tree (root shapes + children-by-container-id).
+  ///
+  /// Rebuilt only when the shapes map changes, avoiding O(n) work per paint
+  /// frame during pan/zoom.
+  final ShapeContainmentTree containmentTree;
 
   /// IDs of currently selected shapes
   final List<String> selectedShapeIds;
@@ -259,6 +289,49 @@ class CanvasState extends Equatable {
     return ordered;
   }
 
+  /// Build the containment tree (rootShapes + childrenByContainerId) from the
+  /// shapes map. Identical logic to the tree traversal in [_buildShapeList]
+  /// but returns the structural data for paint-time use.
+  static ShapeContainmentTree _buildContainmentTree(Map<String, Shape> shapes) {
+    if (shapes.isEmpty) return ShapeContainmentTree.empty;
+
+    int compareZ(Shape a, Shape b) {
+      final byOrder = a.sortOrder.compareTo(b.sortOrder);
+      if (byOrder != 0) return byOrder;
+      return a.id.compareTo(b.id);
+    }
+
+    final childrenByContainerId = <String, List<Shape>>{};
+    final rootShapes = <Shape>[];
+
+    for (final shape in shapes.values) {
+      final parentId = shape.parentId;
+      final parent = parentId == null ? null : shapes[parentId];
+      if (parentId != null && parent is GroupShape) {
+        childrenByContainerId.putIfAbsent(parentId, () => []).add(shape);
+        continue;
+      }
+
+      final frameId = shape.frameId;
+      final frame = frameId == null ? null : shapes[frameId];
+      if (frameId != null && frame is FrameShape) {
+        childrenByContainerId.putIfAbsent(frameId, () => []).add(shape);
+      } else {
+        rootShapes.add(shape);
+      }
+    }
+
+    for (final list in childrenByContainerId.values) {
+      list.sort(compareZ);
+    }
+    rootShapes.sort(compareZ);
+
+    return ShapeContainmentTree(
+      rootShapes: rootShapes,
+      childrenByContainerId: childrenByContainerId,
+    );
+  }
+
   /// Get currently selected shapes
   List<Shape> get selectedShapes =>
       selectedShapeIds.map((id) => shapes[id]).whereType<Shape>().toList();
@@ -407,8 +480,9 @@ class CanvasState extends Equatable {
     bool clearSelectionCursorKind = false,
   }) {
     final nextShapes = shapes ?? this.shapes;
-    final nextOrderedShapes =
-        identical(nextShapes, this.shapes) ? orderedShapes : null;
+    final shapesChanged = !identical(nextShapes, this.shapes);
+    final nextOrderedShapes = shapesChanged ? null : orderedShapes;
+    final nextContainmentTree = shapesChanged ? null : containmentTree;
 
     return CanvasState(
       zoom: zoom ?? this.zoom,
@@ -421,6 +495,7 @@ class CanvasState extends Equatable {
       dragOffset: clearDragOffset ? null : (dragOffset ?? this.dragOffset),
       shapes: nextShapes,
       orderedShapes: nextOrderedShapes,
+      containmentTree: nextContainmentTree,
       selectedShapeIds: selectedShapeIds ?? this.selectedShapeIds,
       hoveredShapeId:
           clearHoveredShapeId ? null : (hoveredShapeId ?? this.hoveredShapeId),

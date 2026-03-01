@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:vio_core/vio_core.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
+import '../../bloc/canvas_bloc.dart';
 import '../../models/selection_handle_metrics.dart';
 import 'shape_painter.dart';
 
@@ -12,6 +13,7 @@ class CanvasPainter extends CustomPainter {
     required this.viewMatrix,
     required this.shapes,
     required this.shapesById,
+    required this.containmentTree,
     this.dragRect,
     this.dragOffset,
     this.selectedShapeIds = const [],
@@ -29,6 +31,9 @@ class CanvasPainter extends CustomPainter {
 
   /// Shape lookup map from state (reused to avoid per-frame map rebuild).
   final Map<String, Shape> shapesById;
+
+  /// Pre-computed containment tree from state (avoids O(n) rebuild per frame).
+  final ShapeContainmentTree containmentTree;
 
   /// Current drag selection rectangle (in canvas coordinates)
   final Rect? dragRect;
@@ -93,26 +98,9 @@ class CanvasPainter extends CustomPainter {
         dragOffset != null && selectedShapeIds.isNotEmpty;
     final selectedIdSet = selectedShapeIds.toSet();
 
-    // Build containment map in already-ordered sequence from state.
-    final childrenByContainerId = <String, List<Shape>>{};
-    final rootShapes = <Shape>[];
-
-    for (final shape in shapes) {
-      final parentId = shape.parentId;
-      final parent = parentId == null ? null : shapesById[parentId];
-      if (parentId != null && parent is GroupShape) {
-        childrenByContainerId.putIfAbsent(parentId, () => []).add(shape);
-        continue;
-      }
-
-      final frameId = shape.frameId;
-      final frame = frameId == null ? null : shapesById[frameId];
-      if (frameId != null && frame is FrameShape) {
-        childrenByContainerId.putIfAbsent(frameId, () => []).add(shape);
-      } else {
-        rootShapes.add(shape);
-      }
-    }
+    // Use cached containment tree from state (built once per shapes change).
+    final childrenByContainerId = containmentTree.childrenByContainerId;
+    final rootShapes = containmentTree.rootShapes;
 
     // During dragging, if a container (group/frame) is selected, also move its
     // descendants in the drag overlay so children don't appear to detach.
@@ -166,6 +154,7 @@ class CanvasPainter extends CustomPainter {
           canvas,
           shape,
           simplifyForInteraction: simplifyForInteraction,
+          zoom: _zoom,
         );
       }
 
@@ -259,6 +248,7 @@ class CanvasPainter extends CustomPainter {
               canvas,
               shape,
               simplifyForInteraction: simplifyForInteraction,
+              zoom: _zoom,
             );
           }
           if (shape is FrameShape && !simplifyForInteraction) {

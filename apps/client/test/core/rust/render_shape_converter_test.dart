@@ -70,8 +70,11 @@ void main() {
         expect(rs.id, 'abc');
         expect(rs.shapeType, frb.ShapeType.rectangle);
         expect(rs.transform.a, 2.0);
-        expect(rs.transform.e, 30.0);
-        expect(rs.transform.f, 40.0);
+        // transform.e/f now includes the baked-in x/y offset:
+        // e' = a*x + c*y + e = 2*10 + 0*20 + 30 = 50
+        // f' = b*x + d*y + f = 0*10 + 2*20 + 40 = 80
+        expect(rs.transform.e, 50.0);
+        expect(rs.transform.f, 80.0);
         expect(rs.sortOrder, 5);
         expect(rs.opacity, 0.8);
         expect(rs.hidden, true);

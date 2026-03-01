@@ -292,7 +292,7 @@ class _ConflictDiffView extends StatelessWidget {
             propertyConflicts: conflict.propertyConflicts,
             showSource: true,
             onSelect: () => onResolutionChanged(
-                common_enum.ResolutionChoice.RESOLUTION_CHOICE_SOURCE),
+                common_enum.ResolutionChoice.RESOLUTION_CHOICE_SOURCE,),
           ),
         ),
         const SizedBox(width: 16),
@@ -310,7 +310,7 @@ class _ConflictDiffView extends StatelessWidget {
             propertyConflicts: conflict.propertyConflicts,
             showSource: false,
             onSelect: () => onResolutionChanged(
-                common_enum.ResolutionChoice.RESOLUTION_CHOICE_TARGET),
+                common_enum.ResolutionChoice.RESOLUTION_CHOICE_TARGET,),
           ),
         ),
       ],

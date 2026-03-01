@@ -57,7 +57,8 @@ mixin _CanvasRustMixin on Bloc<CanvasEvent, CanvasState> {
         _rustEngineLoaded = true;
         _lastRustSyncedShapes = newShapes;
         VioLogger.debug(
-          'Rust engine: initial load of ${renderShapes.length} shapes',
+          'Rust engine: initial load of ${renderShapes.length} shapes, '
+          'tree has ${_rustEngine.shapeCount} shapes',
         );
         return;
       }
@@ -88,15 +89,15 @@ mixin _CanvasRustMixin on Bloc<CanvasEvent, CanvasState> {
   }
 
   /// Force a full reload of the Rust engine (e.g. after branch switch).
-  Future<void> _reloadRustEngine(Map<String, Shape> shapes) async {
-    try {
-      _rustEngine.reset();
-      _rustEngineLoaded = false;
-      await _syncShapesToRust(shapes);
-    } catch (e, st) {
-      VioLogger.error('Rust engine reload failed', e, st);
-    }
-  }
+  // Future<void> _reloadRustEngine(Map<String, Shape> shapes) async {
+  //   try {
+  //     _rustEngine.reset();
+  //     _rustEngineLoaded = false;
+  //     await _syncShapesToRust(shapes);
+  //   } catch (e, st) {
+  //     VioLogger.error('Rust engine reload failed', e, st);
+  //   }
+  // }
 
   // ---------------------------------------------------------------------------
   // Hit testing — delegates to Rust or Dart based on feature flag

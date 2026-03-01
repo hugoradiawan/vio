@@ -94,6 +94,21 @@
       }
     },
     {
+      "label": "Build Rust WASM",
+      "type": "shell",
+      "command": "bash",
+      "args": ["tool/build_wasm.sh"],
+      "options": {
+        "cwd": "${workspaceFolder}/apps/client"
+      },
+      "problemMatcher": [],
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
       "label": "Run Client (macOS) + Capture Canvas Perf",
       "type": "shell",
       "command": "flutter run -d macos --dart-define-from-file=config/dev.json --dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true 2>&1 | tee canvas-run.log | grep --line-buffered 'CANVAS_PERF' | tee canvas-perf.log",

@@ -14,6 +14,21 @@
       ]
     },
     {
+      "name": "Vio Client (Web - Chrome) Rust",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/apps/client",
+      "deviceId": "chrome",
+      "flutterMode": "profile",
+      "toolArgs": [
+        "--dart-define-from-file=config/dev.json",
+        "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true",
+        "--dart-define=VIO_USE_RUST_BACKEND=true",
+        "--dart-define=VIO_USE_RUST_CANVAS=true"
+      ]
+    },
+    {
       "name": "Vio Client (Web - Edge)",
       "type": "dart",
       "request": "launch",
@@ -149,6 +164,13 @@
       "name": "Full Stack (Backend + Web Client)",
       "configurations": [
         "Vio Client (Web - Chrome)"
+      ],
+      "preLaunchTask": "Start Backend Server"
+    },
+    {
+      "name": "Full Stack (Backend + Web Client + Rust)",
+      "configurations": [
+        "Vio Client (Web - Chrome) Rust"
       ],
       "preLaunchTask": "Start Backend Server"
     }

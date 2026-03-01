@@ -11,6 +11,7 @@ import 'package:vio_client/src/features/workspace/bloc/workspace_bloc.dart';
 import 'package:vio_core/vio_core.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
+import '../../../../core/services/rust_engine_service.dart';
 import 'canvas_status_widgets.dart';
 import 'canvas_text_editor_overlay.dart';
 import 'rust_canvas_layer.dart';
@@ -20,14 +21,24 @@ import 'tile_compositor_layer.dart';
 /// [RustCanvasPainter] executes them instead of the Dart-only [CanvasPainter].
 ///
 /// Toggle via `--dart-define=VIO_USE_RUST_CANVAS=true`.
-const _useRustCanvas = bool.fromEnvironment('VIO_USE_RUST_CANVAS');
+///
+/// At runtime this is combined with [RustEngineService.rustAvailable] so that
+/// the canvas falls back to the Dart renderer when WASM fails to load.
+const _useRustCanvasFlag = bool.fromEnvironment('VIO_USE_RUST_CANVAS');
 
 /// Feature flag: when `true` (and `VIO_USE_RUST_CANVAS` is also `true`),
 /// static shapes are pre-rendered into cached 512×512 tiles by tiny-skia in
 /// Rust. Tiles are composited behind the live draw-command layer.
 ///
 /// Toggle via `--dart-define=VIO_USE_RUST_TILES=true`.
-const _useRustTiles = bool.fromEnvironment('VIO_USE_RUST_TILES');
+const _useRustTilesFlag = bool.fromEnvironment('VIO_USE_RUST_TILES');
+
+/// Whether to actually use Rust at runtime — requires both the compile-time
+/// flag AND successful WASM/FFI initialisation.
+bool get _useRustCanvas =>
+    _useRustCanvasFlag && RustEngineService.instance.rustAvailable;
+bool get _useRustTiles =>
+    _useRustTilesFlag && RustEngineService.instance.rustAvailable;
 
 class CanvasSurface extends StatelessWidget {
   const CanvasSurface({

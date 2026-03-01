@@ -131,5 +131,5 @@ melos:
       description: Generate Dart bindings from Rust API
 
     rust:build:wasm:
-      run: cd apps/client/rust && cargo build --target wasm32-unknown-unknown --release
-      description: Build Rust crate for WASM (web)
+      run: cd apps/client && bash tool/build_wasm.sh
+      description: Build Rust crate for WASM (web) — compiles + wasm-bindgen

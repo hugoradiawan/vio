@@ -822,13 +822,41 @@ pub fn rasterize_tiles(&mut self) -> Vec<TileResult> {
 
 ### WASM Build Setup
 
-```bash
-# Install wasm target
-rustup target add wasm32-unknown-unknown
+Cargokit (used by `rust_builder`) does **not** support web targets. WASM builds use a separate script: `apps/client/tool/build_wasm.sh`.
 
-# flutter_rust_bridge handles WASM building automatically via cargokit
-# when running `flutter build web` or `flutter run -d chrome`
+```bash
+# One-time prerequisites
+rustup target add wasm32-unknown-unknown
+cargo install wasm-bindgen-cli --version 0.2.92   # must match Cargo.lock version
+
+# Build WASM (release)
+cd apps/client && bash tool/build_wasm.sh
+
+# Build WASM (debug — faster compile, larger output)
+cd apps/client && bash tool/build_wasm.sh --debug
+
+# Or via melos
+melos run rust:build:wasm
 ```
+
+The script:
+1. Runs `cargo build --target wasm32-unknown-unknown --release`
+2. Runs `wasm-bindgen --web --no-typescript` to produce JS glue + processed WASM
+3. Places output in `apps/client/web/pkg/` (`rust_lib_vio_client.js` + `rust_lib_vio_client_bg.wasm`)
+4. Optionally optimizes with `wasm-opt` if available
+
+`flutter_rust_bridge`'s `ExternalLibraryLoaderConfig(webPrefix: 'pkg/')` picks up the artifacts automatically — no `<script>` tag needed in `index.html`.
+
+**Important**: The `wasm-bindgen-cli` version must exactly match the `wasm-bindgen` crate version in `Cargo.lock` (currently **0.2.92**). A mismatch causes runtime errors.
+
+VS Code: use the **"Build Rust WASM"** task, or the **"Vio Client (Web - Chrome) Rust"** launch config (build WASM first, then launch).
+
+### Web Performance Notes
+
+- No zero-copy `Vec<u8>` → `Uint8List` on web — data crosses the JS boundary via serialization
+- `rayon` is gated out (`cfg(not(target_arch = "wasm32"))`) — tile rasterization is single-threaded
+- Tile rasterization (`VIO_USE_RUST_TILES`) may be slow on web due to pixel transfer overhead; use `VIO_USE_RUST_CANVAS` (draw commands only) as a fallback
+- `decodeImageFromPixels` works on web but incurs an extra copy
 
 ---
 

@@ -17,6 +17,13 @@ class RustEngineService {
 
   CanvasEngine? _engine;
 
+  /// Whether `RustLib.init()` completed successfully at startup.
+  ///
+  /// When `false`, the Rust FFI bridge is not available — callers should
+  /// fall back to the pure-Dart code path even if compile-time flags like
+  /// `VIO_USE_RUST_CANVAS` are set.
+  bool rustAvailable = false;
+
   /// The underlying Rust canvas engine.
   ///
   /// Creates the engine on first access. After this call the engine is

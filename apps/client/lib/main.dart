@@ -23,6 +23,7 @@ void main() async {
   if (useRust) {
     try {
       await RustLib.init();
+      RustEngineService.instance.rustAvailable = true;
       VioLogger.info('Rust engine initialized');
     } catch (e, st) {
       VioLogger.error('Rust engine init failed – running without Rust', e, st);

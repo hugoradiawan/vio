@@ -46,6 +46,9 @@ mixin _CanvasRustMixin on Bloc<CanvasEvent, CanvasState> {
   /// Compares [newShapes] with the last synced snapshot and pushes the diff
   /// to the Rust engine.
   Future<void> _syncShapesToRust(Map<String, Shape> newShapes) async {
+    // Skip if Rust FFI is not available (e.g. WASM failed to load on web)
+    if (!_rustEngine.rustAvailable) return;
+
     // Skip if shapes map is the same reference (no change)
     if (identical(newShapes, _lastRustSyncedShapes)) return;
 

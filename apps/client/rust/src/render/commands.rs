@@ -134,6 +134,10 @@ pub enum DrawCommand {
         color: u32,
         stroke: Option<StrokeData>,
     },
+    /// Marks the beginning of a shape's commands (used for filtering by ID).
+    BeginShape { id: String },
+    /// Marks the end of a shape's commands.
+    EndShape,
 }
 
 #[cfg(test)]

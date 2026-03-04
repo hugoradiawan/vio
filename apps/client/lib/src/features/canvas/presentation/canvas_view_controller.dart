@@ -863,9 +863,6 @@ mixin _CanvasViewController on State<CanvasView> {
         const zoomSensitivity = 0.002;
         final scaleFactor = 1.0 - (event.scrollDelta.dy * zoomSensitivity);
         final clampedScale = scaleFactor.clamp(0.5, 2.0);
-        _setViewportInteractionActive(
-          holdFor: const Duration(milliseconds: 180),
-        );
         state._perfDiagnostics.onWheelZoom(
           scaleFactor: clampedScale,
           canvasState: canvasState,
@@ -883,9 +880,6 @@ mixin _CanvasViewController on State<CanvasView> {
                 : event.scrollDelta.dy)
             : -event.scrollDelta.dx;
         final deltaY = isShiftScroll ? 0.0 : -event.scrollDelta.dy;
-        _setViewportInteractionActive(
-          holdFor: const Duration(milliseconds: 180),
-        );
         state._perfDiagnostics.onWheelPan(
           deltaX: deltaX,
           deltaY: deltaY,
@@ -898,15 +892,23 @@ mixin _CanvasViewController on State<CanvasView> {
           focalPoint: event.localPosition,
         );
       }
+
+      // Debounce BLoC sync: cancel any pending timer and start a new one.
+      // This keeps overlays (selection, grid, rulers) visible and gradients
+      // rendered during scroll/zoom, avoiding the stutter & gradient→solid
+      // flash caused by the old _setViewportInteractionActive(holdFor: 180ms).
+      state._wheelSyncTimer?.cancel();
+      state._wheelSyncTimer = Timer(const Duration(milliseconds: 80), () {
+        if (!mounted) return;
+        _flushBufferedPanZoom(context, force: true);
+        _syncViewportToBloc(context);
+      });
     } else if (event is PointerScaleEvent) {
       final scaleDrift = (event.scale - 1.0).abs();
       if (scaleDrift < _CanvasViewState._pointerScaleGestureEpsilon) {
         return;
       }
 
-      _setViewportInteractionActive(
-        holdFor: const Duration(milliseconds: 180),
-      );
       state._perfDiagnostics.onWheelZoom(
         scaleFactor: event.scale,
         canvasState: context.read<CanvasBloc>().state,
@@ -917,6 +919,14 @@ mixin _CanvasViewController on State<CanvasView> {
         panDelta: Offset.zero,
         focalPoint: event.localPosition,
       );
+
+      // Same debounced sync for trackpad scale events.
+      state._wheelSyncTimer?.cancel();
+      state._wheelSyncTimer = Timer(const Duration(milliseconds: 80), () {
+        if (!mounted) return;
+        _flushBufferedPanZoom(context, force: true);
+        _syncViewportToBloc(context);
+      });
     }
   }
 

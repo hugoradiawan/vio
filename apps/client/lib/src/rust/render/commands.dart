@@ -149,6 +149,14 @@ sealed class DrawCommand with _$DrawCommand {
     required int color,
     StrokeData? stroke,
   }) = DrawCommand_DrawPath;
+
+  /// Marks the beginning of a shape's commands (used for filtering by ID).
+  const factory DrawCommand.beginShape({
+    required String id,
+  }) = DrawCommand_BeginShape;
+
+  /// Marks the end of a shape's commands.
+  const factory DrawCommand.endShape() = DrawCommand_EndShape;
 }
 
 /// Gradient data for draw commands.

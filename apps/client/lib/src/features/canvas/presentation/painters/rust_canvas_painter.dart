@@ -133,7 +133,51 @@ class RustCanvasPainter extends CustomPainter {
       vm.e, vm.f, 0, 1, //
     ]),);
 
+    // Build the set of shape IDs being dragged so we can skip rendering
+    // them at their original position (the drag overlay paints them with
+    // the offset instead).
+    final isDragging = dragOffset != null && selectedShapeIds.isNotEmpty;
+    Set<String>? dragIds;
+    if (isDragging) {
+      final selectedIdSet = selectedShapeIds.toSet();
+      dragIds = <String>{...selectedIdSet};
+      void addDescendants(String id) {
+        final children = _buildChildrenMapCached()[id];
+        if (children == null) return;
+        for (final child in children) {
+          if (dragIds!.add(child.id)) addDescendants(child.id);
+        }
+      }
+      for (final id in selectedIdSet) {
+        final shape = shapesById[id];
+        if (shape is GroupShape || shape is FrameShape) addDescendants(id);
+      }
+    }
+
+    int skipDepth = 0; // nesting depth while skipping a dragged shape
+
     for (final cmd in drawCommands) {
+      // --- Shape-level skip logic for dragged shapes ---
+      if (cmd is DrawCommand_BeginShape) {
+        if (skipDepth > 0) {
+          skipDepth++;
+          continue;
+        }
+        if (isDragging && dragIds!.contains(cmd.id)) {
+          skipDepth = 1;
+          continue;
+        }
+        continue; // BeginShape itself is a no-op on Canvas
+      }
+      if (cmd is DrawCommand_EndShape) {
+        if (skipDepth > 0) {
+          skipDepth--;
+          continue;
+        }
+        continue; // EndShape itself is a no-op on Canvas
+      }
+      if (skipDepth > 0) continue;
+
       switch (cmd) {
         case DrawCommand_PushTransform(:final matrix):
           canvas.save();
@@ -250,6 +294,10 @@ class RustCanvasPainter extends CustomPainter {
 
         case DrawCommand_DrawPath(:final pathData, :final color, :final stroke):
           _drawPath(canvas, pathData, color, stroke);
+
+        // BeginShape/EndShape are handled above the switch.
+        case DrawCommand_BeginShape() || DrawCommand_EndShape():
+          break;
       }
     }
 
@@ -908,6 +956,12 @@ class RustCanvasPainter extends CustomPainter {
       }
     }
     return map;
+  }
+
+  /// Lazily built per-paint children map (same data as _buildChildrenMap).
+  Map<String, List<Shape>>? _childrenMapCache;
+  Map<String, List<Shape>> _buildChildrenMapCached() {
+    return _childrenMapCache ??= _buildChildrenMap();
   }
 
   @override

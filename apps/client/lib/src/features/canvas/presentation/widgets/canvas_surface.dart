@@ -93,11 +93,8 @@ class CanvasSurface extends StatelessWidget {
                   isComplex: true,
                   painter: GridPainter(
                     gridSize: workspaceState.gridSize,
-                    zoom: canvasState.zoom,
-                    offset: Offset(
-                      canvasState.viewportOffset.dx,
-                      canvasState.viewportOffset.dy,
-                    ),
+                    zoom: viewportNotifier.zoom,
+                    offset: viewportNotifier.offset,
                   ),
                 ),
               ),
@@ -120,21 +117,29 @@ class CanvasSurface extends StatelessWidget {
                     interactionNotifier: interactionNotifier,
                   )
                 : RepaintBoundary(
-                    child: CustomPaint(
-                      isComplex: true,
-                      willChange: true,
-                      painter: CanvasPainter(
-                        viewMatrix: canvasState.viewMatrix,
-                        shapes: orderedShapes,
-                        shapesById: canvasState.shapes,
-                        containmentTree: canvasState.containmentTree,
-                        dragRect: canvasState.dragRect,
-                        dragOffset: canvasState.dragOffset,
-                        selectedShapeIds: canvasState.selectedShapeIds,
-                        hoveredShapeId: canvasState.hoveredShapeId,
-                        hoveredLayerId: canvasState.hoveredLayerId,
-                        editingTextShapeId: editingTextShapeId,
-                        simplifyForInteraction: isInteracting,
+                    // ListenableBuilder ensures the Dart CanvasPainter
+                    // repaints with the live viewMatrix from
+                    // ViewportNotifier — otherwise the buildWhen filter
+                    // on the parent BlocBuilder would leave the painter
+                    // with a stale viewport.
+                    child: ListenableBuilder(
+                      listenable: viewportNotifier,
+                      builder: (context, _) => CustomPaint(
+                        isComplex: true,
+                        willChange: true,
+                        painter: CanvasPainter(
+                          viewMatrix: viewportNotifier.viewMatrix,
+                          shapes: orderedShapes,
+                          shapesById: canvasState.shapes,
+                          containmentTree: canvasState.containmentTree,
+                          dragRect: canvasState.dragRect,
+                          dragOffset: canvasState.dragOffset,
+                          selectedShapeIds: canvasState.selectedShapeIds,
+                          hoveredShapeId: canvasState.hoveredShapeId,
+                          hoveredLayerId: canvasState.hoveredLayerId,
+                          editingTextShapeId: editingTextShapeId,
+                          simplifyForInteraction: isInteracting,
+                        ),
                       ),
                     ),
                   ),
@@ -146,7 +151,7 @@ class CanvasSurface extends StatelessWidget {
                   willChange: true,
                   painter: SelectionBoxPainter(
                     selectedShapes: canvasState.selectedShapes,
-                    viewMatrix: canvasState.viewMatrix,
+                    viewMatrix: viewportNotifier.viewMatrix,
                     dragOffset: canvasState.dragOffset,
                     activeCornerIndex: canvasState.activeCornerIndex,
                     hoveredCornerIndex: canvasState.hoveredCornerIndex,
@@ -167,8 +172,8 @@ class CanvasSurface extends StatelessWidget {
                   painter: SnapGuidesPainter(
                     snapLines: canvasState.snapLines,
                     snapPoints: canvasState.snapPoints,
-                    viewMatrix: canvasState.viewMatrix,
-                    zoom: canvasState.zoom,
+                    viewMatrix: viewportNotifier.viewMatrix,
+                    zoom: viewportNotifier.zoom,
                   ),
                 ),
               ),
@@ -181,8 +186,8 @@ class CanvasSurface extends StatelessWidget {
                 child: CustomPaint(
                   painter: SizeIndicatorPainter(
                     selectionRect: selectionRect,
-                    viewMatrix: canvasState.viewMatrix,
-                    zoom: canvasState.zoom,
+                    viewMatrix: viewportNotifier.viewMatrix,
+                    zoom: viewportNotifier.zoom,
                   ),
                 ),
               ),
@@ -196,8 +201,8 @@ class CanvasSurface extends StatelessWidget {
               child: RepaintBoundary(
                 child: CustomPaint(
                   painter: HorizontalRulerPainter(
-                    offset: canvasState.viewportOffset.dx,
-                    zoom: canvasState.zoom,
+                    offset: viewportNotifier.offset.dx,
+                    zoom: viewportNotifier.zoom,
                     selectionRect: selectionRect,
                   ),
                 ),
@@ -211,8 +216,8 @@ class CanvasSurface extends StatelessWidget {
               child: RepaintBoundary(
                 child: CustomPaint(
                   painter: VerticalRulerPainter(
-                    offset: canvasState.viewportOffset.dy,
-                    zoom: canvasState.zoom,
+                    offset: viewportNotifier.offset.dy,
+                    zoom: viewportNotifier.zoom,
                     selectionRect: selectionRect,
                   ),
                 ),

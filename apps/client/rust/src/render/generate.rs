@@ -109,10 +109,12 @@ fn emit_shape_tree(
     }
 
     // ----- Emit draw commands for this shape -----
+    cmds.push(DrawCommand::BeginShape { id: shape.id.clone() });
     emit_shape_commands(shape, simplify, cmds);
 
     // ----- Recurse into children -----
     if !has_children {
+        cmds.push(DrawCommand::EndShape);
         return;
     }
 
@@ -136,6 +138,8 @@ fn emit_shape_tree(
             emit_shape_tree(tree, child_id, viewport, simplify, cmds, skip_ids);
         }
     }
+
+    cmds.push(DrawCommand::EndShape);
 }
 
 // ---------------------------------------------------------------------------

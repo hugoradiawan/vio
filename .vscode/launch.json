@@ -25,7 +25,8 @@
         "--dart-define-from-file=config/dev.json",
         "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true",
         "--dart-define=VIO_USE_RUST_BACKEND=true",
-        "--dart-define=VIO_USE_RUST_CANVAS=true"
+        "--dart-define=VIO_USE_RUST_CANVAS=true",
+        "--dart-define=VIO_USE_RUST_TILES=true"
       ]
     },
     {
@@ -117,7 +118,10 @@
       "flutterMode": "profile",
       "toolArgs": [
         "--dart-define-from-file=config/dev.json",
-        "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true"
+        "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true",
+        "--dart-define=VIO_USE_RUST_BACKEND=true",
+        "--dart-define=VIO_USE_RUST_TILES=true",
+        "--dart-define=VIO_USE_RUST_CANVAS=true"
       ]
     },
     {

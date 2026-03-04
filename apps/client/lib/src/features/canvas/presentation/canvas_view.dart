@@ -99,6 +99,11 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
   /// Debounce timer used for wheel/trackpad interactions.
   Timer? _viewportInteractionTimer;
 
+  /// Debounce timer used to sync viewport to BLoC after scroll/scale events.
+  /// Separate from [_viewportInteractionTimer] so wheel zoom doesn't toggle
+  /// the heavy interaction-active flag (which hides overlays & strips gradients).
+  Timer? _wheelSyncTimer;
+
   /// Lightweight notifier for viewport state that drives RustCanvasPainter
   /// repaints without widget rebuilds or FFI calls.
   final ViewportNotifier _viewportNotifier = ViewportNotifier();
@@ -186,6 +191,7 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
     _imageDecodeSub?.cancel();
     _textLayoutDebounce?.cancel();
     _viewportInteractionTimer?.cancel();
+    _wheelSyncTimer?.cancel();
     _viewportNotifier.dispose();
     _interactionNotifier.dispose();
     _textController.removeListener(_onTextControllerChanged);

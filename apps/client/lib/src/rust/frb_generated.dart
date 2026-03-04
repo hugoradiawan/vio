@@ -848,6 +848,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           color: dco_decode_u_32(raw[2]),
           stroke: dco_decode_opt_box_autoadd_stroke_data(raw[3]),
         );
+      case 21:
+        return DrawCommand_BeginShape(
+          id: dco_decode_String(raw[1]),
+        );
+      case 22:
+        return DrawCommand_EndShape();
       default:
         throw Exception("unreachable");
     }
@@ -1526,6 +1532,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         var var_stroke = sse_decode_opt_box_autoadd_stroke_data(deserializer);
         return DrawCommand_DrawPath(
             pathData: var_pathData, color: var_color, stroke: var_stroke);
+      case 21:
+        var var_id = sse_decode_String(deserializer);
+        return DrawCommand_BeginShape(id: var_id);
+      case 22:
+        return DrawCommand_EndShape();
       default:
         throw UnimplementedError('');
     }
@@ -2330,6 +2341,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_String(pathData, serializer);
         sse_encode_u_32(color, serializer);
         sse_encode_opt_box_autoadd_stroke_data(stroke, serializer);
+      case DrawCommand_BeginShape(id: final id):
+        sse_encode_i_32(21, serializer);
+        sse_encode_String(id, serializer);
+      case DrawCommand_EndShape():
+        sse_encode_i_32(22, serializer);
     }
   }
 

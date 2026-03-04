@@ -1050,6 +1050,13 @@ impl SseDecode for crate::render::commands::DrawCommand {
                     stroke: var_stroke,
                 };
             }
+            21 => {
+                let mut var_id = <String>::sse_decode(deserializer);
+                return crate::render::commands::DrawCommand::BeginShape { id: var_id };
+            }
+            22 => {
+                return crate::render::commands::DrawCommand::EndShape;
+            }
             _ => {
                 unimplemented!("");
             }
@@ -2068,6 +2075,10 @@ impl flutter_rust_bridge::IntoDart for crate::render::commands::DrawCommand {
                 stroke.into_into_dart().into_dart(),
             ]
             .into_dart(),
+            crate::render::commands::DrawCommand::BeginShape { id } => {
+                [21.into_dart(), id.into_into_dart().into_dart()].into_dart()
+            }
+            crate::render::commands::DrawCommand::EndShape => [22.into_dart()].into_dart(),
             _ => {
                 unimplemented!("");
             }
@@ -2874,6 +2885,13 @@ impl SseEncode for crate::render::commands::DrawCommand {
                 <String>::sse_encode(path_data, serializer);
                 <u32>::sse_encode(color, serializer);
                 <Option<crate::render::commands::StrokeData>>::sse_encode(stroke, serializer);
+            }
+            crate::render::commands::DrawCommand::BeginShape { id } => {
+                <i32>::sse_encode(21, serializer);
+                <String>::sse_encode(id, serializer);
+            }
+            crate::render::commands::DrawCommand::EndShape => {
+                <i32>::sse_encode(22, serializer);
             }
             _ => {
                 unimplemented!("");

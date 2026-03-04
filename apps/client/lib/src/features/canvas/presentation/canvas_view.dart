@@ -83,8 +83,14 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
   /// Subscription to image cache decode events for triggering repaints.
   StreamSubscription<String>? _imageDecodeSub;
 
-  /// Track which assetIds we've already requested data for.
-  final Set<String> _requestedAssetIds = {};
+  /// Track when each asset ID was last requested to avoid request spam.
+  final Map<String, DateTime> _assetLastRequestAt = {};
+
+  /// Periodic retry timer for missing image assets.
+  Timer? _assetRetryTimer;
+
+  /// Minimum interval between repeated fetch attempts for the same asset.
+  static const Duration _assetRetryCooldown = Duration(seconds: 3);
 
   /// Whether an OS file is being dragged over the canvas.
   bool _isDroppingFile = false;
@@ -166,6 +172,11 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
       if (mounted) setState(() {});
     });
 
+    _assetRetryTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (!mounted) return;
+      _loadImagesForNewShapes(context, context.read<CanvasBloc>().state);
+    });
+
     // Seed the viewport notifier with the initial BLoC state so the painter
     // has correct values on the very first frame.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -189,6 +200,7 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
     HardwareKeyboard.instance.removeHandler(_handleKeyboardEvent);
 
     _imageDecodeSub?.cancel();
+    _assetRetryTimer?.cancel();
     _textLayoutDebounce?.cancel();
     _viewportInteractionTimer?.cancel();
     _wheelSyncTimer?.cancel();

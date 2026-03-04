@@ -772,16 +772,32 @@ mixin _CanvasViewController on State<CanvasView> {
 
   void _loadImagesForNewShapes(BuildContext context, CanvasState state) {
     final viewState = this as _CanvasViewState;
+    final assetBloc = context.read<AssetBloc>();
+    final now = DateTime.now();
     for (final shape in state.shapes.values) {
       if (shape is ImageShape &&
           shape.assetId.isNotEmpty &&
-          !ImageCacheService.instance.has(shape.assetId) &&
-          !ImageCacheService.instance.isPending(shape.assetId) &&
-          !viewState._requestedAssetIds.contains(shape.assetId)) {
-        viewState._requestedAssetIds.add(shape.assetId);
-        context
-            .read<AssetBloc>()
-            .add(AssetDataRequested(assetId: shape.assetId));
+          !ImageCacheService.instance.has(shape.assetId)) {
+        final lastRequestedAt = viewState._assetLastRequestAt[shape.assetId];
+        if (lastRequestedAt != null &&
+            now.difference(lastRequestedAt) <
+                _CanvasViewState._assetRetryCooldown) {
+          continue;
+        }
+
+        if (!ImageCacheService.instance.isPending(shape.assetId)) {
+          final cachedBytes = assetBloc.state.assetDataCache[shape.assetId];
+          if (cachedBytes != null) {
+            viewState._assetLastRequestAt[shape.assetId] = now;
+            unawaited(
+              ImageCacheService.instance.decode(shape.assetId, cachedBytes),
+            );
+            continue;
+          }
+        }
+
+        viewState._assetLastRequestAt[shape.assetId] = now;
+        assetBloc.add(AssetDataRequested(assetId: shape.assetId));
       }
     }
   }

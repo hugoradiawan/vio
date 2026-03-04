@@ -302,8 +302,24 @@ class AssetBloc extends Bloc<AssetEvent, AssetState> {
     AssetDataRequested event,
     Emitter<AssetState> emit,
   ) async {
-    // Skip if already cached
-    if (state.assetDataCache.containsKey(event.assetId)) return;
+    // If bytes are already cached, still try decoding in case a prior decode
+    // failed (or image cache was cleared).
+    final cachedBytes = state.assetDataCache[event.assetId];
+    if (cachedBytes != null) {
+      if (!ImageCacheService.instance.has(event.assetId) &&
+          !ImageCacheService.instance.isPending(event.assetId)) {
+        try {
+          await ImageCacheService.instance.decode(event.assetId, cachedBytes);
+        } catch (e) {
+          emit(
+            state.copyWith(
+              errorMessage: 'Failed to decode asset image ${event.assetId}: $e',
+            ),
+          );
+        }
+      }
+      return;
+    }
 
     try {
       final response = await _assetService.getAsset(
@@ -339,6 +355,8 @@ class AssetBloc extends Bloc<AssetEvent, AssetState> {
       final errorMessage = switch (e.code) {
         StatusCode.notFound =>
           'Asset ${event.assetId} was not found. It may have been deleted.',
+        StatusCode.resourceExhausted =>
+          'Asset ${event.assetId} is too large to fetch with current gRPC limits.',
         StatusCode.unavailable ||
         StatusCode.deadlineExceeded ||
         StatusCode.unknown =>

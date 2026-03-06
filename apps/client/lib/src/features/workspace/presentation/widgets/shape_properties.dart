@@ -74,7 +74,7 @@ class PositionSizeSection extends StatelessWidget {
               Expanded(
                 child: Row(
                   children: [
-                    const VioIcon(VioIcons.rotation, size: 14),
+                    const Icon(VioIcons.rotation, size: 14, color: VioColors.textSecondary),
                     const SizedBox(width: VioSpacing.xs),
                     Expanded(
                       child: VioNumericField(
@@ -103,7 +103,7 @@ class PositionSizeSection extends StatelessWidget {
       final rect = shape as RectangleShape;
       return Row(
         children: [
-          const VioIcon(VioIcons.cornerRadius, size: 14),
+          const Icon(VioIcons.cornerRadius, size: 14, color: VioColors.textSecondary),
           const SizedBox(width: VioSpacing.xs),
           Expanded(
             child: VioNumericField(
@@ -310,11 +310,11 @@ class RectangleProperties extends StatelessWidget {
           const SizedBox(height: VioSpacing.sm),
           Row(
             children: [
-              VioSvgIconButton(
-                assetPath:
+              VioIconButton(
+                icon:
                     shape.hasUniformCorners ? VioIcons.lock : VioIcons.unlock,
-                size: 14,
-                buttonSize: 24,
+                iconSize: 14,
+                size: 24,
                 onPressed: () => _toggleIndependentCorners(context),
                 tooltip: shape.hasUniformCorners
                     ? 'Enable independent corners'

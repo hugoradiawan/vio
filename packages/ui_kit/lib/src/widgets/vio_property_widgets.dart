@@ -191,18 +191,18 @@ class VioAlignmentButtons extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            VioSvgIconButton(
-              assetPath: VioIcons.alignLeft,
+            VioIconButton(
+              icon: VioIcons.alignLeft,
               onPressed: onAlignLeft,
               tooltip: 'Align left',
             ),
-            VioSvgIconButton(
-              assetPath: VioIcons.alignHorizontalCenter,
+            VioIconButton(
+              icon: VioIcons.alignHorizontalCenter,
               onPressed: onAlignCenterH,
               tooltip: 'Align center horizontally',
             ),
-            VioSvgIconButton(
-              assetPath: VioIcons.alignRight,
+            VioIconButton(
+              icon: VioIcons.alignRight,
               onPressed: onAlignRight,
               tooltip: 'Align right',
             ),
@@ -212,18 +212,18 @@ class VioAlignmentButtons extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            VioSvgIconButton(
-              assetPath: VioIcons.alignTop,
+            VioIconButton(
+              icon: VioIcons.alignTop,
               onPressed: onAlignTop,
               tooltip: 'Align top',
             ),
-            VioSvgIconButton(
-              assetPath: VioIcons.alignVerticalCenter,
+            VioIconButton(
+              icon: VioIcons.alignVerticalCenter,
               onPressed: onAlignCenterV,
               tooltip: 'Align center vertically',
             ),
-            VioSvgIconButton(
-              assetPath: VioIcons.alignBottom,
+            VioIconButton(
+              icon: VioIcons.alignBottom,
               onPressed: onAlignBottom,
               tooltip: 'Align bottom',
             ),
@@ -307,14 +307,14 @@ class VioPropertySlider extends StatelessWidget {
 /// A toggle row with icon and label
 class VioToggleRow extends StatelessWidget {
   const VioToggleRow({
-    required this.iconAsset,
+    required this.icon,
     required this.label,
     required this.value,
     required this.onChanged,
     super.key,
   });
 
-  final String iconAsset;
+  final IconData icon;
   final String label;
   final bool value;
   final ValueChanged<bool> onChanged;
@@ -331,7 +331,7 @@ class VioToggleRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            VioIcon(iconAsset),
+            Icon(icon, size: 16, color: VioColors.textSecondary),
             const SizedBox(width: VioSpacing.sm),
             Expanded(
               child: Text(

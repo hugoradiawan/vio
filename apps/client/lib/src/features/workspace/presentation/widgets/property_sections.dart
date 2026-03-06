@@ -93,10 +93,10 @@ class _FillItemState extends State<_FillItem> {
           Row(
             children: [
               // Visibility toggle
-              VioSvgIconButton(
-                assetPath: fill.hidden ? VioIcons.eyeOff : VioIcons.eye,
-                size: 14,
-                buttonSize: 24,
+              VioIconButton(
+                icon: fill.hidden ? VioIcons.eyeOff : VioIcons.eye,
+                iconSize: 14,
+                size: 24,
                 onPressed: () => _toggleFillVisibility(context),
               ),
               const SizedBox(width: VioSpacing.xs),
@@ -393,10 +393,10 @@ class _StrokeItem extends StatelessWidget {
           Row(
             children: [
               // Visibility toggle
-              VioSvgIconButton(
-                assetPath: stroke.hidden ? VioIcons.eyeOff : VioIcons.eye,
-                size: 14,
-                buttonSize: 24,
+              VioIconButton(
+                icon: stroke.hidden ? VioIcons.eyeOff : VioIcons.eye,
+                iconSize: 14,
+                size: 24,
                 onPressed: () => _toggleStrokeVisibility(context),
               ),
               const SizedBox(width: VioSpacing.xs),
@@ -466,7 +466,7 @@ class _StrokeItem extends StatelessWidget {
           // Width and alignment
           Row(
             children: [
-              const VioIcon(VioIcons.strokeSize, size: 14),
+              const Icon(VioIcons.strokeSize, size: 14, color: VioColors.textSecondary),
               const SizedBox(width: VioSpacing.sm),
               SizedBox(
                 width: 56,
@@ -614,10 +614,10 @@ class ShadowSection extends StatelessWidget {
           // Header row: visibility, color, type dropdown, delete
           Row(
             children: [
-              VioSvgIconButton(
-                assetPath: shadow.hidden ? VioIcons.eyeOff : VioIcons.eye,
-                size: 14,
-                buttonSize: 24,
+              VioIconButton(
+                icon: shadow.hidden ? VioIcons.eyeOff : VioIcons.eye,
+                iconSize: 14,
+                size: 24,
                 onPressed: () => _toggleShadowVisibility(context),
               ),
               const SizedBox(width: VioSpacing.xs),
@@ -677,10 +677,10 @@ class ShadowSection extends StatelessWidget {
               ),
               const SizedBox(width: VioSpacing.xs),
               // Delete button
-              VioSvgIconButton(
-                assetPath: VioIcons.close,
-                size: 12,
-                buttonSize: 24,
+              VioIconButton(
+                icon: VioIcons.close,
+                iconSize: 12,
+                size: 24,
                 onPressed: () => _removeShadow(context),
               ),
             ],
@@ -1356,10 +1356,10 @@ class BlurSection extends StatelessWidget {
           // Header row: visibility, type dropdown, delete
           Row(
             children: [
-              VioSvgIconButton(
-                assetPath: blur.hidden ? VioIcons.eyeOff : VioIcons.eye,
-                size: 14,
-                buttonSize: 24,
+              VioIconButton(
+                icon: blur.hidden ? VioIcons.eyeOff : VioIcons.eye,
+                iconSize: 14,
+                size: 24,
                 onPressed: () => _toggleBlurVisibility(context),
               ),
               const SizedBox(width: VioSpacing.sm),
@@ -1404,10 +1404,10 @@ class BlurSection extends StatelessWidget {
               ),
               const SizedBox(width: VioSpacing.xs),
               // Delete button
-              VioSvgIconButton(
-                assetPath: VioIcons.close,
-                size: 12,
-                buttonSize: 24,
+              VioIconButton(
+                icon: VioIcons.close,
+                iconSize: 12,
+                size: 24,
                 onPressed: () => _removeBlur(context),
               ),
             ],

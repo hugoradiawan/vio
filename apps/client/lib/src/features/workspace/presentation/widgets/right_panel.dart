@@ -279,10 +279,10 @@ class _SingleShapePanel extends StatelessWidget {
                     _sectionKey('fill'),
                     expanded,
                   ),
-                  trailing: VioSvgIconButton(
-                    assetPath: VioIcons.add,
-                    size: 14,
-                    buttonSize: 24,
+                  trailing: VioIconButton(
+                    icon: VioIcons.add,
+                    iconSize: 14,
+                    size: 24,
                     onPressed: () => _addFill(context),
                     tooltip: 'Add fill',
                   ),
@@ -299,10 +299,10 @@ class _SingleShapePanel extends StatelessWidget {
                       _sectionKey('stroke'),
                       expanded,
                     ),
-                    trailing: VioSvgIconButton(
-                      assetPath: VioIcons.add,
-                      size: 14,
-                      buttonSize: 24,
+                    trailing: VioIconButton(
+                      icon: VioIcons.add,
+                      iconSize: 14,
+                      size: 24,
                       onPressed: () => _addStroke(context),
                       tooltip: 'Add stroke',
                     ),
@@ -318,10 +318,10 @@ class _SingleShapePanel extends StatelessWidget {
                       _sectionKey('shadow'),
                       expanded,
                     ),
-                    trailing: VioSvgIconButton(
-                      assetPath: VioIcons.add,
-                      size: 14,
-                      buttonSize: 24,
+                    trailing: VioIconButton(
+                      icon: VioIcons.add,
+                      iconSize: 14,
+                      size: 24,
                       onPressed: () => _addShadow(context),
                       tooltip: 'Add shadow',
                     ),
@@ -336,10 +336,10 @@ class _SingleShapePanel extends StatelessWidget {
                       _sectionKey('blur'),
                       expanded,
                     ),
-                    trailing: VioSvgIconButton(
-                      assetPath: VioIcons.add,
-                      size: 14,
-                      buttonSize: 24,
+                    trailing: VioIconButton(
+                      icon: VioIcons.add,
+                      iconSize: 14,
+                      size: 24,
                       onPressed: () => _addBlur(context),
                       tooltip: 'Add blur',
                     ),
@@ -519,16 +519,16 @@ class _ShapeNameSectionState extends State<_ShapeNameSection> {
                   ),
           ),
           // Visibility toggle
-          VioSvgIconButton(
-            assetPath: widget.shape.hidden ? VioIcons.eyeOff : VioIcons.eye,
-            size: 14,
+          VioIconButton(
+            icon: widget.shape.hidden ? VioIcons.eyeOff : VioIcons.eye,
+            iconSize: 14,
             onPressed: () => _toggleVisibility(context),
             tooltip: widget.shape.hidden ? 'Show' : 'Hide',
           ),
           // Lock toggle
-          VioSvgIconButton(
-            assetPath: widget.shape.blocked ? VioIcons.lock : VioIcons.unlock,
-            size: 14,
+          VioIconButton(
+            icon: widget.shape.blocked ? VioIcons.lock : VioIcons.unlock,
+            iconSize: 14,
             onPressed: () => _toggleLock(context),
             tooltip: widget.shape.blocked ? 'Unlock' : 'Lock',
           ),

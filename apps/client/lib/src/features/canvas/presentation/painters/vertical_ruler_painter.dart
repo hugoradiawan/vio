@@ -20,6 +20,8 @@ class VerticalRulerPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    final effectiveZoom = zoom <= 0 ? 0.01 : zoom;
+
     // The ruler widget is shifted by [rulerOffset] pixels (because the
     // horizontal ruler occupies the top gutter). Adjust the viewport offset so
     // tick values line up with the actual canvas origin.
@@ -48,18 +50,36 @@ class VerticalRulerPainter extends CustomPainter {
       interval = 400;
     } else if (zoom < 0.5) {
       interval = 200;
-    } else if (zoom > 2) {
-      interval = 50;
     } else if (zoom > 4) {
       interval = 25;
+    } else if (zoom > 2) {
+      interval = 50;
     }
 
-    final scaledInterval = interval * zoom;
-    final startValue = (-effectiveOffset / zoom / interval).floor() * interval;
-    final startY = startValue * zoom + effectiveOffset;
+    interval = RulerConstants.adjustMajorTickIntervalForZoom(
+      interval,
+      effectiveZoom,
+    );
+
+    final scaledInterval = interval * effectiveZoom;
+    if (scaledInterval <= 0) {
+      return;
+    }
+
+    final labelSkipFactor = RulerConstants.computeLabelSkipFactor(
+      scaledInterval,
+    );
+    final minorTickFractions = RulerConstants.computeMinorTickFractions(
+      scaledInterval,
+    );
+
+    final startValue =
+        (-effectiveOffset / effectiveZoom / interval).floor() * interval;
+    final startY = startValue * effectiveZoom + effectiveOffset;
+    var majorTickIndex = 0;
 
     for (double y = startY; y < size.height; y += scaledInterval) {
-      final value = ((y - effectiveOffset) / zoom).round();
+      final value = ((y - effectiveOffset) / effectiveZoom).round();
 
       // Major tick
       canvas.drawLine(
@@ -68,36 +88,40 @@ class VerticalRulerPainter extends CustomPainter {
         tickPaint,
       );
 
-      // Label (rotated)
-      canvas.save();
-      canvas.translate(3, y + 2);
-      canvas.rotate(-1.5708); // -90 degrees
+      if (majorTickIndex % labelSkipFactor == 0) {
+        // Keep all ticks visible, but sparsify labels at low zoom.
+        canvas.save();
+        canvas.translate(3, y + 2);
+        canvas.rotate(-1.5708); // -90 degrees
 
-      final textPainter = TextPainter(
-        text: TextSpan(
-          text: value.toString(),
-          style: VioTypography.caption.copyWith(
-            color: VioColors.textTertiary,
-            fontSize: 9,
+        final textPainter = TextPainter(
+          text: TextSpan(
+            text: value.toString(),
+            style: VioTypography.caption.copyWith(
+              color: VioColors.textTertiary,
+              fontSize: 9,
+            ),
           ),
-        ),
-        textDirection: TextDirection.ltr,
-      );
-      textPainter.layout();
-      textPainter.paint(canvas, Offset.zero);
-      canvas.restore();
+          textDirection: TextDirection.ltr,
+        );
+        textPainter.layout();
+        textPainter.paint(canvas, Offset.zero);
+        canvas.restore();
+      }
 
       // Minor ticks
-      for (int i = 1; i < 10; i++) {
-        final minorY = y + (scaledInterval / 10) * i;
+      for (final fraction in minorTickFractions) {
+        final minorY = y + scaledInterval * fraction;
         if (minorY < size.height) {
           canvas.drawLine(
-            Offset(size.width - (i == 5 ? 5 : 3), minorY),
+            Offset(size.width - (fraction == 0.5 ? 5 : 3), minorY),
             Offset(size.width, minorY),
             tickPaint,
           );
         }
       }
+
+      majorTickIndex++;
     }
   }
 

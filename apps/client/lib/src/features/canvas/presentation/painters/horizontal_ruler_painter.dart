@@ -20,6 +20,8 @@ class HorizontalRulerPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    final effectiveZoom = zoom <= 0 ? 0.01 : zoom;
+
     // The ruler widget is shifted by [rulerOffset] pixels (because the vertical
     // ruler occupies the left gutter). Adjust the viewport offset so tick
     // values line up with the actual canvas origin.
@@ -52,18 +54,36 @@ class HorizontalRulerPainter extends CustomPainter {
       interval = 400;
     } else if (zoom < 0.5) {
       interval = 200;
-    } else if (zoom > 2) {
-      interval = 50;
     } else if (zoom > 4) {
       interval = 25;
+    } else if (zoom > 2) {
+      interval = 50;
     }
 
-    final scaledInterval = interval * zoom;
-    final startValue = (-effectiveOffset / zoom / interval).floor() * interval;
-    final startX = startValue * zoom + effectiveOffset;
+    interval = RulerConstants.adjustMajorTickIntervalForZoom(
+      interval,
+      effectiveZoom,
+    );
+
+    final scaledInterval = interval * effectiveZoom;
+    if (scaledInterval <= 0) {
+      return;
+    }
+
+    final labelSkipFactor = RulerConstants.computeLabelSkipFactor(
+      scaledInterval,
+    );
+    final minorTickFractions = RulerConstants.computeMinorTickFractions(
+      scaledInterval,
+    );
+
+    final startValue =
+        (-effectiveOffset / effectiveZoom / interval).floor() * interval;
+    final startX = startValue * effectiveZoom + effectiveOffset;
+    var majorTickIndex = 0;
 
     for (double x = startX; x < size.width; x += scaledInterval) {
-      final value = ((x - effectiveOffset) / zoom).round();
+      final value = ((x - effectiveOffset) / effectiveZoom).round();
 
       // Major tick
       canvas.drawLine(
@@ -72,28 +92,32 @@ class HorizontalRulerPainter extends CustomPainter {
         tickPaint,
       );
 
-      // Label
-      textPainter.text = TextSpan(
-        text: value.toString(),
-        style: VioTypography.caption.copyWith(
-          color: VioColors.textTertiary,
-          fontSize: 9,
-        ),
-      );
-      textPainter.layout();
-      textPainter.paint(canvas, Offset(x + 2, 2));
+      // Keep all ticks visible, but sparsify labels at low zoom.
+      if (majorTickIndex % labelSkipFactor == 0) {
+        textPainter.text = TextSpan(
+          text: value.toString(),
+          style: VioTypography.caption.copyWith(
+            color: VioColors.textTertiary,
+            fontSize: 9,
+          ),
+        );
+        textPainter.layout();
+        textPainter.paint(canvas, Offset(x + 2, 2));
+      }
 
       // Minor ticks
-      for (int i = 1; i < 10; i++) {
-        final minorX = x + (scaledInterval / 10) * i;
+      for (final fraction in minorTickFractions) {
+        final minorX = x + scaledInterval * fraction;
         if (minorX < size.width) {
           canvas.drawLine(
-            Offset(minorX, size.height - (i == 5 ? 5 : 3)),
+            Offset(minorX, size.height - (fraction == 0.5 ? 5 : 3)),
             Offset(minorX, size.height),
             tickPaint,
           );
         }
       }
+
+      majorTickIndex++;
     }
   }
 

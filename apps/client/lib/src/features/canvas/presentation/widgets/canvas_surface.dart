@@ -83,7 +83,7 @@ class CanvasSurface extends StatelessWidget {
         children: [
           Positioned.fill(
             child: Container(
-              color: VioColors.canvasBackground,
+              color: VioCanvasTheme.of(context).canvasBackground,
             ),
           ),
           if (workspaceState.showGrid && !isInteracting)
@@ -95,6 +95,8 @@ class CanvasSurface extends StatelessWidget {
                     gridSize: workspaceState.gridSize,
                     zoom: viewportNotifier.zoom,
                     offset: viewportNotifier.offset,
+                    gridColor: VioCanvasTheme.of(context).gridLines,
+                    originColor: Theme.of(context).colorScheme.error,
                   ),
                 ),
               ),
@@ -124,23 +126,31 @@ class CanvasSurface extends StatelessWidget {
                     // with a stale viewport.
                     child: ListenableBuilder(
                       listenable: viewportNotifier,
-                      builder: (context, _) => CustomPaint(
-                        isComplex: true,
-                        willChange: true,
-                        painter: CanvasPainter(
-                          viewMatrix: viewportNotifier.viewMatrix,
-                          shapes: orderedShapes,
-                          shapesById: canvasState.shapes,
-                          containmentTree: canvasState.containmentTree,
-                          dragRect: canvasState.dragRect,
-                          dragOffset: canvasState.dragOffset,
-                          selectedShapeIds: canvasState.selectedShapeIds,
-                          hoveredShapeId: canvasState.hoveredShapeId,
-                          hoveredLayerId: canvasState.hoveredLayerId,
-                          editingTextShapeId: editingTextShapeId,
-                          simplifyForInteraction: isInteracting,
-                        ),
-                      ),
+                      builder: (context, _) {
+                        final canvasTheme = VioCanvasTheme.of(context);
+                        return CustomPaint(
+                          isComplex: true,
+                          willChange: true,
+                          painter: CanvasPainter(
+                            viewMatrix: viewportNotifier.viewMatrix,
+                            shapes: orderedShapes,
+                            shapesById: canvasState.shapes,
+                            containmentTree: canvasState.containmentTree,
+                            selectionColor: canvasTheme.selectionColor,
+                            labelColor: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant
+                                .withValues(alpha: 0.65),
+                            dragRect: canvasState.dragRect,
+                            dragOffset: canvasState.dragOffset,
+                            selectedShapeIds: canvasState.selectedShapeIds,
+                            hoveredShapeId: canvasState.hoveredShapeId,
+                            hoveredLayerId: canvasState.hoveredLayerId,
+                            editingTextShapeId: editingTextShapeId,
+                            simplifyForInteraction: isInteracting,
+                          ),
+                        );
+                      },
                     ),
                   ),
           ),
@@ -152,6 +162,7 @@ class CanvasSurface extends StatelessWidget {
                   painter: SelectionBoxPainter(
                     selectedShapes: canvasState.selectedShapes,
                     viewMatrix: viewportNotifier.viewMatrix,
+                    selectionColor: VioCanvasTheme.of(context).selectionColor,
                     dragOffset: canvasState.dragOffset,
                     activeCornerIndex: canvasState.activeCornerIndex,
                     hoveredCornerIndex: canvasState.hoveredCornerIndex,
@@ -188,6 +199,8 @@ class CanvasSurface extends StatelessWidget {
                     selectionRect: selectionRect,
                     viewMatrix: viewportNotifier.viewMatrix,
                     zoom: viewportNotifier.zoom,
+                    chipColor: Theme.of(context).colorScheme.primary,
+                    onChipColor: Theme.of(context).colorScheme.onPrimary,
                   ),
                 ),
               ),
@@ -206,6 +219,18 @@ class CanvasSurface extends StatelessWidget {
                       offset: viewportNotifier.offset.dx,
                       zoom: viewportNotifier.zoom,
                       selectionRect: selectionRect,
+                      backgroundColor:
+                          Theme.of(context).colorScheme.surfaceContainerLow,
+                      tickColor: Theme.of(context)
+                          .colorScheme
+                          .onSurfaceVariant
+                          .withValues(alpha: 0.45),
+                      selectionColor:
+                          Theme.of(context).colorScheme.primary,
+                      borderColor: Theme.of(context)
+                          .colorScheme
+                          .outline
+                          .withValues(alpha: 0.25),
                     ),
                   ),
                 ),
@@ -224,6 +249,18 @@ class CanvasSurface extends StatelessWidget {
                       offset: viewportNotifier.offset.dy,
                       zoom: viewportNotifier.zoom,
                       selectionRect: selectionRect,
+                      backgroundColor:
+                          Theme.of(context).colorScheme.surfaceContainerLow,
+                      tickColor: Theme.of(context)
+                          .colorScheme
+                          .onSurfaceVariant
+                          .withValues(alpha: 0.45),
+                      selectionColor:
+                          Theme.of(context).colorScheme.primary,
+                      borderColor: Theme.of(context)
+                          .colorScheme
+                          .outline
+                          .withValues(alpha: 0.25),
                     ),
                   ),
                 ),
@@ -235,7 +272,7 @@ class CanvasSurface extends StatelessWidget {
               width: 20,
               height: 20,
               child: Container(
-                color: VioColors.surface2,
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
               ),
             ),
           ],

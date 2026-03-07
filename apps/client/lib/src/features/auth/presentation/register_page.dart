@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../bloc/auth_bloc.dart';
 
@@ -42,8 +41,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: VioColors.background,
       body: BlocListener<AuthBloc, AuthState>(
         listenWhen: (prev, curr) => prev.status != curr.status,
         listener: (context, state) {
@@ -54,7 +53,7 @@ class _RegisterPageState extends State<RegisterPage> {
               ..showSnackBar(
                 SnackBar(
                   content: Text(state.errorMessage!),
-                  backgroundColor: VioColors.error,
+                  backgroundColor: cs.error,
                 ),
               );
           }
@@ -70,17 +69,17 @@ class _RegisterPageState extends State<RegisterPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // ── Logo / Title ──────────────────────────
-                    const Icon(
+                    Icon(
                       Icons.auto_awesome_mosaic_rounded,
                       size: 48,
-                      color: VioColors.primary,
+                      color: cs.primary,
                     ),
                     const SizedBox(height: 12),
                     Text(
                       'Vio',
                       style:
                           Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                color: VioColors.textPrimary,
+                                color: cs.onSurface,
                                 fontWeight: FontWeight.bold,
                               ),
                     ),
@@ -90,7 +89,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       style: Theme.of(context)
                           .textTheme
                           .bodyMedium
-                          ?.copyWith(color: VioColors.textSecondary),
+                          ?.copyWith(color: cs.onSurfaceVariant),
                     ),
                     const SizedBox(height: 40),
 
@@ -98,11 +97,12 @@ class _RegisterPageState extends State<RegisterPage> {
                     TextFormField(
                       controller: _nameController,
                       textInputAction: TextInputAction.next,
-                      style: const TextStyle(color: VioColors.textPrimary),
+                      style: TextStyle(color: cs.onSurface),
                       decoration: _inputDecoration(
                         label: 'Name',
                         hint: 'Your display name',
                         icon: Icons.person_outline,
+                        cs: cs,
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -118,11 +118,12 @@ class _RegisterPageState extends State<RegisterPage> {
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
-                      style: const TextStyle(color: VioColors.textPrimary),
+                      style: TextStyle(color: cs.onSurface),
                       decoration: _inputDecoration(
                         label: 'Email',
                         hint: 'you@example.com',
                         icon: Icons.email_outlined,
+                        cs: cs,
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -142,18 +143,19 @@ class _RegisterPageState extends State<RegisterPage> {
                       obscureText: _obscurePassword,
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _onRegister(),
-                      style: const TextStyle(color: VioColors.textPrimary),
+                      style: TextStyle(color: cs.onSurface),
                       decoration: _inputDecoration(
                         label: 'Password',
                         hint: 'At least 8 characters',
                         icon: Icons.lock_outline,
+                        cs: cs,
                       ).copyWith(
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword
                                 ? Icons.visibility_off_outlined
                                 : Icons.visibility_outlined,
-                            color: VioColors.textSecondary,
+                            color: cs.onSurfaceVariant,
                             size: 20,
                           ),
                           onPressed: () => setState(
@@ -184,10 +186,10 @@ class _RegisterPageState extends State<RegisterPage> {
                           child: ElevatedButton(
                             onPressed: isLoading ? null : _onRegister,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: VioColors.primary,
-                              foregroundColor: Colors.white,
+                              backgroundColor: cs.primary,
+                              foregroundColor: cs.onPrimary,
                               disabledBackgroundColor:
-                                  VioColors.primary.withValues(alpha: 0.5),
+                                  cs.primary.withValues(alpha: 0.5),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -211,16 +213,16 @@ class _RegisterPageState extends State<RegisterPage> {
                     // ── Login Link ────────────────────────────
                     TextButton(
                       onPressed: () => context.go('/login'),
-                      child: const Text.rich(
+                      child: Text.rich(
                         TextSpan(
                           text: 'Already have an account? ',
                           style: TextStyle(
-                            color: VioColors.textSecondary,
+                            color: cs.onSurfaceVariant,
                           ),
                           children: [
                             TextSpan(
                               text: 'Sign in',
-                              style: TextStyle(color: VioColors.primary),
+                              style: TextStyle(color: cs.primary),
                             ),
                           ],
                         ),
@@ -240,11 +242,13 @@ class _RegisterPageState extends State<RegisterPage> {
     required String label,
     required String hint,
     required IconData icon,
+    required ColorScheme cs,
   }) {
     return buildAuthInputDecoration(
       label: label,
       hint: hint,
       icon: icon,
+      cs: cs,
     );
   }
 }
@@ -253,34 +257,35 @@ InputDecoration buildAuthInputDecoration({
   required String label,
   required String hint,
   required IconData icon,
+  required ColorScheme cs,
 }) {
   return InputDecoration(
     labelText: label,
     hintText: hint,
-    prefixIcon: Icon(icon, color: VioColors.textSecondary, size: 20),
-    labelStyle: const TextStyle(color: VioColors.textSecondary),
-    hintStyle: const TextStyle(color: VioColors.textTertiary),
+    prefixIcon: Icon(icon, color: cs.onSurfaceVariant, size: 20),
+    labelStyle: TextStyle(color: cs.onSurfaceVariant),
+    hintStyle: TextStyle(color: cs.onSurfaceVariant.withValues(alpha: 0.6)),
     filled: true,
-    fillColor: VioColors.surfaceElevated,
+    fillColor: cs.surfaceContainerHigh,
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: VioColors.border),
+      borderSide: BorderSide(color: cs.outline),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: VioColors.border),
+      borderSide: BorderSide(color: cs.outline),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: VioColors.primary),
+      borderSide: BorderSide(color: cs.primary),
     ),
     errorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: VioColors.error),
+      borderSide: BorderSide(color: cs.error),
     ),
     focusedErrorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: VioColors.error),
+      borderSide: BorderSide(color: cs.error),
     ),
   );
 }

@@ -30,7 +30,7 @@ class FillSection extends StatelessWidget {
           child: Text(
             'No fill',
             style: VioTypography.caption.copyWith(
-              color: VioColors.textTertiary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ),
@@ -119,9 +119,9 @@ class _FillItemState extends State<_FillItem> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: VioSpacing.sm),
                     decoration: BoxDecoration(
-                      color: VioColors.surfaceElevated,
+                      color: Theme.of(context).colorScheme.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-                      border: Border.all(color: VioColors.border),
+                      border: Border.all(color: Theme.of(context).colorScheme.outline),
                     ),
                     child: Row(
                       children: [
@@ -131,7 +131,7 @@ class _FillItemState extends State<_FillItem> {
                                 ? Icons.radio_button_checked
                                 : Icons.gradient,
                             size: 12,
-                            color: VioColors.textTertiary,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
@@ -140,7 +140,7 @@ class _FillItemState extends State<_FillItem> {
                                   ? 'Radial'
                                   : 'Linear',
                               style: VioTypography.caption.copyWith(
-                                color: VioColors.textSecondary,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -148,13 +148,13 @@ class _FillItemState extends State<_FillItem> {
                           Icon(
                             _expanded ? Icons.expand_less : Icons.expand_more,
                             size: 14,
-                            color: VioColors.textTertiary,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ] else ...[
                           Text(
                             '#',
                             style: VioTypography.caption.copyWith(
-                              color: VioColors.textTertiary,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                             ),
                           ),
                           const SizedBox(width: 2),
@@ -162,7 +162,7 @@ class _FillItemState extends State<_FillItem> {
                             child: Text(
                               _colorToHex(fill.color),
                               style: VioTypography.caption.copyWith(
-                                color: VioColors.textPrimary,
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontFamily: 'monospace',
                               ),
                             ),
@@ -212,10 +212,10 @@ class _FillItemState extends State<_FillItem> {
                       width: 24,
                       height: 24,
                       alignment: Alignment.center,
-                      child: const Icon(
+                      child: Icon(
                         Icons.gradient,
                         size: 14,
-                        color: VioColors.textTertiary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -248,7 +248,7 @@ class _FillItemState extends State<_FillItem> {
         height: 32,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-          border: Border.all(color: VioColors.border),
+          border: Border.all(color: Theme.of(context).colorScheme.outline),
           gradient: LinearGradient(
             colors: stops
                 .map((s) => Color(s.color).withValues(alpha: s.opacity))
@@ -264,7 +264,7 @@ class _FillItemState extends State<_FillItem> {
       decoration: BoxDecoration(
         color: Color(fill.color),
         borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-        border: Border.all(color: VioColors.border),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
     );
   }
@@ -353,7 +353,7 @@ class StrokeSection extends StatelessWidget {
           child: Text(
             'No stroke',
             style: VioTypography.caption.copyWith(
-              color: VioColors.textTertiary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ),
@@ -409,7 +409,7 @@ class _StrokeItem extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Color(stroke.color),
                     borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-                    border: Border.all(color: VioColors.border),
+                    border: Border.all(color: Theme.of(context).colorScheme.outline),
                   ),
                 ),
               ),
@@ -421,16 +421,16 @@ class _StrokeItem extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: VioSpacing.sm),
                   decoration: BoxDecoration(
-                    color: VioColors.surfaceElevated,
+                    color: Theme.of(context).colorScheme.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-                    border: Border.all(color: VioColors.border),
+                    border: Border.all(color: Theme.of(context).colorScheme.outline),
                   ),
                   child: Row(
                     children: [
                       Text(
                         '#',
                         style: VioTypography.caption.copyWith(
-                          color: VioColors.textTertiary,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(width: 2),
@@ -438,7 +438,7 @@ class _StrokeItem extends StatelessWidget {
                         child: Text(
                           _colorToHex(stroke.color),
                           style: VioTypography.caption.copyWith(
-                            color: VioColors.textPrimary,
+                            color: Theme.of(context).colorScheme.onSurface,
                             fontFamily: 'monospace',
                           ),
                         ),
@@ -466,7 +466,7 @@ class _StrokeItem extends StatelessWidget {
           // Width and alignment
           Row(
             children: [
-              const Icon(VioIcons.strokeSize, size: 14, color: VioColors.textSecondary),
+              Icon(VioIcons.strokeSize, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
               const SizedBox(width: VioSpacing.sm),
               SizedBox(
                 width: 56,
@@ -485,18 +485,18 @@ class _StrokeItem extends StatelessWidget {
                 height: 28,
                 padding: const EdgeInsets.symmetric(horizontal: VioSpacing.sm),
                 decoration: BoxDecoration(
-                  color: VioColors.surfaceElevated,
+                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-                  border: Border.all(color: VioColors.border),
+                  border: Border.all(color: Theme.of(context).colorScheme.outline),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<StrokeAlignment>(
                     value: stroke.alignment,
                     isDense: true,
                     style: VioTypography.caption.copyWith(
-                      color: VioColors.textPrimary,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
-                    dropdownColor: VioColors.surfaceElevated,
+                    dropdownColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                     items: StrokeAlignment.values.map((alignment) {
                       return DropdownMenuItem(
                         value: alignment,
@@ -600,7 +600,7 @@ class ShadowSection extends StatelessWidget {
           child: Text(
             'No shadow',
             style: VioTypography.caption.copyWith(
-              color: VioColors.textTertiary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ),
@@ -631,7 +631,7 @@ class ShadowSection extends StatelessWidget {
                     color:
                         Color(shadow.color).withValues(alpha: shadow.opacity),
                     borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-                    border: Border.all(color: VioColors.border),
+                    border: Border.all(color: Theme.of(context).colorScheme.outline),
                   ),
                 ),
               ),
@@ -643,9 +643,9 @@ class ShadowSection extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: VioSpacing.sm),
                   decoration: BoxDecoration(
-                    color: VioColors.surfaceElevated,
+                    color: Theme.of(context).colorScheme.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-                    border: Border.all(color: VioColors.border),
+                    border: Border.all(color: Theme.of(context).colorScheme.outline),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<ShadowStyle>(
@@ -653,9 +653,9 @@ class ShadowSection extends StatelessWidget {
                       isDense: true,
                       isExpanded: true,
                       style: VioTypography.caption.copyWith(
-                        color: VioColors.textPrimary,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
-                      dropdownColor: VioColors.surfaceElevated,
+                      dropdownColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                       items: ShadowStyle.values.map((style) {
                         return DropdownMenuItem(
                           value: style,
@@ -1018,7 +1018,7 @@ class TypographySection extends StatelessWidget {
                           Text(
                             'Auto',
                             style: VioTypography.caption.copyWith(
-                              color: VioColors.textSecondary,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -1262,7 +1262,7 @@ class _LabeledField extends StatelessWidget {
         Text(
           label,
           style: VioTypography.caption.copyWith(
-            color: VioColors.textTertiary,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 4),
@@ -1291,18 +1291,18 @@ class _Dropdown<T> extends StatelessWidget {
       height: 32,
       padding: const EdgeInsets.symmetric(horizontal: VioSpacing.sm),
       decoration: BoxDecoration(
-        color: VioColors.surfaceElevated,
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-        border: Border.all(color: VioColors.border),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
           value: value,
           isDense: true,
           style: VioTypography.caption.copyWith(
-            color: VioColors.textPrimary,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
-          dropdownColor: VioColors.surfaceElevated,
+          dropdownColor: Theme.of(context).colorScheme.surfaceContainerHigh,
           items: items
               .map(
                 (item) => DropdownMenuItem<T>(
@@ -1342,7 +1342,7 @@ class BlurSection extends StatelessWidget {
           child: Text(
             'No blur',
             style: VioTypography.caption.copyWith(
-              color: VioColors.textTertiary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ),
@@ -1370,9 +1370,9 @@ class BlurSection extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: VioSpacing.sm),
                   decoration: BoxDecoration(
-                    color: VioColors.surfaceElevated,
+                    color: Theme.of(context).colorScheme.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-                    border: Border.all(color: VioColors.border),
+                    border: Border.all(color: Theme.of(context).colorScheme.outline),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<BlurType>(
@@ -1380,9 +1380,9 @@ class BlurSection extends StatelessWidget {
                       isDense: true,
                       isExpanded: true,
                       style: VioTypography.caption.copyWith(
-                        color: VioColors.textPrimary,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
-                      dropdownColor: VioColors.surfaceElevated,
+                      dropdownColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                       items: BlurType.values.map((type) {
                         return DropdownMenuItem(
                           value: type,

@@ -40,6 +40,7 @@ class VioIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final buttonSize = size ?? VioSpacing.iconButtonSize;
     final actualIconSize = iconSize ?? VioSpacing.iconMd;
     final isDisabled = onPressed == null;
@@ -47,7 +48,7 @@ class VioIconButton extends StatelessWidget {
     Widget button = SizedBox(
       width: buttonSize,
       height: buttonSize,
-      child: _buildButton(buttonSize, actualIconSize, isDisabled),
+      child: _buildButton(buttonSize, actualIconSize, isDisabled, cs),
     );
 
     if (tooltip != null) {
@@ -57,20 +58,21 @@ class VioIconButton extends StatelessWidget {
     return button;
   }
 
-  Widget _buildButton(double size, double iconSize, bool isDisabled) {
+  Widget _buildButton(double size, double iconSize, bool isDisabled, ColorScheme cs) {
     return switch (variant) {
-      VioIconButtonVariant.ghost => _buildGhostButton(iconSize, isDisabled),
-      VioIconButtonVariant.filled => _buildFilledButton(iconSize, isDisabled),
+      VioIconButtonVariant.ghost => _buildGhostButton(iconSize, isDisabled, cs),
+      VioIconButtonVariant.filled => _buildFilledButton(iconSize, isDisabled, cs),
       VioIconButtonVariant.outlined => _buildOutlinedButton(
         iconSize,
         isDisabled,
+        cs,
       ),
     };
   }
 
-  Widget _buildGhostButton(double iconSize, bool isDisabled) {
-    final iconColor = _getIconColor(isDisabled);
-    final bgColor = isSelected ? VioColors.primary10 : Colors.transparent;
+  Widget _buildGhostButton(double iconSize, bool isDisabled, ColorScheme cs) {
+    final iconColor = _getIconColor(isDisabled, cs);
+    final bgColor = isSelected ? cs.primaryContainer : Colors.transparent;
 
     return Material(
       color: bgColor,
@@ -87,13 +89,11 @@ class VioIconButton extends StatelessWidget {
     );
   }
 
-  Widget _buildFilledButton(double iconSize, bool isDisabled) {
+  Widget _buildFilledButton(double iconSize, bool isDisabled, ColorScheme cs) {
     final iconColor = isDisabled
-        ? VioColors.textDisabled
-        : VioColors.background;
-    final bgColor = isSelected
-        ? VioColors.primary
-        : (isDisabled ? VioColors.surfaceElevated : VioColors.primary);
+        ? cs.onSurface.withValues(alpha: 0.38)
+        : cs.onPrimary;
+    final bgColor = isDisabled ? cs.surfaceContainerHigh : cs.primary;
 
     return Material(
       color: bgColor,
@@ -110,9 +110,9 @@ class VioIconButton extends StatelessWidget {
     );
   }
 
-  Widget _buildOutlinedButton(double iconSize, bool isDisabled) {
-    final iconColor = _getIconColor(isDisabled);
-    final borderColor = isSelected ? VioColors.primary : VioColors.border;
+  Widget _buildOutlinedButton(double iconSize, bool isDisabled, ColorScheme cs) {
+    final iconColor = _getIconColor(isDisabled, cs);
+    final borderColor = isSelected ? cs.primary : cs.outline;
 
     return Container(
       decoration: BoxDecoration(
@@ -135,10 +135,10 @@ class VioIconButton extends StatelessWidget {
     );
   }
 
-  Color _getIconColor(bool isDisabled) {
+  Color _getIconColor(bool isDisabled, ColorScheme cs) {
     if (color != null) return color!;
-    if (isDisabled) return VioColors.textDisabled;
-    if (isSelected) return VioColors.primary;
-    return VioColors.textSecondary;
+    if (isDisabled) return cs.onSurface.withValues(alpha: 0.38);
+    if (isSelected) return cs.primary;
+    return cs.onSurfaceVariant;
   }
 }

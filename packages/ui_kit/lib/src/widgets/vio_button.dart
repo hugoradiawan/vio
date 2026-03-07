@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../theme/vio_colors.dart';
 import '../theme/vio_spacing.dart';
 import '../theme/vio_typography.dart';
 
@@ -47,12 +46,13 @@ class VioButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final isDisabled = onPressed == null || isLoading;
 
     return SizedBox(
       width: isFullWidth ? double.infinity : null,
       height: _getHeight(),
-      child: _buildButton(isDisabled),
+      child: _buildButton(isDisabled, cs),
     );
   }
 
@@ -88,39 +88,39 @@ class VioButton extends StatelessWidget {
     };
   }
 
-  Widget _buildButton(bool isDisabled) {
+  Widget _buildButton(bool isDisabled, ColorScheme cs) {
     return switch (variant) {
-      VioButtonVariant.primary => _buildPrimaryButton(isDisabled),
-      VioButtonVariant.secondary => _buildSecondaryButton(isDisabled),
-      VioButtonVariant.ghost => _buildGhostButton(isDisabled),
-      VioButtonVariant.danger => _buildDangerButton(isDisabled),
+      VioButtonVariant.primary => _buildPrimaryButton(isDisabled, cs),
+      VioButtonVariant.secondary => _buildSecondaryButton(isDisabled, cs),
+      VioButtonVariant.ghost => _buildGhostButton(isDisabled, cs),
+      VioButtonVariant.danger => _buildDangerButton(isDisabled, cs),
     };
   }
 
-  Widget _buildPrimaryButton(bool isDisabled) {
+  Widget _buildPrimaryButton(bool isDisabled, ColorScheme cs) {
     return ElevatedButton(
       onPressed: isDisabled ? null : onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: VioColors.primary,
-        foregroundColor: VioColors.background,
-        disabledBackgroundColor: VioColors.primary50,
-        disabledForegroundColor: VioColors.background,
+        backgroundColor: cs.primary,
+        foregroundColor: cs.onPrimary,
+        disabledBackgroundColor: cs.primary.withValues(alpha: 0.5),
+        disabledForegroundColor: cs.onPrimary,
         padding: _getPadding(),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(VioSpacing.radiusMd),
         ),
       ),
-      child: _buildContent(VioColors.background),
+      child: _buildContent(cs.onPrimary),
     );
   }
 
-  Widget _buildSecondaryButton(bool isDisabled) {
+  Widget _buildSecondaryButton(bool isDisabled, ColorScheme cs) {
     return OutlinedButton(
       onPressed: isDisabled ? null : onPressed,
       style: OutlinedButton.styleFrom(
-        foregroundColor: VioColors.textPrimary,
+        foregroundColor: cs.onSurface,
         side: BorderSide(
-          color: isDisabled ? VioColors.borderSubtle : VioColors.border,
+          color: isDisabled ? cs.outlineVariant : cs.outline,
         ),
         padding: _getPadding(),
         shape: RoundedRectangleBorder(
@@ -128,40 +128,40 @@ class VioButton extends StatelessWidget {
         ),
       ),
       child: _buildContent(
-        isDisabled ? VioColors.textDisabled : VioColors.textPrimary,
+        isDisabled ? cs.onSurface.withValues(alpha: 0.38) : cs.onSurface,
       ),
     );
   }
 
-  Widget _buildGhostButton(bool isDisabled) {
+  Widget _buildGhostButton(bool isDisabled, ColorScheme cs) {
     return TextButton(
       onPressed: isDisabled ? null : onPressed,
       style: TextButton.styleFrom(
-        foregroundColor: VioColors.textSecondary,
+        foregroundColor: cs.onSurfaceVariant,
         padding: _getPadding(),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(VioSpacing.radiusMd),
         ),
       ),
       child: _buildContent(
-        isDisabled ? VioColors.textDisabled : VioColors.textSecondary,
+        isDisabled ? cs.onSurface.withValues(alpha: 0.38) : cs.onSurfaceVariant,
       ),
     );
   }
 
-  Widget _buildDangerButton(bool isDisabled) {
+  Widget _buildDangerButton(bool isDisabled, ColorScheme cs) {
     return ElevatedButton(
       onPressed: isDisabled ? null : onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: VioColors.error,
-        foregroundColor: VioColors.textPrimary,
-        disabledBackgroundColor: VioColors.errorSubtle,
+        backgroundColor: cs.error,
+        foregroundColor: cs.onError,
+        disabledBackgroundColor: cs.errorContainer,
         padding: _getPadding(),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(VioSpacing.radiusMd),
         ),
       ),
-      child: _buildContent(VioColors.textPrimary),
+      child: _buildContent(cs.onError),
     );
   }
 
@@ -184,9 +184,7 @@ class VioButton extends StatelessWidget {
         Icon(
           leadingIcon,
           size: _getIconSize(),
-          color: variant == VioButtonVariant.primary
-              ? VioColors.background
-              : null,
+          color: color,
         ),
       );
       children.add(const SizedBox(width: VioSpacing.xs));

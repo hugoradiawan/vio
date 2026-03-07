@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:vio_core/vio_core.dart';
-import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../models/handle_types.dart';
 import '../../models/selection_handle_metrics.dart';
@@ -15,6 +14,7 @@ class SelectionBoxPainter extends CustomPainter {
   SelectionBoxPainter({
     required this.selectedShapes,
     required this.viewMatrix,
+    required this.selectionColor,
     this.dragOffset,
     this.activeCornerIndex,
     this.hoveredCornerIndex,
@@ -29,6 +29,9 @@ class SelectionBoxPainter extends CustomPainter {
 
   /// View transformation matrix
   final Matrix2D viewMatrix;
+
+  /// Color for selection outlines, handles, and fill.
+  final Color selectionColor;
 
   /// Current drag offset (applied at render time)
   final Offset? dragOffset;
@@ -199,7 +202,7 @@ class SelectionBoxPainter extends CustomPainter {
     );
 
     final bgPaint = Paint()
-      ..color = VioColors.primary
+      ..color = selectionColor
       ..style = PaintingStyle.fill;
 
     canvas.drawRRect(boxRect, bgPaint);
@@ -288,7 +291,7 @@ class SelectionBoxPainter extends CustomPainter {
 
     // Draw outline
     final outlinePaint = Paint()
-      ..color = VioColors.canvasSelection
+      ..color = selectionColor
       ..style = PaintingStyle.stroke
       ..strokeWidth =
           _screenToCanvas(SelectionHandleMetrics.selectionStrokeWidth);
@@ -300,7 +303,7 @@ class SelectionBoxPainter extends CustomPainter {
     final handleY = bounds.top - _screenToCanvas(rotationHandleOffset);
 
     final linePaint = Paint()
-      ..color = VioColors.canvasSelection
+      ..color = selectionColor
       ..style = PaintingStyle.stroke
       ..strokeWidth =
           _screenToCanvas(SelectionHandleMetrics.selectionStrokeWidth);
@@ -357,7 +360,7 @@ class SelectionBoxPainter extends CustomPainter {
 
     // Stroke
     final strokePaint = Paint()
-      ..color = VioColors.canvasSelection
+      ..color = selectionColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = _screenToCanvas(SelectionHandleMetrics.handleStrokeWidth);
 
@@ -413,7 +416,7 @@ class SelectionBoxPainter extends CustomPainter {
 
     // Stroke
     final strokePaint = Paint()
-      ..color = VioColors.canvasSelection
+      ..color = selectionColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = _screenToCanvas(SelectionHandleMetrics.handleStrokeWidth);
 

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../bloc/version_control_bloc.dart';
 
@@ -60,20 +59,21 @@ class _CommitDialogState extends State<CommitDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return AlertDialog(
-      backgroundColor: VioColors.surface,
+      backgroundColor: cs.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: VioColors.border),
+        side: BorderSide(color: cs.outline),
       ),
-      title: const Row(
+      title: Row(
         children: [
-          Icon(Icons.save_outlined, color: VioColors.primary, size: 24),
-          SizedBox(width: 12),
+          Icon(Icons.save_outlined, color: cs.primary, size: 24),
+          const SizedBox(width: 12),
           Text(
             'Commit Changes',
             style: TextStyle(
-              color: VioColors.textPrimary,
+              color: cs.onSurface,
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
@@ -88,8 +88,8 @@ class _CommitDialogState extends State<CommitDialog> {
           children: [
             Text(
               'Commit your changes before switching to "${widget.targetBranchName}".',
-              style: const TextStyle(
-                color: VioColors.textSecondary,
+              style: TextStyle(
+                color: cs.onSurfaceVariant,
                 fontSize: 13,
               ),
             ),
@@ -98,26 +98,26 @@ class _CommitDialogState extends State<CommitDialog> {
               controller: _messageController,
               focusNode: _focusNode,
               maxLines: 3,
-              style: const TextStyle(
-                color: VioColors.textPrimary,
+              style: TextStyle(
+                color: cs.onSurface,
                 fontSize: 14,
               ),
               decoration: InputDecoration(
                 hintText: 'Commit message...',
-                hintStyle: const TextStyle(color: VioColors.textTertiary),
+                hintStyle: TextStyle(color: cs.onSurfaceVariant),
                 filled: true,
-                fillColor: VioColors.background,
+                fillColor: cs.surface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: VioColors.border),
+                  borderSide: BorderSide(color: cs.outline),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: VioColors.border),
+                  borderSide: BorderSide(color: cs.outline),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: VioColors.primary),
+                  borderSide: BorderSide(color: cs.primary),
                 ),
                 contentPadding: const EdgeInsets.all(12),
               ),
@@ -134,9 +134,9 @@ class _CommitDialogState extends State<CommitDialog> {
                 .read<VersionControlBloc>()
                 .add(const BranchSwitchCanceled());
           },
-          child: const Text(
+          child: Text(
             'Cancel',
-            style: TextStyle(color: VioColors.textSecondary),
+            style: TextStyle(color: cs.onSurfaceVariant),
           ),
         ),
         ValueListenableBuilder<TextEditingValue>(
@@ -147,7 +147,7 @@ class _CommitDialogState extends State<CommitDialog> {
               onPressed: hasMessage ? _onCommit : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                    hasMessage ? VioColors.primary : VioColors.border,
+                    hasMessage ? cs.primary : cs.outline,
                 foregroundColor: Colors.white,
               ),
               child: const Text('Commit & Switch'),

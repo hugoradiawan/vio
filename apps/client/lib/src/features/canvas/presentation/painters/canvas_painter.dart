@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:vio_core/vio_core.dart';
-import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../bloc/canvas_bloc.dart';
 import '../../models/selection_handle_metrics.dart';
@@ -14,6 +13,7 @@ class CanvasPainter extends CustomPainter {
     required this.shapes,
     required this.shapesById,
     required this.containmentTree,
+    required this.selectionColor,
     this.dragRect,
     this.dragOffset,
     this.selectedShapeIds = const [],
@@ -21,6 +21,7 @@ class CanvasPainter extends CustomPainter {
     this.hoveredLayerId,
     this.editingTextShapeId,
     this.simplifyForInteraction = false,
+    this.labelColor = const Color(0xFF8B949E),
   });
 
   /// Transformation matrix for viewport
@@ -34,6 +35,12 @@ class CanvasPainter extends CustomPainter {
 
   /// Pre-computed containment tree from state (avoids O(n) rebuild per frame).
   final ShapeContainmentTree containmentTree;
+
+  /// Color used for selection outlines, drag rect, and hover highlights.
+  final Color selectionColor;
+
+  /// Color used for shape label text when not selected.
+  final Color labelColor;
 
   /// Current drag selection rectangle (in canvas coordinates)
   final Rect? dragRect;
@@ -315,7 +322,7 @@ class CanvasPainter extends CustomPainter {
     final selectedIdSet = selectedShapeIds.toSet();
 
     final outlinePaint = Paint()
-      ..color = VioColors.canvasSelection
+      ..color = selectionColor
       ..style = PaintingStyle.stroke
       ..strokeWidth =
           _screenToCanvas(SelectionHandleMetrics.selectionStrokeWidth);
@@ -406,7 +413,7 @@ class CanvasPainter extends CustomPainter {
     if (shape == null) return;
 
     final hoverPaint = Paint()
-      ..color = VioColors.primary.withValues(alpha: 0.6)
+      ..color = selectionColor.withValues(alpha: 0.6)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
 
@@ -458,13 +465,13 @@ class CanvasPainter extends CustomPainter {
 
     // Fill
     final fillPaint = Paint()
-      ..color = VioColors.canvasSelection.withValues(alpha: 0.1)
+      ..color = selectionColor.withValues(alpha: 0.1)
       ..style = PaintingStyle.fill;
     canvas.drawRect(rect, fillPaint);
 
     // Stroke
     final strokePaint = Paint()
-      ..color = VioColors.canvasSelection
+      ..color = selectionColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
     canvas.drawRect(rect, strokePaint);
@@ -526,7 +533,7 @@ class CanvasPainter extends CustomPainter {
 
     // Draw label text
     final textStyle = TextStyle(
-      color: isSelected ? VioColors.canvasSelection : VioColors.textSecondary,
+      color: isSelected ? selectionColor : labelColor,
       fontSize: 12,
       fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
     );
@@ -555,7 +562,7 @@ class CanvasPainter extends CustomPainter {
         const Radius.circular(4),
       );
       final bgPaint = Paint()
-        ..color = VioColors.canvasSelection.withValues(alpha: 0.15);
+        ..color = selectionColor.withValues(alpha: 0.15);
       canvas.drawRRect(bgRect, bgPaint);
     }
 
@@ -580,6 +587,7 @@ class CanvasPainter extends CustomPainter {
         !listEquals(selectedShapeIds, oldDelegate.selectedShapeIds) ||
         hoveredShapeId != oldDelegate.hoveredShapeId ||
         hoveredLayerId != oldDelegate.hoveredLayerId ||
-        simplifyForInteraction != oldDelegate.simplifyForInteraction;
+        simplifyForInteraction != oldDelegate.simplifyForInteraction ||
+        selectionColor != oldDelegate.selectionColor;
   }
 }

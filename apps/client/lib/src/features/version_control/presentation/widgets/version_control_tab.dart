@@ -102,8 +102,8 @@ class _VersionControlTabState extends State<VersionControlTab> {
               trailing: state.hasUncommittedChanges
                   ? Text(
                       '${state.uncommittedChanges.length} change${state.uncommittedChanges.length == 1 ? '' : 's'}',
-                      style: const TextStyle(
-                        color: VioColors.textTertiary,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 11,
                       ),
                     )
@@ -126,8 +126,8 @@ class _VersionControlTabState extends State<VersionControlTab> {
                 children: [
                   Text(
                     '${state.branches.length}',
-                    style: const TextStyle(
-                      color: VioColors.textTertiary,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 11,
                     ),
                   ),
@@ -138,7 +138,7 @@ class _VersionControlTabState extends State<VersionControlTab> {
                     iconSize: 18,
                     padding: const EdgeInsets.all(4),
                     constraints: const BoxConstraints(),
-                    color: VioColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     tooltip: 'Create branch',
                   ),
                 ],
@@ -207,23 +207,23 @@ class _VersionControlTabState extends State<VersionControlTab> {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: VioColors.surface,
+        backgroundColor: Theme.of(dialogContext).colorScheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: VioColors.border),
+          side: BorderSide(color: Theme.of(dialogContext).colorScheme.outline),
         ),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(
+            const Icon(
               Icons.warning_amber_rounded,
               color: VioColors.warning,
               size: 24,
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Text(
               'Uncommitted Changes',
               style: TextStyle(
-                color: VioColors.textPrimary,
+                color: Theme.of(dialogContext).colorScheme.onSurface,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -232,7 +232,7 @@ class _VersionControlTabState extends State<VersionControlTab> {
         ),
         content: Text(
           'You have uncommitted changes. What would you like to do before switching to "${branch.name}"?',
-          style: const TextStyle(color: VioColors.textSecondary, fontSize: 14),
+          style: TextStyle(color: Theme.of(dialogContext).colorScheme.onSurfaceVariant, fontSize: 14),
         ),
         actions: [
           TextButton(
@@ -242,9 +242,9 @@ class _VersionControlTabState extends State<VersionControlTab> {
                   .read<VersionControlBloc>()
                   .add(const BranchSwitchCanceled());
             },
-            child: const Text(
+            child: Text(
               'Cancel',
-              style: TextStyle(color: VioColors.textSecondary),
+              style: TextStyle(color: Theme.of(dialogContext).colorScheme.onSurfaceVariant),
             ),
           ),
           TextButton(
@@ -254,7 +254,7 @@ class _VersionControlTabState extends State<VersionControlTab> {
                   .read<VersionControlBloc>()
                   .add(const BranchSwitchConfirmed());
             },
-            style: TextButton.styleFrom(foregroundColor: VioColors.error),
+            style: TextButton.styleFrom(foregroundColor: Theme.of(dialogContext).colorScheme.error),
             child: const Text('Discard Changes'),
           ),
           ElevatedButton(
@@ -273,7 +273,7 @@ class _VersionControlTabState extends State<VersionControlTab> {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: VioColors.primary,
+              backgroundColor: Theme.of(dialogContext).colorScheme.primary,
               foregroundColor: Colors.white,
             ),
             child: const Text('Commit First'),
@@ -290,14 +290,14 @@ class _VersionControlTabState extends State<VersionControlTab> {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: VioColors.surface,
-        title: const Text(
+        backgroundColor: Theme.of(dialogContext).colorScheme.surface,
+        title: Text(
           'Delete Branch?',
-          style: TextStyle(color: VioColors.textPrimary),
+          style: TextStyle(color: Theme.of(dialogContext).colorScheme.onSurface),
         ),
         content: Text(
           'Are you sure you want to delete the branch "${branch.name}"? This action cannot be undone.',
-          style: const TextStyle(color: VioColors.textSecondary),
+          style: TextStyle(color: Theme.of(dialogContext).colorScheme.onSurfaceVariant),
         ),
         actions: [
           TextButton(
@@ -316,7 +316,7 @@ class _VersionControlTabState extends State<VersionControlTab> {
                   .read<VersionControlBloc>()
                   .add(const BranchDeleteConfirmed());
             },
-            style: TextButton.styleFrom(foregroundColor: VioColors.error),
+            style: TextButton.styleFrom(foregroundColor: Theme.of(dialogContext).colorScheme.error),
             child: const Text('Delete'),
           ),
         ],
@@ -329,31 +329,32 @@ class _VersionControlTabState extends State<VersionControlTab> {
 class _InitialState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    final cs = Theme.of(context).colorScheme;
+    return Center(
       child: Padding(
-        padding: EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               Icons.source,
               size: 48,
-              color: VioColors.textTertiary,
+              color: cs.onSurfaceVariant,
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Text(
               'Version Control',
               style: TextStyle(
-                color: VioColors.textSecondary,
+                color: cs.onSurfaceVariant,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               'Open a project to start tracking changes',
               style: TextStyle(
-                color: VioColors.textTertiary,
+                color: cs.onSurfaceVariant,
                 fontSize: 12,
               ),
               textAlign: TextAlign.center,
@@ -369,7 +370,8 @@ class _InitialState extends StatelessWidget {
 class _LoadingState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    final cs = Theme.of(context).colorScheme;
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -378,14 +380,14 @@ class _LoadingState extends StatelessWidget {
             height: 32,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: VioColors.primary,
+              color: cs.primary,
             ),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
             'Loading version control...',
             style: TextStyle(
-              color: VioColors.textSecondary,
+              color: cs.onSurfaceVariant,
               fontSize: 12,
             ),
           ),
@@ -407,22 +409,23 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.error_outline,
               size: 48,
-              color: VioColors.error,
+              color: cs.error,
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Error loading version control',
               style: TextStyle(
-                color: VioColors.textPrimary,
+                color: cs.onSurface,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -430,8 +433,8 @@ class _ErrorState extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               error,
-              style: const TextStyle(
-                color: VioColors.textSecondary,
+              style: TextStyle(
+                color: cs.onSurfaceVariant,
                 fontSize: 12,
               ),
               textAlign: TextAlign.center,
@@ -444,7 +447,7 @@ class _ErrorState extends StatelessWidget {
               icon: const Icon(Icons.refresh, size: 16),
               label: const Text('Retry'),
               style: TextButton.styleFrom(
-                foregroundColor: VioColors.primary,
+                foregroundColor: cs.primary,
               ),
             ),
           ],
@@ -466,6 +469,7 @@ class _RefreshButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Tooltip(
       message: 'Refresh',
       child: InkWell(
@@ -474,18 +478,18 @@ class _RefreshButton extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(2),
           child: isLoading
-              ? const SizedBox(
+              ? SizedBox(
                   width: 14,
                   height: 14,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: VioColors.textTertiary,
+                    color: cs.onSurfaceVariant,
                   ),
                 )
-              : const Icon(
+              : Icon(
                   Icons.refresh,
                   size: 14,
-                  color: VioColors.textSecondary,
+                  color: cs.onSurfaceVariant,
                 ),
         ),
       ),
@@ -510,10 +514,11 @@ class _CollapsibleExpandedSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
-      decoration: const BoxDecoration(
-        color: VioColors.surface,
-        border: Border(bottom: BorderSide(color: VioColors.border)),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        border: Border(bottom: BorderSide(color: cs.outline)),
       ),
       child: Column(
         children: [
@@ -536,10 +541,10 @@ class _CollapsibleExpandedSection extends StatelessWidget {
                         child: child,
                       );
                     },
-                    child: const Icon(
+                    child: Icon(
                       Icons.expand_more,
                       size: VioSpacing.iconSm,
-                      color: VioColors.textTertiary,
+                      color: cs.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(width: VioSpacing.xs),
@@ -547,7 +552,7 @@ class _CollapsibleExpandedSection extends StatelessWidget {
                     child: Text(
                       title,
                       style: VioTypography.titleSmall.copyWith(
-                        color: VioColors.textSecondary,
+                        color: cs.onSurfaceVariant,
                       ),
                     ),
                   ),

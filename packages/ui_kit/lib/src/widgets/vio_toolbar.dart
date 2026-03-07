@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../theme/vio_colors.dart';
 import '../theme/vio_spacing.dart';
 import 'vio_icon_button.dart';
 
@@ -26,12 +25,13 @@ class VioToolbar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: VioColors.surface,
+        color: cs.surface,
         border: showDivider
-            ? const Border(bottom: BorderSide(color: VioColors.border))
+            ? Border(bottom: BorderSide(color: cs.outline.withValues(alpha: 0.25)))
             : null,
       ),
       padding: const EdgeInsets.symmetric(horizontal: VioSpacing.sm),
@@ -93,7 +93,7 @@ class VioToolbarSeparator extends StatelessWidget {
       width: 1,
       height: 20,
       margin: const EdgeInsets.symmetric(horizontal: VioSpacing.xs),
-      color: VioColors.border,
+      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.25),
     );
   }
 }
@@ -141,11 +141,12 @@ class VioCanvasToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: VioColors.surface,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(VioSpacing.radiusMd),
-        border: Border.all(color: VioColors.border),
+        border: Border.all(color: cs.outline.withValues(alpha: 0.25)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),

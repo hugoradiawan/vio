@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../theme/vio_colors.dart';
 import '../theme/vio_spacing.dart';
 import '../theme/vio_typography.dart';
 
@@ -41,16 +40,17 @@ class VioPanel extends StatelessWidget {
       );
     }
 
+    final cs = Theme.of(context).colorScheme;
     return Container(
-      decoration: const BoxDecoration(
-        color: VioColors.surface,
-        border: Border(bottom: BorderSide(color: VioColors.border)),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        border: Border(bottom: BorderSide(color: cs.outline.withValues(alpha: 0.25))),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (title != null) _buildHeader(),
+          if (title != null) _buildHeader(cs),
           Padding(
             padding: padding ?? const EdgeInsets.all(VioSpacing.panelPadding),
             child: child,
@@ -60,7 +60,7 @@ class VioPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(ColorScheme cs) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         VioSpacing.panelPadding,
@@ -74,7 +74,7 @@ class VioPanel extends StatelessWidget {
             child: Text(
               title!,
               style: VioTypography.titleSmall.copyWith(
-                color: VioColors.textSecondary,
+                color: cs.onSurfaceVariant.withValues(alpha: 0.55),
               ),
             ),
           ),
@@ -168,15 +168,16 @@ class _CollapsiblePanelState extends State<_CollapsiblePanel>
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
-      decoration: const BoxDecoration(
-        color: VioColors.surface,
-        border: Border(bottom: BorderSide(color: VioColors.border)),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        border: Border(bottom: BorderSide(color: cs.outline.withValues(alpha: 0.25))),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildHeader(),
+          _buildHeader(cs),
           ClipRect(
             child: AnimatedBuilder(
               animation: _heightFactor,
@@ -200,7 +201,7 @@ class _CollapsiblePanelState extends State<_CollapsiblePanel>
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(ColorScheme cs) {
     return InkWell(
       onTap: _toggle,
       child: Padding(
@@ -209,10 +210,10 @@ class _CollapsiblePanelState extends State<_CollapsiblePanel>
           children: [
             RotationTransition(
               turns: _iconRotation,
-              child: const Icon(
+              child: Icon(
                 Icons.expand_more,
                 size: VioSpacing.iconSm,
-                color: VioColors.textTertiary,
+                color: cs.onSurfaceVariant.withValues(alpha: 0.55),
               ),
             ),
             const SizedBox(width: VioSpacing.xs),
@@ -220,7 +221,7 @@ class _CollapsiblePanelState extends State<_CollapsiblePanel>
               child: Text(
                 widget.title ?? '',
                 style: VioTypography.titleSmall.copyWith(
-                  color: VioColors.textSecondary,
+                  color: cs.onSurfaceVariant.withValues(alpha: 0.55),
                 ),
               ),
             ),
@@ -238,9 +239,9 @@ class VioPanelDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: VioSpacing.sm),
-      child: Divider(height: 1, color: VioColors.borderSubtle),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: VioSpacing.sm),
+      child: Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.25)),
     );
   }
 }

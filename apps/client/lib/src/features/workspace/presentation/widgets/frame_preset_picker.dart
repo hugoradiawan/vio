@@ -133,6 +133,7 @@ class _LabeledDropdown<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final labels = items.map(itemLabel).toList(growable: false);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,7 +141,7 @@ class _LabeledDropdown<T> extends StatelessWidget {
         Text(
           label,
           style: VioTypography.caption.copyWith(
-            color: VioColors.textTertiary,
+            color: cs.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 4),
@@ -148,9 +149,9 @@ class _LabeledDropdown<T> extends StatelessWidget {
           height: 32,
           padding: const EdgeInsets.symmetric(horizontal: VioSpacing.sm),
           decoration: BoxDecoration(
-            color: VioColors.surfaceElevated,
+            color: cs.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-            border: Border.all(color: VioColors.border),
+            border: Border.all(color: cs.outline),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<T>(
@@ -158,9 +159,9 @@ class _LabeledDropdown<T> extends StatelessWidget {
               isDense: true,
               isExpanded: true,
               style: VioTypography.caption.copyWith(
-                color: VioColors.textPrimary,
+                color: cs.onSurface,
               ),
-              dropdownColor: VioColors.surfaceElevated,
+              dropdownColor: cs.surfaceContainerHigh,
               selectedItemBuilder: (context) => labels
                   .map(
                     (label) => Align(
@@ -215,6 +216,7 @@ class _LabeledDropdownNullable<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final labels = items.map(itemLabel).toList(growable: false);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,7 +224,7 @@ class _LabeledDropdownNullable<T> extends StatelessWidget {
         Text(
           label,
           style: VioTypography.caption.copyWith(
-            color: VioColors.textTertiary,
+            color: cs.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 4),
@@ -230,9 +232,9 @@ class _LabeledDropdownNullable<T> extends StatelessWidget {
           height: 32,
           padding: const EdgeInsets.symmetric(horizontal: VioSpacing.sm),
           decoration: BoxDecoration(
-            color: VioColors.surfaceElevated,
+            color: cs.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-            border: Border.all(color: VioColors.border),
+            border: Border.all(color: cs.outline),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<T?>(
@@ -240,9 +242,9 @@ class _LabeledDropdownNullable<T> extends StatelessWidget {
               isDense: true,
               isExpanded: true,
               style: VioTypography.caption.copyWith(
-                color: VioColors.textPrimary,
+                color: cs.onSurface,
               ),
-              dropdownColor: VioColors.surfaceElevated,
+              dropdownColor: cs.surfaceContainerHigh,
               selectedItemBuilder: (context) => labels
                   .map(
                     (label) => Align(

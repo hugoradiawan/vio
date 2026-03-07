@@ -56,6 +56,7 @@ class _SearchTabState extends State<SearchTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final cs = Theme.of(context).colorScheme;
 
     final normalizedQuery = _query.toLowerCase();
     final canvasState = context.watch<CanvasBloc>().state;
@@ -215,8 +216,8 @@ class _SearchTabState extends State<SearchTab>
         Container(
           height: 36,
           padding: const EdgeInsets.symmetric(horizontal: VioSpacing.xs),
-          decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: VioColors.border)),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: cs.outline)),
           ),
           child: Row(
             children: [
@@ -224,17 +225,17 @@ class _SearchTabState extends State<SearchTab>
                 child: TextField(
                   controller: _controller,
                   style: VioTypography.body2
-                      .copyWith(color: VioColors.textPrimary),
+                      .copyWith(color: cs.onSurface),
                   decoration: InputDecoration(
                     isDense: true,
                     hintText: 'Search workspace…',
                     hintStyle: VioTypography.body2
-                        .copyWith(color: VioColors.textTertiary),
+                        .copyWith(color: cs.onSurfaceVariant),
                     border: InputBorder.none,
-                    prefixIcon: const Icon(
+                    prefixIcon: Icon(
                       Icons.search,
                       size: 16,
-                      color: VioColors.textTertiary,
+                      color: cs.onSurfaceVariant,
                     ),
                     prefixIconConstraints:
                         const BoxConstraints(minWidth: 24, minHeight: 16),
@@ -349,7 +350,7 @@ class _SearchMetaRow extends StatelessWidget {
       ),
       child: Text(
         '$total result${total == 1 ? '' : 's'}',
-        style: VioTypography.caption.copyWith(color: VioColors.textTertiary),
+        style: VioTypography.caption.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
       ),
     );
   }
@@ -368,6 +369,7 @@ class _SearchSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     if (items.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -384,18 +386,18 @@ class _SearchSection extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(icon, size: 14, color: VioColors.textTertiary),
+              Icon(icon, size: 14, color: cs.onSurfaceVariant),
               const SizedBox(width: VioSpacing.xs),
               Text(
                 title,
                 style: VioTypography.caption
-                    .copyWith(color: VioColors.textTertiary),
+                    .copyWith(color: cs.onSurfaceVariant),
               ),
               const SizedBox(width: VioSpacing.xs),
               Text(
                 '${items.length}',
                 style: VioTypography.caption
-                    .copyWith(color: VioColors.textTertiary),
+                    .copyWith(color: cs.onSurfaceVariant),
               ),
             ],
           ),
@@ -413,6 +415,7 @@ class _SearchResultTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final content = Container(
       padding: const EdgeInsets.symmetric(
         horizontal: VioSpacing.sm,
@@ -420,7 +423,7 @@ class _SearchResultTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(item.icon, size: 14, color: VioColors.textSecondary),
+          Icon(item.icon, size: 14, color: cs.onSurfaceVariant),
           const SizedBox(width: VioSpacing.xs),
           Expanded(
             child: Column(
@@ -431,7 +434,7 @@ class _SearchResultTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: VioTypography.body2.copyWith(
-                    color: VioColors.textPrimary,
+                    color: cs.onSurface,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -440,7 +443,7 @@ class _SearchResultTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: VioTypography.caption.copyWith(
-                    color: VioColors.textTertiary,
+                    color: cs.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -496,23 +499,24 @@ class _EmptySearchState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(VioSpacing.md),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.manage_search_outlined,
               size: 28,
-              color: VioColors.textTertiary,
+              color: cs.onSurfaceVariant,
             ),
             const SizedBox(height: VioSpacing.sm),
             Text(
               'Search layers, assets, colors, branches, commits, and pull requests',
               textAlign: TextAlign.center,
               style: VioTypography.body2.copyWith(
-                color: VioColors.textSecondary,
+                color: cs.onSurfaceVariant,
               ),
             ),
           ],
@@ -531,7 +535,7 @@ class _NoResultsState extends StatelessWidget {
       child: Text(
         'No results found',
         style: VioTypography.body2.copyWith(
-          color: VioColors.textTertiary,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
       ),
     );

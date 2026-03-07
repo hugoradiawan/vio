@@ -14,7 +14,6 @@ import 'package:vio_client/src/features/canvas/bloc/canvas_bloc.dart';
 import 'package:vio_client/src/features/canvas/models/frame_presets.dart';
 import 'package:vio_client/src/features/workspace/bloc/workspace_bloc.dart';
 import 'package:vio_core/vio_core.dart';
-import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import 'canvas_performance_diagnostics.dart';
 import 'viewport_notifier.dart';
@@ -489,9 +488,9 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
               child: IgnorePointer(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: VioColors.primary.withValues(alpha: 0.1),
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                     border: Border.all(
-                      color: VioColors.primary,
+                      color: Theme.of(context).colorScheme.primary,
                       width: 2,
                     ),
                   ),
@@ -502,13 +501,11 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
                         Icon(
                           Icons.file_download,
                           size: 48,
-                          color: VioColors.primary,
                         ),
                         SizedBox(height: 8),
                         Text(
                           'Drop files to upload',
                           style: TextStyle(
-                            color: VioColors.primary,
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),

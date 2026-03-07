@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vio_core/vio_core.dart';
-import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../bloc/canvas_bloc.dart';
 import 'layer_item.dart';
@@ -86,11 +85,11 @@ class LayerTree extends StatelessWidget {
               decoration: BoxDecoration(
                 border: isDropTargetActive
                     ? Border.all(
-                        color: VioColors.primary.withValues(alpha: 0.8),
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
                       )
                     : null,
                 color: isDropTargetActive
-                    ? VioColors.primary.withValues(alpha: 0.06)
+                    ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.06)
                     : null,
               ),
               child: row,
@@ -261,29 +260,29 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.layers_outlined,
             size: 48,
-            color: VioColors.textDisabled,
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
             'No layers yet',
             style: TextStyle(
-              color: VioColors.textSecondary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           Text(
             'Draw a shape to get started',
             style: TextStyle(
-              color: VioColors.textDisabled,
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
               fontSize: 12,
             ),
           ),

@@ -7,12 +7,20 @@ class VerticalRulerPainter extends CustomPainter {
   VerticalRulerPainter({
     required this.offset,
     required this.zoom,
+    required this.backgroundColor,
+    required this.tickColor,
+    required this.selectionColor,
+    required this.borderColor,
     this.selectionRect,
     this.rulerOffset = RulerConstants.rulerSize,
   });
 
   final double offset;
   final double zoom;
+  final Color backgroundColor;
+  final Color tickColor;
+  final Color selectionColor;
+  final Color borderColor;
   final Rect? selectionRect;
 
   /// Offset to account for ruler positioning (vertical ruler starts after horizontal ruler)
@@ -28,11 +36,20 @@ class VerticalRulerPainter extends CustomPainter {
     final effectiveOffset = offset - rulerOffset;
 
     final paint = Paint()
-      ..color = VioColors.surface2
+      ..color = backgroundColor
       ..style = PaintingStyle.fill;
 
     // Background
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
+
+    // Separator line at right edge (ruler ↔ canvas boundary)
+    canvas.drawLine(
+      Offset(size.width - 0.5, 0),
+      Offset(size.width - 0.5, size.height),
+      Paint()
+        ..color = borderColor
+        ..strokeWidth = 1,
+    );
 
     // Draw selection highlight on ruler
     if (selectionRect != null) {
@@ -41,7 +58,7 @@ class VerticalRulerPainter extends CustomPainter {
 
     // Tick marks
     final tickPaint = Paint()
-      ..color = VioColors.textTertiary
+      ..color = tickColor
       ..strokeWidth = 1;
 
     // Calculate tick interval based on zoom
@@ -98,7 +115,7 @@ class VerticalRulerPainter extends CustomPainter {
           text: TextSpan(
             text: value.toString(),
             style: VioTypography.caption.copyWith(
-              color: VioColors.textTertiary,
+              color: tickColor,
               fontSize: 9,
             ),
           ),
@@ -143,7 +160,7 @@ class VerticalRulerPainter extends CustomPainter {
 
     // Draw highlight rectangle
     final highlightPaint = Paint()
-      ..color = RulerConstants.selectionHighlightColor
+      ..color = selectionColor
           .withValues(alpha: RulerConstants.selectionHighlightOpacity)
       ..style = PaintingStyle.fill;
 
@@ -154,7 +171,7 @@ class VerticalRulerPainter extends CustomPainter {
 
     // Draw edge indicators with coordinate labels
     final edgePaint = Paint()
-      ..color = RulerConstants.selectionHighlightColor
+      ..color = selectionColor
       ..strokeWidth = 1;
 
     // Top edge indicator
@@ -201,7 +218,7 @@ class VerticalRulerPainter extends CustomPainter {
       text: TextSpan(
         text: text,
         style: VioTypography.caption.copyWith(
-          color: RulerConstants.selectionHighlightColor,
+          color: selectionColor,
           fontSize: 9,
           fontWeight: FontWeight.w600,
         ),
@@ -220,7 +237,7 @@ class VerticalRulerPainter extends CustomPainter {
 
     // Background for readability
     final bgPaint = Paint()
-      ..color = VioColors.surface2
+      ..color = backgroundColor
       ..style = PaintingStyle.fill;
 
     canvas.drawRect(
@@ -241,6 +258,9 @@ class VerticalRulerPainter extends CustomPainter {
   bool shouldRepaint(VerticalRulerPainter oldDelegate) {
     return offset != oldDelegate.offset ||
         zoom != oldDelegate.zoom ||
-        selectionRect != oldDelegate.selectionRect;
+        selectionRect != oldDelegate.selectionRect ||
+        backgroundColor != oldDelegate.backgroundColor ||
+        tickColor != oldDelegate.tickColor ||
+        borderColor != oldDelegate.borderColor;
   }
 }

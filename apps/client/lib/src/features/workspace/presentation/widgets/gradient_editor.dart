@@ -324,14 +324,15 @@ class _GradientEditorState extends State<GradientEditor> {
   }
 
   Widget _fillTypeButton(FillType type, IconData icon, String tooltip) {
+    final cs = Theme.of(context).colorScheme;
     final isSelected = _fillType == type;
     return Expanded(
       child: Tooltip(
         message: tooltip,
         child: Material(
           color: isSelected
-              ? VioColors.primary.withValues(alpha: 0.2)
-              : VioColors.surfaceElevated,
+              ? cs.primaryContainer
+              : cs.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
           child: InkWell(
             borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
@@ -342,13 +343,13 @@ class _GradientEditorState extends State<GradientEditor> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
                 border: Border.all(
-                  color: isSelected ? VioColors.primary : VioColors.border,
+                  color: isSelected ? cs.primary : cs.outline,
                 ),
               ),
               child: Icon(
                 icon,
                 size: 14,
-                color: isSelected ? VioColors.primary : VioColors.textSecondary,
+                color: isSelected ? cs.primary : cs.onSurfaceVariant,
               ),
             ),
           ),
@@ -452,7 +453,7 @@ class _GradientEditorState extends State<GradientEditor> {
             color: Color(stop.color).withValues(alpha: stop.opacity),
             borderRadius: BorderRadius.circular(2),
             border: Border.all(
-              color: isSelected ? VioColors.primary : Colors.white,
+              color: isSelected ? Theme.of(context).colorScheme.primary : Colors.white,
               width: isSelected ? 2 : 1,
             ),
             boxShadow: const [
@@ -471,6 +472,7 @@ class _GradientEditorState extends State<GradientEditor> {
 
   Widget _buildDirectionControls() {
     if (_gradient == null) return const SizedBox.shrink();
+    final cs = Theme.of(context).colorScheme;
     final isLinear = _gradient!.type == GradientType.linear;
 
     return Row(
@@ -480,7 +482,7 @@ class _GradientEditorState extends State<GradientEditor> {
           Text(
             'Angle',
             style: VioTypography.caption.copyWith(
-              color: VioColors.textTertiary,
+              color: cs.onSurfaceVariant,
             ),
           ),
           const SizedBox(width: VioSpacing.xs),
@@ -507,13 +509,13 @@ class _GradientEditorState extends State<GradientEditor> {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-                border: Border.all(color: VioColors.border),
-                color: VioColors.surfaceElevated,
+                border: Border.all(color: cs.outline),
+                color: cs.surfaceContainerHigh,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.swap_horiz,
                 size: 14,
-                color: VioColors.textSecondary,
+                color: cs.onSurfaceVariant,
               ),
             ),
           ),
@@ -531,13 +533,13 @@ class _GradientEditorState extends State<GradientEditor> {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-                border: Border.all(color: VioColors.border),
-                color: VioColors.surfaceElevated,
+                border: Border.all(color: cs.outline),
+                color: cs.surfaceContainerHigh,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.add,
                 size: 14,
-                color: VioColors.textSecondary,
+                color: cs.onSurfaceVariant,
               ),
             ),
           ),
@@ -560,6 +562,7 @@ class _GradientEditorState extends State<GradientEditor> {
   }
 
   Widget _buildStopRow(int index, GradientStop stop) {
+    final cs = Theme.of(context).colorScheme;
     final isSelected = index == _selectedStopIndex;
     final hexStr =
         (stop.color & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase();
@@ -572,7 +575,7 @@ class _GradientEditorState extends State<GradientEditor> {
           vertical: 2,
         ),
         decoration: BoxDecoration(
-          color: isSelected ? VioColors.primary.withValues(alpha: 0.08) : null,
+          color: isSelected ? cs.primaryContainer.withValues(alpha: 0.08) : null,
           borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
         ),
         child: Row(
@@ -586,7 +589,7 @@ class _GradientEditorState extends State<GradientEditor> {
                 decoration: BoxDecoration(
                   color: Color(stop.color).withValues(alpha: stop.opacity),
                   borderRadius: BorderRadius.circular(3),
-                  border: Border.all(color: VioColors.border),
+                  border: Border.all(color: cs.outline),
                 ),
               ),
             ),
@@ -595,7 +598,7 @@ class _GradientEditorState extends State<GradientEditor> {
             Text(
               '#$hexStr',
               style: VioTypography.caption.copyWith(
-                color: VioColors.textPrimary,
+                color: cs.onSurface,
                 fontFamily: 'monospace',
                 fontSize: 11,
               ),
@@ -615,7 +618,7 @@ class _GradientEditorState extends State<GradientEditor> {
             Text(
               '%',
               style: VioTypography.caption.copyWith(
-                color: VioColors.textTertiary,
+                color: cs.onSurfaceVariant,
                 fontSize: 10,
               ),
             ),
@@ -624,10 +627,10 @@ class _GradientEditorState extends State<GradientEditor> {
             if (_gradient!.stops.length > 2)
               GestureDetector(
                 onTap: () => _removeStop(index),
-                child: const Icon(
+                child: Icon(
                   Icons.close,
                   size: 12,
-                  color: VioColors.textTertiary,
+                  color: cs.onSurfaceVariant,
                 ),
               ),
           ],

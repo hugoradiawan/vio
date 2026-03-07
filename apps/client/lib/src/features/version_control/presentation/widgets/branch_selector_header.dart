@@ -47,6 +47,7 @@ class BranchSelectorHeader extends StatelessWidget {
         }
       },
       builder: (context, state) {
+        final cs = Theme.of(context).colorScheme;
         final currentBranch = state.currentBranch;
         final isLoading = state.status == VersionControlStatus.loading ||
             state.status == VersionControlStatus.switching;
@@ -54,19 +55,19 @@ class BranchSelectorHeader extends StatelessWidget {
         return Container(
           height: 40,
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: const BoxDecoration(
-            color: VioColors.surface,
+          decoration: BoxDecoration(
+            color: cs.surface,
             border: Border(
-              bottom: BorderSide(color: VioColors.border),
+              bottom: BorderSide(color: cs.outline),
             ),
           ),
           child: Row(
             children: [
               // Git branch icon
-              const Icon(
+              Icon(
                 Icons.merge,
                 size: 16,
-                color: VioColors.primary,
+                color: cs.primary,
               ),
               const SizedBox(width: 6),
 
@@ -139,88 +140,91 @@ class BranchSelectorHeader extends StatelessWidget {
     showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: VioColors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: VioColors.border),
-        ),
-        title: const Row(
-          children: [
-            Icon(
-              Icons.warning_amber_rounded,
-              color: VioColors.warning,
-              size: 24,
+      builder: (dialogContext) {
+        final dcs = Theme.of(dialogContext).colorScheme;
+        return AlertDialog(
+          backgroundColor: dcs.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: dcs.outline),
+          ),
+          title: Row(
+            children: [
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: VioColors.warning,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Uncommitted Changes',
+                style: TextStyle(
+                  color: dcs.onSurface,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'You have uncommitted changes. What would you like to do before switching to "$branchName"?',
+            style: TextStyle(
+              color: dcs.onSurfaceVariant,
+              fontSize: 14,
             ),
-            SizedBox(width: 12),
-            Text(
-              'Uncommitted Changes',
-              style: TextStyle(
-                color: VioColors.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+          ),
+          actions: [
+            // Cancel button
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                context
+                    .read<VersionControlBloc>()
+                    .add(const BranchSwitchCanceled());
+              },
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: dcs.onSurfaceVariant),
               ),
             ),
-          ],
-        ),
-        content: Text(
-          'You have uncommitted changes. What would you like to do before switching to "$branchName"?',
-          style: const TextStyle(
-            color: VioColors.textSecondary,
-            fontSize: 14,
-          ),
-        ),
-        actions: [
-          // Cancel button
-          TextButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              context
-                  .read<VersionControlBloc>()
-                  .add(const BranchSwitchCanceled());
-            },
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: VioColors.textSecondary),
+            // Discard changes button
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                context
+                    .read<VersionControlBloc>()
+                    .add(const BranchSwitchConfirmed());
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: dcs.error,
+              ),
+              child: const Text('Discard Changes'),
             ),
-          ),
-          // Discard changes button
-          TextButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              context
-                  .read<VersionControlBloc>()
-                  .add(const BranchSwitchConfirmed());
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: VioColors.error,
-            ),
-            child: const Text('Discard Changes'),
-          ),
-          // Commit first button (primary action)
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              showDialog<void>(
-                context: context,
-                barrierDismissible: false,
-                builder: (_) => BlocProvider.value(
-                  value: context.read<VersionControlBloc>(),
-                  child: CommitDialog(
-                    targetBranchId: branchId,
-                    targetBranchName: branchName,
+            // Commit first button (primary action)
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                showDialog<void>(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (_) => BlocProvider.value(
+                    value: context.read<VersionControlBloc>(),
+                    child: CommitDialog(
+                      targetBranchId: branchId,
+                      targetBranchName: branchName,
+                    ),
                   ),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: VioColors.primary,
-              foregroundColor: Colors.white,
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: dcs.primary,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Commit First'),
             ),
-            child: const Text('Commit First'),
-          ),
-        ],
-      ),
+          ],
+        );
+      },
     );
   }
 
@@ -229,81 +233,84 @@ class BranchSelectorHeader extends StatelessWidget {
     showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: VioColors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: VioColors.border),
-        ),
-        title: const Row(
-          children: [
-            Icon(
-              Icons.delete_outline,
-              color: VioColors.error,
-              size: 24,
-            ),
-            SizedBox(width: 12),
-            Text(
-              'Delete Branch',
-              style: TextStyle(
-                color: VioColors.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+      builder: (dialogContext) {
+        final dcs = Theme.of(dialogContext).colorScheme;
+        return AlertDialog(
+          backgroundColor: dcs.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: dcs.outline),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.delete_outline,
+                color: dcs.error,
+                size: 24,
               ),
+              const SizedBox(width: 12),
+              Text(
+                'Delete Branch',
+                style: TextStyle(
+                  color: dcs.onSurface,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Are you sure you want to delete the branch "${branch.name}"?',
+                style: TextStyle(
+                  color: dcs.onSurfaceVariant,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'This action cannot be undone. All commits unique to this branch will be lost.',
+                style: TextStyle(
+                  color: dcs.onSurfaceVariant,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            // Cancel button
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                context
+                    .read<VersionControlBloc>()
+                    .add(const BranchDeleteCanceled());
+              },
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: dcs.onSurfaceVariant),
+              ),
+            ),
+            // Delete button
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                context
+                    .read<VersionControlBloc>()
+                    .add(const BranchDeleteConfirmed());
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: dcs.error,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Delete Branch'),
             ),
           ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Are you sure you want to delete the branch "${branch.name}"?',
-              style: const TextStyle(
-                color: VioColors.textSecondary,
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'This action cannot be undone. All commits unique to this branch will be lost.',
-              style: TextStyle(
-                color: VioColors.textTertiary,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          // Cancel button
-          TextButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              context
-                  .read<VersionControlBloc>()
-                  .add(const BranchDeleteCanceled());
-            },
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: VioColors.textSecondary),
-            ),
-          ),
-          // Delete button
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              context
-                  .read<VersionControlBloc>()
-                  .add(const BranchDeleteConfirmed());
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: VioColors.error,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Delete Branch'),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -324,22 +331,23 @@ class _BranchDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     if (isLoading) {
-      return const Row(
+      return Row(
         children: [
           SizedBox(
             width: 14,
             height: 14,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: VioColors.primary,
+              color: cs.primary,
             ),
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           Text(
             'Switching...',
             style: TextStyle(
-              color: VioColors.textSecondary,
+              color: cs.onSurfaceVariant,
               fontSize: 12,
             ),
           ),
@@ -350,22 +358,22 @@ class _BranchDropdown extends StatelessWidget {
     return PopupMenuButton<String>(
       padding: EdgeInsets.zero,
       offset: const Offset(0, 32),
-      color: VioColors.surface,
+      color: cs.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: const BorderSide(color: VioColors.border),
+        side: BorderSide(color: cs.outline),
       ),
       onSelected: onBranchSelected,
       itemBuilder: (context) => [
         // Default branches section
         if (branches.any((b) => b.isDefault)) ...[
-          const PopupMenuItem<String>(
+          PopupMenuItem<String>(
             enabled: false,
             height: 24,
             child: Text(
               'DEFAULT',
               style: TextStyle(
-                color: VioColors.textTertiary,
+                color: cs.onSurfaceVariant,
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 1,
@@ -385,13 +393,13 @@ class _BranchDropdown extends StatelessWidget {
         ],
         // Other branches
         if (branches.any((b) => !b.isDefault)) ...[
-          const PopupMenuItem<String>(
+          PopupMenuItem<String>(
             enabled: false,
             height: 24,
             child: Text(
               'BRANCHES',
               style: TextStyle(
-                color: VioColors.textTertiary,
+                color: cs.onSurfaceVariant,
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 1,
@@ -412,9 +420,9 @@ class _BranchDropdown extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: VioColors.surfaceElevated,
+          color: cs.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: VioColors.border),
+          border: Border.all(color: cs.outline),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -422,8 +430,8 @@ class _BranchDropdown extends StatelessWidget {
             Flexible(
               child: Text(
                 currentBranch?.name ?? 'No branch',
-                style: const TextStyle(
-                  color: VioColors.textPrimary,
+                style: TextStyle(
+                  color: cs.onSurface,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -435,13 +443,13 @@ class _BranchDropdown extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                 decoration: BoxDecoration(
-                  color: VioColors.primary.withAlpha(51),
+                  color: cs.primaryContainer,
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Text(
+                child: Text(
                   'default',
                   style: TextStyle(
-                    color: VioColors.primary,
+                    color: cs.primary,
                     fontSize: 9,
                     fontWeight: FontWeight.w500,
                   ),
@@ -449,10 +457,10 @@ class _BranchDropdown extends StatelessWidget {
               ),
             ],
             const SizedBox(width: 4),
-            const Icon(
+            Icon(
               Icons.expand_more,
               size: 16,
-              color: VioColors.textSecondary,
+              color: cs.onSurfaceVariant,
             ),
           ],
         ),
@@ -473,13 +481,14 @@ class _BranchMenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Row(
       children: [
         if (isSelected)
-          const Icon(
+          Icon(
             Icons.check,
             size: 14,
-            color: VioColors.primary,
+            color: cs.primary,
           )
         else
           const SizedBox(width: 14),
@@ -488,7 +497,7 @@ class _BranchMenuItem extends StatelessWidget {
           child: Text(
             branch.name,
             style: TextStyle(
-              color: isSelected ? VioColors.primary : VioColors.textPrimary,
+              color: isSelected ? cs.primary : cs.onSurface,
               fontSize: 13,
             ),
             overflow: TextOverflow.ellipsis,
@@ -496,10 +505,10 @@ class _BranchMenuItem extends StatelessWidget {
         ),
         if (branch.isProtected) ...[
           const SizedBox(width: 4),
-          const Icon(
+          Icon(
             Icons.lock,
             size: 12,
-            color: VioColors.textTertiary,
+            color: cs.onSurfaceVariant,
           ),
         ],
       ],
@@ -523,6 +532,7 @@ class _BranchActionButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -547,12 +557,12 @@ class _BranchActionButtons extends StatelessWidget {
           child: InkWell(
             onTap: onCreateBranch,
             borderRadius: BorderRadius.circular(4),
-            child: const Padding(
-              padding: EdgeInsets.all(4),
+            child: Padding(
+              padding: const EdgeInsets.all(4),
               child: Icon(
                 Icons.add,
                 size: 18,
-                color: VioColors.textSecondary,
+                color: cs.onSurfaceVariant,
               ),
             ),
           ),
@@ -571,10 +581,10 @@ class _BranchActionButtons extends StatelessWidget {
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.call_merge,
                     size: 18,
-                    color: VioColors.textSecondary,
+                    color: cs.onSurfaceVariant,
                   ),
                   if (openPrCount > 0)
                     Positioned(
@@ -582,8 +592,8 @@ class _BranchActionButtons extends StatelessWidget {
                       right: -4,
                       child: Container(
                         padding: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(
-                          color: VioColors.primary,
+                        decoration: BoxDecoration(
+                          color: cs.primary,
                           shape: BoxShape.circle,
                         ),
                         constraints: const BoxConstraints(
@@ -652,13 +662,14 @@ class _CreateBranchDialogState extends State<CreateBranchDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return AlertDialog(
-      backgroundColor: VioColors.surface,
+      backgroundColor: cs.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      title: const Text(
+      title: Text(
         'Create Branch',
         style: TextStyle(
-          color: VioColors.textPrimary,
+          color: cs.onSurface,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -671,10 +682,10 @@ class _CreateBranchDialogState extends State<CreateBranchDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Source branch selector
-              const Text(
+              Text(
                 'Source branch',
                 style: TextStyle(
-                  color: VioColors.textSecondary,
+                  color: cs.onSurfaceVariant,
                   fontSize: 12,
                 ),
               ),
@@ -682,19 +693,19 @@ class _CreateBranchDialogState extends State<CreateBranchDialog> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: VioColors.surfaceElevated,
+                  color: cs.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: VioColors.border),
+                  border: Border.all(color: cs.outline),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: _selectedSourceBranchId,
                     isExpanded: true,
-                    dropdownColor: VioColors.surfaceElevated,
-                    style: const TextStyle(color: VioColors.textPrimary),
-                    icon: const Icon(
+                    dropdownColor: cs.surfaceContainerHigh,
+                    style: TextStyle(color: cs.onSurface),
+                    icon: Icon(
                       Icons.keyboard_arrow_down,
-                      color: VioColors.textSecondary,
+                      color: cs.onSurfaceVariant,
                     ),
                     items: widget.branches.map((branch) {
                       return DropdownMenuItem<String>(
@@ -708,7 +719,7 @@ class _CreateBranchDialogState extends State<CreateBranchDialog> {
                               size: 14,
                               color: branch.isDefault
                                   ? VioColors.warning
-                                  : VioColors.textSecondary,
+                                  : cs.onSurfaceVariant,
                             ),
                             const SizedBox(width: 8),
                             Expanded(
@@ -725,15 +736,14 @@ class _CreateBranchDialogState extends State<CreateBranchDialog> {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color:
-                                      VioColors.primary.withValues(alpha: 0.2),
+                                  color: cs.primaryContainer,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: const Text(
+                                child: Text(
                                   'current',
                                   style: TextStyle(
                                     fontSize: 10,
-                                    color: VioColors.primary,
+                                    color: cs.primary,
                                   ),
                                 ),
                               ),
@@ -789,25 +799,25 @@ class _CreateBranchDialogState extends State<CreateBranchDialog> {
               TextFormField(
                 controller: _nameController,
                 autofocus: true,
-                style: const TextStyle(color: VioColors.textPrimary),
+                style: TextStyle(color: cs.onSurface),
                 decoration: InputDecoration(
                   labelText: 'Branch name',
-                  labelStyle: const TextStyle(color: VioColors.textSecondary),
+                  labelStyle: TextStyle(color: cs.onSurfaceVariant),
                   hintText: 'feature/my-feature',
-                  hintStyle: const TextStyle(color: VioColors.textTertiary),
+                  hintStyle: TextStyle(color: cs.onSurfaceVariant),
                   filled: true,
-                  fillColor: VioColors.surfaceElevated,
+                  fillColor: cs.surfaceContainerHigh,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: VioColors.border),
+                    borderSide: BorderSide(color: cs.outline),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: VioColors.border),
+                    borderSide: BorderSide(color: cs.outline),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: VioColors.primary),
+                    borderSide: BorderSide(color: cs.primary),
                   ),
                 ),
                 validator: (value) {
@@ -826,25 +836,25 @@ class _CreateBranchDialogState extends State<CreateBranchDialog> {
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 2,
-                style: const TextStyle(color: VioColors.textPrimary),
+                style: TextStyle(color: cs.onSurface),
                 decoration: InputDecoration(
                   labelText: 'Description (optional)',
-                  labelStyle: const TextStyle(color: VioColors.textSecondary),
+                  labelStyle: TextStyle(color: cs.onSurfaceVariant),
                   hintText: 'What is this branch for?',
-                  hintStyle: const TextStyle(color: VioColors.textTertiary),
+                  hintStyle: TextStyle(color: cs.onSurfaceVariant),
                   filled: true,
-                  fillColor: VioColors.surfaceElevated,
+                  fillColor: cs.surfaceContainerHigh,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: VioColors.border),
+                    borderSide: BorderSide(color: cs.outline),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: VioColors.border),
+                    borderSide: BorderSide(color: cs.outline),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: VioColors.primary),
+                    borderSide: BorderSide(color: cs.primary),
                   ),
                 ),
               ),
@@ -855,14 +865,14 @@ class _CreateBranchDialogState extends State<CreateBranchDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text(
+          child: Text(
             'Cancel',
-            style: TextStyle(color: VioColors.textSecondary),
+            style: TextStyle(color: cs.onSurfaceVariant),
           ),
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: VioColors.primary,
+            backgroundColor: cs.primary,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
@@ -885,3 +895,4 @@ class _CreateBranchDialogState extends State<CreateBranchDialog> {
     );
   }
 }
+

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../../core/platform_shortcuts.dart';
@@ -99,7 +100,6 @@ class _WorkspacePageState extends State<WorkspacePage> {
                   return KeyEventResult.ignored;
                 },
                 child: Scaffold(
-                  backgroundColor: VioColors.background,
                   body: Column(
                     children: [
                       // Main content area
@@ -114,7 +114,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
                                 // Canvas area
                                 Expanded(
                                   child: Container(
-                                    color: VioColors.canvasBackground,
+                                    color: VioCanvasTheme.of(context).canvasBackground,
                                     child: Stack(
                                       children: [
                                         const CanvasView(),
@@ -280,6 +280,15 @@ class _WorkspacePageState extends State<WorkspacePage> {
         _buildViewToggles(context),
         const SizedBox(width: VioSpacing.md),
         _buildZoomControls(context),
+        const SizedBox(width: VioSpacing.md),
+        Container(width: 1, height: 20, color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.25)),
+        const SizedBox(width: VioSpacing.sm),
+        VioIconButton(
+          icon: Icons.settings_outlined,
+          size: 24,
+          tooltip: 'Settings',
+          onPressed: () => context.push('/settings'),
+        ),
       ],
     );
   }
@@ -316,13 +325,12 @@ class _WorkspacePageState extends State<WorkspacePage> {
                       Text(
                         zoomPercentage,
                         style: VioTypography.caption.copyWith(
-                          color: VioColors.textSecondary,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.55),
                         ),
                       ),
                       const Icon(
                         Icons.arrow_drop_down,
                         size: 16,
-                        color: VioColors.textTertiary,
                       ),
                     ],
                   ),
@@ -605,7 +613,7 @@ class _ToggleButton extends StatelessWidget {
           child: Icon(
             icon,
             size: 16,
-            color: isActive ? VioColors.primary : VioColors.textTertiary,
+            color: isActive ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.45),
           ),
         ),
       ),

@@ -9,15 +9,15 @@ class SizeIndicatorPainter extends CustomPainter {
     required this.viewMatrix,
     required this.selectionRect,
     required this.zoom,
+    required this.chipColor,
+    required this.onChipColor,
   });
 
   final Matrix2D viewMatrix;
   final Rect? selectionRect;
   final double zoom;
-
-  // Size indicator constants
-  static const Color backgroundColor = Color(0xFF2196F3); // Blue
-  static const Color textColor = Colors.white;
+  final Color chipColor;
+  final Color onChipColor;
   static const double pillHeight = 18.0;
   static const double pillPadding = 8.0;
   static const double pillRadius = 4.0;
@@ -38,8 +38,8 @@ class SizeIndicatorPainter extends CustomPainter {
     final textPainter = TextPainter(
       text: TextSpan(
         text: sizeText,
-        style: const TextStyle(
-          color: textColor,
+        style: TextStyle(
+          color: onChipColor,
           fontSize: fontSize,
           fontWeight: FontWeight.w500,
         ),
@@ -74,7 +74,7 @@ class SizeIndicatorPainter extends CustomPainter {
     );
 
     final bgPaint = Paint()
-      ..color = backgroundColor
+      ..color = chipColor
       ..style = PaintingStyle.fill;
 
     canvas.drawRRect(pillRect, bgPaint);
@@ -92,6 +92,8 @@ class SizeIndicatorPainter extends CustomPainter {
   @override
   bool shouldRepaint(SizeIndicatorPainter oldDelegate) {
     return selectionRect != oldDelegate.selectionRect ||
+        chipColor != oldDelegate.chipColor ||
+        onChipColor != oldDelegate.onChipColor ||
         viewMatrix != oldDelegate.viewMatrix ||
         zoom != oldDelegate.zoom;
   }

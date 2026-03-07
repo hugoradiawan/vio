@@ -53,8 +53,9 @@ class _ConflictResolutionDialogState extends State<ConflictResolutionDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Dialog(
-      backgroundColor: VioColors.surface,
+      backgroundColor: cs.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Container(
         width: 800,
@@ -141,6 +142,7 @@ class _DialogHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Row(
       children: [
         const Icon(
@@ -153,18 +155,18 @@ class _DialogHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Resolve Conflicts',
                 style: TextStyle(
-                  color: VioColors.textPrimary,
+                  color: cs.onSurface,
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               Text(
                 '${currentIndex + 1} of $conflictCount conflict${conflictCount > 1 ? 's' : ''}',
-                style: const TextStyle(
-                  color: VioColors.textSecondary,
+                style: TextStyle(
+                  color: cs.onSurfaceVariant,
                   fontSize: 12,
                 ),
               ),
@@ -173,9 +175,9 @@ class _DialogHeader extends StatelessWidget {
         ),
         IconButton(
           onPressed: onClose,
-          icon: const Icon(
+          icon: Icon(
             Icons.close,
-            color: VioColors.textSecondary,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ],
@@ -199,10 +201,11 @@ class _ConflictNavigator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       height: 40,
       decoration: BoxDecoration(
-        color: VioColors.surfaceElevated,
+        color: cs.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListView.builder(
@@ -222,7 +225,7 @@ class _ConflictNavigator extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: isSelected ? VioColors.primary : Colors.transparent,
+                  color: isSelected ? cs.primary : Colors.transparent,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Row(
@@ -234,14 +237,13 @@ class _ConflictNavigator extends StatelessWidget {
                           ? Colors.white
                           : isResolved
                               ? VioColors.success
-                              : VioColors.textTertiary,
+                              : cs.onSurfaceVariant,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       conflict.shapeName,
                       style: TextStyle(
-                        color:
-                            isSelected ? Colors.white : VioColors.textPrimary,
+                        color: isSelected ? Colors.white : cs.onSurface,
                         fontSize: 12,
                         fontWeight:
                             isSelected ? FontWeight.w500 : FontWeight.normal,
@@ -286,7 +288,7 @@ class _ConflictDiffView extends StatelessWidget {
             subtitle: 'Incoming changes',
             isSelected: resolution ==
                 common_enum.ResolutionChoice.RESOLUTION_CHOICE_SOURCE,
-            color: VioColors.primary,
+            color: Theme.of(context).colorScheme.primary,
             shapeData:
                 null, // Proto ShapeConflict doesn't carry full shape objects
             propertyConflicts: conflict.propertyConflicts,
@@ -342,15 +344,16 @@ class _ShapeVersionPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onSelect,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         decoration: BoxDecoration(
-          color: VioColors.surfaceElevated,
+          color: cs.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? color : VioColors.border,
+            color: isSelected ? color : cs.outline,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -371,7 +374,7 @@ class _ShapeVersionPanel extends StatelessWidget {
                   Icon(
                     isSelected ? Icons.check_circle : Icons.radio_button_off,
                     size: 18,
-                    color: isSelected ? color : VioColors.textTertiary,
+                    color: isSelected ? color : cs.onSurfaceVariant,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -380,16 +383,16 @@ class _ShapeVersionPanel extends StatelessWidget {
                       children: [
                         Text(
                           title,
-                          style: const TextStyle(
-                            color: VioColors.textPrimary,
+                          style: TextStyle(
+                            color: cs.onSurface,
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         Text(
                           subtitle,
-                          style: const TextStyle(
-                            color: VioColors.textSecondary,
+                          style: TextStyle(
+                            color: cs.onSurfaceVariant,
                             fontSize: 11,
                           ),
                         ),
@@ -457,20 +460,20 @@ class _ShapePreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (shapeData == null) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               Icons.delete_outline,
               size: 48,
-              color: VioColors.textTertiary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               'Shape deleted',
               style: TextStyle(
-                color: VioColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 12,
               ),
             ),
@@ -494,16 +497,18 @@ class _ShapePreview extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: VioColors.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: VioColors.border),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Stack(
         children: [
           // Grid background
           CustomPaint(
             size: Size.infinite,
-            painter: _GridPainter(),
+            painter: _GridPainter(
+              gridColor: Theme.of(context).colorScheme.outline,
+            ),
           ),
 
           // Shape representation
@@ -552,15 +557,15 @@ class _ShapePreview extends StatelessWidget {
                     // Dimensions
                     Text(
                       '${width.toStringAsFixed(0)} × ${height.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        color: VioColors.textSecondary,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 11,
                       ),
                     ),
                     Text(
                       'at (${x.toStringAsFixed(0)}, ${y.toStringAsFixed(0)})',
-                      style: const TextStyle(
-                        color: VioColors.textTertiary,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 10,
                       ),
                     ),
@@ -577,10 +582,13 @@ class _ShapePreview extends StatelessWidget {
 
 /// Grid painter for shape preview background
 class _GridPainter extends CustomPainter {
+  const _GridPainter({required this.gridColor});
+  final Color gridColor;
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = VioColors.border.withAlpha(128)
+      ..color = gridColor.withAlpha(128)
       ..strokeWidth = 0.5;
 
     const gridSize = 20.0;
@@ -597,7 +605,7 @@ class _GridPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _GridPainter old) => old.gridColor != gridColor;
 }
 
 /// List of property-level conflicts
@@ -614,24 +622,25 @@ class _PropertyConflictsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: const BoxDecoration(
-        color: VioColors.surface,
-        borderRadius: BorderRadius.vertical(
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: const BorderRadius.vertical(
           bottom: Radius.circular(10),
         ),
         border: Border(
-          top: BorderSide(color: VioColors.border),
+          top: BorderSide(color: cs.outline),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'CONFLICTING PROPERTIES',
             style: TextStyle(
-              color: VioColors.textTertiary,
+              color: cs.onSurfaceVariant,
               fontSize: 10,
               fontWeight: FontWeight.w600,
               letterSpacing: 1,
@@ -656,16 +665,16 @@ class _PropertyConflictsList extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     conflict.propertyName,
-                    style: const TextStyle(
-                      color: VioColors.textSecondary,
+                    style: TextStyle(
+                      color: cs.onSurfaceVariant,
                       fontSize: 11,
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Text(
+                  Text(
                     ':',
                     style: TextStyle(
-                      color: VioColors.textTertiary,
+                      color: cs.onSurfaceVariant,
                       fontSize: 11,
                     ),
                   ),
@@ -673,8 +682,8 @@ class _PropertyConflictsList extends StatelessWidget {
                   Expanded(
                     child: Text(
                       _formatValue(value),
-                      style: const TextStyle(
-                        color: VioColors.textPrimary,
+                      style: TextStyle(
+                        color: cs.onSurface,
                         fontSize: 11,
                         fontFamily: 'monospace',
                       ),
@@ -688,8 +697,8 @@ class _PropertyConflictsList extends StatelessWidget {
           if (conflicts.length > 5)
             Text(
               '... and ${conflicts.length - 5} more',
-              style: const TextStyle(
-                color: VioColors.textTertiary,
+              style: TextStyle(
+                color: cs.onSurfaceVariant,
                 fontSize: 10,
                 fontStyle: FontStyle.italic,
               ),
@@ -721,14 +730,15 @@ class _DialogFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         OutlinedButton(
           onPressed: onCancel,
           style: OutlinedButton.styleFrom(
-            foregroundColor: VioColors.textSecondary,
-            side: const BorderSide(color: VioColors.border),
+            foregroundColor: cs.onSurfaceVariant,
+            side: BorderSide(color: cs.outline),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
@@ -740,10 +750,10 @@ class _DialogFooter extends StatelessWidget {
         ElevatedButton(
           onPressed: canResolve ? onResolve : null,
           style: ElevatedButton.styleFrom(
-            backgroundColor: VioColors.primary,
+            backgroundColor: cs.primary,
             foregroundColor: Colors.white,
-            disabledBackgroundColor: VioColors.surfaceElevated,
-            disabledForegroundColor: VioColors.textTertiary,
+            disabledBackgroundColor: cs.surfaceContainerHigh,
+            disabledForegroundColor: cs.onSurfaceVariant,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),

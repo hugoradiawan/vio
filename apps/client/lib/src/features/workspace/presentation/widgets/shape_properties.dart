@@ -74,7 +74,7 @@ class PositionSizeSection extends StatelessWidget {
               Expanded(
                 child: Row(
                   children: [
-                    const Icon(VioIcons.rotation, size: 14, color: VioColors.textSecondary),
+                    Icon(VioIcons.rotation, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     const SizedBox(width: VioSpacing.xs),
                     Expanded(
                       child: VioNumericField(
@@ -103,7 +103,7 @@ class PositionSizeSection extends StatelessWidget {
       final rect = shape as RectangleShape;
       return Row(
         children: [
-          const Icon(VioIcons.cornerRadius, size: 14, color: VioColors.textSecondary),
+          Icon(VioIcons.cornerRadius, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
           const SizedBox(width: VioSpacing.xs),
           Expanded(
             child: VioNumericField(
@@ -123,7 +123,7 @@ class PositionSizeSection extends StatelessWidget {
     // For other shapes, show opacity
     return Row(
       children: [
-        const Icon(Icons.opacity, size: 14, color: VioColors.textSecondary),
+        Icon(Icons.opacity, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
         const SizedBox(width: VioSpacing.xs),
         Expanded(
           child: VioNumericField(
@@ -253,7 +253,7 @@ class RectangleProperties extends StatelessWidget {
           Text(
             'Corner Radius',
             style: VioTypography.caption.copyWith(
-              color: VioColors.textSecondary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: VioSpacing.sm),
@@ -326,7 +326,7 @@ class RectangleProperties extends StatelessWidget {
                     ? 'Uniform corners'
                     : 'Independent corners',
                 style: VioTypography.caption.copyWith(
-                  color: VioColors.textTertiary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -389,13 +389,13 @@ class EllipseProperties extends StatelessWidget {
                 vertical: VioSpacing.xs,
               ),
               decoration: BoxDecoration(
-                color: VioColors.primary.withValues(alpha: 0.1),
+                color: Theme.of(context).colorScheme.primaryContainer,
                 borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
               ),
               child: Text(
                 'Perfect Circle',
                 style: VioTypography.caption.copyWith(
-                  color: VioColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ),
@@ -406,14 +406,14 @@ class EllipseProperties extends StatelessWidget {
               Text(
                 'Radius X: ${shape.radiusX.toStringAsFixed(1)}',
                 style: VioTypography.caption.copyWith(
-                  color: VioColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(width: VioSpacing.md),
               Text(
                 'Radius Y: ${shape.radiusY.toStringAsFixed(1)}',
                 style: VioTypography.caption.copyWith(
-                  color: VioColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -486,7 +486,7 @@ class FrameProperties extends StatelessWidget {
           Text(
             '${shape.children.length} children',
             style: VioTypography.caption.copyWith(
-              color: VioColors.textTertiary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -525,13 +525,13 @@ class FrameProperties extends StatelessWidget {
             Icon(
               value ? Icons.check_box : Icons.check_box_outline_blank,
               size: 18,
-              color: value ? VioColors.primary : VioColors.textTertiary,
+              color: value ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             const SizedBox(width: VioSpacing.sm),
             Text(
               label,
               style: VioTypography.bodyMedium.copyWith(
-                color: VioColors.textPrimary,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ],

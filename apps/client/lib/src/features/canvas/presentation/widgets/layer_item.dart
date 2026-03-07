@@ -138,11 +138,11 @@ class _LayerItemState extends State<LayerItem> {
           height: 32,
           decoration: BoxDecoration(
             color:
-                isHighlighted ? VioColors.surfaceElevated : Colors.transparent,
+                isHighlighted ? Theme.of(context).colorScheme.surfaceContainerHigh : Colors.transparent,
             border: showLeftAccent
-                ? const Border(
+                ? Border(
                     left: BorderSide(
-                      color: VioColors.primary,
+                      color: Theme.of(context).colorScheme.primary,
                       width: 2,
                     ),
                   )
@@ -336,7 +336,6 @@ class _LayerItemState extends State<LayerItem> {
           },
           child: const Icon(
             Icons.expand_more,
-            color: VioColors.textSecondary,
           ),
         ),
         onPressed: () {
@@ -356,8 +355,8 @@ class _LayerItemState extends State<LayerItem> {
       _getShapeIcon(),
       size: 16,
       color: widget.shape.hidden
-          ? VioColors.textDisabled
-          : VioColors.textSecondary,
+          ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38)
+          : Theme.of(context).colorScheme.onSurfaceVariant,
     );
   }
 
@@ -391,9 +390,9 @@ class _LayerItemState extends State<LayerItem> {
         child: TextField(
           controller: _nameController,
           focusNode: _focusNode,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
-            color: VioColors.textPrimary,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
           decoration: InputDecoration(
             isDense: true,
@@ -403,11 +402,11 @@ class _LayerItemState extends State<LayerItem> {
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(4),
-              borderSide: const BorderSide(color: VioColors.primary),
+              borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(4),
-              borderSide: const BorderSide(color: VioColors.primary, width: 2),
+              borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
             ),
           ),
           onSubmitted: (_) => _submitName(),
@@ -420,8 +419,8 @@ class _LayerItemState extends State<LayerItem> {
       style: TextStyle(
         fontSize: 12,
         color: widget.shape.hidden
-            ? VioColors.textDisabled
-            : VioColors.textPrimary,
+            ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38)
+            : Theme.of(context).colorScheme.onSurface,
         fontStyle: widget.shape.hidden ? FontStyle.italic : FontStyle.normal,
       ),
       overflow: TextOverflow.ellipsis,
@@ -452,8 +451,8 @@ class _LayerItemState extends State<LayerItem> {
           icon: Icon(
             widget.shape.hidden ? Icons.visibility_off : Icons.visibility,
             color: widget.shape.hidden
-                ? VioColors.textDisabled
-                : VioColors.textSecondary,
+                ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38)
+                : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
           onPressed: () {
             context

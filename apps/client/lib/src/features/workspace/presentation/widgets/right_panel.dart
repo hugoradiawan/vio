@@ -41,11 +41,11 @@ class _RightPanelState extends State<RightPanel> {
   Widget build(BuildContext context) {
     return Container(
       width: widget.width,
-      decoration: const BoxDecoration(
-        color: VioColors.surface1,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
         border: Border(
           left: BorderSide(
-            color: VioColors.border,
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.25),
           ),
         ),
       ),
@@ -107,7 +107,7 @@ class _FrameToolPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _buildHeader('Frame'),
+        _buildHeader(context, 'Frame'),
         Expanded(
           child: SingleChildScrollView(
             child: Column(
@@ -129,7 +129,7 @@ class _FrameToolPanel extends StatelessWidget {
                   child: Text(
                     'Tip: Click to create a frame using the default preset. Drag to create a custom size.',
                     style: VioTypography.caption.copyWith(
-                      color: VioColors.textTertiary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -150,7 +150,7 @@ class _NoSelectionPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _buildHeader('Design'),
+        _buildHeader(context, 'Design'),
         Expanded(
           child: Center(
             child: Column(
@@ -159,20 +159,20 @@ class _NoSelectionPanel extends StatelessWidget {
                 Icon(
                   Icons.touch_app_outlined,
                   size: 48,
-                  color: VioColors.textTertiary.withValues(alpha: 0.5),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
                 const SizedBox(height: VioSpacing.md),
                 Text(
                   'Select a shape',
                   style: VioTypography.bodyMedium.copyWith(
-                    color: VioColors.textTertiary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: VioSpacing.xs),
                 Text(
                   'to view and edit its properties',
                   style: VioTypography.caption.copyWith(
-                    color: VioColors.textTertiary.withValues(alpha: 0.7),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -203,7 +203,7 @@ class _SingleShapePanel extends StatelessWidget {
     final isText = shape is TextShape;
     return Column(
       children: [
-        _buildHeader(_getShapeTypeLabel(shape.type)),
+        _buildHeader(context, _getShapeTypeLabel(shape.type)),
         Expanded(
           child: SingleChildScrollView(
             child: Column(
@@ -468,9 +468,9 @@ class _ShapeNameSectionState extends State<_ShapeNameSection> {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(VioSpacing.sm),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: VioColors.border),
+          bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.25)),
         ),
       ),
       child: Row(
@@ -480,13 +480,13 @@ class _ShapeNameSectionState extends State<_ShapeNameSection> {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: VioColors.surfaceElevated,
+              color: Theme.of(context).colorScheme.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
             ),
             child: Icon(
               _getShapeIcon(widget.shape.type),
               size: 18,
-              color: VioColors.textSecondary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(width: VioSpacing.sm),
@@ -497,7 +497,7 @@ class _ShapeNameSectionState extends State<_ShapeNameSection> {
                     controller: _controller,
                     autofocus: true,
                     style: VioTypography.bodyMedium.copyWith(
-                      color: VioColors.textPrimary,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     decoration: const InputDecoration(
                       border: InputBorder.none,
@@ -512,7 +512,7 @@ class _ShapeNameSectionState extends State<_ShapeNameSection> {
                     child: Text(
                       widget.shape.name,
                       style: VioTypography.bodyMedium.copyWith(
-                        color: VioColors.textPrimary,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -602,7 +602,7 @@ class _MultipleSelectionPanel extends StatelessWidget {
 
     return Column(
       children: [
-        _buildHeader('Multiple Selection'),
+        _buildHeader(context, 'Multiple Selection'),
         Expanded(
           child: SingleChildScrollView(
             child: Column(
@@ -613,15 +613,15 @@ class _MultipleSelectionPanel extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(VioSpacing.md),
                     decoration: BoxDecoration(
-                      color: VioColors.surfaceElevated,
+                      color: Theme.of(context).colorScheme.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(VioSpacing.radiusMd),
                     ),
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.select_all,
                           size: 24,
-                          color: VioColors.primary,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                         const SizedBox(width: VioSpacing.md),
                         Column(
@@ -630,13 +630,13 @@ class _MultipleSelectionPanel extends StatelessWidget {
                             Text(
                               '${shapes.length} objects selected',
                               style: VioTypography.bodyMedium.copyWith(
-                                color: VioColors.textPrimary,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             Text(
                               _getSelectionSummary(),
                               style: VioTypography.caption.copyWith(
-                                color: VioColors.textTertiary,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -858,14 +858,15 @@ class _MultipleSelectionPanel extends StatelessWidget {
 }
 
 /// Build panel header
-Widget _buildHeader(String title) {
+Widget _buildHeader(BuildContext context, String title) {
+  final cs = Theme.of(context).colorScheme;
   return Container(
     height: 40,
     padding: const EdgeInsets.symmetric(horizontal: VioSpacing.md),
-    decoration: const BoxDecoration(
+    decoration: BoxDecoration(
       border: Border(
         bottom: BorderSide(
-          color: VioColors.border,
+          color: cs.outline,
         ),
       ),
     ),
@@ -874,7 +875,7 @@ Widget _buildHeader(String title) {
         Text(
           title,
           style: VioTypography.subtitle2.copyWith(
-            color: VioColors.textPrimary,
+            color: cs.onSurface,
           ),
         ),
       ],

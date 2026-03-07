@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../../../gen/vio/v1/branch.pb.dart' as branch_pb;
 import '../../bloc/version_control_bloc.dart';
@@ -38,12 +37,13 @@ class _BranchListPanelState extends State<BranchListPanel> {
       builder: (context, state) {
         final branches = _filterBranches(state.branches, _searchQuery);
         final isLoading = state.status == VersionControlStatus.loading;
+        final cs = Theme.of(context).colorScheme;
 
         return Container(
-          decoration: const BoxDecoration(
-            color: VioColors.surface,
+          decoration: BoxDecoration(
+            color: cs.surface,
             border: Border(
-              right: BorderSide(color: VioColors.border),
+              right: BorderSide(color: cs.outline),
             ),
           ),
           child: Column(
@@ -55,9 +55,9 @@ class _BranchListPanelState extends State<BranchListPanel> {
               // Branch list
               Expanded(
                 child: isLoading
-                    ? const Center(
+                    ? Center(
                         child: CircularProgressIndicator(
-                          color: VioColors.primary,
+                          color: cs.primary,
                         ),
                       )
                     : branches.isEmpty
@@ -72,24 +72,25 @@ class _BranchListPanelState extends State<BranchListPanel> {
   }
 
   Widget _buildSearchBar() {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.all(8),
       child: TextField(
         controller: _searchController,
-        style: const TextStyle(
-          color: VioColors.textPrimary,
+        style: TextStyle(
+          color: cs.onSurface,
           fontSize: 13,
         ),
         decoration: InputDecoration(
           hintText: 'Search branches...',
-          hintStyle: const TextStyle(
-            color: VioColors.textTertiary,
+          hintStyle: TextStyle(
+            color: cs.onSurfaceVariant,
             fontSize: 13,
           ),
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             Icons.search,
             size: 18,
-            color: VioColors.textTertiary,
+            color: cs.onSurfaceVariant,
           ),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
@@ -100,11 +101,11 @@ class _BranchListPanelState extends State<BranchListPanel> {
                     });
                   },
                   icon: const Icon(Icons.clear, size: 16),
-                  color: VioColors.textTertiary,
+                  color: cs.onSurfaceVariant,
                 )
               : null,
           filled: true,
-          fillColor: VioColors.surfaceElevated,
+          fillColor: cs.surfaceContainerHigh,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,
             vertical: 8,
@@ -115,11 +116,11 @@ class _BranchListPanelState extends State<BranchListPanel> {
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(6),
-            borderSide: const BorderSide(color: VioColors.border),
+            borderSide: BorderSide(color: cs.outline),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(6),
-            borderSide: const BorderSide(color: VioColors.primary),
+            borderSide: BorderSide(color: cs.primary),
           ),
         ),
         onChanged: (value) {
@@ -132,21 +133,22 @@ class _BranchListPanelState extends State<BranchListPanel> {
   }
 
   Widget _buildEmptyState() {
+    final cs = Theme.of(context).colorScheme;
     if (_searchQuery.isNotEmpty) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.search_off,
               size: 48,
-              color: VioColors.textTertiary,
+              color: cs.onSurfaceVariant,
             ),
             const SizedBox(height: 12),
             Text(
               'No branches matching "$_searchQuery"',
-              style: const TextStyle(
-                color: VioColors.textSecondary,
+              style: TextStyle(
+                color: cs.onSurfaceVariant,
                 fontSize: 13,
               ),
             ),
@@ -155,20 +157,20 @@ class _BranchListPanelState extends State<BranchListPanel> {
       );
     }
 
-    return const Center(
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             Icons.account_tree_outlined,
             size: 48,
-            color: VioColors.textTertiary,
+            color: cs.onSurfaceVariant,
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Text(
             'No branches found',
             style: TextStyle(
-              color: VioColors.textSecondary,
+              color: cs.onSurfaceVariant,
               fontSize: 13,
             ),
           ),
@@ -292,6 +294,7 @@ class _BranchListItemState extends State<BranchListItem> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
@@ -305,13 +308,13 @@ class _BranchListItemState extends State<BranchListItem> {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
             color: widget.isCurrentBranch
-                ? VioColors.primary.withAlpha(26)
+                ? cs.primary.withAlpha(26)
                 : _isHovered
-                    ? VioColors.surfaceElevated
+                    ? cs.surfaceContainerHigh
                     : Colors.transparent,
             borderRadius: BorderRadius.circular(6),
             border: widget.isCurrentBranch
-                ? Border.all(color: VioColors.primary.withAlpha(77))
+                ? Border.all(color: cs.primary.withAlpha(77))
                 : null,
           ),
           child: Row(
@@ -321,8 +324,8 @@ class _BranchListItemState extends State<BranchListItem> {
                 widget.isCurrentBranch ? Icons.check_circle : Icons.merge,
                 size: 16,
                 color: widget.isCurrentBranch
-                    ? VioColors.primary
-                    : VioColors.textTertiary,
+                    ? cs.primary
+                    : cs.onSurfaceVariant,
               ),
               const SizedBox(width: 8),
 
@@ -335,8 +338,8 @@ class _BranchListItemState extends State<BranchListItem> {
                       widget.branch.name,
                       style: TextStyle(
                         color: widget.isCurrentBranch
-                            ? VioColors.primary
-                            : VioColors.textPrimary,
+                            ? cs.primary
+                            : cs.onSurface,
                         fontSize: 13,
                         fontWeight: widget.isCurrentBranch
                             ? FontWeight.w600
@@ -348,8 +351,8 @@ class _BranchListItemState extends State<BranchListItem> {
                       const SizedBox(height: 2),
                       Text(
                         widget.branch.description,
-                        style: const TextStyle(
-                          color: VioColors.textTertiary,
+                        style: TextStyle(
+                          color: cs.onSurfaceVariant,
                           fontSize: 11,
                         ),
                         maxLines: 1,
@@ -366,13 +369,13 @@ class _BranchListItemState extends State<BranchListItem> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                   decoration: BoxDecoration(
-                    color: VioColors.primary.withAlpha(51),
+                    color: cs.primary.withAlpha(51),
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: const Text(
+                  child: Text(
                     'default',
                     style: TextStyle(
-                      color: VioColors.primary,
+                      color: cs.primary,
                       fontSize: 9,
                       fontWeight: FontWeight.w500,
                     ),
@@ -381,10 +384,10 @@ class _BranchListItemState extends State<BranchListItem> {
                 const SizedBox(width: 4),
               ],
               if (widget.branch.isProtected) ...[
-                const Icon(
+                Icon(
                   Icons.lock,
                   size: 12,
-                  color: VioColors.textTertiary,
+                  color: cs.onSurfaceVariant,
                 ),
                 const SizedBox(width: 4),
               ],
@@ -401,7 +404,7 @@ class _BranchListItemState extends State<BranchListItem> {
                     icon: Icons.delete_outline,
                     tooltip: 'Delete branch',
                     onTap: widget.onDelete,
-                    color: VioColors.error,
+                    color: cs.error,
                   ),
               ],
             ],
@@ -412,6 +415,7 @@ class _BranchListItemState extends State<BranchListItem> {
   }
 
   void _showContextMenu(BuildContext context, Offset position) {
+    final cs = Theme.of(context).colorScheme;
     final RenderBox overlay =
         Overlay.of(context).context.findRenderObject()! as RenderBox;
 
@@ -421,76 +425,78 @@ class _BranchListItemState extends State<BranchListItem> {
         position & const Size(1, 1),
         Offset.zero & overlay.size,
       ),
-      color: VioColors.surface,
+      color: cs.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: const BorderSide(color: VioColors.border),
+        side: BorderSide(color: cs.outline),
       ),
       items: [
         if (!widget.isCurrentBranch)
-          const PopupMenuItem<String>(
+          PopupMenuItem<String>(
             value: 'switch',
             child: Row(
               children: [
                 Icon(
                   Icons.swap_horiz,
                   size: 16,
-                  color: VioColors.textSecondary,
+                  color: cs.onSurfaceVariant,
                 ),
-                SizedBox(width: 8),
-                Text('Switch to branch', style: TextStyle(fontSize: 13)),
+                const SizedBox(width: 8),
+                const Text('Switch to branch', style: TextStyle(fontSize: 13)),
               ],
             ),
           ),
         if (!widget.branch.isDefault)
-          const PopupMenuItem<String>(
+          PopupMenuItem<String>(
             value: 'create_pr',
             child: Row(
               children: [
                 Icon(
                   Icons.call_merge,
                   size: 16,
-                  color: VioColors.textSecondary,
+                  color: cs.onSurfaceVariant,
                 ),
-                SizedBox(width: 8),
-                Text('Create Pull Request', style: TextStyle(fontSize: 13)),
+                const SizedBox(width: 8),
+                const Text('Create Pull Request',
+                    style: TextStyle(fontSize: 13),),
               ],
             ),
           ),
-        const PopupMenuItem<String>(
+        PopupMenuItem<String>(
           value: 'compare',
           child: Row(
             children: [
               Icon(
                 Icons.compare_arrows,
                 size: 16,
-                color: VioColors.textSecondary,
+                color: cs.onSurfaceVariant,
               ),
-              SizedBox(width: 8),
-              Text('Compare with default', style: TextStyle(fontSize: 13)),
+              const SizedBox(width: 8),
+              const Text('Compare with default',
+                  style: TextStyle(fontSize: 13),),
             ],
           ),
         ),
-        const PopupMenuItem<String>(
+        PopupMenuItem<String>(
           value: 'settings',
           child: Row(
             children: [
-              Icon(Icons.settings, size: 16, color: VioColors.textSecondary),
-              SizedBox(width: 8),
-              Text('Branch settings', style: TextStyle(fontSize: 13)),
+              Icon(Icons.settings, size: 16, color: cs.onSurfaceVariant),
+              const SizedBox(width: 8),
+              const Text('Branch settings', style: TextStyle(fontSize: 13)),
             ],
           ),
         ),
         if (!widget.branch.isDefault && !widget.branch.isProtected)
-          const PopupMenuItem<String>(
+          PopupMenuItem<String>(
             value: 'delete',
             child: Row(
               children: [
-                Icon(Icons.delete_outline, size: 16, color: VioColors.error),
-                SizedBox(width: 8),
+                Icon(Icons.delete_outline, size: 16, color: cs.error),
+                const SizedBox(width: 8),
                 Text(
                   'Delete branch',
-                  style: TextStyle(fontSize: 13, color: VioColors.error),
+                  style: TextStyle(fontSize: 13, color: cs.error),
                 ),
               ],
             ),
@@ -555,7 +561,7 @@ class _HoverActionButton extends StatelessWidget {
           child: Icon(
             icon,
             size: 14,
-            color: color ?? VioColors.textSecondary,
+            color: color ?? Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ),
@@ -601,20 +607,21 @@ class _CreatePRFromBranchDialogState extends State<_CreatePRFromBranchDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return AlertDialog(
-      backgroundColor: VioColors.surface,
+      backgroundColor: cs.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: VioColors.border),
+        side: BorderSide(color: cs.outline),
       ),
-      title: const Row(
+      title: Row(
         children: [
-          Icon(Icons.call_merge, color: VioColors.primary, size: 24),
-          SizedBox(width: 12),
+          Icon(Icons.call_merge, color: cs.primary, size: 24),
+          const SizedBox(width: 12),
           Text(
             'Create Pull Request',
             style: TextStyle(
-              color: VioColors.textPrimary,
+              color: cs.onSurface,
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
@@ -631,7 +638,7 @@ class _CreatePRFromBranchDialogState extends State<_CreatePRFromBranchDialog> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: VioColors.surfaceElevated,
+                color: cs.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -640,17 +647,17 @@ class _CreatePRFromBranchDialogState extends State<_CreatePRFromBranchDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'From',
                           style: TextStyle(
-                            color: VioColors.textTertiary,
+                            color: cs.onSurfaceVariant,
                             fontSize: 10,
                           ),
                         ),
                         Text(
                           widget.sourceBranch.name,
-                          style: const TextStyle(
-                            color: VioColors.textPrimary,
+                          style: TextStyle(
+                            color: cs.onSurface,
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
                           ),
@@ -658,26 +665,26 @@ class _CreatePRFromBranchDialogState extends State<_CreatePRFromBranchDialog> {
                       ],
                     ),
                   ),
-                  const Icon(
+                  Icon(
                     Icons.arrow_forward,
-                    color: VioColors.textTertiary,
+                    color: cs.onSurfaceVariant,
                     size: 16,
                   ),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Text(
+                        Text(
                           'Into',
                           style: TextStyle(
-                            color: VioColors.textTertiary,
+                            color: cs.onSurfaceVariant,
                             fontSize: 10,
                           ),
                         ),
                         Text(
                           widget.targetBranch.name,
-                          style: const TextStyle(
-                            color: VioColors.textPrimary,
+                          style: TextStyle(
+                            color: cs.onSurface,
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
                           ),
@@ -691,46 +698,46 @@ class _CreatePRFromBranchDialogState extends State<_CreatePRFromBranchDialog> {
             const SizedBox(height: 16),
 
             // Title field
-            const Text(
+            Text(
               'Title',
               style: TextStyle(
-                color: VioColors.textSecondary,
+                color: cs.onSurfaceVariant,
                 fontSize: 12,
               ),
             ),
             const SizedBox(height: 4),
             TextField(
               controller: _titleController,
-              style: const TextStyle(
-                color: VioColors.textPrimary,
+              style: TextStyle(
+                color: cs.onSurface,
                 fontSize: 13,
               ),
               decoration: InputDecoration(
                 hintText: 'Pull request title',
-                hintStyle: const TextStyle(color: VioColors.textTertiary),
+                hintStyle: TextStyle(color: cs.onSurfaceVariant),
                 filled: true,
-                fillColor: VioColors.surfaceElevated,
+                fillColor: cs.surfaceContainerHigh,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(6),
-                  borderSide: const BorderSide(color: VioColors.border),
+                  borderSide: BorderSide(color: cs.outline),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(6),
-                  borderSide: const BorderSide(color: VioColors.border),
+                  borderSide: BorderSide(color: cs.outline),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(6),
-                  borderSide: const BorderSide(color: VioColors.primary),
+                  borderSide: BorderSide(color: cs.primary),
                 ),
               ),
             ),
             const SizedBox(height: 12),
 
             // Description field
-            const Text(
+            Text(
               'Description (optional)',
               style: TextStyle(
-                color: VioColors.textSecondary,
+                color: cs.onSurfaceVariant,
                 fontSize: 12,
               ),
             ),
@@ -738,26 +745,26 @@ class _CreatePRFromBranchDialogState extends State<_CreatePRFromBranchDialog> {
             TextField(
               controller: _descriptionController,
               maxLines: 3,
-              style: const TextStyle(
-                color: VioColors.textPrimary,
+              style: TextStyle(
+                color: cs.onSurface,
                 fontSize: 13,
               ),
               decoration: InputDecoration(
                 hintText: 'Describe your changes...',
-                hintStyle: const TextStyle(color: VioColors.textTertiary),
+                hintStyle: TextStyle(color: cs.onSurfaceVariant),
                 filled: true,
-                fillColor: VioColors.surfaceElevated,
+                fillColor: cs.surfaceContainerHigh,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(6),
-                  borderSide: const BorderSide(color: VioColors.border),
+                  borderSide: BorderSide(color: cs.outline),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(6),
-                  borderSide: const BorderSide(color: VioColors.border),
+                  borderSide: BorderSide(color: cs.outline),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(6),
-                  borderSide: const BorderSide(color: VioColors.primary),
+                  borderSide: BorderSide(color: cs.primary),
                 ),
               ),
             ),
@@ -767,9 +774,9 @@ class _CreatePRFromBranchDialogState extends State<_CreatePRFromBranchDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text(
+          child: Text(
             'Cancel',
-            style: TextStyle(color: VioColors.textSecondary),
+            style: TextStyle(color: cs.onSurfaceVariant),
           ),
         ),
         ElevatedButton(
@@ -784,7 +791,7 @@ class _CreatePRFromBranchDialogState extends State<_CreatePRFromBranchDialog> {
             }
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: VioColors.primary,
+            backgroundColor: cs.primary,
             foregroundColor: Colors.white,
           ),
           child: const Text('Create Pull Request'),

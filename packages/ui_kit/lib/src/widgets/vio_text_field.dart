@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../theme/vio_colors.dart';
 import '../theme/vio_spacing.dart';
 import '../theme/vio_typography.dart';
 
@@ -55,6 +54,7 @@ class VioTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -63,7 +63,7 @@ class VioTextField extends StatelessWidget {
           Text(
             label!,
             style: VioTypography.labelMedium.copyWith(
-              color: VioColors.textSecondary,
+              color: cs.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: VioSpacing.xs),
@@ -83,7 +83,7 @@ class VioTextField extends StatelessWidget {
           onTap: onTap,
           autofocus: autofocus,
           style: VioTypography.bodyMedium,
-          cursorColor: VioColors.primary,
+          cursorColor: cs.primary,
           decoration: InputDecoration(
             hintText: hint,
             errorText: errorText,
@@ -197,6 +197,7 @@ class _VioNumericFieldState extends State<VioNumericField> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return SizedBox(
       height: 32,
       child: TextField(
@@ -208,7 +209,7 @@ class _VioNumericFieldState extends State<VioNumericField> {
           signed: true,
         ),
         textAlign: TextAlign.center,
-        style: VioTypography.bodyMedium.copyWith(color: VioColors.textPrimary),
+        style: VioTypography.bodyMedium.copyWith(color: cs.onSurface),
         onSubmitted: (_) => _commitValue(),
         decoration: InputDecoration(
           contentPadding: const EdgeInsets.symmetric(
@@ -217,22 +218,22 @@ class _VioNumericFieldState extends State<VioNumericField> {
           ),
           suffixText: widget.label,
           suffixStyle: VioTypography.caption.copyWith(
-            color: VioColors.textTertiary,
+            color: cs.onSurfaceVariant,
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-            borderSide: const BorderSide(color: VioColors.border),
+            borderSide: BorderSide(color: cs.outline),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-            borderSide: const BorderSide(color: VioColors.border),
+            borderSide: BorderSide(color: cs.outline),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-            borderSide: const BorderSide(color: VioColors.primary),
+            borderSide: BorderSide(color: cs.primary),
           ),
           filled: true,
-          fillColor: VioColors.surfaceElevated,
+          fillColor: cs.surfaceContainerHigh,
         ),
       ),
     );

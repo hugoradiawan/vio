@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:vio_client/src/features/canvas/bloc/canvas_bloc.dart';
 import 'package:vio_core/vio_core.dart';
-import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 class CanvasTextEditorOverlay extends StatelessWidget {
   const CanvasTextEditorOverlay({
@@ -88,9 +87,9 @@ class CanvasTextEditorOverlay extends StatelessWidget {
           textAlign: shape.textAlign,
           textDirection: TextDirection.ltr,
           style: resolveFontStyle(),
-          cursorColor: VioColors.primary,
-          backgroundCursorColor: VioColors.background,
-          selectionColor: VioColors.primary.withValues(alpha: 0.25),
+          cursorColor: Theme.of(context).colorScheme.primary,
+          backgroundCursorColor: Theme.of(context).colorScheme.surface,
+          selectionColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.25),
         ),
       ),
     );

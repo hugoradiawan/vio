@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vio_core/vio_core.dart';
+import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../../../core/services/rust_engine_service.dart';
 import '../../../../rust/render/commands.dart';
@@ -140,6 +141,7 @@ class _RustCanvasLayerState extends State<RustCanvasLayer> {
           shapesById: state.shapes,
           viewportNotifier: widget.viewportNotifier,
           interactionNotifier: widget.interactionNotifier,
+          selectionColor: VioCanvasTheme.of(context).selectionColor,
           dragRect: state.dragRect,
           dragOffset: state.dragOffset,
           selectedShapeIds: state.selectedShapeIds,

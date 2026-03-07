@@ -162,31 +162,32 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.call_merge,
               size: 48,
-              color: VioColors.textTertiary,
+              color: cs.onSurfaceVariant,
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'No pull requests',
               style: TextStyle(
-                color: VioColors.textSecondary,
+                color: cs.onSurfaceVariant,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Create a pull request to merge changes',
               style: TextStyle(
-                color: VioColors.textTertiary,
+                color: cs.onSurfaceVariant,
                 fontSize: 12,
               ),
               textAlign: TextAlign.center,
@@ -197,7 +198,7 @@ class _EmptyState extends StatelessWidget {
               icon: const Icon(Icons.add, size: 16),
               label: const Text('New Pull Request'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: VioColors.primary,
+                backgroundColor: cs.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -223,20 +224,21 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: const BoxDecoration(
-        color: VioColors.surface,
+      decoration: BoxDecoration(
+        color: cs.surface,
         border: Border(
-          bottom: BorderSide(color: VioColors.border),
+          bottom: BorderSide(color: cs.outline),
         ),
       ),
       child: Row(
         children: [
-          const Text(
+          Text(
             'PULL REQUESTS',
             style: TextStyle(
-              color: VioColors.textTertiary,
+              color: cs.onSurfaceVariant,
               fontSize: 10,
               fontWeight: FontWeight.w600,
               letterSpacing: 1,
@@ -246,13 +248,13 @@ class _Header extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: VioColors.primary.withAlpha(51),
+              color: cs.primaryContainer,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
               count.toString(),
-              style: const TextStyle(
-                color: VioColors.primary,
+              style: TextStyle(
+                color: cs.primary,
                 fontSize: 10,
                 fontWeight: FontWeight.w500,
               ),
@@ -264,12 +266,12 @@ class _Header extends StatelessWidget {
             child: InkWell(
               onTap: onCreate,
               borderRadius: BorderRadius.circular(4),
-              child: const Padding(
-                padding: EdgeInsets.all(2),
+              child: Padding(
+                padding: const EdgeInsets.all(2),
                 child: Icon(
                   Icons.add,
                   size: 16,
-                  color: VioColors.primary,
+                  color: cs.primary,
                 ),
               ),
             ),
@@ -294,6 +296,7 @@ class _PullRequestItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -301,11 +304,11 @@ class _PullRequestItem extends StatelessWidget {
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: isSelected
-              ? VioColors.primary.withAlpha(26)
-              : VioColors.surfaceElevated,
+              ? cs.primaryContainer
+              : cs.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? VioColors.primary : VioColors.border,
+            color: isSelected ? cs.primary : cs.outline,
           ),
         ),
         child: Column(
@@ -317,8 +320,8 @@ class _PullRequestItem extends StatelessWidget {
                 Expanded(
                   child: Text(
                     pullRequest.title,
-                    style: const TextStyle(
-                      color: VioColors.textPrimary,
+                    style: TextStyle(
+                      color: cs.onSurface,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                     ),
@@ -334,17 +337,17 @@ class _PullRequestItem extends StatelessWidget {
             // Branch info
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.call_merge,
                   size: 12,
-                  color: VioColors.textTertiary,
+                  color: cs.onSurfaceVariant,
                 ),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     '${pullRequest.sourceBranchId.substring(0, 7)}... → ${pullRequest.targetBranchId.substring(0, 7)}...',
-                    style: const TextStyle(
-                      color: VioColors.textSecondary,
+                    style: TextStyle(
+                      color: cs.onSurfaceVariant,
                       fontSize: 11,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -367,6 +370,7 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     Color bgColor;
     Color textColor;
     String label;
@@ -378,13 +382,13 @@ class _StatusBadge extends StatelessWidget {
         label = 'Open';
         break;
       case pr_enum.PullRequestStatus.PULL_REQUEST_STATUS_MERGED:
-        bgColor = VioColors.primary.withAlpha(51);
-        textColor = VioColors.primary;
+        bgColor = cs.primaryContainer;
+        textColor = cs.primary;
         label = 'Merged';
         break;
       case pr_enum.PullRequestStatus.PULL_REQUEST_STATUS_CLOSED:
-        bgColor = VioColors.textTertiary.withAlpha(51);
-        textColor = VioColors.textTertiary;
+        bgColor = cs.onSurfaceVariant.withAlpha(51);
+        textColor = cs.onSurfaceVariant;
         label = 'Closed';
         break;
       default:
@@ -429,15 +433,16 @@ class _PullRequestDetailPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final canMerge = detail.mergeable;
     final hasConflicts = detail.hasConflicts;
 
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: const BoxDecoration(
-        color: VioColors.surface,
+      decoration: BoxDecoration(
+        color: cs.surface,
         border: Border(
-          top: BorderSide(color: VioColors.border),
+          top: BorderSide(color: cs.outline),
         ),
       ),
       child: Column(
@@ -450,10 +455,10 @@ class _PullRequestDetailPanel extends StatelessWidget {
                 name: detail.sourceBranch?.name ?? 'Unknown',
               ),
               const SizedBox(width: 8),
-              const Icon(
+              Icon(
                 Icons.arrow_forward,
                 size: 16,
-                color: VioColors.textTertiary,
+                color: cs.onSurfaceVariant,
               ),
               const SizedBox(width: 8),
               _BranchChip(
@@ -482,8 +487,8 @@ class _PullRequestDetailPanel extends StatelessWidget {
                 child: OutlinedButton(
                   onPressed: onClose,
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: VioColors.textSecondary,
-                    side: const BorderSide(color: VioColors.border),
+                    foregroundColor: cs.onSurfaceVariant,
+                    side: BorderSide(color: cs.outline),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -496,10 +501,10 @@ class _PullRequestDetailPanel extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: canMerge && !isMerging ? onMerge : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: VioColors.primary,
+                    backgroundColor: cs.primary,
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor: VioColors.surfaceElevated,
-                    disabledForegroundColor: VioColors.textTertiary,
+                    disabledBackgroundColor: cs.surfaceContainerHigh,
+                    disabledForegroundColor: cs.onSurfaceVariant,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -532,26 +537,27 @@ class _BranchChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: VioColors.surfaceElevated,
+        color: cs.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: VioColors.border),
+        border: Border.all(color: cs.outline),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.merge,
             size: 12,
-            color: VioColors.textSecondary,
+            color: cs.onSurfaceVariant,
           ),
           const SizedBox(width: 4),
           Text(
             name,
-            style: const TextStyle(
-              color: VioColors.textPrimary,
+            style: TextStyle(
+              color: cs.onSurface,
               fontSize: 11,
               fontWeight: FontWeight.w500,
             ),
@@ -574,6 +580,7 @@ class _ConflictWarning extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -601,10 +608,10 @@ class _ConflictWarning extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const Text(
+                Text(
                   'Resolve before merging',
                   style: TextStyle(
-                    color: VioColors.textSecondary,
+                    color: cs.onSurfaceVariant,
                     fontSize: 11,
                   ),
                 ),
@@ -711,13 +718,14 @@ class _CreatePullRequestDialogState extends State<CreatePullRequestDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return AlertDialog(
-      backgroundColor: VioColors.surface,
+      backgroundColor: cs.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      title: const Text(
+      title: Text(
         'Create Pull Request',
         style: TextStyle(
-          color: VioColors.textPrimary,
+          color: cs.onSurface,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -740,11 +748,11 @@ class _CreatePullRequestDialogState extends State<CreatePullRequestDialog> {
                       onChanged: (id) => setState(() => _sourceBranchId = id),
                     ),
                   ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Icon(
                       Icons.arrow_forward,
-                      color: VioColors.textTertiary,
+                      color: cs.onSurfaceVariant,
                     ),
                   ),
                   Expanded(
@@ -762,23 +770,23 @@ class _CreatePullRequestDialogState extends State<CreatePullRequestDialog> {
               // Title
               TextFormField(
                 controller: _titleController,
-                style: const TextStyle(color: VioColors.textPrimary),
+                style: TextStyle(color: cs.onSurface),
                 decoration: InputDecoration(
                   labelText: 'Title',
-                  labelStyle: const TextStyle(color: VioColors.textSecondary),
+                  labelStyle: TextStyle(color: cs.onSurfaceVariant),
                   filled: true,
-                  fillColor: VioColors.surfaceElevated,
+                  fillColor: cs.surfaceContainerHigh,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: VioColors.border),
+                    borderSide: BorderSide(color: cs.outline),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: VioColors.border),
+                    borderSide: BorderSide(color: cs.outline),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: VioColors.primary),
+                    borderSide: BorderSide(color: cs.primary),
                   ),
                 ),
                 validator: (value) {
@@ -794,23 +802,23 @@ class _CreatePullRequestDialogState extends State<CreatePullRequestDialog> {
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 3,
-                style: const TextStyle(color: VioColors.textPrimary),
+                style: TextStyle(color: cs.onSurface),
                 decoration: InputDecoration(
                   labelText: 'Description (optional)',
-                  labelStyle: const TextStyle(color: VioColors.textSecondary),
+                  labelStyle: TextStyle(color: cs.onSurfaceVariant),
                   filled: true,
-                  fillColor: VioColors.surfaceElevated,
+                  fillColor: cs.surfaceContainerHigh,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: VioColors.border),
+                    borderSide: BorderSide(color: cs.outline),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: VioColors.border),
+                    borderSide: BorderSide(color: cs.outline),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: VioColors.primary),
+                    borderSide: BorderSide(color: cs.primary),
                   ),
                 ),
               ),
@@ -821,14 +829,14 @@ class _CreatePullRequestDialogState extends State<CreatePullRequestDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text(
+          child: Text(
             'Cancel',
-            style: TextStyle(color: VioColors.textSecondary),
+            style: TextStyle(color: cs.onSurfaceVariant),
           ),
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: VioColors.primary,
+            backgroundColor: cs.primary,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
@@ -873,13 +881,14 @@ class _BranchSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: VioColors.textSecondary,
+          style: TextStyle(
+            color: cs.onSurfaceVariant,
             fontSize: 12,
           ),
         ),
@@ -887,21 +896,21 @@ class _BranchSelector extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           decoration: BoxDecoration(
-            color: VioColors.surfaceElevated,
+            color: cs.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: VioColors.border),
+            border: Border.all(color: cs.outline),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: value,
               isExpanded: true,
-              dropdownColor: VioColors.surface,
-              icon: const Icon(
+              dropdownColor: cs.surface,
+              icon: Icon(
                 Icons.expand_more,
-                color: VioColors.textSecondary,
+                color: cs.onSurfaceVariant,
               ),
-              style: const TextStyle(
-                color: VioColors.textPrimary,
+              style: TextStyle(
+                color: cs.onSurface,
                 fontSize: 13,
               ),
               onChanged: onChanged,
@@ -959,13 +968,14 @@ class _MergePullRequestDialogState extends State<MergePullRequestDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return AlertDialog(
-      backgroundColor: VioColors.surface,
+      backgroundColor: cs.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      title: const Text(
+      title: Text(
         'Merge Pull Request',
         style: TextStyle(
-          color: VioColors.textPrimary,
+          color: cs.onSurface,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -977,8 +987,8 @@ class _MergePullRequestDialogState extends State<MergePullRequestDialog> {
           children: [
             Text(
               widget.pullRequest.title,
-              style: const TextStyle(
-                color: VioColors.textPrimary,
+              style: TextStyle(
+                color: cs.onSurface,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -986,10 +996,10 @@ class _MergePullRequestDialogState extends State<MergePullRequestDialog> {
             const SizedBox(height: 16),
 
             // Strategy selector
-            const Text(
+            Text(
               'Merge Strategy',
               style: TextStyle(
-                color: VioColors.textSecondary,
+                color: cs.onSurfaceVariant,
                 fontSize: 12,
               ),
             ),
@@ -1004,23 +1014,23 @@ class _MergePullRequestDialogState extends State<MergePullRequestDialog> {
             TextFormField(
               controller: _messageController,
               maxLines: 2,
-              style: const TextStyle(color: VioColors.textPrimary),
+              style: TextStyle(color: cs.onSurface),
               decoration: InputDecoration(
                 labelText: 'Merge commit message',
-                labelStyle: const TextStyle(color: VioColors.textSecondary),
+                labelStyle: TextStyle(color: cs.onSurfaceVariant),
                 filled: true,
-                fillColor: VioColors.surfaceElevated,
+                fillColor: cs.surfaceContainerHigh,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: VioColors.border),
+                  borderSide: BorderSide(color: cs.outline),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: VioColors.border),
+                  borderSide: BorderSide(color: cs.outline),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: VioColors.primary),
+                  borderSide: BorderSide(color: cs.primary),
                 ),
               ),
             ),
@@ -1030,14 +1040,14 @@ class _MergePullRequestDialogState extends State<MergePullRequestDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text(
+          child: Text(
             'Cancel',
-            style: TextStyle(color: VioColors.textSecondary),
+            style: TextStyle(color: cs.onSurfaceVariant),
           ),
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: VioColors.primary,
+            backgroundColor: cs.primary,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
@@ -1125,6 +1135,7 @@ class _StrategyOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
@@ -1132,11 +1143,11 @@ class _StrategyOption extends StatelessWidget {
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: isSelected
-              ? VioColors.primary.withAlpha(26)
-              : VioColors.surfaceElevated,
+              ? cs.primaryContainer
+              : cs.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? VioColors.primary : VioColors.border,
+            color: isSelected ? cs.primary : cs.outline,
           ),
         ),
         child: Row(
@@ -1144,7 +1155,7 @@ class _StrategyOption extends StatelessWidget {
             Icon(
               isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
               size: 18,
-              color: isSelected ? VioColors.primary : VioColors.textTertiary,
+              color: isSelected ? cs.primary : cs.onSurfaceVariant,
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -1153,16 +1164,16 @@ class _StrategyOption extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: VioColors.textPrimary,
+                    style: TextStyle(
+                      color: cs.onSurface,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   Text(
                     description,
-                    style: const TextStyle(
-                      color: VioColors.textSecondary,
+                    style: TextStyle(
+                      color: cs.onSurfaceVariant,
                       fontSize: 11,
                     ),
                   ),

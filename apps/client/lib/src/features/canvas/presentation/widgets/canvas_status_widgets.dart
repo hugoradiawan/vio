@@ -14,19 +14,20 @@ class CanvasCoordinatesDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     if (pointer == null) return const SizedBox.shrink();
 
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: VioSpacing.xs,
         vertical: 2,
       ),
       decoration: BoxDecoration(
-        color: VioColors.surface2.withValues(alpha: 0.8),
+        color: cs.surfaceContainerLow.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
       ),
       child: Text(
         'X: ${pointer!.dx.toStringAsFixed(0)}  Y: ${pointer!.dy.toStringAsFixed(0)}',
         style: VioTypography.caption.copyWith(
-          color: VioColors.textSecondary,
+          color: cs.onSurfaceVariant,
           fontFamily: 'monospace',
           fontSize: 10,
         ),
@@ -51,7 +52,8 @@ class CanvasSyncStatusIndicator extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final (icon, color, label) = _getStatusInfo();
+    final cs = Theme.of(context).colorScheme;
+    final (icon, color, label) = _getStatusInfo(cs);
 
     return Tooltip(
       message: syncError ?? label,
@@ -61,7 +63,7 @@ class CanvasSyncStatusIndicator extends StatelessWidget {
           vertical: 2,
         ),
         decoration: BoxDecoration(
-          color: VioColors.surface2.withValues(alpha: 0.8),
+          color: cs.surfaceContainerLow.withValues(alpha: 0.8),
           borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
         ),
         child: Row(
@@ -92,15 +94,15 @@ class CanvasSyncStatusIndicator extends StatelessWidget {
     );
   }
 
-  (IconData, Color, String) _getStatusInfo() => switch (syncStatus) {
+  (IconData, Color, String) _getStatusInfo(ColorScheme cs) => switch (syncStatus) {
         SyncStatus.idle => (
             Icons.cloud_off_outlined,
-            VioColors.textSecondary,
+            cs.onSurfaceVariant,
             'Offline'
           ),
         SyncStatus.loading => (
             Icons.cloud_download_outlined,
-            VioColors.primary,
+            cs.primary,
             'Loading...'
           ),
         SyncStatus.pending => (
@@ -110,7 +112,7 @@ class CanvasSyncStatusIndicator extends StatelessWidget {
           ),
         SyncStatus.syncing => (
             Icons.cloud_sync_outlined,
-            VioColors.primary,
+            cs.primary,
             'Syncing...'
           ),
         SyncStatus.synced => (
@@ -120,7 +122,7 @@ class CanvasSyncStatusIndicator extends StatelessWidget {
           ),
         SyncStatus.error => (
             Icons.cloud_off_outlined,
-            VioColors.error,
+            cs.error,
             'Sync Error'
           ),
       };

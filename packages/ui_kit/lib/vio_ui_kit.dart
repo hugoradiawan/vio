@@ -1,8 +1,11 @@
 /// Vio UI Kit - Design system and themed components
 library;
 
+// BLoC
+export 'src/bloc/theme_bloc.dart';
 // Icons
 export 'src/icons/vio_icons.dart';
+export 'src/theme/vio_canvas_theme.dart';
 export 'src/theme/vio_colors.dart';
 export 'src/theme/vio_spacing.dart';
 // Theme

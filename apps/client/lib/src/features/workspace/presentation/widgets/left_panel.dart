@@ -55,11 +55,11 @@ class _LeftPanelState extends State<LeftPanel>
   Widget build(BuildContext context) {
     return Container(
       width: widget.width,
-      decoration: const BoxDecoration(
-        color: VioColors.surface1,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
         border: Border(
           right: BorderSide(
-            color: VioColors.border,
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.25),
           ),
         ),
       ),
@@ -68,10 +68,10 @@ class _LeftPanelState extends State<LeftPanel>
           // Tab bar
           Container(
             height: 40,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: VioColors.border,
+                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.25),
                 ),
               ),
             ),
@@ -83,7 +83,7 @@ class _LeftPanelState extends State<LeftPanel>
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: VioColors.primary,
+                    color: Theme.of(context).colorScheme.primary,
                     borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
                   ),
                   child: const Center(
@@ -100,9 +100,9 @@ class _LeftPanelState extends State<LeftPanel>
                 Expanded(
                   child: TabBar(
                     controller: _tabController,
-                    labelColor: VioColors.textPrimary,
-                    unselectedLabelColor: VioColors.textTertiary,
-                    indicatorColor: VioColors.primary,
+                    labelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.65),
+                    unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.45),
+                    indicatorColor: Theme.of(context).colorScheme.primary,
                     labelStyle: VioTypography.body2,
                     dividerColor: Colors.transparent,
                     tabs: const [
@@ -173,10 +173,10 @@ class _LayersTab extends StatelessWidget {
             return Container(
               height: 36,
               padding: const EdgeInsets.symmetric(horizontal: VioSpacing.xs),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: VioColors.border,
+                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.25),
                   ),
                 ),
               ),
@@ -210,7 +210,7 @@ class _LayersTab extends StatelessWidget {
                       child: TextField(
                         autofocus: true,
                         style: VioTypography.body2.copyWith(
-                          color: VioColors.textPrimary,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                         decoration: const InputDecoration(
                           isDense: true,

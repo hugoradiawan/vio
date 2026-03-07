@@ -63,21 +63,22 @@ class _BranchSettingsDialogState extends State<BranchSettingsDialog> {
       builder: (context, state) {
         final isCurrentBranch = widget.branch.id == state.currentBranchId;
         final canEdit = !widget.branch.isProtected;
+        final cs = Theme.of(context).colorScheme;
 
         return AlertDialog(
-          backgroundColor: VioColors.surface,
+          backgroundColor: cs.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: const BorderSide(color: VioColors.border),
+            side: BorderSide(color: cs.outline),
           ),
           title: Row(
             children: [
-              const Icon(Icons.settings, color: VioColors.primary, size: 24),
+              Icon(Icons.settings, color: cs.primary, size: 24),
               const SizedBox(width: 12),
-              const Text(
+              Text(
                 'Branch Settings',
                 style: TextStyle(
-                  color: VioColors.textPrimary,
+                  color: cs.onSurface,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
@@ -89,13 +90,13 @@ class _BranchSettingsDialogState extends State<BranchSettingsDialog> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: VioColors.primary.withAlpha(51),
+                    color: cs.primary.withAlpha(51),
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: const Text(
+                  child: Text(
                     'default',
                     style: TextStyle(
-                      color: VioColors.primary,
+                      color: cs.primary,
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
                     ),
@@ -141,14 +142,14 @@ class _BranchSettingsDialogState extends State<BranchSettingsDialog> {
                   _buildInfoSection(),
 
                   const SizedBox(height: 20),
-                  const Divider(color: VioColors.border),
+                  Divider(color: cs.outline),
                   const SizedBox(height: 20),
 
                   // Edit section (if allowed)
                   if (canEdit) ...[
                     _buildEditSection(),
                     const SizedBox(height: 20),
-                    const Divider(color: VioColors.border),
+                    Divider(color: cs.outline),
                     const SizedBox(height: 20),
                   ],
 
@@ -163,7 +164,7 @@ class _BranchSettingsDialogState extends State<BranchSettingsDialog> {
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 _hasChanges ? 'Discard' : 'Close',
-                style: const TextStyle(color: VioColors.textSecondary),
+                style: TextStyle(color: cs.onSurfaceVariant),
               ),
             ),
             if (_hasChanges && canEdit)
@@ -188,7 +189,7 @@ class _BranchSettingsDialogState extends State<BranchSettingsDialog> {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: VioColors.primary,
+                  backgroundColor: cs.primary,
                   foregroundColor: Colors.white,
                 ),
                 child: const Text('Save Changes'),
@@ -200,13 +201,14 @@ class _BranchSettingsDialogState extends State<BranchSettingsDialog> {
   }
 
   Widget _buildInfoSection() {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'BRANCH INFORMATION',
           style: TextStyle(
-            color: VioColors.textTertiary,
+            color: cs.onSurfaceVariant,
             fontSize: 10,
             fontWeight: FontWeight.w600,
             letterSpacing: 1,
@@ -227,7 +229,7 @@ class _BranchSettingsDialogState extends State<BranchSettingsDialog> {
             label: 'Head Commit',
             value: widget.branch.headCommitId.substring(0, 8),
             icon: Icons.commit,
-            valueColor: VioColors.textTertiary,
+            valueColor: cs.onSurfaceVariant,
             monospace: true,
           ),
 
@@ -243,13 +245,14 @@ class _BranchSettingsDialogState extends State<BranchSettingsDialog> {
   }
 
   Widget _buildEditSection() {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'EDIT BRANCH',
           style: TextStyle(
-            color: VioColors.textTertiary,
+            color: cs.onSurfaceVariant,
             fontSize: 10,
             fontWeight: FontWeight.w600,
             letterSpacing: 1,
@@ -258,10 +261,10 @@ class _BranchSettingsDialogState extends State<BranchSettingsDialog> {
         const SizedBox(height: 12),
 
         // Name field
-        const Text(
+        Text(
           'Name',
           style: TextStyle(
-            color: VioColors.textSecondary,
+            color: cs.onSurfaceVariant,
             fontSize: 12,
           ),
         ),
@@ -269,36 +272,36 @@ class _BranchSettingsDialogState extends State<BranchSettingsDialog> {
         TextField(
           controller: _nameController,
           onChanged: (_) => _checkForChanges(),
-          style: const TextStyle(
-            color: VioColors.textPrimary,
+          style: TextStyle(
+            color: cs.onSurface,
             fontSize: 13,
           ),
           decoration: InputDecoration(
             hintText: 'Branch name',
-            hintStyle: const TextStyle(color: VioColors.textTertiary),
+            hintStyle: TextStyle(color: cs.onSurfaceVariant),
             filled: true,
-            fillColor: VioColors.surfaceElevated,
+            fillColor: cs.surfaceContainerHigh,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(6),
-              borderSide: const BorderSide(color: VioColors.border),
+              borderSide: BorderSide(color: cs.outline),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(6),
-              borderSide: const BorderSide(color: VioColors.border),
+              borderSide: BorderSide(color: cs.outline),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(6),
-              borderSide: const BorderSide(color: VioColors.primary),
+              borderSide: BorderSide(color: cs.primary),
             ),
           ),
         ),
         const SizedBox(height: 12),
 
         // Description field
-        const Text(
+        Text(
           'Description',
           style: TextStyle(
-            color: VioColors.textSecondary,
+            color: cs.onSurfaceVariant,
             fontSize: 12,
           ),
         ),
@@ -307,26 +310,26 @@ class _BranchSettingsDialogState extends State<BranchSettingsDialog> {
           controller: _descriptionController,
           onChanged: (_) => _checkForChanges(),
           maxLines: 2,
-          style: const TextStyle(
-            color: VioColors.textPrimary,
+          style: TextStyle(
+            color: cs.onSurface,
             fontSize: 13,
           ),
           decoration: InputDecoration(
             hintText: 'Optional description...',
-            hintStyle: const TextStyle(color: VioColors.textTertiary),
+            hintStyle: TextStyle(color: cs.onSurfaceVariant),
             filled: true,
-            fillColor: VioColors.surfaceElevated,
+            fillColor: cs.surfaceContainerHigh,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(6),
-              borderSide: const BorderSide(color: VioColors.border),
+              borderSide: BorderSide(color: cs.outline),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(6),
-              borderSide: const BorderSide(color: VioColors.border),
+              borderSide: BorderSide(color: cs.outline),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(6),
-              borderSide: const BorderSide(color: VioColors.primary),
+              borderSide: BorderSide(color: cs.primary),
             ),
           ),
         ),
@@ -339,13 +342,14 @@ class _BranchSettingsDialogState extends State<BranchSettingsDialog> {
     VersionControlState state,
     bool isCurrentBranch,
   ) {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'ACTIONS',
           style: TextStyle(
-            color: VioColors.textTertiary,
+            color: cs.onSurfaceVariant,
             fontSize: 10,
             fontWeight: FontWeight.w600,
             letterSpacing: 1,
@@ -401,7 +405,7 @@ class _BranchSettingsDialogState extends State<BranchSettingsDialog> {
           _ActionButton(
             icon: Icons.delete_outline,
             label: 'Delete this branch',
-            color: VioColors.error,
+            color: Theme.of(context).colorScheme.error,
             onTap: () {
               Navigator.of(context).pop();
               context.read<VersionControlBloc>().add(
@@ -447,6 +451,7 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -454,15 +459,15 @@ class _InfoRow extends StatelessWidget {
           Icon(
             icon,
             size: 14,
-            color: VioColors.textTertiary,
+            color: cs.onSurfaceVariant,
           ),
           const SizedBox(width: 8),
           SizedBox(
             width: 100,
             child: Text(
               label,
-              style: const TextStyle(
-                color: VioColors.textSecondary,
+              style: TextStyle(
+                color: cs.onSurfaceVariant,
                 fontSize: 12,
               ),
             ),
@@ -471,7 +476,7 @@ class _InfoRow extends StatelessWidget {
             child: Text(
               value,
               style: TextStyle(
-                color: valueColor ?? VioColors.textPrimary,
+                color: valueColor ?? cs.onSurface,
                 fontSize: 13,
                 fontFamily: monospace ? 'monospace' : null,
               ),
@@ -499,7 +504,8 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveColor = color ?? VioColors.textSecondary;
+    final cs = Theme.of(context).colorScheme;
+    final effectiveColor = color ?? cs.onSurfaceVariant;
 
     return InkWell(
       onTap: onTap,
@@ -518,10 +524,10 @@ class _ActionButton extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            const Icon(
+            Icon(
               Icons.chevron_right,
               size: 16,
-              color: VioColors.textTertiary,
+              color: cs.onSurfaceVariant,
             ),
           ],
         ),

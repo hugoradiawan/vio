@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 /// Paints the infinite grid pattern on the canvas
 class GridPainter extends CustomPainter {
@@ -7,22 +6,9 @@ class GridPainter extends CustomPainter {
     required this.gridSize,
     required this.zoom,
     required this.offset,
+    required this.gridColor,
+    required this.originColor,
   });
-
-  static final Paint _minorPaint = Paint()
-    ..color = VioColors.canvasGrid.withValues(alpha: 0.3)
-    ..style = PaintingStyle.stroke
-    ..strokeWidth = 0.5;
-
-  static final Paint _majorPaint = Paint()
-    ..color = VioColors.canvasGrid.withValues(alpha: 0.6)
-    ..style = PaintingStyle.stroke
-    ..strokeWidth = 1;
-
-  static final Paint _originPaint = Paint()
-    ..color = VioColors.error.withValues(alpha: 0.5)
-    ..style = PaintingStyle.stroke
-    ..strokeWidth = 1;
 
   /// Base grid cell size in logical pixels
   final double gridSize;
@@ -32,6 +18,12 @@ class GridPainter extends CustomPainter {
 
   /// Current viewport offset
   final Offset offset;
+
+  /// Colour used for minor and major grid lines.
+  final Color gridColor;
+
+  /// Colour used for the origin crosshair.
+  final Color originColor;
 
   double _effectiveGridSize() {
     // Calculate effective grid size based on zoom.
@@ -51,6 +43,19 @@ class GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final effectiveGridSize = _effectiveGridSize();
+
+    final minorPaint = Paint()
+      ..color = gridColor.withValues(alpha: 0.3)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.5;
+    final majorPaint = Paint()
+      ..color = gridColor.withValues(alpha: 0.6)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    final originPaint = Paint()
+      ..color = originColor.withValues(alpha: 0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
 
     // Calculate starting positions
     final startX = offset.dx % effectiveGridSize;
@@ -86,22 +91,22 @@ class GridPainter extends CustomPainter {
       indexY++;
     }
 
-    canvas.drawPath(minorPath, _minorPaint);
-    canvas.drawPath(majorPath, _majorPaint);
+    canvas.drawPath(minorPath, minorPaint);
+    canvas.drawPath(majorPath, majorPaint);
 
     // Draw origin crosshair if visible
     if (offset.dx >= 0 && offset.dx <= size.width) {
       canvas.drawLine(
         Offset(offset.dx, 0),
         Offset(offset.dx, size.height),
-        _originPaint,
+        originPaint,
       );
     }
     if (offset.dy >= 0 && offset.dy <= size.height) {
       canvas.drawLine(
         Offset(0, offset.dy),
         Offset(size.width, offset.dy),
-        _originPaint,
+        originPaint,
       );
     }
   }
@@ -110,6 +115,8 @@ class GridPainter extends CustomPainter {
   bool shouldRepaint(GridPainter oldDelegate) {
     return gridSize != oldDelegate.gridSize ||
         zoom != oldDelegate.zoom ||
-        offset != oldDelegate.offset;
+        offset != oldDelegate.offset ||
+        gridColor != oldDelegate.gridColor ||
+        originColor != oldDelegate.originColor;
   }
 }

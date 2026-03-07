@@ -49,86 +49,89 @@ class CommitHistoryList extends StatelessWidget {
 
     showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: VioColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text(
-          'Checkout Commit',
-          style: TextStyle(
-            color: VioColors.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        content: SizedBox(
-          width: 300,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Create a new branch from this commit:',
-                style: TextStyle(
-                  color: VioColors.textSecondary,
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 8),
-              _CommitPreview(commit: commit),
-              const SizedBox(height: 16),
-              TextField(
-                controller: nameController,
-                style: const TextStyle(color: VioColors.textPrimary),
-                decoration: InputDecoration(
-                  labelText: 'New branch name',
-                  labelStyle: const TextStyle(color: VioColors.textSecondary),
-                  filled: true,
-                  fillColor: VioColors.surfaceElevated,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: VioColors.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: VioColors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: VioColors.primary),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: VioColors.textSecondary),
+      builder: (dialogContext) {
+        final dcs = Theme.of(dialogContext).colorScheme;
+        return AlertDialog(
+          backgroundColor: dcs.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: Text(
+            'Checkout Commit',
+            style: TextStyle(
+              color: dcs.onSurface,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: VioColors.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            onPressed: () {
-              context.read<VersionControlBloc>().add(
-                    CommitCheckoutRequested(
-                      commitId: commit.id,
-                      newBranchName: nameController.text.trim(),
+          content: SizedBox(
+            width: 300,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Create a new branch from this commit:',
+                  style: TextStyle(
+                    color: dcs.onSurfaceVariant,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _CommitPreview(commit: commit),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: nameController,
+                  style: TextStyle(color: dcs.onSurface),
+                  decoration: InputDecoration(
+                    labelText: 'New branch name',
+                    labelStyle: TextStyle(color: dcs.onSurfaceVariant),
+                    filled: true,
+                    fillColor: dcs.surfaceContainerHigh,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: dcs.outline),
                     ),
-                  );
-              Navigator.of(dialogContext).pop();
-            },
-            child: const Text('Checkout'),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: dcs.outline),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: dcs.primary),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: dcs.onSurfaceVariant),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: dcs.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () {
+                context.read<VersionControlBloc>().add(
+                      CommitCheckoutRequested(
+                        commitId: commit.id,
+                        newBranchName: nameController.text.trim(),
+                      ),
+                    );
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('Checkout'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -139,87 +142,90 @@ class CommitHistoryList extends StatelessWidget {
 
     showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: VioColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text(
-          'Revert Commit',
-          style: TextStyle(
-            color: VioColors.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        content: SizedBox(
-          width: 300,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Create a new commit that undoes the changes:',
-                style: TextStyle(
-                  color: VioColors.textSecondary,
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 8),
-              _CommitPreview(commit: commit),
-              const SizedBox(height: 16),
-              TextField(
-                controller: messageController,
-                maxLines: 2,
-                style: const TextStyle(color: VioColors.textPrimary),
-                decoration: InputDecoration(
-                  labelText: 'Revert commit message',
-                  labelStyle: const TextStyle(color: VioColors.textSecondary),
-                  filled: true,
-                  fillColor: VioColors.surfaceElevated,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: VioColors.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: VioColors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: VioColors.primary),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: VioColors.textSecondary),
+      builder: (dialogContext) {
+        final dcs = Theme.of(dialogContext).colorScheme;
+        return AlertDialog(
+          backgroundColor: dcs.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: Text(
+            'Revert Commit',
+            style: TextStyle(
+              color: dcs.onSurface,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: VioColors.warning,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            onPressed: () {
-              context.read<VersionControlBloc>().add(
-                    CommitRevertRequested(
-                      commitId: commit.id,
-                      message: messageController.text.trim(),
+          content: SizedBox(
+            width: 300,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Create a new commit that undoes the changes:',
+                  style: TextStyle(
+                    color: dcs.onSurfaceVariant,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _CommitPreview(commit: commit),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: messageController,
+                  maxLines: 2,
+                  style: TextStyle(color: dcs.onSurface),
+                  decoration: InputDecoration(
+                    labelText: 'Revert commit message',
+                    labelStyle: TextStyle(color: dcs.onSurfaceVariant),
+                    filled: true,
+                    fillColor: dcs.surfaceContainerHigh,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: dcs.outline),
                     ),
-                  );
-              Navigator.of(dialogContext).pop();
-            },
-            child: const Text('Revert'),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: dcs.outline),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: dcs.primary),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: dcs.onSurfaceVariant),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VioColors.warning,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () {
+                context.read<VersionControlBloc>().add(
+                      CommitRevertRequested(
+                        commitId: commit.id,
+                        message: messageController.text.trim(),
+                      ),
+                    );
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('Revert'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -231,44 +237,47 @@ class CommitHistoryList extends StatelessWidget {
     // For now, show a placeholder. Full diff view would be a more complex widget.
     showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: VioColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text(
-          'Commit Details',
-          style: TextStyle(
-            color: VioColors.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        content: SizedBox(
-          width: 400,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _CommitPreview(commit: commit, expanded: true),
-              const SizedBox(height: 16),
-              const Text(
-                'Diff visualization coming soon...',
-                style: TextStyle(
-                  color: VioColors.textSecondary,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text(
-              'Close',
-              style: TextStyle(color: VioColors.textSecondary),
+      builder: (dialogContext) {
+        final dcs = Theme.of(dialogContext).colorScheme;
+        return AlertDialog(
+          backgroundColor: dcs.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: Text(
+            'Commit Details',
+            style: TextStyle(
+              color: dcs.onSurface,
+              fontWeight: FontWeight.w600,
             ),
           ),
-        ],
-      ),
+          content: SizedBox(
+            width: 400,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _CommitPreview(commit: commit, expanded: true),
+                const SizedBox(height: 16),
+                Text(
+                  'Diff visualization coming soon...',
+                  style: TextStyle(
+                    color: dcs.onSurfaceVariant,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(
+                'Close',
+                style: TextStyle(color: dcs.onSurfaceVariant),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -277,6 +286,7 @@ class CommitHistoryList extends StatelessWidget {
 class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -284,16 +294,16 @@ class _EmptyState extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.history,
               size: 32,
-              color: VioColors.textTertiary,
+              color: cs.onSurfaceVariant,
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'No commits yet',
               style: TextStyle(
-                color: VioColors.textSecondary,
+                color: cs.onSurfaceVariant,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -302,7 +312,7 @@ class _EmptyState extends StatelessWidget {
             Text(
               'Make changes and commit',
               style: TextStyle(
-                color: VioColors.textTertiary.withValues(alpha: 0.8),
+                color: cs.onSurfaceVariant.withValues(alpha: 0.8),
                 fontSize: 11,
               ),
               textAlign: TextAlign.center,
@@ -352,9 +362,11 @@ class _CommitItem extends StatelessWidget {
                   margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: VioColors.surfaceElevated,
+                    color: Theme.of(context).colorScheme.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: VioColors.border),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -362,8 +374,8 @@ class _CommitItem extends StatelessWidget {
                       // Commit message
                       Text(
                         commit.message,
-                        style: const TextStyle(
-                          color: VioColors.textPrimary,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                         ),
@@ -381,15 +393,15 @@ class _CommitItem extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: VioColors.surface,
+                              color: Theme.of(context).colorScheme.surface,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               commit.id.length > 7
                                   ? commit.id.substring(0, 7)
                                   : commit.id,
-                              style: const TextStyle(
-                                color: VioColors.textSecondary,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontSize: 10,
                                 fontFamily: 'monospace',
                               ),
@@ -399,10 +411,12 @@ class _CommitItem extends StatelessWidget {
                           Expanded(
                             child: Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.schedule,
                                   size: 12,
-                                  color: VioColors.textTertiary,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
                                 ),
                                 const SizedBox(width: 4),
                                 Expanded(
@@ -410,8 +424,10 @@ class _CommitItem extends StatelessWidget {
                                     _formatDate(commit.createdAtDateTime),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: VioColors.textTertiary,
+                                    style: TextStyle(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
                                       fontSize: 11,
                                     ),
                                   ),
@@ -477,7 +493,9 @@ class _TimelineIndicator extends StatelessWidget {
           Expanded(
             child: Container(
               width: 2,
-              color: isFirst ? Colors.transparent : VioColors.border,
+              color: isFirst
+                  ? Colors.transparent
+                  : Theme.of(context).colorScheme.outline,
             ),
           ),
           // Dot
@@ -485,10 +503,14 @@ class _TimelineIndicator extends StatelessWidget {
             width: 10,
             height: 10,
             decoration: BoxDecoration(
-              color: isFirst ? VioColors.primary : VioColors.surfaceElevated,
+              color: isFirst
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.surfaceContainerHigh,
               shape: BoxShape.circle,
               border: Border.all(
-                color: isFirst ? VioColors.primary : VioColors.border,
+                color: isFirst
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.outline,
                 width: 2,
               ),
             ),
@@ -497,7 +519,9 @@ class _TimelineIndicator extends StatelessWidget {
           Expanded(
             child: Container(
               width: 2,
-              color: isLast ? Colors.transparent : VioColors.border,
+              color: isLast
+                  ? Colors.transparent
+                  : Theme.of(context).colorScheme.outline,
             ),
           ),
         ],
@@ -526,12 +550,12 @@ class _CommitActions extends StatelessWidget {
           child: InkWell(
             onTap: onCheckout,
             borderRadius: BorderRadius.circular(4),
-            child: const Padding(
-              padding: EdgeInsets.all(4),
+            child: Padding(
+              padding: const EdgeInsets.all(4),
               child: Icon(
                 Icons.call_split,
                 size: 14,
-                color: VioColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ),
@@ -542,12 +566,12 @@ class _CommitActions extends StatelessWidget {
           child: InkWell(
             onTap: onRevert,
             borderRadius: BorderRadius.circular(4),
-            child: const Padding(
-              padding: EdgeInsets.all(4),
+            child: Padding(
+              padding: const EdgeInsets.all(4),
               child: Icon(
                 Icons.undo,
                 size: 14,
-                color: VioColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ),
@@ -569,12 +593,13 @@ class _CommitPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: VioColors.surfaceElevated,
+        color: cs.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: VioColors.border),
+        border: Border.all(color: cs.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -584,13 +609,13 @@ class _CommitPreview extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: VioColors.surface,
+                  color: cs.surface,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   commit.id.length > 7 ? commit.id.substring(0, 7) : commit.id,
-                  style: const TextStyle(
-                    color: VioColors.primary,
+                  style: TextStyle(
+                    color: cs.primary,
                     fontSize: 11,
                     fontFamily: 'monospace',
                   ),
@@ -601,8 +626,8 @@ class _CommitPreview extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             commit.message,
-            style: const TextStyle(
-              color: VioColors.textPrimary,
+            style: TextStyle(
+              color: cs.onSurface,
               fontSize: 13,
             ),
             maxLines: expanded ? null : 2,
@@ -612,16 +637,16 @@ class _CommitPreview extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.schedule,
                   size: 12,
-                  color: VioColors.textTertiary,
+                  color: cs.onSurfaceVariant,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   _formatFullDate(commit.createdAtDateTime),
-                  style: const TextStyle(
-                    color: VioColors.textTertiary,
+                  style: TextStyle(
+                    color: cs.onSurfaceVariant,
                     fontSize: 11,
                   ),
                 ),

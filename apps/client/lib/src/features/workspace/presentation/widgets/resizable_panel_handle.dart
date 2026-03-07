@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 /// A vertical drag handle for resizing side panels.
 ///
@@ -67,7 +66,7 @@ class _ResizablePanelHandleState extends State<ResizablePanelHandle> {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               width: 1,
-              color: isActive ? VioColors.primary : VioColors.border,
+              color: isActive ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
             ),
           ),
         ),

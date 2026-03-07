@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:vio_core/vio_core.dart' hide StrokeCap, StrokeJoin;
-import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../../../core/services/image_cache_service.dart';
 import '../../../../rust/lib.dart';
@@ -33,6 +32,7 @@ class RustCanvasPainter extends CustomPainter {
     required this.shapesById,
     required this.viewportNotifier,
     required this.interactionNotifier,
+    required this.selectionColor,
     this.dragRect,
     this.dragOffset,
     this.selectedShapeIds = const [],
@@ -90,6 +90,9 @@ class RustCanvasPainter extends CustomPainter {
 
   /// Text shape currently being edited by overlay.
   final String? editingTextShapeId;
+
+  /// Colour used for hover outlines, selection outlines, and drag rect.
+  final Color selectionColor;
 
   /// Read viewport state from the notifier — always current on each paint.
   Matrix2D get viewMatrix => viewportNotifier.viewMatrix;
@@ -853,7 +856,7 @@ class RustCanvasPainter extends CustomPainter {
     ]),);
 
     final paint = Paint()
-      ..color = VioColors.primary.withValues(alpha: 0.5)
+      ..color = selectionColor.withValues(alpha: 0.5)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth;
 
@@ -888,7 +891,7 @@ class RustCanvasPainter extends CustomPainter {
     ]),);
 
     final paint = Paint()
-      ..color = VioColors.primary
+      ..color = selectionColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth;
 
@@ -924,10 +927,10 @@ class RustCanvasPainter extends CustomPainter {
     ]),);
 
     final fill = Paint()
-      ..color = VioColors.primary.withValues(alpha: 0.1)
+      ..color = selectionColor.withValues(alpha: 0.1)
       ..style = PaintingStyle.fill;
     final stroke = Paint()
-      ..color = VioColors.primary
+      ..color = selectionColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = SelectionHandleMetrics.toCanvasUnits(
         screenPx: 1.0,

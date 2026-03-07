@@ -61,30 +61,33 @@ class _CommitPanelState extends State<CommitPanel> {
 
     showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: VioColors.surface,
-        title: const Text(
-          'Discard Change',
-          style: TextStyle(color: VioColors.textPrimary),
-        ),
-        content: Text(
-          'Are you sure you want to discard changes to "${change.shapeName}"?',
-          style: const TextStyle(color: VioColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+      builder: (dialogContext) {
+        final dcs = Theme.of(dialogContext).colorScheme;
+        return AlertDialog(
+          backgroundColor: dcs.surface,
+          title: Text(
+            'Discard Change',
+            style: TextStyle(color: dcs.onSurface),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: VioColors.error,
+          content: Text(
+            'Are you sure you want to discard changes to "${change.shapeName}"?',
+            style: TextStyle(color: dcs.onSurfaceVariant),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
             ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: dcs.error,
+              ),
             onPressed: () => Navigator.of(dialogContext).pop(true),
             child: const Text('Discard'),
-          ),
-        ],
-      ),
+            ),
+          ],
+        );
+      },
     ).then((confirmed) {
       if (confirmed == true && context.mounted) {
         // Get the discarded shapes state
@@ -129,30 +132,33 @@ class _CommitPanelState extends State<CommitPanel> {
 
     showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: VioColors.surface,
-        title: const Text(
-          'Discard All Changes',
-          style: TextStyle(color: VioColors.textPrimary),
-        ),
-        content: Text(
-          'Are you sure you want to discard all $changeCount change${changeCount == 1 ? '' : 's'}? This cannot be undone.',
-          style: const TextStyle(color: VioColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+      builder: (dialogContext) {
+        final dcs = Theme.of(dialogContext).colorScheme;
+        return AlertDialog(
+          backgroundColor: dcs.surface,
+          title: Text(
+            'Discard All Changes',
+            style: TextStyle(color: dcs.onSurface),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: VioColors.error,
+          content: Text(
+            'Are you sure you want to discard all $changeCount change${changeCount == 1 ? '' : 's'}? This cannot be undone.',
+            style: TextStyle(color: dcs.onSurfaceVariant),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
             ),
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Discard All'),
-          ),
-        ],
-      ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: dcs.error,
+              ),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Discard All'),
+            ),
+          ],
+        );
+      },
     ).then((confirmed) {
       if (confirmed == true && context.mounted) {
         final canvasBloc = context.read<CanvasBloc>();
@@ -189,12 +195,13 @@ class _CommitPanelState extends State<CommitPanel> {
         final canCommit = state.canCommit && !isCommitting;
         final stagedChanges = state.stagedChanges;
         final uncommittedChanges = state.uncommittedChanges;
+        final cs = Theme.of(context).colorScheme;
 
         return Container(
-          decoration: const BoxDecoration(
-            color: VioColors.surface,
+          decoration: BoxDecoration(
+            color: cs.surface,
             border: Border(
-              bottom: BorderSide(color: VioColors.border),
+              bottom: BorderSide(color: cs.outline),
             ),
           ),
           child: Column(
@@ -250,28 +257,33 @@ class _CommitPanelState extends State<CommitPanel> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: VioColors.surfaceElevated,
+                      color: cs.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: VioColors.border,
+                        color: cs.outline,
                       ),
                     ),
-                    child: const Column(
-                      children: [
-                        Icon(
-                          Icons.check_circle_outline,
-                          size: 32,
-                          color: VioColors.success,
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'No changes',
-                          style: TextStyle(
-                            color: VioColors.textSecondary,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
+                    child: Builder(
+                      builder: (context) {
+                        final cs = Theme.of(context).colorScheme;
+                        return Column(
+                          children: [
+                            Icon(
+                              Icons.check_circle_outline,
+                              size: 32,
+                              color: cs.primary,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'No changes',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: cs.onSurface,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -287,27 +299,27 @@ class _CommitPanelState extends State<CommitPanel> {
                   focusNode: _focusNode,
                   maxLines: 3,
                   minLines: 2,
-                  style: const TextStyle(
-                    color: VioColors.textPrimary,
+                  style: TextStyle(
+                    color: cs.onSurface,
                     fontSize: 12,
                   ),
                   decoration: InputDecoration(
                     hintText: 'Commit message...',
-                    hintStyle: const TextStyle(color: VioColors.textTertiary),
+                    hintStyle: TextStyle(color: cs.onSurfaceVariant),
                     filled: true,
-                    fillColor: VioColors.surfaceElevated,
+                    fillColor: cs.surfaceContainerHigh,
                     contentPadding: const EdgeInsets.all(12),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: VioColors.border),
+                      borderSide: BorderSide(color: cs.outline),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: VioColors.border),
+                      borderSide: BorderSide(color: cs.outline),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: VioColors.primary),
+                      borderSide: BorderSide(color: cs.primary),
                     ),
                   ),
                   enabled: !isCommitting,
@@ -322,10 +334,10 @@ class _CommitPanelState extends State<CommitPanel> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: canCommit
-                        ? VioColors.primary
-                        : VioColors.surfaceElevated,
+                        ? cs.primary
+                        : cs.surfaceContainerHigh,
                     foregroundColor:
-                        canCommit ? Colors.white : VioColors.textTertiary,
+                        canCommit ? Colors.white : cs.onSurfaceVariant,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -334,12 +346,12 @@ class _CommitPanelState extends State<CommitPanel> {
                   ),
                   onPressed: canCommit ? () => _syncAndCommit(context) : null,
                   child: isCommitting || _isSyncing
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: VioColors.textTertiary,
+                            color: cs.onSurfaceVariant,
                           ),
                         )
                       : Row(
@@ -478,7 +490,7 @@ class _SectionIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: onPressed,
-      icon: Icon(icon, size: 14, color: VioColors.textSecondary),
+      icon: Icon(icon, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
       tooltip: tooltip,
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
@@ -513,8 +525,8 @@ class _ChangesSection extends StatelessWidget {
             children: [
               Text(
                 title.toUpperCase(),
-                style: const TextStyle(
-                  color: VioColors.textTertiary,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1,
@@ -524,13 +536,13 @@ class _ChangesSection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: VioColors.surfaceElevated,
+                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   count.toString(),
-                  style: const TextStyle(
-                    color: VioColors.textSecondary,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: 10,
                   ),
                 ),
@@ -588,11 +600,13 @@ class _ChangeItemState extends State<_ChangeItem> {
             duration: const Duration(milliseconds: 150),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: highlighted ? VioColors.surfaceElevated : null,
+              color: highlighted
+                  ? Theme.of(context).colorScheme.surfaceContainerHigh
+                  : null,
               border: isCanvasHovered && !_isHovering
-                  ? const Border(
+                  ? Border(
                       left: BorderSide(
-                        color: VioColors.primary,
+                        color: Theme.of(context).colorScheme.primary,
                         width: 2,
                       ),
                     )
@@ -608,12 +622,12 @@ class _ChangeItemState extends State<_ChangeItem> {
                     height: 16,
                     decoration: BoxDecoration(
                       color: widget.isStaged
-                          ? VioColors.primary
+                          ? Theme.of(context).colorScheme.primary
                           : Colors.transparent,
                       border: Border.all(
                         color: widget.isStaged
-                            ? VioColors.primary
-                            : VioColors.border,
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.outline,
                       ),
                       borderRadius: BorderRadius.circular(3),
                     ),
@@ -636,8 +650,8 @@ class _ChangeItemState extends State<_ChangeItem> {
                 Expanded(
                   child: Text(
                     widget.change.shapeName,
-                    style: const TextStyle(
-                      color: VioColors.textPrimary,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 12,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -650,10 +664,10 @@ class _ChangeItemState extends State<_ChangeItem> {
                     child: _isHovering
                         ? IconButton(
                             onPressed: widget.onDiscard,
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.undo,
                               size: 14,
-                              color: VioColors.textSecondary,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                             ),
                             tooltip: 'Discard change',
                             padding: EdgeInsets.zero,
@@ -671,15 +685,19 @@ class _ChangeItemState extends State<_ChangeItem> {
                               vertical: 1,
                             ),
                             decoration: BoxDecoration(
-                              color: VioColors.surfaceElevated,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHigh,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               widget.change.afterShape?.type.name ??
                                   widget.change.beforeShape?.type.name ??
                                   'shape',
-                              style: const TextStyle(
-                                color: VioColors.textTertiary,
+                              style: TextStyle(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
                                 fontSize: 9,
                               ),
                             ),
@@ -715,7 +733,7 @@ class _ChangeTypeIcon extends StatelessWidget {
         color = VioColors.warning;
       case ShapeChangeType.deleted:
         icon = Icons.remove_circle;
-        color = VioColors.error;
+        color = Theme.of(context).colorScheme.error;
     }
 
     return Icon(icon, size: 14, color: color);

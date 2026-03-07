@@ -1,0 +1,8 @@
+version: v2
+plugins:
+  - local: protoc-gen-es
+    out: ./src/gen
+    include_imports: true
+    opt:
+      - target=js+dts
+      - import_extension=.js

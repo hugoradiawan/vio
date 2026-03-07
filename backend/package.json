@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "bun run --watch src/index.ts",
-    "dev:preflight": "sh ./scripts/dev-preflight.sh",
-    "dev:ready": "bun run dev:preflight && bun run dev",
+    "dev:preflight": "bun run ./scripts/dev-preflight.ts",
+    "dev:ready": "bun run dev:preflight && bun run proto:generate:backend && bun run dev",
     "dev:diagnostics": "PERF_DIAGNOSTICS=1 bun run --watch src/index.ts",
     "dev:diagnostics:ready": "bun run dev:preflight && bun run dev:diagnostics",
     "start": "bun run src/index.ts",
@@ -20,6 +20,7 @@
     "db:seed:stress:medium": "bun run src/db/seed.ts --stress-level=medium",
     "db:seed:stress:large": "bun run src/db/seed.ts --stress-level=large",
     "proto:generate": "cd ../packages/protos && bunx buf generate",
+    "proto:generate:backend": "bunx @bufbuild/buf generate ../packages/protos --template ./buf.gen.backend.yaml",
     "proto:lint": "cd ../packages/protos && bunx buf lint",
     "test": "bun test",
     "lint": "bunx @biomejs/biome lint ./src",

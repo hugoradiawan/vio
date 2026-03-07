@@ -68,9 +68,7 @@ melos:
 
     # Protobuf Generation
     proto:generate:
-      run: |
-        export PATH="$PATH:$PWD/backend/node_modules/.bin:$HOME/.pub-cache/bin"
-        cd packages/protos && bunx buf generate
+      run: bun run scripts/proto-generate.ts
       description: Generate Dart + TypeScript code from proto files
 
     # Clean
@@ -127,9 +125,11 @@ melos:
       description: Run Rust linter (clippy)
 
     rust:generate:
-      run: cd apps/client && flutter_rust_bridge_codegen generate
+      run: cd apps/client && flutter_rust_bridge_codegen generate --dump config --stop-on-error --no-auto-upgrade-dependency
       description: Generate Dart bindings from Rust API
 
     rust:build:wasm:
       run: cd apps/client && bash tool/build_wasm.sh
       description: Build Rust crate for WASM (web) — compiles + wasm-bindgen
+dependencies:
+  flutter_rust_bridge: ^2.11.1

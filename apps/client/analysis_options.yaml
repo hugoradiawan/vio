@@ -80,6 +80,7 @@ analyzer:
     - "**/*.pbgrpc.dart"
     - "lib/src/gen/**"
     - "lib/src/rust/**"
+    - "rust_builder/cargokit/**"
   errors:
     invalid_annotation_target: ignore
   language:

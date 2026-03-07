@@ -93,3 +93,7 @@ coverage/
 # Reference repositories (not dependencies)
 /gitea/
 /apps/client/lib/src/gen
+/apps/client/rust/src/frb_generated.rs
+apps/client/lib/src/rust/frb_generated.dart
+apps/client/lib/src/rust/frb_generated.web.dart
+apps/client/lib/src/rust/frb_generated.io.dart

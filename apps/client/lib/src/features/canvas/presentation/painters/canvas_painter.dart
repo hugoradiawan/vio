@@ -158,7 +158,7 @@ class CanvasPainter extends CustomPainter {
         );
       }
 
-      if (shape is FrameShape && !simplifyForInteraction) {
+      if (shape is FrameShape) {
         _drawFrameLabel(canvas, shape);
       }
 
@@ -251,7 +251,7 @@ class CanvasPainter extends CustomPainter {
               zoom: _zoom,
             );
           }
-          if (shape is FrameShape && !simplifyForInteraction) {
+          if (shape is FrameShape) {
             _drawFrameLabel(canvas, shape);
           }
 

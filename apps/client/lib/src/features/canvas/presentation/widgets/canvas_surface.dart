@@ -192,18 +192,21 @@ class CanvasSurface extends StatelessWidget {
                 ),
               ),
             ),
-          if (workspaceState.showRulers && !isInteracting) ...[
+          if (workspaceState.showRulers) ...[
             Positioned(
               top: 0,
               left: 20,
               right: 0,
               height: 20,
               child: RepaintBoundary(
-                child: CustomPaint(
-                  painter: HorizontalRulerPainter(
-                    offset: viewportNotifier.offset.dx,
-                    zoom: viewportNotifier.zoom,
-                    selectionRect: selectionRect,
+                child: ListenableBuilder(
+                  listenable: viewportNotifier,
+                  builder: (context, _) => CustomPaint(
+                    painter: HorizontalRulerPainter(
+                      offset: viewportNotifier.offset.dx,
+                      zoom: viewportNotifier.zoom,
+                      selectionRect: selectionRect,
+                    ),
                   ),
                 ),
               ),
@@ -214,11 +217,14 @@ class CanvasSurface extends StatelessWidget {
               bottom: 0,
               width: 20,
               child: RepaintBoundary(
-                child: CustomPaint(
-                  painter: VerticalRulerPainter(
-                    offset: viewportNotifier.offset.dy,
-                    zoom: viewportNotifier.zoom,
-                    selectionRect: selectionRect,
+                child: ListenableBuilder(
+                  listenable: viewportNotifier,
+                  builder: (context, _) => CustomPaint(
+                    painter: VerticalRulerPainter(
+                      offset: viewportNotifier.offset.dy,
+                      zoom: viewportNotifier.zoom,
+                      selectionRect: selectionRect,
+                    ),
                   ),
                 ),
               ),

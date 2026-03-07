@@ -26,6 +26,9 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
+      /* Disable browser edge-overscroll navigation on horizontal pan. */
+      overscroll-behavior-x: none;
+      overscroll-behavior-y: none;
       background-color: #0D1117;
     }
 
@@ -85,6 +88,15 @@
         e.preventDefault();
       }
     });
+
+    // Prevent browser history swipe/overscroll defaults from horizontal wheel
+    // gestures (including Shift+wheel patterns) while allowing Flutter to
+    // consume the event for canvas pan.
+    document.addEventListener('wheel', function(e) {
+      if (!e.ctrlKey && (Math.abs(e.deltaX) > 0 || (e.shiftKey && Math.abs(e.deltaY) > 0))) {
+        e.preventDefault();
+      }
+    }, { passive: false });
   </script>
 
   <script src="flutter_bootstrap.js" async></script>

@@ -10,8 +10,9 @@ use crate::scene_graph::tree::SceneTree;
 ///
 /// This is the hot path — called every frame from Dart's `CustomPainter`.
 ///
-/// When `simplify` is `true` the pipeline skips shadows, blurs, and replaces
-/// gradients with the first stop colour (used during pan/zoom interactions).
+/// When `simplify` is `true` the pipeline skips expensive effects like
+/// shadows/blurs during pan/zoom interactions, but keeps fill/stroke visuals
+/// (gradients and stroke alignment) consistent.
 pub fn generate_draw_commands(
     tree: &SceneTree,
     viewport: &Aabb,
@@ -332,39 +333,27 @@ fn emit_fill(
         } => {
             let radii = [*r1, *r2, *r3, *r4];
             let has_radii = *r1 > 0.0 || *r2 > 0.0 || *r3 > 0.0 || *r4 > 0.0;
-            emit_fill_for_rrect(fill, rect, &radii, has_radii, shape_opacity, simplify, cmds);
+            emit_fill_for_rrect(fill, rect, &radii, has_radii, shape_opacity, cmds);
         }
         ShapeGeometry::Ellipse { .. } => {
-            emit_fill_for_oval(fill, rect, shape_opacity, simplify, cmds);
+            emit_fill_for_oval(fill, rect, shape_opacity, cmds);
         }
         ShapeGeometry::Path {
             ref path_data, ..
         } => {
-            if fill.gradient.is_some() && !simplify {
-                // Path gradients are complex — fall back to solid for now
-                let color = apply_alpha_to_color(fill.color, combined_alpha(fill.opacity, shape_opacity));
-                cmds.push(DrawCommand::DrawPath {
-                    path_data: path_data.clone(),
-                    color,
-                    stroke: None,
-                });
-            } else {
-                let color = if simplify {
-                    simplified_fill_color(fill, shape_opacity)
-                } else {
-                    apply_alpha_to_color(fill.color, combined_alpha(fill.opacity, shape_opacity))
-                };
-                cmds.push(DrawCommand::DrawPath {
-                    path_data: path_data.clone(),
-                    color,
-                    stroke: None,
-                });
-            }
+            // Path gradients are currently unsupported in command stream.
+            // Keep behavior stable across simplify modes by using solid fill.
+            let color = apply_alpha_to_color(fill.color, combined_alpha(fill.opacity, shape_opacity));
+            cmds.push(DrawCommand::DrawPath {
+                path_data: path_data.clone(),
+                color,
+                stroke: None,
+            });
         }
         // Frame, Group, Svg, Bool, Text (fallback) — use rect
         _ => {
             let radii = [0.0; 4];
-            emit_fill_for_rrect(fill, rect, &radii, false, shape_opacity, simplify, cmds);
+            emit_fill_for_rrect(fill, rect, &radii, false, shape_opacity, cmds);
         }
     }
 }
@@ -375,41 +364,23 @@ fn emit_fill_for_rrect(
     radii: &[f64; 4],
     has_radii: bool,
     shape_opacity: f64,
-    simplify: bool,
     cmds: &mut Vec<DrawCommand>,
 ) {
     if let Some(ref gradient) = fill.gradient {
-        if simplify {
-            // Simplified: use first stop colour
-            let color = simplified_gradient_color(gradient, fill.opacity, shape_opacity);
-            if has_radii {
-                cmds.push(DrawCommand::DrawRRect {
-                    rect: *rect,
-                    radii: *radii,
-                    color,
-                });
-            } else {
-                cmds.push(DrawCommand::DrawRect {
-                    rect: *rect,
-                    color,
-                });
-            }
+        let gd = to_gradient_data(gradient, fill.opacity);
+        if has_radii {
+            cmds.push(DrawCommand::DrawRRectGradient {
+                rect: *rect,
+                radii: *radii,
+                gradient: gd,
+            });
         } else {
-            let gd = to_gradient_data(gradient, fill.opacity);
-            if has_radii {
-                cmds.push(DrawCommand::DrawRRectGradient {
-                    rect: *rect,
-                    radii: *radii,
-                    gradient: gd,
-                });
-            } else {
-                // Use RRectGradient with zero radii (Dart handles this fine)
-                cmds.push(DrawCommand::DrawRRectGradient {
-                    rect: *rect,
-                    radii: *radii,
-                    gradient: gd,
-                });
-            }
+            // Use RRectGradient with zero radii (Dart handles this fine)
+            cmds.push(DrawCommand::DrawRRectGradient {
+                rect: *rect,
+                radii: *radii,
+                gradient: gd,
+            });
         }
     } else {
         let color = apply_alpha_to_color(fill.color, combined_alpha(fill.opacity, shape_opacity));
@@ -432,23 +403,14 @@ fn emit_fill_for_oval(
     fill: &ShapeFill,
     rect: &[f64; 4],
     shape_opacity: f64,
-    simplify: bool,
     cmds: &mut Vec<DrawCommand>,
 ) {
     if let Some(ref gradient) = fill.gradient {
-        if simplify {
-            let color = simplified_gradient_color(gradient, fill.opacity, shape_opacity);
-            cmds.push(DrawCommand::DrawOval {
-                rect: *rect,
-                color,
-            });
-        } else {
-            let gd = to_gradient_data(gradient, fill.opacity);
-            cmds.push(DrawCommand::DrawOvalGradient {
-                rect: *rect,
-                gradient: gd,
-            });
-        }
+        let gd = to_gradient_data(gradient, fill.opacity);
+        cmds.push(DrawCommand::DrawOvalGradient {
+            rect: *rect,
+            gradient: gd,
+        });
     } else {
         let color = apply_alpha_to_color(fill.color, combined_alpha(fill.opacity, shape_opacity));
         cmds.push(DrawCommand::DrawOval {
@@ -475,7 +437,7 @@ fn emit_stroke(
 
     let shape_opacity = if simplify { shape.opacity } else { 1.0 };
     let color = apply_alpha_to_color(stroke.color, combined_alpha(stroke.opacity, shape_opacity));
-    let alignment = if simplify { 0 } else { stroke_alignment_u8(stroke.alignment) };
+    let alignment = stroke_alignment_u8(stroke.alignment);
 
     match &shape.geometry {
         ShapeGeometry::Rectangle {
@@ -620,20 +582,6 @@ fn first_visible_fill_color(fills: &[ShapeFill]) -> (u32, f64) {
         }
     }
     (0xFFFF_FFFF, 1.0) // white default
-}
-
-fn simplified_fill_color(fill: &ShapeFill, shape_opacity: f64) -> u32 {
-    if let Some(ref gradient) = fill.gradient {
-        simplified_gradient_color(gradient, fill.opacity, shape_opacity)
-    } else {
-        apply_alpha_to_color(fill.color, combined_alpha(fill.opacity, shape_opacity))
-    }
-}
-
-fn simplified_gradient_color(gradient: &ShapeGradient, fill_opacity: f64, shape_opacity: f64) -> u32 {
-    let first_stop = gradient.stops.first();
-    let color = first_stop.map(|s| s.color).unwrap_or(0xFF000000);
-    apply_alpha_to_color(color, combined_alpha(fill_opacity, shape_opacity))
 }
 
 fn to_gradient_data(gradient: &ShapeGradient, fill_opacity: f64) -> GradientData {
@@ -996,7 +944,7 @@ mod tests {
     }
 
     #[test]
-    fn simplify_replaces_gradient_with_solid() {
+    fn simplify_keeps_gradient_rendering() {
         let mut shape = make_rect("r1", 0.0, 0.0, 100.0, 50.0, 0);
         shape.fills = vec![ShapeFill {
             color: 0xFF000000,
@@ -1018,9 +966,34 @@ mod tests {
         let cmds = generate_draw_commands(&tree, &large_viewport(), &identity_view(), true);
 
         let has_gradient = cmds.iter().any(|c| matches!(c, DrawCommand::DrawRRectGradient { .. }));
-        assert!(!has_gradient, "Gradient should be simplified to solid colour");
-        let has_rect = cmds.iter().any(|c| matches!(c, DrawCommand::DrawRect { .. }));
-        assert!(has_rect, "Should have solid DrawRect instead");
+        assert!(has_gradient, "Gradient should be preserved in simplify mode");
+    }
+
+    #[test]
+    fn simplify_preserves_stroke_alignment() {
+        let mut shape = make_rect("r1", 0.0, 0.0, 100.0, 50.0, 0);
+        shape.fills = vec![];
+        shape.strokes = vec![ShapeStroke {
+            color: 0xFFFFA500,
+            width: 4.0,
+            opacity: 1.0,
+            hidden: false,
+            alignment: StrokeAlignment::Outside,
+            cap: StrokeCap::Round,
+            join: StrokeJoin::Round,
+        }];
+
+        let tree = SceneTree::from_shapes(vec![shape]);
+        let cmds = generate_draw_commands(&tree, &large_viewport(), &identity_view(), true);
+
+        let stroke = cmds.iter().find_map(|c| match c {
+            DrawCommand::DrawRRectStroke {
+                stroke_alignment, ..
+            } => Some(*stroke_alignment),
+            _ => None,
+        });
+
+        assert_eq!(stroke, Some(2), "Expected outside alignment (2) in simplify mode");
     }
 
     #[test]

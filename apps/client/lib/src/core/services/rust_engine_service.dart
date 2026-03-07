@@ -107,7 +107,8 @@ class RustEngineService {
   ///
   /// [viewMatrix] is the 6-element affine `[a, b, c, d, e, f]`.
   /// [viewportMinX..maxY] is the visible rect in canvas (world) coordinates.
-  /// When [simplify] is true, shadows/blurs/gradients are elided.
+  /// When [simplify] is true, expensive effects (shadows/blurs) are elided.
+  /// Gradient fills and stroke alignment are preserved.
   /// When [skipTileRasterized] is true, shapes already rendered into tiles are
   /// excluded from the returned command list.
   ///

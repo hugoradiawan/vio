@@ -180,8 +180,11 @@ impl CanvasEngine {
     /// `viewport` is `[min_x, min_y, max_x, max_y]` in canvas (world)
     /// coordinates — i.e., the visible area *before* the view transform.
     ///
-    /// When `simplify` is `true`, shadows, blurs, and gradients are
+    /// When `simplify` is `true`, expensive effects (shadows/blurs) are
     /// elided for cheaper rendering during pan/zoom interactions.
+    ///
+    /// Gradient fills and stroke alignment remain unchanged so shape
+    /// color/geometry stay visually stable while interacting.
     ///
     /// When `skip_tile_rasterized` is `true`, shapes that have been
     /// rendered into cached tiles are excluded from the draw command list.

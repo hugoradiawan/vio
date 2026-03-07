@@ -705,22 +705,9 @@ class ShapePainter {
 
     final paint = Paint()..style = PaintingStyle.fill;
 
-    // Check for gradient first
+    // Preserve visual fidelity during interaction: keep authored gradients.
     if (fill.gradient != null) {
-      if (simplifyForInteraction) {
-        final firstStop =
-            fill.gradient!.stops.isEmpty ? null : fill.gradient!.stops.first;
-        paint.color =
-            (firstStop == null ? Color(fill.color) : Color(firstStop.color))
-                .withValues(
-          alpha: _combinedAlpha(
-            firstStop?.opacity ?? fill.opacity,
-            shapeOpacity,
-          ),
-        );
-      } else {
-        paint.shader = _createGradientShader(fill.gradient!, shape.bounds);
-      }
+      paint.shader = _createGradientShader(fill.gradient!, shape.bounds);
     } else {
       paint.color = Color(fill.color).withValues(
         alpha: _combinedAlpha(fill.opacity, shapeOpacity),
@@ -750,9 +737,8 @@ class ShapePainter {
       ..strokeCap = _mapStrokeCap(stroke.cap)
       ..strokeJoin = _mapStrokeJoin(stroke.join);
 
-    // Handle stroke alignment
-    final alignment =
-        simplifyForInteraction ? StrokeAlignment.center : stroke.alignment;
+    // Preserve authored stroke geometry during interaction.
+    final alignment = stroke.alignment;
     switch (alignment) {
       case StrokeAlignment.center:
         canvas.drawPath(path, paint);

@@ -26,7 +26,8 @@
         "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true",
         "--dart-define=VIO_USE_RUST_BACKEND=true",
         "--dart-define=VIO_USE_RUST_CANVAS=true",
-        "--dart-define=VIO_USE_RUST_TILES=true"
+        "--dart-define=VIO_USE_RUST_TILES=true",
+        "--dart-define=VIO_USE_RUST_HIT_TEST=true",
       ]
     },
     {
@@ -65,7 +66,8 @@
         "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true",
         "--dart-define=VIO_USE_RUST_BACKEND=true",
         "--dart-define=VIO_USE_RUST_TILES=true",
-        "--dart-define=VIO_USE_RUST_CANVAS=true"
+        "--dart-define=VIO_USE_RUST_CANVAS=true",
+        "--dart-define=VIO_USE_RUST_HIT_TEST=true",
       ]
     },
     {
@@ -80,7 +82,8 @@
         "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true",
         "--dart-define=VIO_USE_RUST_BACKEND=true",
         "--dart-define=VIO_USE_RUST_TILES=true",
-        "--dart-define=VIO_USE_RUST_CANVAS=true"
+        "--dart-define=VIO_USE_RUST_CANVAS=true",
+        "--dart-define=VIO_USE_RUST_HIT_TEST=true",
       ]
     },
     {
@@ -108,7 +111,8 @@
         "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true",
         "--dart-define=VIO_USE_RUST_BACKEND=true",
         "--dart-define=VIO_USE_RUST_TILES=true",
-        "--dart-define=VIO_USE_RUST_CANVAS=true"
+        "--dart-define=VIO_USE_RUST_CANVAS=true",
+        "--dart-define=VIO_USE_RUST_HIT_TEST=true",
       ]
     },
     {
@@ -136,7 +140,8 @@
         "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true",
         "--dart-define=VIO_USE_RUST_BACKEND=true",
         "--dart-define=VIO_USE_RUST_TILES=true",
-        "--dart-define=VIO_USE_RUST_CANVAS=true"
+        "--dart-define=VIO_USE_RUST_CANVAS=true",
+        "--dart-define=VIO_USE_RUST_HIT_TEST=true",
       ]
     },
     {

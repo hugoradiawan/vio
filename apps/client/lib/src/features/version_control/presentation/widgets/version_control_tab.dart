@@ -18,6 +18,7 @@ class _VersionControlTabState extends State<VersionControlTab> {
   final Map<String, bool> _expandedSections = <String, bool>{
     'commit': true,
     'branches': false,
+    'pull_requests': true,
     'history': true,
   };
 
@@ -34,8 +35,19 @@ class _VersionControlTabState extends State<VersionControlTab> {
     return BlocConsumer<VersionControlBloc, VersionControlState>(
       listenWhen: (previous, current) =>
           previous.pendingSwitchBranchId != current.pendingSwitchBranchId ||
-          previous.pendingDeleteBranchId != current.pendingDeleteBranchId,
+          previous.pendingDeleteBranchId != current.pendingDeleteBranchId ||
+          previous.error != current.error,
       listener: (context, state) {
+        // Show operation errors as snackbar (errors that occur after init)
+        if (state.error != null && state.branches.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.error!),
+              backgroundColor: Theme.of(context).colorScheme.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
         // Show branch switch confirmation dialog
         if (state.pendingSwitchBranchId != null) {
           final branch = state.branches.firstWhere(
@@ -87,7 +99,8 @@ class _VersionControlTabState extends State<VersionControlTab> {
           );
         }
 
-        return Column(
+        return SingleChildScrollView(
+          child: Column(
           children: [
             // Commit panel (collapsible)
             VioPanel(
@@ -149,27 +162,62 @@ class _VersionControlTabState extends State<VersionControlTab> {
               ),
             ),
 
-            // History section (collapsible, takes remaining space)
-            Expanded(
-              child: _CollapsibleExpandedSection(
-                title: 'History',
-                isExpanded: _isExpanded('history'),
-                onExpansionChanged: (expanded) => _setExpanded(
-                  'history',
-                  expanded,
-                ),
-                trailing: _RefreshButton(
-                  isLoading: state.status == VersionControlStatus.loading,
-                  onRefresh: () {
-                    context
-                        .read<VersionControlBloc>()
-                        .add(const CommitsRefreshRequested());
-                  },
-                ),
-                child: const CommitHistoryList(),
+            // Pull Requests section (collapsible)
+            VioPanel(
+              title: 'Pull Requests',
+              collapsible: true,
+              padding: EdgeInsets.zero,
+              isExpanded: _isExpanded('pull_requests'),
+              onExpansionChanged: (expanded) => _setExpanded(
+                'pull_requests',
+                expanded,
+              ),
+              trailing: state.openPullRequests.isNotEmpty
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '${state.openPullRequests.length}',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    )
+                  : null,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 400),
+                child: const PullRequestList(),
               ),
             ),
+
+            // History section (collapsible)
+            _CollapsibleExpandedSection(
+              title: 'History',
+              isExpanded: _isExpanded('history'),
+              onExpansionChanged: (expanded) => _setExpanded(
+                'history',
+                expanded,
+              ),
+              trailing: _RefreshButton(
+                isLoading: state.status == VersionControlStatus.loading,
+                onRefresh: () {
+                  context
+                      .read<VersionControlBloc>()
+                      .add(const CommitsRefreshRequested());
+                },
+              ),
+              child: const CommitHistoryList(),
+            ),
           ],
+          ),
         );
       },
     );
@@ -562,7 +610,8 @@ class _CollapsibleExpandedSection extends StatelessWidget {
             ),
           ),
           if (isExpanded)
-            Expanded(
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 400),
               child: Padding(
                 padding: const EdgeInsets.all(VioSpacing.panelPadding),
                 child: child,

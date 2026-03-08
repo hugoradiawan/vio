@@ -35,6 +35,9 @@ class CommitHistoryList extends StatelessWidget {
               onCheckout: () => _showCheckoutDialog(context, commit),
               onRevert: () => _showRevertDialog(context, commit),
               onViewDiff: () => _showDiffDialog(context, state, commit),
+              onCherryPick: state.currentBranchId != null
+                  ? () => _showCherryPickDialog(context, state, commit)
+                  : null,
             );
           },
         );
@@ -280,6 +283,108 @@ class CommitHistoryList extends StatelessWidget {
       },
     );
   }
+
+  void _showCherryPickDialog(
+    BuildContext context,
+    VersionControlState state,
+    commit_pb.Commit commit,
+  ) {
+    final currentBranch = state.currentBranch;
+    if (currentBranch == null) return;
+
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        final dcs = Theme.of(dialogContext).colorScheme;
+        return AlertDialog(
+          backgroundColor: dcs.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: Text(
+            'Cherry-pick Commit',
+            style: TextStyle(
+              color: dcs.onSurface,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: SizedBox(
+            width: 320,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Apply the changes from this commit to the current branch:',
+                  style: TextStyle(color: dcs.onSurfaceVariant, fontSize: 13),
+                ),
+                const SizedBox(height: 12),
+                _CommitPreview(commit: commit),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: dcs.primaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.merge_type,
+                        size: 14,
+                        color: dcs.primary,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Target: ${currentBranch.name}',
+                          style: TextStyle(
+                            color: dcs.primary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: dcs.onSurfaceVariant),
+              ),
+            ),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.file_copy_outlined, size: 16),
+              label: const Text('Cherry-pick'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: dcs.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () {
+                context.read<VersionControlBloc>().add(
+                      CommitCherryPickRequested(
+                        commitId: commit.id,
+                        targetBranchId: currentBranch.id,
+                      ),
+                    );
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
 
 /// Empty state when no commits exist
@@ -333,6 +438,7 @@ class _CommitItem extends StatelessWidget {
     required this.onCheckout,
     required this.onRevert,
     required this.onViewDiff,
+    this.onCherryPick,
   });
 
   final commit_pb.Commit commit;
@@ -341,6 +447,7 @@ class _CommitItem extends StatelessWidget {
   final VoidCallback onCheckout;
   final VoidCallback onRevert;
   final VoidCallback onViewDiff;
+  final VoidCallback? onCherryPick;
 
   @override
   Widget build(BuildContext context) {
@@ -443,6 +550,7 @@ class _CommitItem extends StatelessWidget {
                         child: _CommitActions(
                           onCheckout: onCheckout,
                           onRevert: onRevert,
+                          onCherryPick: onCherryPick,
                         ),
                       ),
                     ],
@@ -535,10 +643,12 @@ class _CommitActions extends StatelessWidget {
   const _CommitActions({
     required this.onCheckout,
     required this.onRevert,
+    this.onCherryPick,
   });
 
   final VoidCallback onCheckout;
   final VoidCallback onRevert;
+  final VoidCallback? onCherryPick;
 
   @override
   Widget build(BuildContext context) {
@@ -576,6 +686,24 @@ class _CommitActions extends StatelessWidget {
             ),
           ),
         ),
+        if (onCherryPick != null) ...[
+          const SizedBox(width: 4),
+          Tooltip(
+            message: 'Cherry-pick to current branch',
+            child: InkWell(
+              onTap: onCherryPick,
+              borderRadius: BorderRadius.circular(4),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Icon(
+                  Icons.file_copy_outlined,
+                  size: 14,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }

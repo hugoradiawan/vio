@@ -69,6 +69,13 @@ class PullRequestList extends StatelessWidget {
                         ),
                       );
                 },
+                onReopen: () {
+                  context.read<VersionControlBloc>().add(
+                        PullRequestReopenRequested(
+                          pullRequestId: state.selectedPullRequest!.id,
+                        ),
+                      );
+                },
                 onResolveConflicts: () {
                   _showConflictResolutionDialog(context, state);
                 },
@@ -422,6 +429,7 @@ class _PullRequestDetailPanel extends StatelessWidget {
     required this.isMerging,
     required this.onMerge,
     required this.onClose,
+    required this.onReopen,
     required this.onResolveConflicts,
   });
 
@@ -429,6 +437,7 @@ class _PullRequestDetailPanel extends StatelessWidget {
   final bool isMerging;
   final VoidCallback onMerge;
   final VoidCallback onClose;
+  final VoidCallback onReopen;
   final VoidCallback onResolveConflicts;
 
   @override
@@ -436,6 +445,12 @@ class _PullRequestDetailPanel extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final canMerge = detail.mergeable;
     final hasConflicts = detail.hasConflicts;
+    final isClosed =
+        detail.pullRequest.status ==
+        pr_enum.PullRequestStatus.PULL_REQUEST_STATUS_CLOSED;
+    final isMerged =
+        detail.pullRequest.status ==
+        pr_enum.PullRequestStatus.PULL_REQUEST_STATUS_MERGED;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -469,58 +484,77 @@ class _PullRequestDetailPanel extends StatelessWidget {
           const SizedBox(height: 12),
 
           // Merge status
-          if (hasConflicts) ...[
-            _ConflictWarning(
-              conflictCount: detail.conflicts.length,
-              onResolve: onResolveConflicts,
-            ),
-            const SizedBox(height: 12),
-          ] else if (canMerge) ...[
-            _MergeReady(),
-            const SizedBox(height: 12),
+          if (!isClosed && !isMerged) ...[
+            if (hasConflicts) ...[
+              _ConflictWarning(
+                conflictCount: detail.conflicts.length,
+                onResolve: onResolveConflicts,
+              ),
+              const SizedBox(height: 12),
+            ] else if (canMerge) ...[
+              _MergeReady(),
+              const SizedBox(height: 12),
+            ],
           ],
 
           // Action buttons
           Row(
             children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: onClose,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: cs.onSurfaceVariant,
-                    side: BorderSide(color: cs.outline),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+              if (isClosed) ...[
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: onReopen,
+                    icon: const Icon(Icons.refresh, size: 16),
+                    label: const Text('Reopen'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: VioColors.success,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                   ),
-                  child: const Text('Close'),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: canMerge && !isMerging ? onMerge : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: cs.primary,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: cs.surfaceContainerHigh,
-                    disabledForegroundColor: cs.onSurfaceVariant,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+              ] else if (!isMerged) ...[
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: onClose,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: cs.onSurfaceVariant,
+                      side: BorderSide(color: cs.outline),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
+                    child: const Text('Close'),
                   ),
-                  child: isMerging
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text('Merge'),
                 ),
-              ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: canMerge && !isMerging ? onMerge : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: cs.primary,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: cs.surfaceContainerHigh,
+                      disabledForegroundColor: cs.onSurfaceVariant,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: isMerging
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text('Merge'),
+                  ),
+                ),
+              ],
             ],
           ),
         ],

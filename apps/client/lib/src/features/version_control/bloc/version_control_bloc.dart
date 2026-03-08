@@ -51,8 +51,10 @@ class VersionControlBloc
     on<PullRequestSelected>(_onPullRequestSelected);
     on<PullRequestMergeRequested>(_onPullRequestMerge);
     on<PullRequestCloseRequested>(_onPullRequestClose);
+    on<PullRequestReopenRequested>(_onPullRequestReopen);
     on<ConflictsResolveRequested>(_onConflictsResolve);
     on<BranchCompareRequested>(_onBranchCompare);
+    on<CommitCherryPickRequested>(_onCommitCherryPick);
     on<ShapesStagedForCommit>(_onShapesStaged);
     on<StagedShapesCleared>(_onStagedCleared);
     on<CanvasShapesChanged>(_onCanvasShapesChanged);
@@ -205,6 +207,9 @@ class VersionControlBloc
         '${commits.length} commits, ${baseShapes.length} base shapes, '
         '${uncommittedChanges.length} uncommitted changes',
       );
+
+      // Load pull requests for this project
+      add(const PullRequestsRefreshRequested());
     } on GrpcError catch (e) {
       VioLogger.error(
         'VersionControlBloc: Failed to initialize - ${e.message}',
@@ -227,6 +232,7 @@ class VersionControlBloc
     _pollingTimer = Timer.periodic(_pollingInterval, (_) {
       add(const BranchesRefreshRequested());
       add(const CommitsRefreshRequested());
+      add(const PullRequestsRefreshRequested());
     });
     emit(state.copyWith(isPolling: true));
     VioLogger.debug('VersionControlBloc: Polling started');
@@ -503,7 +509,17 @@ class VersionControlBloc
     BranchCreateRequested event,
     Emitter<VersionControlState> emit,
   ) async {
-    if (state.projectId == null || state.userId == null) return;
+    if (state.projectId == null ||
+        state.projectId!.isEmpty ||
+        state.userId == null ||
+        state.userId!.isEmpty) {
+      emit(
+        state.copyWith(
+          error: 'Cannot create branch: user not authenticated',
+        ),
+      );
+      return;
+    }
 
     VioLogger.info(
       'VersionControlBloc: Creating branch "${event.name}" from sourceBranchId: ${event.sourceBranchId}',
@@ -514,6 +530,10 @@ class VersionControlBloc
         ..projectId = state.projectId!
         ..name = event.name
         ..createdById = state.userId!;
+
+      if (event.description != null && event.description!.isNotEmpty) {
+        request.description = event.description!;
+      }
 
       if (event.sourceBranchId != null) {
         request.sourceBranchId = event.sourceBranchId!;
@@ -558,6 +578,9 @@ class VersionControlBloc
       }
     } on GrpcError catch (e) {
       emit(state.copyWith(error: e.message ?? 'Failed to create branch'));
+    } catch (e) {
+      VioLogger.error('VersionControlBloc: Unexpected error creating branch - $e');
+      emit(state.copyWith(error: 'Failed to create branch: $e'));
     }
   }
 
@@ -932,6 +955,36 @@ class VersionControlBloc
     }
   }
 
+  Future<void> _onCommitCherryPick(
+    CommitCherryPickRequested event,
+    Emitter<VersionControlState> emit,
+  ) async {
+    if (state.projectId == null || state.userId == null) return;
+
+    emit(state.copyWith(status: VersionControlStatus.committing));
+
+    try {
+      await _commitClient.cherryPick(
+        commit_pb.CherryPickRequest()
+          ..projectId = state.projectId!
+          ..targetBranchId = event.targetBranchId
+          ..commitId = event.commitId
+          ..authorId = state.userId!
+          ..message = event.message ?? '',
+      );
+
+      emit(state.copyWith(status: VersionControlStatus.ready));
+      add(const CommitsRefreshRequested());
+    } on GrpcError catch (e) {
+      emit(
+        state.copyWith(
+          status: VersionControlStatus.error,
+          error: e.message ?? 'Failed to cherry-pick commit',
+        ),
+      );
+    }
+  }
+
   // ============================================================================
   // Pull Request Operations
   // ============================================================================
@@ -992,6 +1045,36 @@ class VersionControlBloc
     );
 
     emit(state.copyWith(selectedPullRequest: selected));
+
+    // Fetch full PR detail (conflicts, diff, mergeable status)
+    try {
+      final detailResponse = await _prClient.getPullRequest(
+        pr_pb.GetPullRequestRequest()
+          ..projectId = state.projectId!
+          ..pullRequestId = event.pullRequestId,
+      );
+
+      final sourceBranch = state.branches.where(
+        (b) => b.id == selected.sourceBranchId,
+      ).firstOrNull;
+      final targetBranch = state.branches.where(
+        (b) => b.id == selected.targetBranchId,
+      ).firstOrNull;
+
+      final detail = PullRequestDetail(
+        pullRequest: detailResponse.pullRequest,
+        sourceBranch: sourceBranch,
+        targetBranch: targetBranch,
+        mergeable: detailResponse.mergeable,
+        conflicts: detailResponse.conflicts.toList(),
+      );
+
+      emit(state.copyWith(selectedPullRequestDetail: detail));
+    } on GrpcError catch (e) {
+      VioLogger.error(
+        'VersionControlBloc: Failed to load PR detail - ${e.message}',
+      );
+    }
   }
 
   Future<void> _onPullRequestMerge(
@@ -1006,7 +1089,9 @@ class VersionControlBloc
       await _prClient.mergePullRequest(
         pr_pb.MergePullRequestRequest()
           ..projectId = state.projectId!
-          ..pullRequestId = event.pullRequestId,
+          ..pullRequestId = event.pullRequestId
+          ..strategy = event.strategy
+          ..commitMessage = event.commitMessage ?? '',
       );
 
       emit(
@@ -1048,14 +1133,72 @@ class VersionControlBloc
     }
   }
 
+  Future<void> _onPullRequestReopen(
+    PullRequestReopenRequested event,
+    Emitter<VersionControlState> emit,
+  ) async {
+    if (state.projectId == null) return;
+
+    try {
+      await _prClient.reopenPullRequest(
+        pr_pb.ReopenPullRequestRequest()
+          ..projectId = state.projectId!
+          ..pullRequestId = event.pullRequestId,
+      );
+
+      add(const PullRequestsRefreshRequested());
+    } on GrpcError catch (e) {
+      emit(state.copyWith(error: e.message ?? 'Failed to reopen pull request'));
+    }
+  }
+
   Future<void> _onConflictsResolve(
     ConflictsResolveRequested event,
     Emitter<VersionControlState> emit,
   ) async {
-    // Conflict resolution requires complex UI - just log for now
-    VioLogger.warning(
-      'VersionControlBloc: Conflict resolution not yet implemented in UI',
-    );
+    if (state.projectId == null || state.userId == null) return;
+
+    emit(state.copyWith(status: VersionControlStatus.loading));
+
+    try {
+      await _prClient.resolveConflicts(
+        pr_pb.ResolveConflictsRequest()
+          ..projectId = state.projectId!
+          ..pullRequestId = event.pullRequestId
+          ..resolutions.addAll(event.resolutions)
+          ..resolvedById = state.userId!,
+      );
+
+      // Re-fetch PR detail to reflect the updated conflict state
+      final detailResponse = await _prClient.getPullRequest(
+        pr_pb.GetPullRequestRequest()
+          ..projectId = state.projectId!
+          ..pullRequestId = event.pullRequestId,
+      );
+
+      final currentDetail = state.selectedPullRequestDetail;
+      final updatedDetail = PullRequestDetail(
+        pullRequest: detailResponse.pullRequest,
+        sourceBranch: currentDetail?.sourceBranch,
+        targetBranch: currentDetail?.targetBranch,
+        mergeable: detailResponse.mergeable,
+        conflicts: detailResponse.conflicts.toList(),
+      );
+
+      emit(
+        state.copyWith(
+          status: VersionControlStatus.ready,
+          selectedPullRequestDetail: updatedDetail,
+        ),
+      );
+    } on GrpcError catch (e) {
+      emit(
+        state.copyWith(
+          status: VersionControlStatus.error,
+          error: e.message ?? 'Failed to resolve conflicts',
+        ),
+      );
+    }
   }
 
   // ============================================================================

@@ -166,6 +166,22 @@ class CommitRevertRequested extends VersionControlEvent {
   List<Object?> get props => [commitId, message];
 }
 
+/// Cherry-pick a commit onto the current branch
+class CommitCherryPickRequested extends VersionControlEvent {
+  const CommitCherryPickRequested({
+    required this.commitId,
+    required this.targetBranchId,
+    this.message,
+  });
+
+  final String commitId;
+  final String targetBranchId;
+  final String? message;
+
+  @override
+  List<Object?> get props => [commitId, targetBranchId, message];
+}
+
 /// Refresh pull requests list
 class PullRequestsRefreshRequested extends VersionControlEvent {
   const PullRequestsRefreshRequested({this.status});
@@ -224,6 +240,16 @@ class PullRequestMergeRequested extends VersionControlEvent {
 /// Close a pull request
 class PullRequestCloseRequested extends VersionControlEvent {
   const PullRequestCloseRequested({required this.pullRequestId});
+
+  final String pullRequestId;
+
+  @override
+  List<Object?> get props => [pullRequestId];
+}
+
+/// Reopen a closed pull request
+class PullRequestReopenRequested extends VersionControlEvent {
+  const PullRequestReopenRequested({required this.pullRequestId});
 
   final String pullRequestId;
 

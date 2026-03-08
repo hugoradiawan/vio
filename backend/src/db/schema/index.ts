@@ -1,17 +1,17 @@
 import { relations } from "drizzle-orm";
 import {
-	boolean,
-	customType,
-	doublePrecision,
-	index,
-	integer,
-	jsonb,
-	pgTable,
-	real,
-	text,
-	timestamp,
-	uuid,
-	varchar,
+    boolean,
+    customType,
+    doublePrecision,
+    index,
+    integer,
+    jsonb,
+    pgTable,
+    real,
+    text,
+    timestamp,
+    uuid,
+    varchar,
 } from "drizzle-orm/pg-core";
 
 // Custom type for PostgreSQL bytea columns (binary data)
@@ -308,7 +308,8 @@ export const comments = pgTable(
 // ============================================================================
 
 export const projectsRelations = relations(projects, ({ many, one }) => ({
-	branches: many(branches),
+	// relationName disambiguates the two projects ↔ branches paths
+	branches: many(branches, { relationName: "projectBranches" }),
 	commits: many(commits),
 	frames: many(frames),
 	shapes: many(shapes),
@@ -316,6 +317,7 @@ export const projectsRelations = relations(projects, ({ many, one }) => ({
 	assets: many(projectAssets),
 	colors: many(projectColors),
 	defaultBranch: one(branches, {
+		relationName: "projectDefaultBranch",
 		fields: [projects.defaultBranchId],
 		references: [branches.id],
 	}),
@@ -323,33 +325,71 @@ export const projectsRelations = relations(projects, ({ many, one }) => ({
 
 export const branchesRelations = relations(branches, ({ one, many }) => ({
 	project: one(projects, {
+		relationName: "projectBranches",
 		fields: [branches.projectId],
 		references: [projects.id],
 	}),
-	commits: many(commits),
+	defaultForProject: one(projects, {
+		relationName: "projectDefaultBranch",
+		fields: [branches.id],
+		references: [projects.defaultBranchId],
+	}),
+	// relationName disambiguates the two branches ↔ commits paths
+	commits: many(commits, { relationName: "branchCommits" }),
 	headCommit: one(commits, {
+		relationName: "branchHeadCommit",
 		fields: [branches.headCommitId],
 		references: [commits.id],
 	}),
+	// Pull requests where this branch is source or target
+	sourcePullRequests: many(pullRequests, { relationName: "prSourceBranch" }),
+	targetPullRequests: many(pullRequests, { relationName: "prTargetBranch" }),
 }));
 
-export const commitsRelations = relations(commits, ({ one }) => ({
+export const commitsRelations = relations(commits, ({ one, many }) => ({
 	project: one(projects, {
 		fields: [commits.projectId],
 		references: [projects.id],
 	}),
 	branch: one(branches, {
+		relationName: "branchCommits",
 		fields: [commits.branchId],
 		references: [branches.id],
 	}),
+	headOfBranch: one(branches, {
+		relationName: "branchHeadCommit",
+		fields: [commits.id],
+		references: [branches.headCommitId],
+	}),
+	// Self-referential parent/child chain — needs relationName
 	parent: one(commits, {
+		relationName: "commitParent",
 		fields: [commits.parentId],
 		references: [commits.id],
 	}),
+	children: many(commits, { relationName: "commitParent" }),
 	snapshot: one(snapshots, {
 		fields: [commits.snapshotId],
 		references: [snapshots.id],
 	}),
+}));
+
+export const pullRequestsRelations = relations(pullRequests, ({ one, many }) => ({
+	project: one(projects, {
+		fields: [pullRequests.projectId],
+		references: [projects.id],
+	}),
+	sourceBranch: one(branches, {
+		relationName: "prSourceBranch",
+		fields: [pullRequests.sourceBranchId],
+		references: [branches.id],
+	}),
+	targetBranch: one(branches, {
+		relationName: "prTargetBranch",
+		fields: [pullRequests.targetBranchId],
+		references: [branches.id],
+	}),
+	comments: many(comments),
 }));
 
 export const framesRelations = relations(frames, ({ one, many }) => ({
@@ -369,12 +409,36 @@ export const shapesRelations = relations(shapes, ({ one, many }) => ({
 		fields: [shapes.frameId],
 		references: [frames.id],
 	}),
+	// Self-referential parent/child — needs relationName
 	parent: one(shapes, {
+		relationName: "shapeParent",
 		fields: [shapes.parentId],
 		references: [shapes.id],
 	}),
-	children: many(shapes),
+	children: many(shapes, { relationName: "shapeParent" }),
 	comments: many(comments),
+}));
+
+export const commentsRelations = relations(comments, ({ one, many }) => ({
+	project: one(projects, {
+		fields: [comments.projectId],
+		references: [projects.id],
+	}),
+	pullRequest: one(pullRequests, {
+		fields: [comments.pullRequestId],
+		references: [pullRequests.id],
+	}),
+	shape: one(shapes, {
+		fields: [comments.shapeId],
+		references: [shapes.id],
+	}),
+	// Self-referential thread replies — needs relationName
+	parent: one(comments, {
+		relationName: "commentReplies",
+		fields: [comments.parentId],
+		references: [comments.id],
+	}),
+	replies: many(comments, { relationName: "commentReplies" }),
 }));
 
 // ============================================================================

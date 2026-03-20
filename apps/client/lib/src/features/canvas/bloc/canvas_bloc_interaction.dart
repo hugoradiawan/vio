@@ -245,8 +245,24 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
       }
     }
 
-    // Hit test to find shape under pointer
-    final hitShape = findTopShapeAtPoint(canvasPoint, state.shapeList);
+    // Hit test to find shape under pointer.
+    // When inside an entered container, prefer shapes that are descendants of
+    // that container so overlapping siblings don't cause an unwanted exit.
+    Shape? hitShape;
+    if (state.enteredContainerId != null) {
+      final allHits = HitTest.findShapesAtPoint(canvasPoint, state.shapeList);
+      hitShape = allHits.cast<Shape?>().firstWhere(
+            (s) => HitTest.isDescendantOf(
+              s!,
+              state.enteredContainerId!,
+              state.shapes,
+            ),
+            orElse: () => null,
+          ) ??
+          allHits.firstOrNull;
+    } else {
+      hitShape = findTopShapeAtPoint(canvasPoint, state.shapeList);
+    }
 
     if (hitShape != null) {
       // Resolve the correct selection target based on group drill-down state.
@@ -258,30 +274,32 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
 
       if (isDirectSelect) {
         selectionTarget = hitShape;
-        shouldClearEnteredGroup = state.enteredGroupId != null;
-      } else if (state.enteredGroupId != null) {
-        if (hitShape.id == state.enteredGroupId ||
+        shouldClearEnteredGroup = state.enteredContainerId != null;
+      } else if (state.enteredContainerId != null) {
+        if (hitShape.id == state.enteredContainerId ||
             !HitTest.isDescendantOf(
               hitShape,
-              state.enteredGroupId!,
+              state.enteredContainerId!,
               state.shapes,
             )) {
           // Clicked on the entered group's background or outside it.
           // Exit the entered group and do normal (outermost-group) selection.
-          selectionTarget = HitTest.resolveGroupTarget(hitShape, state.shapes);
+          selectionTarget =
+              HitTest.resolveContainerTarget(hitShape, state.shapes);
           shouldClearEnteredGroup = true;
         } else {
           // Clicked on a descendant — select the direct child of the entered
           // group that contains this shape.
-          selectionTarget = HitTest.resolveGroupTarget(
+          selectionTarget = HitTest.resolveContainerTarget(
             hitShape,
             state.shapes,
-            enteredGroupId: state.enteredGroupId,
+            enteredContainerId: state.enteredContainerId,
           );
         }
       } else {
-        // Not inside any group — select the outermost group ancestor.
-        selectionTarget = HitTest.resolveGroupTarget(hitShape, state.shapes);
+        // Not inside any group — select the outermost container ancestor.
+        selectionTarget =
+            HitTest.resolveContainerTarget(hitShape, state.shapes);
       }
 
       // Check if shift is held for multi-select
@@ -299,7 +317,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
               interactionMode: InteractionMode.idle,
               clearDragStart: true,
               clearCurrentPointer: true,
-              clearEnteredGroupId: shouldClearEnteredGroup,
+              clearEnteredContainerId: shouldClearEnteredGroup,
             ),
           );
         } else {
@@ -315,7 +333,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
               interactionMode: InteractionMode.movingShapes,
               dragStart: canvasPoint,
               currentPointer: canvasPoint,
-              clearEnteredGroupId: shouldClearEnteredGroup,
+              clearEnteredContainerId: shouldClearEnteredGroup,
             ),
           );
         }
@@ -334,7 +352,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
             interactionMode: InteractionMode.movingShapes,
             dragStart: canvasPoint,
             currentPointer: canvasPoint,
-            clearEnteredGroupId: shouldClearEnteredGroup,
+            clearEnteredContainerId: shouldClearEnteredGroup,
           ),
         );
       }
@@ -347,7 +365,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
           dragStart: canvasPoint,
           currentPointer: canvasPoint,
           selectedShapeIds: [], // Clear selection
-          clearEnteredGroupId: true,
+          clearEnteredContainerId: true,
         ),
       );
     }
@@ -369,29 +387,34 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
       return;
     }
 
-    // Double-click on a GroupShape → drill into the group.
-    if (selectedShape is GroupShape) {
+    // Double-click on a GroupShape or FrameShape — drill into the container.
+    if (selectedShape is GroupShape || selectedShape is FrameShape) {
       final screenPoint = Offset(event.x, event.y);
       final canvasPoint = _screenToCanvas(screenPoint);
 
-      // Find the leaf shape under the cursor.
-      final hitShape =
-          findTopShapeAtPoint(canvasPoint, state.shapeList);
+      // Find the topmost shape under the cursor that is a descendant of the
+      // selected container. We can't use findTopShapeAtPoint because a sibling
+      // shape may overlap the container's children at the click position.
+      final allHits = HitTest.findShapesAtPoint(canvasPoint, state.shapeList);
+      final hitShape = allHits.cast<Shape?>().firstWhere(
+            (s) =>
+                s!.id != selectedShape.id &&
+                HitTest.isDescendantOf(s, selectedShape.id, state.shapes),
+            orElse: () => null,
+          );
 
-      if (hitShape != null &&
-          hitShape.id != selectedShape.id &&
-          HitTest.isDescendantOf(hitShape, selectedShape.id, state.shapes)) {
-        // Resolve the direct child of the newly-entered group.
-        final target = HitTest.resolveGroupTarget(
+      if (hitShape != null) {
+        // Resolve the direct child of the newly-entered container.
+        final target = HitTest.resolveContainerTarget(
           hitShape,
           state.shapes,
-          enteredGroupId: selectedShape.id,
+          enteredContainerId: selectedShape.id,
         );
 
         final newSelection = [target.id];
         emit(
           state.copyWith(
-            enteredGroupId: selectedShape.id,
+            enteredContainerId: selectedShape.id,
             selectedShapeIds: newSelection,
             expandedLayerIds: _expandAncestorsForShapes(newSelection),
             interactionMode: InteractionMode.idle,
@@ -402,10 +425,10 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
           ),
         );
       } else {
-        // Nothing under cursor inside the group — enter but clear selection.
+        // Nothing under cursor inside the container — enter but clear selection.
         emit(
           state.copyWith(
-            enteredGroupId: selectedShape.id,
+            enteredContainerId: selectedShape.id,
             selectedShapeIds: const [],
             interactionMode: InteractionMode.idle,
             clearDragStart: true,
@@ -658,17 +681,31 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
         hoveredCorner = _hitTestCornerRadiusHandle(screenPoint);
       }
 
-      // Hit test to find shape under pointer for hover highlight.
-      // Resolve to the correct group level so the hover outline matches what
-      // a click would actually select.
-      final hoveredLeaf =
-          findTopShapeAtPoint(canvasPoint, state.shapeList);
+      // Resolve to the correct container level so the hover outline matches what
+      // a click would actually select. When inside an entered container, prefer
+      // descendants so overlapping siblings don't flicker the hover.
+      Shape? hoveredLeaf;
+      if (state.enteredContainerId != null) {
+        final allHits =
+            HitTest.findShapesAtPoint(canvasPoint, state.shapeList);
+        hoveredLeaf = allHits.cast<Shape?>().firstWhere(
+              (s) => HitTest.isDescendantOf(
+                s!,
+                state.enteredContainerId!,
+                state.shapes,
+              ),
+              orElse: () => null,
+            ) ??
+            allHits.firstOrNull;
+      } else {
+        hoveredLeaf = findTopShapeAtPoint(canvasPoint, state.shapeList);
+      }
       String? newHoveredId;
       if (hoveredLeaf != null) {
-        final target = HitTest.resolveGroupTarget(
+        final target = HitTest.resolveContainerTarget(
           hoveredLeaf,
           state.shapes,
-          enteredGroupId: state.enteredGroupId,
+          enteredContainerId: state.enteredContainerId,
         );
         newHoveredId = target.id;
       }

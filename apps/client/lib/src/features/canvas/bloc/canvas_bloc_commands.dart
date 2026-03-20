@@ -258,6 +258,14 @@ mixin _CanvasCommandsMixin on Bloc<CanvasEvent, CanvasState> {
     );
   }
 
+  void _onHoverCleared(
+    HoverCleared event,
+    Emitter<CanvasState> emit,
+  ) {
+    if (state.hoveredShapeId == null) return;
+    emit(state.copyWith(clearHoveredShapeId: true));
+  }
+
   void _onShapesRemoved(
     ShapesRemoved event,
     Emitter<CanvasState> emit,

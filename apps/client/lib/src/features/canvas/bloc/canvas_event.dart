@@ -338,6 +338,11 @@ class SelectionCleared extends CanvasEvent {
   const SelectionCleared();
 }
 
+/// Fired to clear the hover highlight (e.g. when panning starts).
+class HoverCleared extends CanvasEvent {
+  const HoverCleared();
+}
+
 /// Fired to zoom in from keyboard shortcut (uses viewport center as focal point)
 class ZoomIn extends CanvasEvent {
   const ZoomIn();

@@ -37,22 +37,30 @@ mixin _CanvasHierarchyMixin on Bloc<CanvasEvent, CanvasState> {
     SelectionCleared event,
     Emitter<CanvasState> emit,
   ) {
-    if (state.enteredGroupId != null) {
-      final enteredGroup = state.shapes[state.enteredGroupId!];
-      if (enteredGroup != null) {
-        final parentGroupId = enteredGroup.parentId;
-        final parentGroup =
-            parentGroupId != null ? state.shapes[parentGroupId] : null;
-        final nextEnteredGroupId =
-            (parentGroup is GroupShape) ? parentGroupId : null;
+    if (state.enteredContainerId != null) {
+      final enteredContainer = state.shapes[state.enteredContainerId!];
+      if (enteredContainer != null) {
+        // Walk up both parentId and frameId to find the parent container.
+        final parentContainerId =
+            enteredContainer.parentId ?? enteredContainer.frameId;
+        final parentContainer = parentContainerId != null
+            ? state.shapes[parentContainerId]
+            : null;
+
+        // Stay in the parent if it's a container (group or frame).
+        final bool isParentEnterable = parentContainer != null &&
+            (parentContainer is GroupShape || parentContainer is FrameShape);
+
+        final nextEnteredContainerId =
+            isParentEnterable ? parentContainerId : null;
 
         emit(
           state.copyWith(
-            selectedShapeIds: [state.enteredGroupId!],
+            selectedShapeIds: [state.enteredContainerId!],
             expandedLayerIds:
-                _expandAncestorsForShapes([state.enteredGroupId!]),
-            enteredGroupId: nextEnteredGroupId,
-            clearEnteredGroupId: nextEnteredGroupId == null,
+                _expandAncestorsForShapes([state.enteredContainerId!]),
+            enteredContainerId: nextEnteredContainerId,
+            clearEnteredContainerId: nextEnteredContainerId == null,
             clearHoveredCornerIndex: true,
           ),
         );
@@ -60,7 +68,7 @@ mixin _CanvasHierarchyMixin on Bloc<CanvasEvent, CanvasState> {
         emit(
           state.copyWith(
             selectedShapeIds: [],
-            clearEnteredGroupId: true,
+            clearEnteredContainerId: true,
             clearHoveredCornerIndex: true,
           ),
         );

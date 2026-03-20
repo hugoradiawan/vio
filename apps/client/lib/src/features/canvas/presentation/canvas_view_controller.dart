@@ -406,6 +406,9 @@ mixin _CanvasViewController on State<CanvasView> {
       // not in the widget tree.
       state._isPanning = true;
       state._lastPanPosition = event.localPosition;
+      // Clear hover so the stale outline isn't drawn at the wrong position
+      // while panning (the BLoC won't receive PointerMove during pan).
+      context.read<CanvasBloc>().add(const HoverCleared());
       return;
     }
 
@@ -871,7 +874,14 @@ mixin _CanvasViewController on State<CanvasView> {
     final state = this as _CanvasViewState;
 
     if (event is PointerScrollEvent) {
-      final canvasState = context.read<CanvasBloc>().state;
+      final canvasBloc = context.read<CanvasBloc>();
+
+      // Suppress overlays (hover outlines, selection handles, grid) while
+      // the viewport is moving. Without this, stale overlay state from the
+      // BLoC ghosts at old screen positions.
+      _setViewportInteractionActive();
+
+      final canvasState = canvasBloc.state;
       final isZoomGesture = isPlatformModifierPressed();
       final isShiftScroll = HardwareKeyboard.instance.isShiftPressed;
 
@@ -909,21 +919,23 @@ mixin _CanvasViewController on State<CanvasView> {
         );
       }
 
-      // Debounce BLoC sync: cancel any pending timer and start a new one.
-      // This keeps overlays (selection, grid, rulers) visible and gradients
-      // rendered during scroll/zoom, avoiding the stutter & gradient→solid
-      // flash caused by the old _setViewportInteractionActive(holdFor: 180ms).
+      // Debounce: once scrolling stops, sync viewport to BLoC and restore
+      // overlays. Each scroll tick resets the timer so overlays stay hidden
+      // throughout continuous scrolling.
       state._wheelSyncTimer?.cancel();
       state._wheelSyncTimer = Timer(const Duration(milliseconds: 80), () {
         if (!mounted) return;
         _flushBufferedPanZoom(context, force: true);
         _syncViewportToBloc(context);
+        _setViewportInteractionInactive();
       });
     } else if (event is PointerScaleEvent) {
       final scaleDrift = (event.scale - 1.0).abs();
       if (scaleDrift < _CanvasViewState._pointerScaleGestureEpsilon) {
         return;
       }
+
+      _setViewportInteractionActive();
 
       state._perfDiagnostics.onWheelZoom(
         scaleFactor: event.scale,
@@ -942,6 +954,7 @@ mixin _CanvasViewController on State<CanvasView> {
         if (!mounted) return;
         _flushBufferedPanZoom(context, force: true);
         _syncViewportToBloc(context);
+        _setViewportInteractionInactive();
       });
     }
   }

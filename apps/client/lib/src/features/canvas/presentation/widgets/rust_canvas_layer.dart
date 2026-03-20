@@ -132,7 +132,6 @@ class _RustCanvasLayerState extends State<RustCanvasLayer> {
     final state = widget.canvasState;
     return RepaintBoundary(
       child: CustomPaint(
-        isComplex: true,
         willChange: true,
         painter: RustCanvasPainter(
           repaintNotifier: widget.viewportNotifier,

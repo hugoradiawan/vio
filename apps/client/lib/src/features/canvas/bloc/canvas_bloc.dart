@@ -85,6 +85,7 @@ class CanvasBloc extends Bloc<CanvasEvent, CanvasState>
     on<CanvasDoubleClicked>(_onCanvasDoubleClicked);
     on<CanvasPointerExited>(_onCanvasPointerExited);
     on<SelectionCleared>(_onSelectionCleared);
+    on<HoverCleared>(_onHoverCleared);
     on<ShapeAdded>(_onShapeAdded);
     on<ShapesAdded>(_onShapesAdded);
     on<ShapesReplaced>(_onShapesReplaced);

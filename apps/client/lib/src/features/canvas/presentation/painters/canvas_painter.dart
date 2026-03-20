@@ -72,11 +72,19 @@ class CanvasPainter extends CustomPainter {
     return SelectionHandleMetrics.toCanvasUnits(screenPx: px, zoom: _zoom);
   }
 
+
   @override
   void paint(Canvas canvas, Size size) {
-    final visibleCanvasRect = _visibleCanvasRect(size).inflate(
-      simplifyForInteraction ? 320 : 160,
-    );
+    // Use a consistent visibility buffer regardless of interaction state
+    // to prevent shapes from appearing/disappearing at inflation boundaries.
+    final visibleCanvasRect = _visibleCanvasRect(size).inflate(200);
+
+    // Force-clear the compositing layer to prevent stale pixel artifacts
+    // from Impeller's RepaintBoundary backing store on macOS.
+    canvas.save();
+    canvas.clipRect(Offset.zero & size);
+    canvas.drawColor(const Color(0x00000000), BlendMode.src);
+    canvas.restore();
 
     // Apply view transformation
     canvas.save();

@@ -161,59 +161,70 @@ class HitTest {
     return hits;
   }
 
+  /// Whether [shape] is a top-level frame (artboard) — i.e. a [FrameShape]
+  /// with no parent group or parent frame.
+  static bool isTopLevelFrame(Shape shape) {
+    return shape is FrameShape &&
+        shape.parentId == null &&
+        shape.frameId == null;
+  }
+
   /// Given a directly-hit shape, resolve the correct selection target based on
-  /// the current group drill-down depth.
+  /// the current container drill-down depth.
   ///
-  /// When [enteredGroupId] is `null`, returns the outermost [GroupShape]
-  /// ancestor of [hitShape] (i.e. first click selects the top-level group).
-  /// When [enteredGroupId] is set, returns the direct child of that group that
-  /// contains [hitShape] (i.e. selecting one level deeper).
-  static Shape resolveGroupTarget(
+  /// Walks both [parentId] (groups) and [frameId] (frames) chains.
+  ///
+  /// When [enteredContainerId] is `null`, returns the outermost container
+  /// ancestor of [hitShape] (the root-most group or frame in the hierarchy).
+  /// When [enteredContainerId] is set, returns the direct child of that
+  /// container that contains [hitShape].
+  static Shape resolveContainerTarget(
     Shape hitShape,
     Map<String, Shape> shapesById, {
-    String? enteredGroupId,
+    String? enteredContainerId,
   }) {
-    if (enteredGroupId == null) {
-      // Walk up the GroupShape parentId chain to find the outermost group.
+    if (enteredContainerId == null) {
+      // Walk up both parentId and frameId chains to find the outermost
+      // container ancestor.
       var current = hitShape;
       while (true) {
-        final parentId = current.parentId;
-        if (parentId == null) break;
-        final parent = shapesById[parentId];
-        if (parent == null || parent is! GroupShape) break;
+        final pid = current.parentId ?? current.frameId;
+        if (pid == null) break;
+        final parent = shapesById[pid];
+        if (parent == null) break;
         current = parent;
       }
       return current;
     } else {
-      // Walk up to find the direct child of the entered group.
+      // Walk up to find the direct child of the entered container.
       var current = hitShape;
       while (true) {
-        final parentId = current.parentId;
-        if (parentId == enteredGroupId) return current;
-        if (parentId == null) break;
-        final parent = shapesById[parentId];
+        final pid = current.parentId ?? current.frameId;
+        if (pid == enteredContainerId) return current;
+        if (pid == null) break;
+        final parent = shapesById[pid];
         if (parent == null) break;
         current = parent;
       }
-      // hitShape is not inside the entered group — return as-is so the caller
-      // can decide to exit the entered group.
+      // hitShape is not inside the entered container — return as-is so the
+      // caller can decide to exit.
       return hitShape;
     }
   }
 
   /// Whether [shape] is a descendant (direct or transitive) of the shape with
-  /// [ancestorId], following the [parentId] chain through groups.
+  /// [ancestorId], following both [parentId] and [frameId] chains.
   static bool isDescendantOf(
     Shape shape,
     String ancestorId,
     Map<String, Shape> shapesById,
   ) {
-    var currentId = shape.parentId;
+    var currentId = shape.parentId ?? shape.frameId;
     while (currentId != null) {
       if (currentId == ancestorId) return true;
       final parent = shapesById[currentId];
       if (parent == null) break;
-      currentId = parent.parentId;
+      currentId = parent.parentId ?? parent.frameId;
     }
     return false;
   }

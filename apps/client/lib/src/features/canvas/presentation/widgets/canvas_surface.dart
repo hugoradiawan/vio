@@ -88,6 +88,7 @@ class CanvasSurface extends StatelessWidget {
           ),
           if (workspaceState.showGrid && !isInteracting)
             Positioned.fill(
+              key: const ValueKey('grid'),
               child: RepaintBoundary(
                 child: CustomPaint(
                   isComplex: true,
@@ -104,12 +105,14 @@ class CanvasSurface extends StatelessWidget {
           // Tile layer: renders static shapes from cached tiles (behind draw cmds)
           if (_useRustCanvas && _useRustTiles)
             Positioned.fill(
+              key: const ValueKey('tiles'),
               child: TileCompositorLayer(
                 canvasState: canvasState,
               ),
             ),
           // Shape / draw-command layer
           Positioned.fill(
+            key: const ValueKey('shapes'),
             child: _useRustCanvas
                 ? RustCanvasLayer(
                     canvasState: canvasState,
@@ -124,12 +127,21 @@ class CanvasSurface extends StatelessWidget {
                     // ViewportNotifier — otherwise the buildWhen filter
                     // on the parent BlocBuilder would leave the painter
                     // with a stale viewport.
+                    //
+                    // Also listens to interactionNotifier so that
+                    // simplifyForInteraction toggles trigger an immediate
+                    // repaint (the outer ListenableBuilder rebuilds the
+                    // Stack but does not guarantee the inner builder's
+                    // closure is re-evaluated in time if only one
+                    // listenable is subscribed).
                     child: ListenableBuilder(
-                      listenable: viewportNotifier,
+                      listenable: Listenable.merge([
+                        viewportNotifier,
+                        interactionNotifier,
+                      ]),
                       builder: (context, _) {
                         final canvasTheme = VioCanvasTheme.of(context);
                         return CustomPaint(
-                          isComplex: true,
                           willChange: true,
                           painter: CanvasPainter(
                             viewMatrix: viewportNotifier.viewMatrix,
@@ -156,19 +168,25 @@ class CanvasSurface extends StatelessWidget {
           ),
           if (canvasState.hasSelection && !isInteracting)
             Positioned.fill(
+              key: const ValueKey('selection'),
               child: RepaintBoundary(
-                child: CustomPaint(
-                  willChange: true,
-                  painter: SelectionBoxPainter(
-                    selectedShapes: canvasState.selectedShapes,
-                    viewMatrix: viewportNotifier.viewMatrix,
-                    selectionColor: VioCanvasTheme.of(context).selectionColor,
-                    dragOffset: canvasState.dragOffset,
-                    activeCornerIndex: canvasState.activeCornerIndex,
-                    hoveredCornerIndex: canvasState.hoveredCornerIndex,
-                    showCornerRadiusHandles:
-                        canvasState.selectedShapes.length == 1 &&
-                            canvasState.selectedShapes.first is RectangleShape,
+                child: ListenableBuilder(
+                  listenable: viewportNotifier,
+                  builder: (context, _) => CustomPaint(
+                    willChange: true,
+                    painter: SelectionBoxPainter(
+                      selectedShapes: canvasState.selectedShapes,
+                      viewMatrix: viewportNotifier.viewMatrix,
+                      selectionColor:
+                          VioCanvasTheme.of(context).selectionColor,
+                      dragOffset: canvasState.dragOffset,
+                      activeCornerIndex: canvasState.activeCornerIndex,
+                      hoveredCornerIndex: canvasState.hoveredCornerIndex,
+                      showCornerRadiusHandles:
+                          canvasState.selectedShapes.length == 1 &&
+                              canvasState.selectedShapes.first
+                                  is RectangleShape,
+                    ),
                   ),
                 ),
               ),
@@ -177,14 +195,18 @@ class CanvasSurface extends StatelessWidget {
               (canvasState.snapLines.isNotEmpty ||
                   canvasState.snapPoints.isNotEmpty))
             Positioned.fill(
+              key: const ValueKey('snapGuides'),
               child: RepaintBoundary(
-                child: CustomPaint(
-                  willChange: true,
-                  painter: SnapGuidesPainter(
-                    snapLines: canvasState.snapLines,
-                    snapPoints: canvasState.snapPoints,
-                    viewMatrix: viewportNotifier.viewMatrix,
-                    zoom: viewportNotifier.zoom,
+                child: ListenableBuilder(
+                  listenable: viewportNotifier,
+                  builder: (context, _) => CustomPaint(
+                    willChange: true,
+                    painter: SnapGuidesPainter(
+                      snapLines: canvasState.snapLines,
+                      snapPoints: canvasState.snapPoints,
+                      viewMatrix: viewportNotifier.viewMatrix,
+                      zoom: viewportNotifier.zoom,
+                    ),
                   ),
                 ),
               ),
@@ -193,6 +215,7 @@ class CanvasSurface extends StatelessWidget {
               canvasState.hasSelection &&
               selectionRect != null)
             Positioned.fill(
+              key: const ValueKey('sizeIndicator'),
               child: RepaintBoundary(
                 child: CustomPaint(
                   painter: SizeIndicatorPainter(

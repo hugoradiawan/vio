@@ -103,8 +103,34 @@ class RustCanvasPainter extends CustomPainter {
     return z <= 0 ? 1.0 : z;
   }
 
+  // Diagnostic: confirm Rust painter is active
+  static int _paintCount = 0;
+
   @override
   void paint(Canvas canvas, Size size) {
+    _paintCount++;
+    if (_paintCount <= 3 && drawCommands.isNotEmpty) {
+      final clipCmds = drawCommands.whereType<DrawCommand_ClipRect>().toList();
+      final buf = StringBuffer('[RUST_PAINT] #$_paintCount ');
+      buf.write('cmds=${drawCommands.length} ');
+      buf.write('clips=${clipCmds.length} ');
+      buf.write('simplify=$simplifyForInteraction ');
+      for (final c in clipCmds) {
+        buf.write('clip=(${c.rect[0].toStringAsFixed(1)},'
+            '${c.rect[1].toStringAsFixed(1)},'
+            '${c.rect[2].toStringAsFixed(1)},'
+            '${c.rect[3].toStringAsFixed(1)}) ');
+      }
+      // ignore: avoid_print
+      print(buf.toString());
+    }
+
+    // Force-clear to prevent Impeller RepaintBoundary caching artifacts.
+    canvas.save();
+    canvas.clipRect(Offset.zero & size);
+    canvas.drawColor(const Color(0x00000000), BlendMode.src);
+    canvas.restore();
+
     // Execute Rust-generated draw commands for shape rendering.
     _executeDrawCommands(canvas);
 

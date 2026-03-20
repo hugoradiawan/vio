@@ -76,7 +76,7 @@ class CanvasState extends Equatable {
     ShapeContainmentTree? containmentTree,
     this.selectedShapeIds = const [],
     this.hoveredShapeId,
-    this.enteredGroupId,
+    this.enteredContainerId,
     this.expandedLayerIds = const {},
     this.hoveredLayerId,
     this.snapLines = const [],
@@ -145,10 +145,11 @@ class CanvasState extends Equatable {
   /// ID of shape currently under the pointer (canvas)
   final String? hoveredShapeId;
 
-  /// ID of the group the user has drilled into via double-click.
-  /// When set, single-click selects direct children of this group instead of
-  /// the outermost group ancestor (Figma-style group selection).
-  final String? enteredGroupId;
+  /// ID of the container (group or frame) the user has drilled into via
+  /// double-click. When set, single-click selects direct children of this
+  /// container instead of the outermost container ancestor (Figma-style
+  /// drill-down selection).
+  final String? enteredContainerId;
 
   /// IDs of expanded layers in the layers panel (frames/groups)
   final Set<String> expandedLayerIds;
@@ -436,7 +437,7 @@ class CanvasState extends Equatable {
     Map<String, Shape>? shapes,
     List<String>? selectedShapeIds,
     String? hoveredShapeId,
-    String? enteredGroupId,
+    String? enteredContainerId,
     Set<String>? expandedLayerIds,
     String? hoveredLayerId,
     List<SnapLine>? snapLines,
@@ -463,7 +464,7 @@ class CanvasState extends Equatable {
     bool clearCurrentPointer = false,
     bool clearDragOffset = false,
     bool clearHoveredShapeId = false,
-    bool clearEnteredGroupId = false,
+    bool clearEnteredContainerId = false,
     bool clearHoveredLayerId = false,
     bool clearSnap = false,
     bool clearSyncError = false,
@@ -499,8 +500,9 @@ class CanvasState extends Equatable {
       selectedShapeIds: selectedShapeIds ?? this.selectedShapeIds,
       hoveredShapeId:
           clearHoveredShapeId ? null : (hoveredShapeId ?? this.hoveredShapeId),
-      enteredGroupId:
-          clearEnteredGroupId ? null : (enteredGroupId ?? this.enteredGroupId),
+      enteredContainerId: clearEnteredContainerId
+          ? null
+          : (enteredContainerId ?? this.enteredContainerId),
       expandedLayerIds: expandedLayerIds ?? this.expandedLayerIds,
       hoveredLayerId:
           clearHoveredLayerId ? null : (hoveredLayerId ?? this.hoveredLayerId),
@@ -557,7 +559,7 @@ class CanvasState extends Equatable {
         shapes,
         selectedShapeIds,
         hoveredShapeId,
-        enteredGroupId,
+        enteredContainerId,
         expandedLayerIds,
         hoveredLayerId,
         snapLines,

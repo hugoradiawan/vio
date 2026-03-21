@@ -248,13 +248,26 @@ class VioTheme {
       ),
 
       popupMenuTheme: PopupMenuThemeData(
-        color: VioColors.surface,
+        color: colorScheme.surfaceContainer,
         elevation: 8,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(VioSpacing.radiusMd),
-          side: const BorderSide(color: VioColors.border),
+          side: BorderSide(color: colorScheme.outlineVariant),
         ),
-        textStyle: VioTypography.bodyMedium,
+        textStyle: VioTypography.bodyMedium.copyWith(
+          color: colorScheme.onSurface,
+        ),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final base = VioTypography.bodyMedium.copyWith(
+            color: colorScheme.onSurface,
+          );
+          if (states.contains(WidgetState.disabled)) {
+            return base.copyWith(
+              color: colorScheme.onSurface.withValues(alpha: 0.38),
+            );
+          }
+          return base;
+        }),
       ),
 
       dialogTheme: DialogThemeData(

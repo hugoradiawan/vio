@@ -216,7 +216,6 @@ class _LayerItemState extends State<LayerItem> {
 
     const menuItemHeight = 34.0;
     const menuItemPadding = EdgeInsets.symmetric(horizontal: 12);
-    const menuTextStyle = TextStyle(fontSize: 13);
 
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
     final action = await showMenu<_LayerContextAction>(
@@ -231,7 +230,6 @@ class _LayerItemState extends State<LayerItem> {
           enabled: hasSelection && hasUnlockedSelection,
           height: menuItemHeight,
           padding: menuItemPadding,
-          textStyle: menuTextStyle,
           child: const Text('Cut'),
         ),
         PopupMenuItem(
@@ -239,7 +237,6 @@ class _LayerItemState extends State<LayerItem> {
           enabled: hasSelection,
           height: menuItemHeight,
           padding: menuItemPadding,
-          textStyle: menuTextStyle,
           child: const Text('Copy'),
         ),
         PopupMenuItem(
@@ -247,7 +244,6 @@ class _LayerItemState extends State<LayerItem> {
           enabled: hasClipboard,
           height: menuItemHeight,
           padding: menuItemPadding,
-          textStyle: menuTextStyle,
           child: const Text('Paste'),
         ),
         const PopupMenuDivider(height: 8),
@@ -256,7 +252,6 @@ class _LayerItemState extends State<LayerItem> {
           enabled: canGroup,
           height: menuItemHeight,
           padding: menuItemPadding,
-          textStyle: menuTextStyle,
           child: const Text('Group'),
         ),
         PopupMenuItem(
@@ -264,7 +259,6 @@ class _LayerItemState extends State<LayerItem> {
           enabled: canUngroup,
           height: menuItemHeight,
           padding: menuItemPadding,
-          textStyle: menuTextStyle,
           child: const Text('Ungroup'),
         ),
         const PopupMenuDivider(height: 8),
@@ -273,7 +267,6 @@ class _LayerItemState extends State<LayerItem> {
           enabled: hasSelection && hasUnlockedSelection,
           height: menuItemHeight,
           padding: menuItemPadding,
-          textStyle: menuTextStyle,
           child: const Text('Bring to front'),
         ),
         PopupMenuItem(
@@ -281,7 +274,6 @@ class _LayerItemState extends State<LayerItem> {
           enabled: hasSelection && hasUnlockedSelection,
           height: menuItemHeight,
           padding: menuItemPadding,
-          textStyle: menuTextStyle,
           child: const Text('Send to back'),
         ),
       ],
@@ -409,7 +401,9 @@ class _LayerItemState extends State<LayerItem> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(4),
               borderSide: BorderSide(
-                  color: Theme.of(context).colorScheme.primary, width: 2),
+                color: Theme.of(context).colorScheme.primary,
+                width: 2,
+              ),
             ),
           ),
           onSubmitted: (_) => _submitName(),

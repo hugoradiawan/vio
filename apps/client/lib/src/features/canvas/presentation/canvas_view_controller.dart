@@ -511,7 +511,6 @@ mixin _CanvasViewController on State<CanvasView> {
 
     const menuItemHeight = 34.0;
     const menuItemPadding = EdgeInsets.symmetric(horizontal: 12);
-    const menuTextStyle = TextStyle(fontSize: 13);
 
     final action = await showMenu<_CanvasContextAction>(
       context: context,
@@ -525,7 +524,6 @@ mixin _CanvasViewController on State<CanvasView> {
           enabled: hasSelection && hasUnlockedSelection,
           height: menuItemHeight,
           padding: menuItemPadding,
-          textStyle: menuTextStyle,
           child: const Text('Cut'),
         ),
         PopupMenuItem(
@@ -533,7 +531,6 @@ mixin _CanvasViewController on State<CanvasView> {
           enabled: hasSelection,
           height: menuItemHeight,
           padding: menuItemPadding,
-          textStyle: menuTextStyle,
           child: const Text('Copy'),
         ),
         PopupMenuItem(
@@ -541,7 +538,6 @@ mixin _CanvasViewController on State<CanvasView> {
           enabled: hasClipboard,
           height: menuItemHeight,
           padding: menuItemPadding,
-          textStyle: menuTextStyle,
           child: const Text('Paste'),
         ),
         const PopupMenuDivider(height: 8),
@@ -550,7 +546,6 @@ mixin _CanvasViewController on State<CanvasView> {
           enabled: canGroup,
           height: menuItemHeight,
           padding: menuItemPadding,
-          textStyle: menuTextStyle,
           child: const Text('Group'),
         ),
         PopupMenuItem(
@@ -558,7 +553,6 @@ mixin _CanvasViewController on State<CanvasView> {
           enabled: canUngroup,
           height: menuItemHeight,
           padding: menuItemPadding,
-          textStyle: menuTextStyle,
           child: const Text('Ungroup'),
         ),
         const PopupMenuDivider(height: 8),
@@ -567,7 +561,6 @@ mixin _CanvasViewController on State<CanvasView> {
           enabled: hasSelection && hasUnlockedSelection,
           height: menuItemHeight,
           padding: menuItemPadding,
-          textStyle: menuTextStyle,
           child: const Text('Bring to front'),
         ),
         PopupMenuItem(
@@ -575,7 +568,6 @@ mixin _CanvasViewController on State<CanvasView> {
           enabled: hasSelection && hasUnlockedSelection,
           height: menuItemHeight,
           padding: menuItemPadding,
-          textStyle: menuTextStyle,
           child: const Text('Send to back'),
         ),
       ],
@@ -617,7 +609,6 @@ mixin _CanvasViewController on State<CanvasView> {
 
     const menuItemHeight = 34.0;
     const menuItemPadding = EdgeInsets.symmetric(horizontal: 12);
-    const menuTextStyle = TextStyle(fontSize: 13);
 
     final action = await showMenu<_RulerContextAction>(
       context: context,
@@ -630,7 +621,6 @@ mixin _CanvasViewController on State<CanvasView> {
           value: _RulerContextAction.hideRulers,
           height: menuItemHeight,
           padding: menuItemPadding,
-          textStyle: menuTextStyle,
           child: Text('Hide rulers'),
         ),
       ],

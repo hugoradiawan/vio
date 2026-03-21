@@ -141,6 +141,7 @@ class _RustCanvasLayerState extends State<RustCanvasLayer> {
           viewportNotifier: widget.viewportNotifier,
           interactionNotifier: widget.interactionNotifier,
           selectionColor: VioCanvasTheme.of(context).selectionColor,
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
           dragRect: state.dragRect,
           dragOffset: state.dragOffset,
           selectedShapeIds: state.selectedShapeIds,

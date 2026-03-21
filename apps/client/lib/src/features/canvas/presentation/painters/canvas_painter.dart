@@ -14,6 +14,7 @@ class CanvasPainter extends CustomPainter {
     required this.shapesById,
     required this.containmentTree,
     required this.selectionColor,
+    required this.backgroundColor,
     this.dragRect,
     this.dragOffset,
     this.selectedShapeIds = const [],
@@ -38,6 +39,9 @@ class CanvasPainter extends CustomPainter {
 
   /// Color used for selection outlines, drag rect, and hover highlights.
   final Color selectionColor;
+
+  /// Background color for the canvas area.
+  final Color backgroundColor;
 
   /// Color used for shape label text when not selected.
   final Color labelColor;
@@ -83,7 +87,7 @@ class CanvasPainter extends CustomPainter {
     // from Impeller's RepaintBoundary backing store on macOS.
     canvas.save();
     canvas.clipRect(Offset.zero & size);
-    canvas.drawColor(const Color(0x00000000), BlendMode.src);
+    canvas.drawColor(backgroundColor, BlendMode.src);
     canvas.restore();
 
     // Apply view transformation

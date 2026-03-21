@@ -149,6 +149,9 @@ class CanvasSurface extends StatelessWidget {
                             shapesById: canvasState.shapes,
                             containmentTree: canvasState.containmentTree,
                             selectionColor: canvasTheme.selectionColor,
+                            backgroundColor: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerLow,
                             labelColor: Theme.of(context)
                                 .colorScheme
                                 .onSurfaceVariant

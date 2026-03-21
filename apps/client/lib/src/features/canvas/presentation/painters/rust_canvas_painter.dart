@@ -33,6 +33,7 @@ class RustCanvasPainter extends CustomPainter {
     required this.viewportNotifier,
     required this.interactionNotifier,
     required this.selectionColor,
+    required this.backgroundColor,
     this.dragRect,
     this.dragOffset,
     this.selectedShapeIds = const [],
@@ -94,6 +95,9 @@ class RustCanvasPainter extends CustomPainter {
   /// Colour used for hover outlines, selection outlines, and drag rect.
   final Color selectionColor;
 
+  /// Background color for the canvas area.
+  final Color backgroundColor;
+
   /// Read viewport state from the notifier — always current on each paint.
   Matrix2D get viewMatrix => viewportNotifier.viewMatrix;
   bool get simplifyForInteraction => interactionNotifier.value;
@@ -125,11 +129,9 @@ class RustCanvasPainter extends CustomPainter {
       print(buf.toString());
     }
 
-    // Force-clear to prevent Impeller RepaintBoundary caching artifacts.
-    canvas.save();
-    canvas.clipRect(Offset.zero & size);
-    canvas.drawColor(const Color(0x00000000), BlendMode.src);
-    canvas.restore();
+    // Fill background and force-clear to prevent Impeller RepaintBoundary
+    // caching artifacts.
+    canvas.drawRect(Offset.zero & size, Paint()..color = backgroundColor);
 
     // Execute Rust-generated draw commands for shape rendering.
     _executeDrawCommands(canvas);
@@ -1006,7 +1008,8 @@ class RustCanvasPainter extends CustomPainter {
         hoveredLayerId != oldDelegate.hoveredLayerId ||
         editingTextShapeId != oldDelegate.editingTextShapeId ||
         dragRect != oldDelegate.dragRect ||
-        dragOffset != oldDelegate.dragOffset;
+        dragOffset != oldDelegate.dragOffset ||
+        backgroundColor != oldDelegate.backgroundColor;
   }
 }
 

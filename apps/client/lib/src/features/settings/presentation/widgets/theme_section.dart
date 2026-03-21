@@ -230,25 +230,27 @@ class _CustomColorButton extends StatelessWidget {
             onColorPicked(Color(result.color));
           }
         },
-        child: Container(
+        child: SizedBox(
           width: 32,
           height: 32,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-            gradient: const SweepGradient(
-              colors: [
-                Color(0xFFFF0000),
-                Color(0xFFFFFF00),
-                Color(0xFF00FF00),
-                Color(0xFF00FFFF),
-                Color(0xFF0000FF),
-                Color(0xFFFF00FF),
-                Color(0xFFFF0000),
-              ],
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+              gradient: const SweepGradient(
+                colors: [
+                  Color(0xFFFF0000),
+                  Color(0xFFFFFF00),
+                  Color(0xFF00FF00),
+                  Color(0xFF00FFFF),
+                  Color(0xFF0000FF),
+                  Color(0xFFFF00FF),
+                  Color(0xFFFF0000),
+                ],
+              ),
             ),
+            child: const Icon(Icons.add, color: Colors.white, size: 14),
           ),
-          child: const Icon(Icons.add, color: Colors.white, size: 14),
         ),
       ),
     );

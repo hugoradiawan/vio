@@ -89,11 +89,15 @@ class VioToolbarSeparator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 1,
-      height: 20,
-      margin: const EdgeInsets.symmetric(horizontal: VioSpacing.xs),
-      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.25),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: VioSpacing.xs),
+      child: SizedBox(
+        width: 1,
+        height: 20,
+        child: ColoredBox(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.25),
+        ),
+      ),
     );
   }
 }

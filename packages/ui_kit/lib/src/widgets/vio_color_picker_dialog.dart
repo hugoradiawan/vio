@@ -146,12 +146,13 @@ class _VioColorPickerDialogState extends State<VioColorPickerDialog> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(VioSpacing.radiusMd),
       ),
-      child: Container(
+      child: SizedBox(
         width: 320,
-        padding: const EdgeInsets.all(VioSpacing.lg),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Padding(
+          padding: const EdgeInsets.all(VioSpacing.lg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Header
             Row(
@@ -225,6 +226,7 @@ class _VioColorPickerDialogState extends State<VioColorPickerDialog> {
               ],
             ),
           ],
+          ),
         ),
       ),
     );
@@ -361,27 +363,29 @@ class _VioColorPickerDialogState extends State<VioColorPickerDialog> {
     return Row(
       children: [
         // Color preview
-        Container(
+        SizedBox(
           width: 48,
           height: 48,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-            border: Border.all(color: VioColors.border),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(VioSpacing.radiusSm - 1),
-            child: Stack(
-              children: [
-                // Checkerboard for transparency
-                CustomPaint(
-                  size: const Size(48, 48),
-                  painter: _CheckerboardPainter(),
-                ),
-                // Color overlay
-                Container(
-                  color: _hsvColor.toColor().withValues(alpha: _opacity),
-                ),
-              ],
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
+              border: Border.all(color: VioColors.border),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(VioSpacing.radiusSm - 1),
+              child: Stack(
+                children: [
+                  // Checkerboard for transparency
+                  CustomPaint(
+                    size: const Size(48, 48),
+                    painter: _CheckerboardPainter(),
+                  ),
+                  // Color overlay
+                  ColoredBox(
+                    color: _hsvColor.toColor().withValues(alpha: _opacity),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

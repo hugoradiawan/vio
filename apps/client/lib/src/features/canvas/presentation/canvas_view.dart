@@ -486,7 +486,7 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
           if (_isDroppingFile)
             Positioned.fill(
               child: IgnorePointer(
-                child: Container(
+                child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                     border: Border.all(

@@ -79,20 +79,22 @@ class _LeftPanelState extends State<LeftPanel>
               children: [
                 const SizedBox(width: VioSpacing.md),
                 // Logo
-                Container(
+                SizedBox(
                   width: 32,
                   height: 32,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,
-                    borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'V',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'V',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
                       ),
                     ),
                   ),

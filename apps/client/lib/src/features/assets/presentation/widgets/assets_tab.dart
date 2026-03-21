@@ -445,15 +445,17 @@ class _AssetGridItem extends StatelessWidget {
       dragAnchorStrategy: pointerDragAnchorStrategy,
       feedback: Material(
         color: Colors.transparent,
-        child: Container(
+        child: SizedBox(
           width: 64,
           height: 64,
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-            border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
+              border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
+            ),
+            child: _buildThumbnail(context),
           ),
-          child: _buildThumbnail(context),
         ),
       ),
       childWhenDragging: Opacity(
@@ -471,7 +473,7 @@ class _AssetGridItem extends StatelessWidget {
       child: Tooltip(
         message: '${asset.name}\n${asset.width}×${asset.height} • '
             '${_formatFileSize(asset.fileSize)}',
-        child: Container(
+        child: DecoratedBox(
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surfaceContainerLow,
             borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
@@ -487,21 +489,23 @@ class _AssetGridItem extends StatelessWidget {
                   child: _buildThumbnail(context),
                 ),
               ),
-              Container(
+              SizedBox(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 4,
-                  vertical: 3,
-                ),
-                child: Text(
-                  asset.name,
-                  style: VioTypography.caption.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontSize: 10,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 3,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
+                  child: Text(
+                    asset.name,
+                    style: VioTypography.caption.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 10,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
             ],
@@ -515,14 +519,14 @@ class _AssetGridItem extends StatelessWidget {
     // Priority: thumbnailBytes (from server) → cachedData (upload cache) → icon
     final bytes = asset.thumbnailBytes ?? cachedData;
     if (bytes != null && bytes.isNotEmpty) {
-      return Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: Theme.of(context).colorScheme.surface,
-        child: Image.memory(
-          bytes,
-          fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => _buildIconFallback(context),
+      return SizedBox.expand(
+        child: ColoredBox(
+          color: Theme.of(context).colorScheme.surface,
+          child: Image.memory(
+            bytes,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => _buildIconFallback(context),
+          ),
         ),
       );
     }
@@ -824,13 +828,15 @@ class _ColorItem extends StatelessWidget {
       data: color,
       feedback: Material(
         color: Colors.transparent,
-        child: Container(
+        child: SizedBox(
           width: 32,
           height: 32,
-          decoration: BoxDecoration(
-            color: _parseColor(),
-            borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-            border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: _parseColor(),
+              borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
+              border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
+            ),
           ),
         ),
       ),
@@ -840,16 +846,18 @@ class _ColorItem extends StatelessWidget {
         onTap: () => _applyColor(context),
         child: Tooltip(
           message: '${color.name}\n${color.color ?? 'Gradient'}',
-          child: Container(
+          child: SizedBox(
             width: 28,
             height: 28,
-            decoration: BoxDecoration(
-              color: _parseColor(),
-              gradient: color.isGradient ? _buildGradient() : null,
-              borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-              border: Border.all(
-                color: Theme.of(context).colorScheme.outline,
-                width: 0.5,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: _parseColor(),
+                gradient: color.isGradient ? _buildGradient() : null,
+                borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outline,
+                  width: 0.5,
+                ),
               ),
             ),
           ),

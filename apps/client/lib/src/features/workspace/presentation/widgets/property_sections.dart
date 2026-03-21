@@ -208,14 +208,15 @@ class _FillItemState extends State<_FillItem> {
                       );
                       setState(() => _expanded = true);
                     },
-                    child: Container(
+                    child: SizedBox(
                       width: 24,
                       height: 24,
-                      alignment: Alignment.center,
-                      child: Icon(
-                        Icons.gradient,
-                        size: 14,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      child: Center(
+                        child: Icon(
+                          Icons.gradient,
+                          size: 14,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   ),
@@ -403,13 +404,15 @@ class _StrokeItem extends StatelessWidget {
               // Color preview
               GestureDetector(
                 onTap: () => _showColorPicker(context),
-                child: Container(
+                child: SizedBox(
                   width: 32,
                   height: 32,
-                  decoration: BoxDecoration(
-                    color: Color(stroke.color),
-                    borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-                    border: Border.all(color: Theme.of(context).colorScheme.outline),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Color(stroke.color),
+                      borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
+                      border: Border.all(color: Theme.of(context).colorScheme.outline),
+                    ),
                   ),
                 ),
               ),
@@ -624,14 +627,16 @@ class ShadowSection extends StatelessWidget {
               // Color preview (tappable for color picker)
               GestureDetector(
                 onTap: () => _showColorPicker(context),
-                child: Container(
+                child: SizedBox(
                   width: 32,
                   height: 32,
-                  decoration: BoxDecoration(
-                    color:
-                        Color(shadow.color).withValues(alpha: shadow.opacity),
-                    borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-                    border: Border.all(color: Theme.of(context).colorScheme.outline),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color:
+                          Color(shadow.color).withValues(alpha: shadow.opacity),
+                      borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
+                      border: Border.all(color: Theme.of(context).colorScheme.outline),
+                    ),
                   ),
                 ),
               ),

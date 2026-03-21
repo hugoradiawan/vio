@@ -82,7 +82,7 @@ class CanvasSurface extends StatelessWidget {
           return Stack(
         children: [
           Positioned.fill(
-            child: Container(
+            child: ColoredBox(
               color: VioCanvasTheme.of(context).canvasBackground,
             ),
           ),
@@ -297,7 +297,7 @@ class CanvasSurface extends StatelessWidget {
               left: 0,
               width: 20,
               height: 20,
-              child: Container(
+              child: ColoredBox(
                 color: Theme.of(context).colorScheme.surfaceContainerLow,
               ),
             ),

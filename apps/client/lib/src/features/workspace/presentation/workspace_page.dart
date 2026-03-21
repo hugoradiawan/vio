@@ -113,7 +113,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
                                   LeftPanel(width: state.leftPanelWidth),
                                 // Canvas area
                                 Expanded(
-                                  child: Container(
+                                  child: ColoredBox(
                                     color: VioCanvasTheme.of(context).canvasBackground,
                                     child: Stack(
                                       children: [
@@ -281,7 +281,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
         const SizedBox(width: VioSpacing.md),
         _buildZoomControls(context),
         const SizedBox(width: VioSpacing.md),
-        Container(width: 1, height: 20, color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.25)),
+        SizedBox(width: 1, height: 20, child: ColoredBox(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.25))),
         const SizedBox(width: VioSpacing.sm),
         VioIconButton(
           icon: Icons.settings_outlined,
@@ -605,7 +605,7 @@ class _ToggleButton extends StatelessWidget {
       child: InkWell(
         onTap: onPressed,
         borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-        child: Container(
+        child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: VioSpacing.xs,
             vertical: VioSpacing.xs / 2,

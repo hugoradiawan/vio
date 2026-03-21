@@ -202,59 +202,61 @@ class _ConflictNavigator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Container(
+    return SizedBox(
       height: 40,
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.all(4),
-        itemCount: conflicts.length,
-        itemBuilder: (context, index) {
-          final conflict = conflicts[index];
-          final isSelected = index == currentIndex;
-          final isResolved = resolutions[conflict.shapeId] != null;
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.all(4),
+          itemCount: conflicts.length,
+          itemBuilder: (context, index) {
+            final conflict = conflicts[index];
+            final isSelected = index == currentIndex;
+            final isResolved = resolutions[conflict.shapeId] != null;
 
-          return Padding(
-            padding: const EdgeInsets.only(right: 4),
-            child: InkWell(
-              onTap: () => onSelectConflict(index),
-              borderRadius: BorderRadius.circular(6),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: isSelected ? cs.primary : Colors.transparent,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      isResolved ? Icons.check_circle : Icons.radio_button_off,
-                      size: 14,
-                      color: isSelected
-                          ? Colors.white
-                          : isResolved
-                              ? VioColors.success
-                              : cs.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      conflict.shapeName,
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : cs.onSurface,
-                        fontSize: 12,
-                        fontWeight:
-                            isSelected ? FontWeight.w500 : FontWeight.normal,
+            return Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: InkWell(
+                onTap: () => onSelectConflict(index),
+                borderRadius: BorderRadius.circular(6),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: isSelected ? cs.primary : Colors.transparent,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isResolved ? Icons.check_circle : Icons.radio_button_off,
+                        size: 14,
+                        color: isSelected
+                            ? Colors.white
+                            : isResolved
+                                ? VioColors.success
+                                : cs.onSurfaceVariant,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 6),
+                      Text(
+                        conflict.shapeName,
+                        style: TextStyle(
+                          color: isSelected ? Colors.white : cs.onSurface,
+                          fontSize: 12,
+                          fontWeight:
+                              isSelected ? FontWeight.w500 : FontWeight.normal,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -654,12 +656,14 @@ class _PropertyConflictsList extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 4),
               child: Row(
                 children: [
-                  Container(
+                  SizedBox(
                     width: 6,
                     height: 6,
-                    decoration: BoxDecoration(
-                      color: accentColor,
-                      shape: BoxShape.circle,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: accentColor,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),

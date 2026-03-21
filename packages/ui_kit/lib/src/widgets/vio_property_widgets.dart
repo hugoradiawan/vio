@@ -74,13 +74,15 @@ class _VioColorPickerState extends State<VioColorPicker> {
         // Color preview
         GestureDetector(
           onTap: _showColorPicker,
-          child: Container(
+          child: SizedBox(
             width: 36,
             height: 36,
-            decoration: BoxDecoration(
-              color: Color(widget.color),
-              borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-              border: Border.all(color: VioColors.border),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Color(widget.color),
+                borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
+                border: Border.all(color: VioColors.border),
+              ),
             ),
           ),
         ),

@@ -34,7 +34,7 @@ class SettingsPage extends StatelessWidget {
         elevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: cs.outline.withValues(alpha: 0.25)),
+          child: SizedBox(height: 1, child: ColoredBox(color: cs.outline.withValues(alpha: 0.25))),
         ),
       ),
       body: ListView(

@@ -476,17 +476,19 @@ class _ShapeNameSectionState extends State<_ShapeNameSection> {
       child: Row(
         children: [
           // Shape type icon
-          Container(
+          SizedBox(
             width: 32,
             height: 32,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-            ),
-            child: Icon(
-              _getShapeIcon(widget.shape.type),
-              size: 18,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
+              ),
+              child: Icon(
+                _getShapeIcon(widget.shape.type),
+                size: 18,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
           const SizedBox(width: VioSpacing.sm),

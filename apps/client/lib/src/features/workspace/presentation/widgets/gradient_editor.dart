@@ -393,7 +393,7 @@ class _GradientEditorState extends State<GradientEditor> {
               children: [
                 // Gradient bar
                 Positioned.fill(
-                  child: Container(
+                  child: DecoratedBox(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
                       gradient: LinearGradient(
@@ -447,21 +447,23 @@ class _GradientEditorState extends State<GradientEditor> {
       child: GestureDetector(
         onTap: () => setState(() => _selectedStopIndex = index),
         onDoubleTap: () => _editStopColor(index),
-        child: Container(
+        child: SizedBox(
           width: handleWidth,
-          decoration: BoxDecoration(
-            color: Color(stop.color).withValues(alpha: stop.opacity),
-            borderRadius: BorderRadius.circular(2),
-            border: Border.all(
-              color: isSelected ? Theme.of(context).colorScheme.primary : Colors.white,
-              width: isSelected ? 2 : 1,
-            ),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 2,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Color(stop.color).withValues(alpha: stop.opacity),
+              borderRadius: BorderRadius.circular(2),
+              border: Border.all(
+                color: isSelected ? Theme.of(context).colorScheme.primary : Colors.white,
+                width: isSelected ? 2 : 1,
               ),
-            ],
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 2,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -583,13 +585,15 @@ class _GradientEditorState extends State<GradientEditor> {
             // Colour swatch
             GestureDetector(
               onTap: () => _editStopColor(index),
-              child: Container(
+              child: SizedBox(
                 width: 20,
                 height: 20,
-                decoration: BoxDecoration(
-                  color: Color(stop.color).withValues(alpha: stop.opacity),
-                  borderRadius: BorderRadius.circular(3),
-                  border: Border.all(color: cs.outline),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Color(stop.color).withValues(alpha: stop.opacity),
+                    borderRadius: BorderRadius.circular(3),
+                    border: Border.all(color: cs.outline),
+                  ),
                 ),
               ),
             ),

@@ -625,11 +625,13 @@ class _TimelineIndicator extends StatelessWidget {
           ),
           // Bottom line
           Expanded(
-            child: Container(
+            child: SizedBox(
               width: 2,
-              color: isLast
-                  ? Colors.transparent
-                  : Theme.of(context).colorScheme.outline,
+              child: ColoredBox(
+                color: isLast
+                    ? Colors.transparent
+                    : Theme.of(context).colorScheme.outline,
+              ),
             ),
           ),
         ],

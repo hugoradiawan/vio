@@ -101,122 +101,122 @@ class _VersionControlTabState extends State<VersionControlTab> {
 
         return SingleChildScrollView(
           child: Column(
-          children: [
-            // Commit panel (collapsible)
-            VioPanel(
-              title: 'Commit',
-              collapsible: true,
-              padding: EdgeInsets.zero,
-              isExpanded: _isExpanded('commit'),
-              onExpansionChanged: (expanded) => _setExpanded(
-                'commit',
-                expanded,
+            children: [
+              // Commit panel (collapsible)
+              VioPanel(
+                title: 'Commit',
+                collapsible: true,
+                padding: EdgeInsets.zero,
+                isExpanded: _isExpanded('commit'),
+                onExpansionChanged: (expanded) => _setExpanded(
+                  'commit',
+                  expanded,
+                ),
+                trailing: state.hasUncommittedChanges
+                    ? Text(
+                        '${state.uncommittedChanges.length} change${state.uncommittedChanges.length == 1 ? '' : 's'}',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 11,
+                        ),
+                      )
+                    : null,
+                child: const CommitPanel(),
               ),
-              trailing: state.hasUncommittedChanges
-                  ? Text(
-                      '${state.uncommittedChanges.length} change${state.uncommittedChanges.length == 1 ? '' : 's'}',
+
+              // Branches section (collapsible)
+              VioPanel(
+                title: 'Branches',
+                collapsible: true,
+                padding: EdgeInsets.zero,
+                initiallyExpanded: false,
+                isExpanded: _isExpanded('branches'),
+                onExpansionChanged: (expanded) => _setExpanded(
+                  'branches',
+                  expanded,
+                ),
+                trailing: Row(
+                  children: [
+                    Text(
+                      '${state.branches.length}',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 11,
                       ),
-                    )
-                  : null,
-              child: const CommitPanel(),
-            ),
-
-            // Branches section (collapsible)
-            VioPanel(
-              title: 'Branches',
-              collapsible: true,
-              padding: EdgeInsets.zero,
-              initiallyExpanded: false,
-              isExpanded: _isExpanded('branches'),
-              onExpansionChanged: (expanded) => _setExpanded(
-                'branches',
-                expanded,
-              ),
-              trailing: Row(
-                children: [
-                  Text(
-                    '${state.branches.length}',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontSize: 11,
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    onPressed: () => _showCreateBranchDialog(context, state),
-                    icon: const Icon(Icons.add),
-                    iconSize: 18,
-                    padding: const EdgeInsets.all(4),
-                    constraints: const BoxConstraints(),
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    tooltip: 'Create branch',
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () => _showCreateBranchDialog(context, state),
+                      icon: const Icon(Icons.add),
+                      iconSize: 18,
+                      padding: const EdgeInsets.all(4),
+                      constraints: const BoxConstraints(),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      tooltip: 'Create branch',
+                    ),
+                  ],
+                ),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 300),
+                  child: const BranchListPanel(),
+                ),
               ),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 300),
-                child: const BranchListPanel(),
-              ),
-            ),
 
-            // Pull Requests section (collapsible)
-            VioPanel(
-              title: 'Pull Requests',
-              collapsible: true,
-              padding: EdgeInsets.zero,
-              isExpanded: _isExpanded('pull_requests'),
-              onExpansionChanged: (expanded) => _setExpanded(
-                'pull_requests',
-                expanded,
-              ),
-              trailing: state.openPullRequests.isNotEmpty
-                  ? Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        '${state.openPullRequests.length}',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
+              // Pull Requests section (collapsible)
+              VioPanel(
+                title: 'Pull Requests',
+                collapsible: true,
+                padding: EdgeInsets.zero,
+                isExpanded: _isExpanded('pull_requests'),
+                onExpansionChanged: (expanded) => _setExpanded(
+                  'pull_requests',
+                  expanded,
+                ),
+                trailing: state.openPullRequests.isNotEmpty
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
                         ),
-                      ),
-                    )
-                  : null,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 400),
-                child: const PullRequestList(),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '${state.openPullRequests.length}',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      )
+                    : null,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 400),
+                  child: const PullRequestList(),
+                ),
               ),
-            ),
 
-            // History section (collapsible)
-            _CollapsibleExpandedSection(
-              title: 'History',
-              isExpanded: _isExpanded('history'),
-              onExpansionChanged: (expanded) => _setExpanded(
-                'history',
-                expanded,
+              // History section (collapsible)
+              _CollapsibleExpandedSection(
+                title: 'History',
+                isExpanded: _isExpanded('history'),
+                onExpansionChanged: (expanded) => _setExpanded(
+                  'history',
+                  expanded,
+                ),
+                trailing: _RefreshButton(
+                  isLoading: state.status == VersionControlStatus.loading,
+                  onRefresh: () {
+                    context
+                        .read<VersionControlBloc>()
+                        .add(const CommitsRefreshRequested());
+                  },
+                ),
+                child: const CommitHistoryList(),
               ),
-              trailing: _RefreshButton(
-                isLoading: state.status == VersionControlStatus.loading,
-                onRefresh: () {
-                  context
-                      .read<VersionControlBloc>()
-                      .add(const CommitsRefreshRequested());
-                },
-              ),
-              child: const CommitHistoryList(),
-            ),
-          ],
+            ],
           ),
         );
       },
@@ -280,7 +280,9 @@ class _VersionControlTabState extends State<VersionControlTab> {
         ),
         content: Text(
           'You have uncommitted changes. What would you like to do before switching to "${branch.name}"?',
-          style: TextStyle(color: Theme.of(dialogContext).colorScheme.onSurfaceVariant, fontSize: 14),
+          style: TextStyle(
+              color: Theme.of(dialogContext).colorScheme.onSurfaceVariant,
+              fontSize: 14),
         ),
         actions: [
           TextButton(
@@ -292,7 +294,8 @@ class _VersionControlTabState extends State<VersionControlTab> {
             },
             child: Text(
               'Cancel',
-              style: TextStyle(color: Theme.of(dialogContext).colorScheme.onSurfaceVariant),
+              style: TextStyle(
+                  color: Theme.of(dialogContext).colorScheme.onSurfaceVariant),
             ),
           ),
           TextButton(
@@ -302,7 +305,8 @@ class _VersionControlTabState extends State<VersionControlTab> {
                   .read<VersionControlBloc>()
                   .add(const BranchSwitchConfirmed());
             },
-            style: TextButton.styleFrom(foregroundColor: Theme.of(dialogContext).colorScheme.error),
+            style: TextButton.styleFrom(
+                foregroundColor: Theme.of(dialogContext).colorScheme.error),
             child: const Text('Discard Changes'),
           ),
           ElevatedButton(
@@ -341,11 +345,13 @@ class _VersionControlTabState extends State<VersionControlTab> {
         backgroundColor: Theme.of(dialogContext).colorScheme.surface,
         title: Text(
           'Delete Branch?',
-          style: TextStyle(color: Theme.of(dialogContext).colorScheme.onSurface),
+          style:
+              TextStyle(color: Theme.of(dialogContext).colorScheme.onSurface),
         ),
         content: Text(
           'Are you sure you want to delete the branch "${branch.name}"? This action cannot be undone.',
-          style: TextStyle(color: Theme.of(dialogContext).colorScheme.onSurfaceVariant),
+          style: TextStyle(
+              color: Theme.of(dialogContext).colorScheme.onSurfaceVariant),
         ),
         actions: [
           TextButton(
@@ -364,7 +370,8 @@ class _VersionControlTabState extends State<VersionControlTab> {
                   .read<VersionControlBloc>()
                   .add(const BranchDeleteConfirmed());
             },
-            style: TextButton.styleFrom(foregroundColor: Theme.of(dialogContext).colorScheme.error),
+            style: TextButton.styleFrom(
+                foregroundColor: Theme.of(dialogContext).colorScheme.error),
             child: const Text('Delete'),
           ),
         ],

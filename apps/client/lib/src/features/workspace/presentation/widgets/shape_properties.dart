@@ -74,7 +74,9 @@ class PositionSizeSection extends StatelessWidget {
               Expanded(
                 child: Row(
                   children: [
-                    Icon(VioIcons.rotation, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    Icon(VioIcons.rotation,
+                        size: 14,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                     const SizedBox(width: VioSpacing.xs),
                     Expanded(
                       child: VioNumericField(
@@ -103,7 +105,8 @@ class PositionSizeSection extends StatelessWidget {
       final rect = shape as RectangleShape;
       return Row(
         children: [
-          Icon(VioIcons.cornerRadius, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+          Icon(VioIcons.cornerRadius,
+              size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
           const SizedBox(width: VioSpacing.xs),
           Expanded(
             child: VioNumericField(
@@ -123,7 +126,8 @@ class PositionSizeSection extends StatelessWidget {
     // For other shapes, show opacity
     return Row(
       children: [
-        Icon(Icons.opacity, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        Icon(Icons.opacity,
+            size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
         const SizedBox(width: VioSpacing.xs),
         Expanded(
           child: VioNumericField(
@@ -311,8 +315,7 @@ class RectangleProperties extends StatelessWidget {
           Row(
             children: [
               VioIconButton(
-                icon:
-                    shape.hasUniformCorners ? VioIcons.lock : VioIcons.unlock,
+                icon: shape.hasUniformCorners ? VioIcons.lock : VioIcons.unlock,
                 iconSize: 14,
                 size: 24,
                 onPressed: () => _toggleIndependentCorners(context),
@@ -525,7 +528,9 @@ class FrameProperties extends StatelessWidget {
             Icon(
               value ? Icons.check_box : Icons.check_box_outline_blank,
               size: 18,
-              color: value ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
+              color: value
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             const SizedBox(width: VioSpacing.sm),
             Text(

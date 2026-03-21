@@ -125,8 +125,11 @@ class VioCanvasTheme extends ThemeExtension<VioCanvasTheme> {
   VioCanvasTheme lerp(VioCanvasTheme? other, double t) {
     if (other is! VioCanvasTheme) return this;
     return VioCanvasTheme(
-      canvasBackground:
-          Color.lerp(canvasBackground, other.canvasBackground, t)!,
+      canvasBackground: Color.lerp(
+        canvasBackground,
+        other.canvasBackground,
+        t,
+      )!,
       gridLines: Color.lerp(gridLines, other.gridLines, t)!,
       gridLinesFine: Color.lerp(gridLinesFine, other.gridLinesFine, t)!,
       selectionColor: Color.lerp(selectionColor, other.selectionColor, t)!,
@@ -151,12 +154,12 @@ class VioCanvasTheme extends ThemeExtension<VioCanvasTheme> {
 
   @override
   int get hashCode => Object.hash(
-        canvasBackground,
-        gridLines,
-        gridLinesFine,
-        selectionColor,
-        selectionFill,
-        snapColor,
-        guidesColor,
-      );
+    canvasBackground,
+    gridLines,
+    gridLinesFine,
+    selectionColor,
+    selectionFill,
+    snapColor,
+    guidesColor,
+  );
 }

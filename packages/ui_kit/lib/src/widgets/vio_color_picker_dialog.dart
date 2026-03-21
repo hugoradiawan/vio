@@ -153,79 +153,79 @@ class _VioColorPickerDialogState extends State<VioColorPickerDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Color Picker',
-                  style: VioTypography.labelLarge.copyWith(
-                    color: VioColors.textPrimary,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close, size: 20),
-                  color: VioColors.textTertiary,
-                  onPressed: () => Navigator.of(context).pop(),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ),
-            const SizedBox(height: VioSpacing.md),
-
-            // HSV Picker area
-            _buildHSVPicker(),
-            const SizedBox(height: VioSpacing.md),
-
-            // Hue slider
-            _buildHueSlider(),
-            const SizedBox(height: VioSpacing.md),
-
-            // Opacity slider (optional)
-            if (widget.showOpacity) ...[
-              _buildOpacitySlider(),
-              const SizedBox(height: VioSpacing.md),
-            ],
-
-            // Color preview and inputs
-            _buildColorInputs(),
-            const SizedBox(height: VioSpacing.lg),
-
-            // Buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(
-                    'Cancel',
-                    style: VioTypography.bodyMedium.copyWith(
-                      color: VioColors.textSecondary,
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Color Picker',
+                    style: VioTypography.labelLarge.copyWith(
+                      color: VioColors.textPrimary,
                     ),
                   ),
-                ),
-                const SizedBox(width: VioSpacing.sm),
-                ElevatedButton(
-                  onPressed: () {
-                    final color = _hsvColor.toColor();
-                    Navigator.of(context).pop(
-                      ColorPickerResult(
-                        color: color.toARGB32(),
-                        opacity: _opacity,
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: VioColors.primary,
-                    foregroundColor: Colors.white,
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 20),
+                    color: VioColors.textTertiary,
+                    onPressed: () => Navigator.of(context).pop(),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
-                  child: const Text('Apply'),
-                ),
+                ],
+              ),
+              const SizedBox(height: VioSpacing.md),
+
+              // HSV Picker area
+              _buildHSVPicker(),
+              const SizedBox(height: VioSpacing.md),
+
+              // Hue slider
+              _buildHueSlider(),
+              const SizedBox(height: VioSpacing.md),
+
+              // Opacity slider (optional)
+              if (widget.showOpacity) ...[
+                _buildOpacitySlider(),
+                const SizedBox(height: VioSpacing.md),
               ],
-            ),
-          ],
+
+              // Color preview and inputs
+              _buildColorInputs(),
+              const SizedBox(height: VioSpacing.lg),
+
+              // Buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(
+                      'Cancel',
+                      style: VioTypography.bodyMedium.copyWith(
+                        color: VioColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: VioSpacing.sm),
+                  ElevatedButton(
+                    onPressed: () {
+                      final color = _hsvColor.toColor();
+                      Navigator.of(context).pop(
+                        ColorPickerResult(
+                          color: color.toARGB32(),
+                          opacity: _opacity,
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: VioColors.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Apply'),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),

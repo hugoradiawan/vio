@@ -279,7 +279,9 @@ class VioPropertySlider extends StatelessWidget {
               activeTrackColor: Theme.of(context).colorScheme.primary,
               inactiveTrackColor: Theme.of(context).colorScheme.outlineVariant,
               thumbColor: Theme.of(context).colorScheme.primary,
-              overlayColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+              overlayColor: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.2),
             ),
             child: Slider(
               value: value.clamp(min, max),

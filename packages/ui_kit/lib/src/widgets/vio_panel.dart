@@ -44,7 +44,9 @@ class VioPanel extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: cs.surface,
-        border: Border(bottom: BorderSide(color: cs.outline.withValues(alpha: 0.25))),
+        border: Border(
+          bottom: BorderSide(color: cs.outline.withValues(alpha: 0.25)),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,7 +174,9 @@ class _CollapsiblePanelState extends State<_CollapsiblePanel>
     return Container(
       decoration: BoxDecoration(
         color: cs.surface,
-        border: Border(bottom: BorderSide(color: cs.outline.withValues(alpha: 0.25))),
+        border: Border(
+          bottom: BorderSide(color: cs.outline.withValues(alpha: 0.25)),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -241,7 +245,12 @@ class VioPanelDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: VioSpacing.sm),
-      child: Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.25)),
+      child: Divider(
+        height: 1,
+        color: Theme.of(
+          context,
+        ).colorScheme.outlineVariant.withValues(alpha: 0.25),
+      ),
     );
   }
 }

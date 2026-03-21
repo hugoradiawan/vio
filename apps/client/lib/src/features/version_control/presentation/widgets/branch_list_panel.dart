@@ -323,9 +323,8 @@ class _BranchListItemState extends State<BranchListItem> {
               Icon(
                 widget.isCurrentBranch ? Icons.check_circle : Icons.merge,
                 size: 16,
-                color: widget.isCurrentBranch
-                    ? cs.primary
-                    : cs.onSurfaceVariant,
+                color:
+                    widget.isCurrentBranch ? cs.primary : cs.onSurfaceVariant,
               ),
               const SizedBox(width: 8),
 
@@ -337,9 +336,8 @@ class _BranchListItemState extends State<BranchListItem> {
                     Text(
                       widget.branch.name,
                       style: TextStyle(
-                        color: widget.isCurrentBranch
-                            ? cs.primary
-                            : cs.onSurface,
+                        color:
+                            widget.isCurrentBranch ? cs.primary : cs.onSurface,
                         fontSize: 13,
                         fontWeight: widget.isCurrentBranch
                             ? FontWeight.w600
@@ -457,8 +455,10 @@ class _BranchListItemState extends State<BranchListItem> {
                   color: cs.onSurfaceVariant,
                 ),
                 const SizedBox(width: 8),
-                const Text('Create Pull Request',
-                    style: TextStyle(fontSize: 13),),
+                const Text(
+                  'Create Pull Request',
+                  style: TextStyle(fontSize: 13),
+                ),
               ],
             ),
           ),
@@ -472,8 +472,10 @@ class _BranchListItemState extends State<BranchListItem> {
                 color: cs.onSurfaceVariant,
               ),
               const SizedBox(width: 8),
-              const Text('Compare with default',
-                  style: TextStyle(fontSize: 13),),
+              const Text(
+                'Compare with default',
+                style: TextStyle(fontSize: 13),
+              ),
             ],
           ),
         ),

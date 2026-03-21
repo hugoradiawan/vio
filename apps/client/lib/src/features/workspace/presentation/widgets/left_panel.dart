@@ -59,7 +59,8 @@ class _LeftPanelState extends State<LeftPanel>
         color: Theme.of(context).colorScheme.surface,
         border: Border(
           right: BorderSide(
-            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.25),
+            color:
+                Theme.of(context).colorScheme.outline.withValues(alpha: 0.25),
           ),
         ),
       ),
@@ -71,7 +72,10 @@ class _LeftPanelState extends State<LeftPanel>
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.25),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .outline
+                      .withValues(alpha: 0.25),
                 ),
               ),
             ),
@@ -102,8 +106,14 @@ class _LeftPanelState extends State<LeftPanel>
                 Expanded(
                   child: TabBar(
                     controller: _tabController,
-                    labelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.65),
-                    unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.45),
+                    labelColor: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.65),
+                    unselectedLabelColor: Theme.of(context)
+                        .colorScheme
+                        .onSurfaceVariant
+                        .withValues(alpha: 0.45),
                     indicatorColor: Theme.of(context).colorScheme.primary,
                     labelStyle: VioTypography.body2,
                     dividerColor: Colors.transparent,
@@ -178,7 +188,10 @@ class _LayersTab extends StatelessWidget {
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.25),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .outline
+                        .withValues(alpha: 0.25),
                   ),
                 ),
               ),

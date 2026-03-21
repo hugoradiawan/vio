@@ -187,12 +187,26 @@ class _TileCompositePainter extends CustomPainter {
 
     // Apply the view transform
     canvas.save();
-    canvas.transform(Float64List.fromList([
-      viewMatrix.a, viewMatrix.b, 0, 0,
-      viewMatrix.c, viewMatrix.d, 0, 0,
-      0, 0, 1, 0,
-      viewMatrix.e, viewMatrix.f, 0, 1,
-    ]),);
+    canvas.transform(
+      Float64List.fromList([
+        viewMatrix.a,
+        viewMatrix.b,
+        0,
+        0,
+        viewMatrix.c,
+        viewMatrix.d,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        viewMatrix.e,
+        viewMatrix.f,
+        0,
+        1,
+      ]),
+    );
 
     final tileWorldSize = _tileSize / zoom;
 

@@ -37,8 +37,10 @@ void main() {
 
     test('produces dark brightness for ThemeMode.system', () {
       // system → dark (our fallback for non-light modes)
-      final theme =
-          VioTheme.fromSeed(VioColors.primary, mode: ThemeMode.system);
+      final theme = VioTheme.fromSeed(
+        VioColors.primary,
+        mode: ThemeMode.system,
+      );
       expect(theme.brightness, Brightness.dark);
     });
 
@@ -67,12 +69,14 @@ void main() {
     test('different seeds produce different primary colors', () {
       final blueTheme = VioTheme.fromSeed(const Color(0xFF2196F3));
       final redTheme = VioTheme.fromSeed(const Color(0xFFF44336));
-      expect(blueTheme.colorScheme.primary, isNot(redTheme.colorScheme.primary));
+      expect(
+        blueTheme.colorScheme.primary,
+        isNot(redTheme.colorScheme.primary),
+      );
     });
 
     test('scaffold background stays dark in dark mode regardless of seed', () {
-      final theme =
-          VioTheme.fromSeed(const Color(0xFFFF9800)); // orange seed
+      final theme = VioTheme.fromSeed(const Color(0xFFFF9800)); // orange seed
       expect(theme.scaffoldBackgroundColor, equals(VioColors.background));
     });
   });
@@ -102,8 +106,9 @@ void main() {
 
     test('copyWith overrides specific fields', () {
       final original = VioCanvasTheme.fromPrimary(VioColors.primary);
-      final updated =
-          original.copyWith(selectionColor: const Color(0xFF4CAF50));
+      final updated = original.copyWith(
+        selectionColor: const Color(0xFF4CAF50),
+      );
       expect(updated.selectionColor, const Color(0xFF4CAF50));
       expect(updated.canvasBackground, equals(original.canvasBackground));
     });

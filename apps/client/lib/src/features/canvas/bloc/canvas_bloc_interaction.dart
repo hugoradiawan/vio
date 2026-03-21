@@ -252,13 +252,13 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
     if (state.enteredContainerId != null) {
       final allHits = HitTest.findShapesAtPoint(canvasPoint, state.shapeList);
       hitShape = allHits.cast<Shape?>().firstWhere(
-            (s) => HitTest.isDescendantOf(
-              s!,
-              state.enteredContainerId!,
-              state.shapes,
-            ),
-            orElse: () => null,
-          ) ??
+                (s) => HitTest.isDescendantOf(
+                  s!,
+                  state.enteredContainerId!,
+                  state.shapes,
+                ),
+                orElse: () => null,
+              ) ??
           allHits.firstOrNull;
     } else {
       hitShape = findTopShapeAtPoint(canvasPoint, state.shapeList);
@@ -686,16 +686,15 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
       // descendants so overlapping siblings don't flicker the hover.
       Shape? hoveredLeaf;
       if (state.enteredContainerId != null) {
-        final allHits =
-            HitTest.findShapesAtPoint(canvasPoint, state.shapeList);
+        final allHits = HitTest.findShapesAtPoint(canvasPoint, state.shapeList);
         hoveredLeaf = allHits.cast<Shape?>().firstWhere(
-              (s) => HitTest.isDescendantOf(
-                s!,
-                state.enteredContainerId!,
-                state.shapes,
-              ),
-              orElse: () => null,
-            ) ??
+                  (s) => HitTest.isDescendantOf(
+                    s!,
+                    state.enteredContainerId!,
+                    state.shapes,
+                  ),
+                  orElse: () => null,
+                ) ??
             allHits.firstOrNull;
       } else {
         hoveredLeaf = findTopShapeAtPoint(canvasPoint, state.shapeList);

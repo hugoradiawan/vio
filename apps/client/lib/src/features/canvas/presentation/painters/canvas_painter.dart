@@ -76,7 +76,6 @@ class CanvasPainter extends CustomPainter {
     return SelectionHandleMetrics.toCanvasUnits(screenPx: px, zoom: _zoom);
   }
 
-
   @override
   void paint(Canvas canvas, Size size) {
     // Use a consistent visibility buffer regardless of interaction state
@@ -573,8 +572,7 @@ class CanvasPainter extends CustomPainter {
         ),
         const Radius.circular(4),
       );
-      final bgPaint = Paint()
-        ..color = selectionColor.withValues(alpha: 0.15);
+      final bgPaint = Paint()..color = selectionColor.withValues(alpha: 0.15);
       canvas.drawRRect(bgRect, bgPaint);
     }
 

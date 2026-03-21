@@ -330,9 +330,7 @@ class _GradientEditorState extends State<GradientEditor> {
       child: Tooltip(
         message: tooltip,
         child: Material(
-          color: isSelected
-              ? cs.primaryContainer
-              : cs.surfaceContainerHigh,
+          color: isSelected ? cs.primaryContainer : cs.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
           child: InkWell(
             borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
@@ -454,7 +452,9 @@ class _GradientEditorState extends State<GradientEditor> {
               color: Color(stop.color).withValues(alpha: stop.opacity),
               borderRadius: BorderRadius.circular(2),
               border: Border.all(
-                color: isSelected ? Theme.of(context).colorScheme.primary : Colors.white,
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.white,
                 width: isSelected ? 2 : 1,
               ),
               boxShadow: const [
@@ -577,7 +577,8 @@ class _GradientEditorState extends State<GradientEditor> {
           vertical: 2,
         ),
         decoration: BoxDecoration(
-          color: isSelected ? cs.primaryContainer.withValues(alpha: 0.08) : null,
+          color:
+              isSelected ? cs.primaryContainer.withValues(alpha: 0.08) : null,
           borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
         ),
         child: Row(

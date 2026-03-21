@@ -45,7 +45,8 @@ class _RightPanelState extends State<RightPanel> {
         color: Theme.of(context).colorScheme.surface,
         border: Border(
           left: BorderSide(
-            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.25),
+            color:
+                Theme.of(context).colorScheme.outline.withValues(alpha: 0.25),
           ),
         ),
       ),
@@ -159,7 +160,10 @@ class _NoSelectionPanel extends StatelessWidget {
                 Icon(
                   Icons.touch_app_outlined,
                   size: 48,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurfaceVariant
+                      .withValues(alpha: 0.5),
                 ),
                 const SizedBox(height: VioSpacing.md),
                 Text(
@@ -172,7 +176,10 @@ class _NoSelectionPanel extends StatelessWidget {
                 Text(
                   'to view and edit its properties',
                   style: VioTypography.caption.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurfaceVariant
+                        .withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -470,7 +477,11 @@ class _ShapeNameSectionState extends State<_ShapeNameSection> {
       padding: const EdgeInsets.all(VioSpacing.sm),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.25)),
+          bottom: BorderSide(
+              color: Theme.of(context)
+                  .colorScheme
+                  .outline
+                  .withValues(alpha: 0.25)),
         ),
       ),
       child: Row(
@@ -638,7 +649,9 @@ class _MultipleSelectionPanel extends StatelessWidget {
                             Text(
                               _getSelectionSummary(),
                               style: VioTypography.caption.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
                               ),
                             ),
                           ],

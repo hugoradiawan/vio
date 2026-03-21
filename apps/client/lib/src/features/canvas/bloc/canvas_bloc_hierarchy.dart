@@ -43,9 +43,8 @@ mixin _CanvasHierarchyMixin on Bloc<CanvasEvent, CanvasState> {
         // Walk up both parentId and frameId to find the parent container.
         final parentContainerId =
             enteredContainer.parentId ?? enteredContainer.frameId;
-        final parentContainer = parentContainerId != null
-            ? state.shapes[parentContainerId]
-            : null;
+        final parentContainer =
+            parentContainerId != null ? state.shapes[parentContainerId] : null;
 
         // Stay in the parent if it's a container (group or frame).
         final bool isParentEnterable = parentContainer != null &&

@@ -62,11 +62,13 @@ class _ResizablePanelHandleState extends State<ResizablePanelHandle> {
         onDoubleTap: widget.onDoubleTap,
         behavior: HitTestBehavior.opaque,
         child: Center(
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              width: 1,
-              color: isActive ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
-            ),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: 1,
+            color: isActive
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.outline,
+          ),
         ),
       ),
     );

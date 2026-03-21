@@ -488,7 +488,10 @@ class _CanvasViewState extends State<CanvasView> with _CanvasViewController {
               child: IgnorePointer(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withValues(alpha: 0.1),
                     border: Border.all(
                       color: Theme.of(context).colorScheme.primary,
                       width: 2,

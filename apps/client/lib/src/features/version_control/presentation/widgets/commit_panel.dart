@@ -82,8 +82,8 @@ class _CommitPanelState extends State<CommitPanel> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: dcs.error,
               ),
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Discard'),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Discard'),
             ),
           ],
         );
@@ -333,9 +333,8 @@ class _CommitPanelState extends State<CommitPanel> {
                 padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: canCommit
-                        ? cs.primary
-                        : cs.surfaceContainerHigh,
+                    backgroundColor:
+                        canCommit ? cs.primary : cs.surfaceContainerHigh,
                     foregroundColor:
                         canCommit ? Colors.white : cs.onSurfaceVariant,
                     padding: const EdgeInsets.symmetric(vertical: 12),
@@ -490,7 +489,8 @@ class _SectionIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: onPressed,
-      icon: Icon(icon, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+      icon: Icon(icon,
+          size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
       tooltip: tooltip,
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
@@ -667,7 +667,9 @@ class _ChangeItemState extends State<_ChangeItem> {
                             icon: Icon(
                               Icons.undo,
                               size: 14,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                             ),
                             tooltip: 'Discard change',
                             padding: EdgeInsets.zero,

@@ -12,7 +12,9 @@ import 'package:vio_ui_kit/vio_ui_kit.dart';
 /// persist the new value.
 class ThemeSection extends StatelessWidget {
   const ThemeSection({
-    required this.onSeedChanged, required this.onModeChanged, super.key,
+    required this.onSeedChanged,
+    required this.onModeChanged,
+    super.key,
   });
 
   final ValueChanged<Color> onSeedChanged;
@@ -107,7 +109,9 @@ class ThemeSection extends StatelessWidget {
 
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: VioSpacing.md),
-                child: Divider(height: VioSpacing.xl, color: cs.outline.withValues(alpha: 0.25)),
+                child: Divider(
+                    height: VioSpacing.xl,
+                    color: cs.outline.withValues(alpha: 0.25)),
               ),
 
               // — Theme mode selector ——————————————————————————————————
@@ -224,7 +228,8 @@ class _CustomColorButton extends StatelessWidget {
         onTap: () async {
           final result = await showDialog<ColorPickerResult>(
             context: context,
-            builder: (_) => VioColorPickerDialog(initialColor: currentColor.toARGB32()),
+            builder: (_) =>
+                VioColorPickerDialog(initialColor: currentColor.toARGB32()),
           );
           if (result != null) {
             onColorPicked(Color(result.color));
@@ -236,7 +241,8 @@ class _CustomColorButton extends StatelessWidget {
           child: DecoratedBox(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+              border: Border.all(
+                  color: Theme.of(context).colorScheme.outlineVariant),
               gradient: const SweepGradient(
                 colors: [
                   Color(0xFFFF0000),

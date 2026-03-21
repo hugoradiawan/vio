@@ -31,8 +31,7 @@ void main() {
 
     test('copyWith changes only specified fields', () {
       final original = ThemeState.initial();
-      final changed =
-          original.copyWith(themeMode: ThemeMode.light);
+      final changed = original.copyWith(themeMode: ThemeMode.light);
       expect(changed.themeMode, equals(ThemeMode.light));
       expect(changed.seedColor, equals(original.seedColor));
     });
@@ -73,9 +72,7 @@ void main() {
 
     test('ThemeLoaded updates seed and mode', () async {
       const newSeed = Color(0xFFE91E63); // pink
-      bloc.add(
-        const ThemeLoaded(seedColor: newSeed, mode: ThemeMode.light),
-      );
+      bloc.add(const ThemeLoaded(seedColor: newSeed, mode: ThemeMode.light));
       await Future<void>.delayed(Duration.zero);
       expect(bloc.state.seedColor, equals(newSeed));
       expect(bloc.state.themeMode, equals(ThemeMode.light));
@@ -112,9 +109,7 @@ void main() {
       const loadedSeed = Color(0xFF607D8B); // blue-grey
       const newSeed = Color(0xFFFF5722); // deep-orange
       bloc
-        ..add(
-          const ThemeLoaded(seedColor: loadedSeed, mode: ThemeMode.dark),
-        )
+        ..add(const ThemeLoaded(seedColor: loadedSeed, mode: ThemeMode.dark))
         ..add(const ThemeSeedChanged(newSeed));
       await Future<void>.delayed(Duration.zero);
       expect(bloc.state.seedColor, equals(newSeed));

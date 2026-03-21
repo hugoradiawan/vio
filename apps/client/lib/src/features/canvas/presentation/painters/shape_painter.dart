@@ -593,7 +593,8 @@ class ShapePainter {
     final bounds = shape.bounds;
     final fill = shape.fills.isNotEmpty ? shape.fills.first : null;
     final color = fill != null
-        ? Color(fill.color).withValues(alpha: _combinedAlpha(fill.opacity, shape.opacity))
+        ? Color(fill.color)
+            .withValues(alpha: _combinedAlpha(fill.opacity, shape.opacity))
         : Colors.white.withValues(alpha: shape.opacity * 0.3);
     final paint = Paint()
       ..color = color.withValues(alpha: color.a * 0.35)

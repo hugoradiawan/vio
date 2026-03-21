@@ -130,8 +130,7 @@ void main() {
             builder: (_, state) => MaterialApp(
               theme: state.themeData,
               home: Scaffold(
-                backgroundColor:
-                    state.themeData.colorScheme.primary,
+                backgroundColor: state.themeData.colorScheme.primary,
               ),
             ),
           ),
@@ -139,16 +138,22 @@ void main() {
       );
 
       // Initial state uses VioColors.primary
-      final initialPrimary =
-          tester.widget<MaterialApp>(find.byType(MaterialApp)).theme!.colorScheme.primary;
+      final initialPrimary = tester
+          .widget<MaterialApp>(find.byType(MaterialApp))
+          .theme!
+          .colorScheme
+          .primary;
 
       // Dispatch a purple seed
       const purpleSeed = Color(0xFF9C27B0);
       bloc.add(const ThemeSeedChanged(purpleSeed));
       await tester.pump();
 
-      final updatedPrimary =
-          tester.widget<MaterialApp>(find.byType(MaterialApp)).theme!.colorScheme.primary;
+      final updatedPrimary = tester
+          .widget<MaterialApp>(find.byType(MaterialApp))
+          .theme!
+          .colorScheme
+          .primary;
 
       expect(updatedPrimary, isNot(equals(initialPrimary)));
     });

@@ -58,10 +58,19 @@ class VioIconButton extends StatelessWidget {
     return button;
   }
 
-  Widget _buildButton(double size, double iconSize, bool isDisabled, ColorScheme cs) {
+  Widget _buildButton(
+    double size,
+    double iconSize,
+    bool isDisabled,
+    ColorScheme cs,
+  ) {
     return switch (variant) {
       VioIconButtonVariant.ghost => _buildGhostButton(iconSize, isDisabled, cs),
-      VioIconButtonVariant.filled => _buildFilledButton(iconSize, isDisabled, cs),
+      VioIconButtonVariant.filled => _buildFilledButton(
+        iconSize,
+        isDisabled,
+        cs,
+      ),
       VioIconButtonVariant.outlined => _buildOutlinedButton(
         iconSize,
         isDisabled,
@@ -110,7 +119,11 @@ class VioIconButton extends StatelessWidget {
     );
   }
 
-  Widget _buildOutlinedButton(double iconSize, bool isDisabled, ColorScheme cs) {
+  Widget _buildOutlinedButton(
+    double iconSize,
+    bool isDisabled,
+    ColorScheme cs,
+  ) {
     final iconColor = _getIconColor(isDisabled, cs);
     final borderColor = isSelected ? cs.primary : cs.outline;
 

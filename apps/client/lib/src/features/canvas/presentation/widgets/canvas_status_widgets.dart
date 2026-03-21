@@ -94,7 +94,8 @@ class CanvasSyncStatusIndicator extends StatelessWidget {
     );
   }
 
-  (IconData, Color, String) _getStatusInfo(ColorScheme cs) => switch (syncStatus) {
+  (IconData, Color, String) _getStatusInfo(ColorScheme cs) =>
+      switch (syncStatus) {
         SyncStatus.idle => (
             Icons.cloud_off_outlined,
             cs.onSurfaceVariant,
@@ -120,10 +121,6 @@ class CanvasSyncStatusIndicator extends StatelessWidget {
             VioColors.success,
             'Synced'
           ),
-        SyncStatus.error => (
-            Icons.cloud_off_outlined,
-            cs.error,
-            'Sync Error'
-          ),
+        SyncStatus.error => (Icons.cloud_off_outlined, cs.error, 'Sync Error'),
       };
 }

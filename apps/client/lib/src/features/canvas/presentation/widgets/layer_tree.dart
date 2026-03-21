@@ -85,11 +85,17 @@ class LayerTree extends StatelessWidget {
               decoration: BoxDecoration(
                 border: isDropTargetActive
                     ? Border.all(
-                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withValues(alpha: 0.8),
                       )
                     : null,
                 color: isDropTargetActive
-                    ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.06)
+                    ? Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withValues(alpha: 0.06)
                     : null,
               ),
               child: row,
@@ -271,7 +277,8 @@ class _EmptyState extends StatelessWidget {
           Icon(
             Icons.layers_outlined,
             size: 48,
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
+            color:
+                Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
           ),
           const SizedBox(height: 16),
           Text(
@@ -286,7 +293,10 @@ class _EmptyState extends StatelessWidget {
           Text(
             'Draw a shape to get started',
             style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38),
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.38),
               fontSize: 12,
             ),
           ),

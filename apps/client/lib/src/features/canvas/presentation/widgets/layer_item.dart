@@ -137,8 +137,9 @@ class _LayerItemState extends State<LayerItem> {
           curve: Curves.easeInOut,
           height: 32,
           decoration: BoxDecoration(
-            color:
-                isHighlighted ? Theme.of(context).colorScheme.surfaceContainerHigh : Colors.transparent,
+            color: isHighlighted
+                ? Theme.of(context).colorScheme.surfaceContainerHigh
+                : Colors.transparent,
             border: showLeftAccent
                 ? Border(
                     left: BorderSide(
@@ -402,11 +403,13 @@ class _LayerItemState extends State<LayerItem> {
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(4),
-              borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
+              borderSide:
+                  BorderSide(color: Theme.of(context).colorScheme.primary),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(4),
-              borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
+              borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary, width: 2),
             ),
           ),
           onSubmitted: (_) => _submitName(),
@@ -451,7 +454,10 @@ class _LayerItemState extends State<LayerItem> {
           icon: Icon(
             widget.shape.hidden ? Icons.visibility_off : Icons.visibility,
             color: widget.shape.hidden
-                ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38)
+                ? Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.38)
                 : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
           onPressed: () {

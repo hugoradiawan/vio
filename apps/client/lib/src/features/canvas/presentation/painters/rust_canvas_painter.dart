@@ -157,12 +157,14 @@ class RustCanvasPainter extends CustomPainter {
     // with an updated view matrix during pan/zoom without FFI.
     final vm = viewMatrix;
     canvas.save();
-    canvas.transform(Float64List.fromList([
-      vm.a, vm.b, 0, 0, //
-      vm.c, vm.d, 0, 0, //
-      0, 0, 1, 0, //
-      vm.e, vm.f, 0, 1, //
-    ]),);
+    canvas.transform(
+      Float64List.fromList([
+        vm.a, vm.b, 0, 0, //
+        vm.c, vm.d, 0, 0, //
+        0, 0, 1, 0, //
+        vm.e, vm.f, 0, 1, //
+      ]),
+    );
 
     // Build the set of shape IDs being dragged so we can skip rendering
     // them at their original position (the drag overlay paints them with
@@ -179,6 +181,7 @@ class RustCanvasPainter extends CustomPainter {
           if (dragIds!.add(child.id)) addDescendants(child.id);
         }
       }
+
       for (final id in selectedIdSet) {
         final shape = shapesById[id];
         if (shape is GroupShape || shape is FrameShape) addDescendants(id);
@@ -212,12 +215,14 @@ class RustCanvasPainter extends CustomPainter {
       switch (cmd) {
         case DrawCommand_PushTransform(:final matrix):
           canvas.save();
-          canvas.transform(Float64List.fromList([
-            matrix[0], matrix[1], 0, 0, //
-            matrix[2], matrix[3], 0, 0, //
-            0, 0, 1, 0, //
-            matrix[4], matrix[5], 0, 1, //
-          ]),);
+          canvas.transform(
+            Float64List.fromList([
+              matrix[0], matrix[1], 0, 0, //
+              matrix[2], matrix[3], 0, 0, //
+              0, 0, 1, 0, //
+              matrix[4], matrix[5], 0, 1, //
+            ]),
+          );
 
         case DrawCommand_PopTransform():
           canvas.restore();
@@ -253,7 +258,11 @@ class RustCanvasPainter extends CustomPainter {
             Paint()..color = _toColor(color),
           );
 
-        case DrawCommand_DrawRRectGradient(:final rect, :final radii, :final gradient):
+        case DrawCommand_DrawRRectGradient(
+            :final rect,
+            :final radii,
+            :final gradient
+          ):
           final r = _toRect(rect);
           final paint = Paint()..shader = _toShader(gradient, r);
           canvas.drawRRect(_toRRect(rect, radii), paint);
@@ -265,7 +274,8 @@ class RustCanvasPainter extends CustomPainter {
             :final strokeWidth,
             :final strokeAlignment,
           ):
-          _drawStrokedRRect(canvas, rect, radii, color, strokeWidth, strokeAlignment);
+          _drawStrokedRRect(
+              canvas, rect, radii, color, strokeWidth, strokeAlignment);
 
         case DrawCommand_DrawOval(:final rect, :final color):
           canvas.drawOval(_toRect(rect), Paint()..color = _toColor(color));
@@ -275,7 +285,11 @@ class RustCanvasPainter extends CustomPainter {
           final paint = Paint()..shader = _toShader(gradient, r);
           canvas.drawOval(r, paint);
 
-        case DrawCommand_DrawOvalStroke(:final rect, :final color, :final strokeWidth):
+        case DrawCommand_DrawOvalStroke(
+            :final rect,
+            :final color,
+            :final strokeWidth
+          ):
           final paint = Paint()
             ..color = _toColor(color)
             ..style = PaintingStyle.stroke
@@ -293,10 +307,24 @@ class RustCanvasPainter extends CustomPainter {
             :final letterSpacing,
             :final textAlign,
           ):
-          _drawText(canvas, text, rect, fontSize, fontFamily, fontWeight,
-              color, lineHeight, letterSpacing, textAlign,);
+          _drawText(
+            canvas,
+            text,
+            rect,
+            fontSize,
+            fontFamily,
+            fontWeight,
+            color,
+            lineHeight,
+            letterSpacing,
+            textAlign,
+          );
 
-        case DrawCommand_DrawImage(:final assetId, :final dstRect, :final filterQuality):
+        case DrawCommand_DrawImage(
+            :final assetId,
+            :final dstRect,
+            :final filterQuality
+          ):
           _drawImage(canvas, assetId, dstRect, filterQuality);
 
         case DrawCommand_DrawShadow(
@@ -308,7 +336,8 @@ class RustCanvasPainter extends CustomPainter {
             :final offset,
             :final spread,
           ):
-          _drawShadow(canvas, pathType, rect, radii, color, blurSigma, offset, spread);
+          _drawShadow(
+              canvas, pathType, rect, radii, color, blurSigma, offset, spread);
 
         case DrawCommand_PushBlur(:final sigmaX, :final sigmaY, :final bounds):
           canvas.saveLayer(
@@ -340,8 +369,7 @@ class RustCanvasPainter extends CustomPainter {
   // Conversion helpers
   // ---------------------------------------------------------------
 
-  static Rect _toRect(F64Array4 r) =>
-      Rect.fromLTWH(r[0], r[1], r[2], r[3]);
+  static Rect _toRect(F64Array4 r) => Rect.fromLTWH(r[0], r[1], r[2], r[3]);
 
   static RRect _toRRect(F64Array4 r, F64Array4 radii) {
     final rect = Rect.fromLTWH(r[0], r[1], r[2], r[3]);
@@ -580,14 +608,19 @@ class RustCanvasPainter extends CustomPainter {
 
     final paint = Paint()
       ..color = _toColor(color)
-      ..maskFilter = blurSigma > 0 ? MaskFilter.blur(BlurStyle.normal, blurSigma) : null;
+      ..maskFilter =
+          blurSigma > 0 ? MaskFilter.blur(BlurStyle.normal, blurSigma) : null;
 
     switch (pathType) {
       case 1: // rrect
-        final spreadRadii = F64Array4(Float64List.fromList(
-          List.generate(4, (i) => (radii[i] + spread).clamp(0, double.infinity)),
-        ),);
-        final rrectRect = F64Array4(Float64List.fromList([r.left, r.top, r.width, r.height]));
+        final spreadRadii = F64Array4(
+          Float64List.fromList(
+            List.generate(
+                4, (i) => (radii[i] + spread).clamp(0, double.infinity)),
+          ),
+        );
+        final rrectRect =
+            F64Array4(Float64List.fromList([r.left, r.top, r.width, r.height]));
         canvas.drawRRect(
           _toRRect(rrectRect, spreadRadii),
           paint,
@@ -633,7 +666,8 @@ class RustCanvasPainter extends CustomPainter {
   // Path rendering
   // ---------------------------------------------------------------
 
-  void _drawPath(Canvas canvas, String pathData, int color, StrokeData? stroke) {
+  void _drawPath(
+      Canvas canvas, String pathData, int color, StrokeData? stroke) {
     // SVG path parsing — for now use Flutter's path builder
     // This is a placeholder; full SVG path parsing will be added in Phase 3
     if (stroke != null) {
@@ -681,7 +715,8 @@ class RustCanvasPainter extends CustomPainter {
 
     // Evict oldest entries if cache is full
     if (_pathCache.length >= _maxPathCacheSize) {
-      final keysToRemove = _pathCache.keys.take(_maxPathCacheSize ~/ 4).toList();
+      final keysToRemove =
+          _pathCache.keys.take(_maxPathCacheSize ~/ 4).toList();
       for (final k in keysToRemove) {
         _pathCache.remove(k);
       }
@@ -695,8 +730,8 @@ class RustCanvasPainter extends CustomPainter {
   static Path? _parseSvgPathUncached(String data) {
     try {
       final path = Path();
-      final segments = RegExp('[MLCQZAHVSmlcqzahvs][^MLCQZAHVSmlcqzahvs]*')
-          .allMatches(data);
+      final segments =
+          RegExp('[MLCQZAHVSmlcqzahvs][^MLCQZAHVSmlcqzahvs]*').allMatches(data);
       double cx = 0, cy = 0;
 
       for (final seg in segments) {
@@ -754,14 +789,21 @@ class RustCanvasPainter extends CustomPainter {
             }
           case 'C':
             if (nums.length >= 6) {
-              path.cubicTo(nums[0], nums[1], nums[2], nums[3], nums[4], nums[5]);
+              path.cubicTo(
+                  nums[0], nums[1], nums[2], nums[3], nums[4], nums[5]);
               cx = nums[4];
               cy = nums[5];
             }
           case 'c':
             if (nums.length >= 6) {
               path.relativeCubicTo(
-                  nums[0], nums[1], nums[2], nums[3], nums[4], nums[5],);
+                nums[0],
+                nums[1],
+                nums[2],
+                nums[3],
+                nums[4],
+                nums[5],
+              );
               cx += nums[4];
               cy += nums[5];
             }
@@ -774,7 +816,11 @@ class RustCanvasPainter extends CustomPainter {
           case 'q':
             if (nums.length >= 4) {
               path.relativeQuadraticBezierTo(
-                  nums[0], nums[1], nums[2], nums[3],);
+                nums[0],
+                nums[1],
+                nums[2],
+                nums[3],
+              );
               cx += nums[2];
               cy += nums[3];
             }
@@ -808,6 +854,7 @@ class RustCanvasPainter extends CustomPainter {
         if (dragIds.add(child.id)) addDescendants(child.id);
       }
     }
+
     for (final id in selectedIdSet) {
       final shape = shapesById[id];
       if (shape is GroupShape || shape is FrameShape) addDescendants(id);
@@ -815,12 +862,26 @@ class RustCanvasPainter extends CustomPainter {
 
     // Apply view transform
     canvas.save();
-    canvas.transform(Float64List.fromList([
-      viewMatrix.a, viewMatrix.b, 0, 0,
-      viewMatrix.c, viewMatrix.d, 0, 0,
-      0, 0, 1, 0,
-      viewMatrix.e, viewMatrix.f, 0, 1,
-    ]),);
+    canvas.transform(
+      Float64List.fromList([
+        viewMatrix.a,
+        viewMatrix.b,
+        0,
+        0,
+        viewMatrix.c,
+        viewMatrix.d,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        viewMatrix.e,
+        viewMatrix.f,
+        0,
+        1,
+      ]),
+    );
 
     for (final shape in shapes) {
       if (!dragIds.contains(shape.id)) continue;
@@ -834,22 +895,35 @@ class RustCanvasPainter extends CustomPainter {
       if (frame is FrameShape && frame.clipContent) {
         // If frame is also dragging, translate the clip with it
         if (dragIds.contains(frameId)) {
-          canvas.clipRect(Rect.fromLTWH(
-            frame.x, frame.y, frame.frameWidth, frame.frameHeight,
-          ),);
+          canvas.clipRect(
+            Rect.fromLTWH(
+              frame.x,
+              frame.y,
+              frame.frameWidth,
+              frame.frameHeight,
+            ),
+          );
         } else {
           canvas.restore();
           canvas.save();
-          canvas.clipRect(Rect.fromLTWH(
-            frame.x, frame.y, frame.frameWidth, frame.frameHeight,
-          ),);
+          canvas.clipRect(
+            Rect.fromLTWH(
+              frame.x,
+              frame.y,
+              frame.frameWidth,
+              frame.frameHeight,
+            ),
+          );
           canvas.translate(dragOffset!.dx, dragOffset!.dy);
         }
       }
 
       if (shape is! TextShape || shape.id != editingTextShapeId) {
-        ShapePainter.paintShape(canvas, shape,
-            simplifyForInteraction: simplifyForInteraction,);
+        ShapePainter.paintShape(
+          canvas,
+          shape,
+          simplifyForInteraction: simplifyForInteraction,
+        );
       }
       canvas.restore();
     }
@@ -876,12 +950,26 @@ class RustCanvasPainter extends CustomPainter {
     );
 
     canvas.save();
-    canvas.transform(Float64List.fromList([
-      viewMatrix.a, viewMatrix.b, 0, 0,
-      viewMatrix.c, viewMatrix.d, 0, 0,
-      0, 0, 1, 0,
-      viewMatrix.e, viewMatrix.f, 0, 1,
-    ]),);
+    canvas.transform(
+      Float64List.fromList([
+        viewMatrix.a,
+        viewMatrix.b,
+        0,
+        0,
+        viewMatrix.c,
+        viewMatrix.d,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        viewMatrix.e,
+        viewMatrix.f,
+        0,
+        1,
+      ]),
+    );
 
     final paint = Paint()
       ..color = selectionColor.withValues(alpha: 0.5)
@@ -911,12 +999,26 @@ class RustCanvasPainter extends CustomPainter {
     );
 
     canvas.save();
-    canvas.transform(Float64List.fromList([
-      viewMatrix.a, viewMatrix.b, 0, 0,
-      viewMatrix.c, viewMatrix.d, 0, 0,
-      0, 0, 1, 0,
-      viewMatrix.e, viewMatrix.f, 0, 1,
-    ]),);
+    canvas.transform(
+      Float64List.fromList([
+        viewMatrix.a,
+        viewMatrix.b,
+        0,
+        0,
+        viewMatrix.c,
+        viewMatrix.d,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        viewMatrix.e,
+        viewMatrix.f,
+        0,
+        1,
+      ]),
+    );
 
     final paint = Paint()
       ..color = selectionColor
@@ -947,12 +1049,26 @@ class RustCanvasPainter extends CustomPainter {
     if (dragRect == null) return;
 
     canvas.save();
-    canvas.transform(Float64List.fromList([
-      viewMatrix.a, viewMatrix.b, 0, 0,
-      viewMatrix.c, viewMatrix.d, 0, 0,
-      0, 0, 1, 0,
-      viewMatrix.e, viewMatrix.f, 0, 1,
-    ]),);
+    canvas.transform(
+      Float64List.fromList([
+        viewMatrix.a,
+        viewMatrix.b,
+        0,
+        0,
+        viewMatrix.c,
+        viewMatrix.d,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        viewMatrix.e,
+        viewMatrix.f,
+        0,
+        1,
+      ]),
+    );
 
     final fill = Paint()
       ..color = selectionColor.withValues(alpha: 0.1)

@@ -146,8 +146,7 @@ class _CommitDialogState extends State<CommitDialog> {
             return ElevatedButton(
               onPressed: hasMessage ? _onCommit : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    hasMessage ? cs.primary : cs.outline,
+                backgroundColor: hasMessage ? cs.primary : cs.outline,
                 foregroundColor: Colors.white,
               ),
               child: const Text('Commit & Switch'),

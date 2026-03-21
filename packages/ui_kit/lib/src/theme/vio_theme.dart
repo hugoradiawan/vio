@@ -28,8 +28,9 @@ class VioTheme {
     Color seedColor, {
     ThemeMode mode = ThemeMode.dark,
   }) {
-    final brightness =
-        mode == ThemeMode.light ? Brightness.light : Brightness.dark;
+    final brightness = mode == ThemeMode.light
+        ? Brightness.light
+        : Brightness.dark;
     final colorScheme = ColorScheme.fromSeed(
       seedColor: seedColor,
       brightness: brightness,
@@ -193,8 +194,7 @@ class VioTheme {
           borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
           border: Border.all(color: VioColors.border),
         ),
-        textStyle:
-            VioTypography.caption.copyWith(color: VioColors.textPrimary),
+        textStyle: VioTypography.caption.copyWith(color: VioColors.textPrimary),
         padding: const EdgeInsets.symmetric(
           horizontal: VioSpacing.sm,
           vertical: VioSpacing.xs,

@@ -231,8 +231,7 @@ class _SearchTabState extends State<SearchTab>
               Expanded(
                 child: TextField(
                   controller: _controller,
-                  style: VioTypography.body2
-                      .copyWith(color: cs.onSurface),
+                  style: VioTypography.body2.copyWith(color: cs.onSurface),
                   decoration: InputDecoration(
                     isDense: true,
                     hintText: 'Search workspace…',
@@ -363,7 +362,8 @@ class _SearchMetaRow extends StatelessWidget {
       ),
       child: Text(
         '$total result${total == 1 ? '' : 's'}',
-        style: VioTypography.caption.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+        style: VioTypography.caption
+            .copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
       ),
     );
   }
@@ -403,14 +403,14 @@ class _SearchSection extends StatelessWidget {
               const SizedBox(width: VioSpacing.xs),
               Text(
                 title,
-                style: VioTypography.caption
-                    .copyWith(color: cs.onSurfaceVariant),
+                style:
+                    VioTypography.caption.copyWith(color: cs.onSurfaceVariant),
               ),
               const SizedBox(width: VioSpacing.xs),
               Text(
                 '${items.length}',
-                style: VioTypography.caption
-                    .copyWith(color: cs.onSurfaceVariant),
+                style:
+                    VioTypography.caption.copyWith(color: cs.onSurfaceVariant),
               ),
             ],
           ),

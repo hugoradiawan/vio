@@ -94,8 +94,8 @@ class AssetsTab extends StatelessWidget {
                     Expanded(
                       child: Text(
                         state.errorMessage!,
-                        style: VioTypography.caption
-                            .copyWith(color: Theme.of(context).colorScheme.error),
+                        style: VioTypography.caption.copyWith(
+                            color: Theme.of(context).colorScheme.error),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -120,7 +120,9 @@ class AssetsTab extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 24, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            Icon(icon,
+                size: 24,
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
             const SizedBox(height: VioSpacing.xs),
             Text(
               message,
@@ -150,19 +152,21 @@ class _AssetsToolbar extends StatelessWidget {
       height: 36,
       padding: const EdgeInsets.symmetric(horizontal: VioSpacing.xs),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.outline)),
+        border: Border(
+            bottom: BorderSide(color: Theme.of(context).colorScheme.outline)),
       ),
       child: Row(
         children: [
           // Search
           Expanded(
             child: TextField(
-              style: VioTypography.body2.copyWith(color: Theme.of(context).colorScheme.onSurface),
+              style: VioTypography.body2
+                  .copyWith(color: Theme.of(context).colorScheme.onSurface),
               decoration: InputDecoration(
                 isDense: true,
                 hintText: 'Search assets…',
-                hintStyle:
-                    VioTypography.body2.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                hintStyle: VioTypography.body2.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant),
                 border: InputBorder.none,
                 prefixIcon: Icon(
                   Icons.search,
@@ -234,8 +238,8 @@ class _GraphicsSectionState extends State<_GraphicsSection> {
           children: [
             Text(
               '${widget.assets.length}',
-              style:
-                  VioTypography.caption.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: VioTypography.caption.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(width: VioSpacing.xs),
             VioIconButton(
@@ -262,9 +266,13 @@ class _GraphicsSectionState extends State<_GraphicsSection> {
               Container(
                 margin: const EdgeInsets.all(VioSpacing.xs),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primary
+                      .withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(VioSpacing.radiusMd),
-                  border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
+                  border: Border.all(
+                      color: Theme.of(context).colorScheme.primary, width: 2),
                 ),
                 child: Center(
                   child: Column(
@@ -452,7 +460,8 @@ class _AssetGridItem extends StatelessWidget {
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerLow,
               borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-              border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
+              border: Border.all(
+                  color: Theme.of(context).colorScheme.primary, width: 2),
             ),
             child: _buildThumbnail(context),
           ),
@@ -557,7 +566,8 @@ class _AssetGridItem extends StatelessWidget {
         const PopupMenuItem(value: 'move', child: Text('Move to group…')),
         PopupMenuItem(
           value: 'delete',
-          child: Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          child: Text('Delete',
+              style: TextStyle(color: Theme.of(context).colorScheme.error)),
         ),
       ],
     ).then((value) {
@@ -672,7 +682,8 @@ class _AssetListItem extends StatelessWidget {
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surfaceContainerLow,
             borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-            border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
+            border: Border.all(
+                color: Theme.of(context).colorScheme.primary, width: 2),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -685,8 +696,8 @@ class _AssetListItem extends StatelessWidget {
               const SizedBox(width: VioSpacing.xs),
               Text(
                 asset.name,
-                style:
-                    VioTypography.body2.copyWith(color: Theme.of(context).colorScheme.onSurface),
+                style: VioTypography.body2
+                    .copyWith(color: Theme.of(context).colorScheme.onSurface),
               ),
             ],
           ),
@@ -705,7 +716,9 @@ class _AssetListItem extends StatelessWidget {
       height: 32,
       padding: const EdgeInsets.symmetric(horizontal: VioSpacing.sm),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.outline, width: 0.5)),
+        border: Border(
+            bottom: BorderSide(
+                color: Theme.of(context).colorScheme.outline, width: 0.5)),
       ),
       child: Row(
         children: [
@@ -718,16 +731,16 @@ class _AssetListItem extends StatelessWidget {
           Expanded(
             child: Text(
               asset.name,
-              style:
-                  VioTypography.body2.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: VioTypography.body2.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ),
           Text(
             '${asset.width}×${asset.height}',
-            style:
-                VioTypography.caption.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: VioTypography.caption.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
       ),
@@ -758,8 +771,8 @@ class _ColorsSection extends StatelessWidget {
         children: [
           Text(
             '${colors.length}',
-            style:
-                VioTypography.caption.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: VioTypography.caption.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           const SizedBox(width: VioSpacing.xs),
           VioIconButton(
@@ -835,7 +848,8 @@ class _ColorItem extends StatelessWidget {
             decoration: BoxDecoration(
               color: _parseColor(),
               borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-              border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
+              border: Border.all(
+                  color: Theme.of(context).colorScheme.primary, width: 2),
             ),
           ),
         ),
@@ -942,7 +956,8 @@ class _ColorItem extends StatelessWidget {
         const PopupMenuItem(value: 'move', child: Text('Move to group…')),
         PopupMenuItem(
           value: 'delete',
-          child: Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          child: Text('Delete',
+              style: TextStyle(color: Theme.of(context).colorScheme.error)),
         ),
       ],
     ).then((value) {

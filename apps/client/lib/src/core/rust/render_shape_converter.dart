@@ -133,8 +133,7 @@ class RenderShapeConverter {
       color: fill.color,
       opacity: fill.opacity,
       hidden: fill.hidden,
-      gradient:
-          fill.gradient != null ? _convertGradient(fill.gradient!) : null,
+      gradient: fill.gradient != null ? _convertGradient(fill.gradient!) : null,
     );
   }
 

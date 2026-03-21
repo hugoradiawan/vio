@@ -116,8 +116,7 @@ class ImageCacheService {
         if (longest > maxEdge) {
           final scale = maxEdge / longest;
           final targetWidth = math.max(1, (normalized.width * scale).round());
-          final targetHeight =
-              math.max(1, (normalized.height * scale).round());
+          final targetHeight = math.max(1, (normalized.height * scale).round());
           finalImage = img.copyResize(
             normalized,
             width: targetWidth,

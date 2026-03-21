@@ -89,7 +89,8 @@ class CanvasTextEditorOverlay extends StatelessWidget {
           style: resolveFontStyle(),
           cursorColor: Theme.of(context).colorScheme.primary,
           backgroundCursorColor: Theme.of(context).colorScheme.surface,
-          selectionColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.25),
+          selectionColor:
+              Theme.of(context).colorScheme.primary.withValues(alpha: 0.25),
         ),
       ),
     );

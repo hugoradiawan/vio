@@ -114,7 +114,8 @@ class _WorkspacePageState extends State<WorkspacePage> {
                                 // Canvas area
                                 Expanded(
                                   child: ColoredBox(
-                                    color: VioCanvasTheme.of(context).canvasBackground,
+                                    color: VioCanvasTheme.of(context)
+                                        .canvasBackground,
                                     child: Stack(
                                       children: [
                                         const CanvasView(),
@@ -281,7 +282,14 @@ class _WorkspacePageState extends State<WorkspacePage> {
         const SizedBox(width: VioSpacing.md),
         _buildZoomControls(context),
         const SizedBox(width: VioSpacing.md),
-        SizedBox(width: 1, height: 20, child: ColoredBox(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.25))),
+        SizedBox(
+            width: 1,
+            height: 20,
+            child: ColoredBox(
+                color: Theme.of(context)
+                    .colorScheme
+                    .outline
+                    .withValues(alpha: 0.25))),
         const SizedBox(width: VioSpacing.sm),
         VioIconButton(
           icon: Icons.settings_outlined,
@@ -325,7 +333,10 @@ class _WorkspacePageState extends State<WorkspacePage> {
                       Text(
                         zoomPercentage,
                         style: VioTypography.caption.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.55),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurfaceVariant
+                              .withValues(alpha: 0.55),
                         ),
                       ),
                       const Icon(
@@ -613,7 +624,12 @@ class _ToggleButton extends StatelessWidget {
           child: Icon(
             icon,
             size: 16,
-            color: isActive ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.45),
+            color: isActive
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context)
+                    .colorScheme
+                    .onSurfaceVariant
+                    .withValues(alpha: 0.45),
           ),
         ),
       ),

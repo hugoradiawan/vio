@@ -310,9 +310,7 @@ class _PullRequestItem extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: isSelected
-              ? cs.primaryContainer
-              : cs.surfaceContainerHigh,
+          color: isSelected ? cs.primaryContainer : cs.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected ? cs.primary : cs.outline,
@@ -445,11 +443,9 @@ class _PullRequestDetailPanel extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final canMerge = detail.mergeable;
     final hasConflicts = detail.hasConflicts;
-    final isClosed =
-        detail.pullRequest.status ==
+    final isClosed = detail.pullRequest.status ==
         pr_enum.PullRequestStatus.PULL_REQUEST_STATUS_CLOSED;
-    final isMerged =
-        detail.pullRequest.status ==
+    final isMerged = detail.pullRequest.status ==
         pr_enum.PullRequestStatus.PULL_REQUEST_STATUS_MERGED;
 
     return Container(
@@ -1176,9 +1172,7 @@ class _StrategyOption extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: isSelected
-              ? cs.primaryContainer
-              : cs.surfaceContainerHigh,
+          color: isSelected ? cs.primaryContainer : cs.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected ? cs.primary : cs.outline,

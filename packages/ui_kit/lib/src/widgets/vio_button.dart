@@ -119,9 +119,7 @@ class VioButton extends StatelessWidget {
       onPressed: isDisabled ? null : onPressed,
       style: OutlinedButton.styleFrom(
         foregroundColor: cs.onSurface,
-        side: BorderSide(
-          color: isDisabled ? cs.outlineVariant : cs.outline,
-        ),
+        side: BorderSide(color: isDisabled ? cs.outlineVariant : cs.outline),
         padding: _getPadding(),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(VioSpacing.radiusMd),
@@ -180,13 +178,7 @@ class VioButton extends StatelessWidget {
     final children = <Widget>[];
 
     if (leadingIcon != null) {
-      children.add(
-        Icon(
-          leadingIcon,
-          size: _getIconSize(),
-          color: color,
-        ),
-      );
+      children.add(Icon(leadingIcon, size: _getIconSize(), color: color));
       children.add(const SizedBox(width: VioSpacing.xs));
     }
 

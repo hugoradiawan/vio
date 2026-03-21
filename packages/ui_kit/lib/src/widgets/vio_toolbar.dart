@@ -31,7 +31,9 @@ class VioToolbar extends StatelessWidget implements PreferredSizeWidget {
       decoration: BoxDecoration(
         color: cs.surface,
         border: showDivider
-            ? Border(bottom: BorderSide(color: cs.outline.withValues(alpha: 0.25)))
+            ? Border(
+                bottom: BorderSide(color: cs.outline.withValues(alpha: 0.25)),
+              )
             : null,
       ),
       padding: const EdgeInsets.symmetric(horizontal: VioSpacing.sm),

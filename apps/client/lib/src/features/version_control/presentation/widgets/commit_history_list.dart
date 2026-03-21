@@ -56,7 +56,8 @@ class CommitHistoryList extends StatelessWidget {
         final dcs = Theme.of(dialogContext).colorScheme;
         return AlertDialog(
           backgroundColor: dcs.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           title: Text(
             'Checkout Commit',
             style: TextStyle(
@@ -149,7 +150,8 @@ class CommitHistoryList extends StatelessWidget {
         final dcs = Theme.of(dialogContext).colorScheme;
         return AlertDialog(
           backgroundColor: dcs.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           title: Text(
             'Revert Commit',
             style: TextStyle(
@@ -244,7 +246,8 @@ class CommitHistoryList extends StatelessWidget {
         final dcs = Theme.of(dialogContext).colorScheme;
         return AlertDialog(
           backgroundColor: dcs.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           title: Text(
             'Commit Details',
             style: TextStyle(
@@ -298,7 +301,8 @@ class CommitHistoryList extends StatelessWidget {
         final dcs = Theme.of(dialogContext).colorScheme;
         return AlertDialog(
           backgroundColor: dcs.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           title: Text(
             'Cherry-pick Commit',
             style: TextStyle(
@@ -508,7 +512,9 @@ class _CommitItem extends StatelessWidget {
                                   ? commit.id.substring(0, 7)
                                   : commit.id,
                               style: TextStyle(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
                                 fontSize: 10,
                                 fontFamily: 'monospace',
                               ),

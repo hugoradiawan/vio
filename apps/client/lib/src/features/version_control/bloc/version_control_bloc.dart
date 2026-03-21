@@ -579,7 +579,8 @@ class VersionControlBloc
     } on GrpcError catch (e) {
       emit(state.copyWith(error: e.message ?? 'Failed to create branch'));
     } catch (e) {
-      VioLogger.error('VersionControlBloc: Unexpected error creating branch - $e');
+      VioLogger.error(
+          'VersionControlBloc: Unexpected error creating branch - $e');
       emit(state.copyWith(error: 'Failed to create branch: $e'));
     }
   }
@@ -1054,12 +1055,16 @@ class VersionControlBloc
           ..pullRequestId = event.pullRequestId,
       );
 
-      final sourceBranch = state.branches.where(
-        (b) => b.id == selected.sourceBranchId,
-      ).firstOrNull;
-      final targetBranch = state.branches.where(
-        (b) => b.id == selected.targetBranchId,
-      ).firstOrNull;
+      final sourceBranch = state.branches
+          .where(
+            (b) => b.id == selected.sourceBranchId,
+          )
+          .firstOrNull;
+      final targetBranch = state.branches
+          .where(
+            (b) => b.id == selected.targetBranchId,
+          )
+          .firstOrNull;
 
       final detail = PullRequestDetail(
         pullRequest: detailResponse.pullRequest,

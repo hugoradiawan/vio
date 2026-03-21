@@ -20,12 +20,10 @@ class VioIcons {
 
   // Alignment icons
   static const IconData alignLeft = Icons.align_horizontal_left;
-  static const IconData alignHorizontalCenter =
-      Icons.align_horizontal_center;
+  static const IconData alignHorizontalCenter = Icons.align_horizontal_center;
   static const IconData alignRight = Icons.align_horizontal_right;
   static const IconData alignTop = Icons.align_vertical_top;
-  static const IconData alignVerticalCenter =
-      Icons.align_vertical_center;
+  static const IconData alignVerticalCenter = Icons.align_vertical_center;
   static const IconData alignBottom = Icons.align_vertical_bottom;
 
   // Flip icons

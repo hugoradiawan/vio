@@ -9,10 +9,8 @@ final class ThemeState extends Equatable {
   const ThemeState({required this.seedColor, required this.themeMode});
 
   /// Default state — Vio primary blue seed, dark mode.
-  factory ThemeState.initial() => const ThemeState(
-        seedColor: VioColors.primary,
-        themeMode: ThemeMode.dark,
-      );
+  factory ThemeState.initial() =>
+      const ThemeState(seedColor: VioColors.primary, themeMode: ThemeMode.dark);
 
   /// The color used to generate the M3 [ColorScheme] via [VioTheme.fromSeed].
   final Color seedColor;

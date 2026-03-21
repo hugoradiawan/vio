@@ -895,4 +895,3 @@ class _CreateBranchDialogState extends State<CreateBranchDialog> {
     );
   }
 }
-

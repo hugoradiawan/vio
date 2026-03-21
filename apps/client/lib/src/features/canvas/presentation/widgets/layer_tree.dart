@@ -175,7 +175,11 @@ class LayerTree extends StatelessWidget {
 
     for (final node in nodes) {
       final name = node.shape.name.toLowerCase();
-      final selfMatches = name.contains(query);
+      var selfMatches = name.contains(query);
+      if (!selfMatches && node.shape is TextShape) {
+        selfMatches =
+            (node.shape as TextShape).text.toLowerCase().contains(query);
+      }
 
       final filteredChildren = node.hasChildren
           ? _filterTree(node.children, query)

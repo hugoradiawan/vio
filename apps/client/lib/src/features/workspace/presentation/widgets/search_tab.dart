@@ -69,7 +69,12 @@ class _SearchTabState extends State<SearchTab>
             .where(
               (shape) => _matches(
                 normalizedQuery,
-                [shape.name, shape.type.name, shape.id],
+                [
+                  shape.name,
+                  shape.type.name,
+                  shape.id,
+                  if (shape is TextShape) shape.text,
+                ],
               ),
             )
             .take(30)
@@ -78,7 +83,9 @@ class _SearchTabState extends State<SearchTab>
                 title: shape.name.isEmpty
                     ? 'Untitled ${shape.type.name}'
                     : shape.name,
-                subtitle: '${shape.type.name} · ${shape.id}',
+                subtitle: shape is TextShape && shape.text.isNotEmpty
+                    ? '${shape.type.name} · ${_truncate(shape.text, 40)}'
+                    : '${shape.type.name} · ${shape.id}',
                 icon: _iconForShape(shape),
                 onTap: () {
                   widget.onLayerResultTap(
@@ -327,6 +334,12 @@ class _SearchTabState extends State<SearchTab>
       case ShapeType.bool:
         return Icons.auto_fix_normal_outlined;
     }
+  }
+
+  String _truncate(String value, int maxLength) {
+    final singleLine = value.replaceAll(RegExp(r'\s+'), ' ');
+    if (singleLine.length <= maxLength) return singleLine;
+    return '${singleLine.substring(0, maxLength)}…';
   }
 
   String _enumName(Object enumValue) {

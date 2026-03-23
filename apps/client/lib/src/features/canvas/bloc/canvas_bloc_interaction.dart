@@ -31,6 +31,26 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
   void _notifyRepositoryShapeUpdated(Shape shape);
   void _notifyRepositoryShapeDeleted(String shapeId);
 
+  /// Find the innermost [FrameShape] whose bounds contain [canvasPoint].
+  /// Returns `null` when the point is outside all frames (root canvas).
+  FrameShape? _findContainingFrame(
+    Offset canvasPoint,
+    Map<String, Shape> shapes,
+  ) {
+    FrameShape? best;
+    double bestArea = double.infinity;
+    for (final shape in shapes.values) {
+      if (shape is FrameShape && shape.bounds.contains(canvasPoint)) {
+        final area = shape.bounds.width * shape.bounds.height;
+        if (area < bestArea) {
+          best = shape;
+          bestArea = area;
+        }
+      }
+    }
+    return best;
+  }
+
   void _onPointerDown(
     PointerDown event,
     Emitter<CanvasState> emit,
@@ -42,14 +62,8 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
     if (event.tool == CanvasPointerTool.drawText) {
       final newId = _uuid.v4();
 
-      FrameShape? defaultFrame;
-      for (final shape in state.shapes.values) {
-        if (shape is FrameShape) {
-          defaultFrame = shape;
-          break;
-        }
-      }
-      final frameId = defaultFrame?.id;
+      final containingFrame = _findContainingFrame(canvasPoint, state.shapes);
+      final frameId = containingFrame?.id;
 
       final sortOrder = _nextSortOrderForNewShape(
         shapes: state.shapes,
@@ -103,14 +117,8 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
         state.interactionMode != InteractionMode.drawing) {
       final newId = _uuid.v4();
 
-      FrameShape? defaultFrame;
-      for (final shape in state.shapes.values) {
-        if (shape is FrameShape) {
-          defaultFrame = shape;
-          break;
-        }
-      }
-      final frameId = defaultFrame?.id;
+      final containingFrame = _findContainingFrame(canvasPoint, state.shapes);
+      final frameId = containingFrame?.id;
 
       final sortOrder = _nextSortOrderForNewShape(
         shapes: state.shapes,

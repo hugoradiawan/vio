@@ -122,7 +122,8 @@ class _FillItemState extends State<_FillItem> {
                       color: Theme.of(context).colorScheme.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
                       border: Border.all(
-                          color: Theme.of(context).colorScheme.outline),
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
                     ),
                     child: Row(
                       children: [
@@ -419,7 +420,8 @@ class _StrokeItem extends StatelessWidget {
                       color: Color(stroke.color),
                       borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
                       border: Border.all(
-                          color: Theme.of(context).colorScheme.outline),
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
                     ),
                   ),
                 ),
@@ -435,7 +437,8 @@ class _StrokeItem extends StatelessWidget {
                     color: Theme.of(context).colorScheme.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
                     border: Border.all(
-                        color: Theme.of(context).colorScheme.outline),
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -478,9 +481,11 @@ class _StrokeItem extends StatelessWidget {
           // Width and alignment
           Row(
             children: [
-              Icon(VioIcons.strokeSize,
-                  size: 14,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant),
+              Icon(
+                VioIcons.strokeSize,
+                size: 14,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
               const SizedBox(width: VioSpacing.sm),
               SizedBox(
                 width: 56,
@@ -649,7 +654,8 @@ class ShadowSection extends StatelessWidget {
                           Color(shadow.color).withValues(alpha: shadow.opacity),
                       borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
                       border: Border.all(
-                          color: Theme.of(context).colorScheme.outline),
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
                     ),
                   ),
                 ),
@@ -665,7 +671,8 @@ class ShadowSection extends StatelessWidget {
                     color: Theme.of(context).colorScheme.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
                     border: Border.all(
-                        color: Theme.of(context).colorScheme.outline),
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<ShadowStyle>(
@@ -1396,7 +1403,8 @@ class BlurSection extends StatelessWidget {
                     color: Theme.of(context).colorScheme.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
                     border: Border.all(
-                        color: Theme.of(context).colorScheme.outline),
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<BlurType>(

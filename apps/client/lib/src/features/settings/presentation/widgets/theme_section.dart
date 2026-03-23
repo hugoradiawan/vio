@@ -110,8 +110,9 @@ class ThemeSection extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: VioSpacing.md),
                 child: Divider(
-                    height: VioSpacing.xl,
-                    color: cs.outline.withValues(alpha: 0.25)),
+                  height: VioSpacing.xl,
+                  color: cs.outline.withValues(alpha: 0.25),
+                ),
               ),
 
               // — Theme mode selector ——————————————————————————————————
@@ -242,7 +243,8 @@ class _CustomColorButton extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                  color: Theme.of(context).colorScheme.outlineVariant),
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
               gradient: const SweepGradient(
                 colors: [
                   Color(0xFFFF0000),

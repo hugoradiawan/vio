@@ -478,10 +478,9 @@ class _ShapeNameSectionState extends State<_ShapeNameSection> {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-              color: Theme.of(context)
-                  .colorScheme
-                  .outline
-                  .withValues(alpha: 0.25)),
+            color:
+                Theme.of(context).colorScheme.outline.withValues(alpha: 0.25),
+          ),
         ),
       ),
       child: Row(

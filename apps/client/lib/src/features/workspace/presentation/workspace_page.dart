@@ -283,13 +283,13 @@ class _WorkspacePageState extends State<WorkspacePage> {
         _buildZoomControls(context),
         const SizedBox(width: VioSpacing.md),
         SizedBox(
-            width: 1,
-            height: 20,
-            child: ColoredBox(
-                color: Theme.of(context)
-                    .colorScheme
-                    .outline
-                    .withValues(alpha: 0.25))),
+          width: 1,
+          height: 20,
+          child: ColoredBox(
+            color:
+                Theme.of(context).colorScheme.outline.withValues(alpha: 0.25),
+          ),
+        ),
         const SizedBox(width: VioSpacing.sm),
         VioIconButton(
           icon: Icons.settings_outlined,

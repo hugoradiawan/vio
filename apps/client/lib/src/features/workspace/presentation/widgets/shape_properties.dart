@@ -74,9 +74,11 @@ class PositionSizeSection extends StatelessWidget {
               Expanded(
                 child: Row(
                   children: [
-                    Icon(VioIcons.rotation,
-                        size: 14,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    Icon(
+                      VioIcons.rotation,
+                      size: 14,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                     const SizedBox(width: VioSpacing.xs),
                     Expanded(
                       child: VioNumericField(
@@ -105,8 +107,11 @@ class PositionSizeSection extends StatelessWidget {
       final rect = shape as RectangleShape;
       return Row(
         children: [
-          Icon(VioIcons.cornerRadius,
-              size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+          Icon(
+            VioIcons.cornerRadius,
+            size: 14,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           const SizedBox(width: VioSpacing.xs),
           Expanded(
             child: VioNumericField(
@@ -126,8 +131,11 @@ class PositionSizeSection extends StatelessWidget {
     // For other shapes, show opacity
     return Row(
       children: [
-        Icon(Icons.opacity,
-            size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        Icon(
+          Icons.opacity,
+          size: 14,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
         const SizedBox(width: VioSpacing.xs),
         Expanded(
           child: VioNumericField(

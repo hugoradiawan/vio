@@ -275,7 +275,13 @@ class RustCanvasPainter extends CustomPainter {
             :final strokeAlignment,
           ):
           _drawStrokedRRect(
-              canvas, rect, radii, color, strokeWidth, strokeAlignment);
+            canvas,
+            rect,
+            radii,
+            color,
+            strokeWidth,
+            strokeAlignment,
+          );
 
         case DrawCommand_DrawOval(:final rect, :final color):
           canvas.drawOval(_toRect(rect), Paint()..color = _toColor(color));
@@ -337,7 +343,15 @@ class RustCanvasPainter extends CustomPainter {
             :final spread,
           ):
           _drawShadow(
-              canvas, pathType, rect, radii, color, blurSigma, offset, spread);
+            canvas,
+            pathType,
+            rect,
+            radii,
+            color,
+            blurSigma,
+            offset,
+            spread,
+          );
 
         case DrawCommand_PushBlur(:final sigmaX, :final sigmaY, :final bounds):
           canvas.saveLayer(
@@ -616,7 +630,9 @@ class RustCanvasPainter extends CustomPainter {
         final spreadRadii = F64Array4(
           Float64List.fromList(
             List.generate(
-                4, (i) => (radii[i] + spread).clamp(0, double.infinity)),
+              4,
+              (i) => (radii[i] + spread).clamp(0, double.infinity),
+            ),
           ),
         );
         final rrectRect =
@@ -667,7 +683,11 @@ class RustCanvasPainter extends CustomPainter {
   // ---------------------------------------------------------------
 
   void _drawPath(
-      Canvas canvas, String pathData, int color, StrokeData? stroke) {
+    Canvas canvas,
+    String pathData,
+    int color,
+    StrokeData? stroke,
+  ) {
     // SVG path parsing — for now use Flutter's path builder
     // This is a placeholder; full SVG path parsing will be added in Phase 3
     if (stroke != null) {
@@ -790,7 +810,13 @@ class RustCanvasPainter extends CustomPainter {
           case 'C':
             if (nums.length >= 6) {
               path.cubicTo(
-                  nums[0], nums[1], nums[2], nums[3], nums[4], nums[5]);
+                nums[0],
+                nums[1],
+                nums[2],
+                nums[3],
+                nums[4],
+                nums[5],
+              );
               cx = nums[4];
               cy = nums[5];
             }

@@ -489,8 +489,11 @@ class _SectionIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: onPressed,
-      icon: Icon(icon,
-          size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+      icon: Icon(
+        icon,
+        size: 14,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
       tooltip: tooltip,
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(minWidth: 24, minHeight: 24),

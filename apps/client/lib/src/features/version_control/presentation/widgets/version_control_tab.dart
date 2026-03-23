@@ -281,8 +281,9 @@ class _VersionControlTabState extends State<VersionControlTab> {
         content: Text(
           'You have uncommitted changes. What would you like to do before switching to "${branch.name}"?',
           style: TextStyle(
-              color: Theme.of(dialogContext).colorScheme.onSurfaceVariant,
-              fontSize: 14),
+            color: Theme.of(dialogContext).colorScheme.onSurfaceVariant,
+            fontSize: 14,
+          ),
         ),
         actions: [
           TextButton(
@@ -295,7 +296,8 @@ class _VersionControlTabState extends State<VersionControlTab> {
             child: Text(
               'Cancel',
               style: TextStyle(
-                  color: Theme.of(dialogContext).colorScheme.onSurfaceVariant),
+                color: Theme.of(dialogContext).colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
           TextButton(
@@ -306,7 +308,8 @@ class _VersionControlTabState extends State<VersionControlTab> {
                   .add(const BranchSwitchConfirmed());
             },
             style: TextButton.styleFrom(
-                foregroundColor: Theme.of(dialogContext).colorScheme.error),
+              foregroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
             child: const Text('Discard Changes'),
           ),
           ElevatedButton(
@@ -351,7 +354,8 @@ class _VersionControlTabState extends State<VersionControlTab> {
         content: Text(
           'Are you sure you want to delete the branch "${branch.name}"? This action cannot be undone.',
           style: TextStyle(
-              color: Theme.of(dialogContext).colorScheme.onSurfaceVariant),
+            color: Theme.of(dialogContext).colorScheme.onSurfaceVariant,
+          ),
         ),
         actions: [
           TextButton(
@@ -371,7 +375,8 @@ class _VersionControlTabState extends State<VersionControlTab> {
                   .add(const BranchDeleteConfirmed());
             },
             style: TextButton.styleFrom(
-                foregroundColor: Theme.of(dialogContext).colorScheme.error),
+              foregroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
             child: const Text('Delete'),
           ),
         ],

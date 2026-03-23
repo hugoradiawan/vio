@@ -95,7 +95,8 @@ class AssetsTab extends StatelessWidget {
                       child: Text(
                         state.errorMessage!,
                         style: VioTypography.caption.copyWith(
-                            color: Theme.of(context).colorScheme.error),
+                          color: Theme.of(context).colorScheme.error,
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -120,9 +121,11 @@ class AssetsTab extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon,
-                size: 24,
-                color: Theme.of(context).colorScheme.onSurfaceVariant),
+            Icon(
+              icon,
+              size: 24,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(height: VioSpacing.xs),
             Text(
               message,
@@ -153,7 +156,8 @@ class _AssetsToolbar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: VioSpacing.xs),
       decoration: BoxDecoration(
         border: Border(
-            bottom: BorderSide(color: Theme.of(context).colorScheme.outline)),
+          bottom: BorderSide(color: Theme.of(context).colorScheme.outline),
+        ),
       ),
       child: Row(
         children: [
@@ -166,7 +170,8 @@ class _AssetsToolbar extends StatelessWidget {
                 isDense: true,
                 hintText: 'Search assets…',
                 hintStyle: VioTypography.body2.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
                 border: InputBorder.none,
                 prefixIcon: Icon(
                   Icons.search,
@@ -239,7 +244,8 @@ class _GraphicsSectionState extends State<_GraphicsSection> {
             Text(
               '${widget.assets.length}',
               style: VioTypography.caption.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(width: VioSpacing.xs),
             VioIconButton(
@@ -272,7 +278,9 @@ class _GraphicsSectionState extends State<_GraphicsSection> {
                       .withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(VioSpacing.radiusMd),
                   border: Border.all(
-                      color: Theme.of(context).colorScheme.primary, width: 2),
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 2,
+                  ),
                 ),
                 child: Center(
                   child: Column(
@@ -461,7 +469,9 @@ class _AssetGridItem extends StatelessWidget {
               color: Theme.of(context).colorScheme.surfaceContainerLow,
               borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
               border: Border.all(
-                  color: Theme.of(context).colorScheme.primary, width: 2),
+                color: Theme.of(context).colorScheme.primary,
+                width: 2,
+              ),
             ),
             child: _buildThumbnail(context),
           ),
@@ -566,8 +576,10 @@ class _AssetGridItem extends StatelessWidget {
         const PopupMenuItem(value: 'move', child: Text('Move to group…')),
         PopupMenuItem(
           value: 'delete',
-          child: Text('Delete',
-              style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          child: Text(
+            'Delete',
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
         ),
       ],
     ).then((value) {
@@ -683,7 +695,9 @@ class _AssetListItem extends StatelessWidget {
             color: Theme.of(context).colorScheme.surfaceContainerLow,
             borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
             border: Border.all(
-                color: Theme.of(context).colorScheme.primary, width: 2),
+              color: Theme.of(context).colorScheme.primary,
+              width: 2,
+            ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -717,8 +731,11 @@ class _AssetListItem extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: VioSpacing.sm),
       decoration: BoxDecoration(
         border: Border(
-            bottom: BorderSide(
-                color: Theme.of(context).colorScheme.outline, width: 0.5)),
+          bottom: BorderSide(
+            color: Theme.of(context).colorScheme.outline,
+            width: 0.5,
+          ),
+        ),
       ),
       child: Row(
         children: [
@@ -732,7 +749,8 @@ class _AssetListItem extends StatelessWidget {
             child: Text(
               asset.name,
               style: VioTypography.body2.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -740,7 +758,8 @@ class _AssetListItem extends StatelessWidget {
           Text(
             '${asset.width}×${asset.height}',
             style: VioTypography.caption.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -772,7 +791,8 @@ class _ColorsSection extends StatelessWidget {
           Text(
             '${colors.length}',
             style: VioTypography.caption.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(width: VioSpacing.xs),
           VioIconButton(
@@ -849,7 +869,9 @@ class _ColorItem extends StatelessWidget {
               color: _parseColor(),
               borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
               border: Border.all(
-                  color: Theme.of(context).colorScheme.primary, width: 2),
+                color: Theme.of(context).colorScheme.primary,
+                width: 2,
+              ),
             ),
           ),
         ),
@@ -956,8 +978,10 @@ class _ColorItem extends StatelessWidget {
         const PopupMenuItem(value: 'move', child: Text('Move to group…')),
         PopupMenuItem(
           value: 'delete',
-          child: Text('Delete',
-              style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          child: Text(
+            'Delete',
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
         ),
       ],
     ).then((value) {

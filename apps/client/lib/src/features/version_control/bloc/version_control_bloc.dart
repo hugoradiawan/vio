@@ -580,7 +580,8 @@ class VersionControlBloc
       emit(state.copyWith(error: e.message ?? 'Failed to create branch'));
     } catch (e) {
       VioLogger.error(
-          'VersionControlBloc: Unexpected error creating branch - $e');
+        'VersionControlBloc: Unexpected error creating branch - $e',
+      );
       emit(state.copyWith(error: 'Failed to create branch: $e'));
     }
   }

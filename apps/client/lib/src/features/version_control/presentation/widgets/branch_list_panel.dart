@@ -440,8 +440,10 @@ class _BranchListItemState extends State<BranchListItem> {
                   color: cs.onSurfaceVariant,
                 ),
                 const SizedBox(width: 8),
-                Text('Switch to branch',
-                    style: TextStyle(fontSize: 13, color: cs.onSurface)),
+                Text(
+                  'Switch to branch',
+                  style: TextStyle(fontSize: 13, color: cs.onSurface),
+                ),
               ],
             ),
           ),
@@ -486,8 +488,10 @@ class _BranchListItemState extends State<BranchListItem> {
             children: [
               Icon(Icons.settings, size: 16, color: cs.onSurfaceVariant),
               const SizedBox(width: 8),
-              Text('Branch settings',
-                  style: TextStyle(fontSize: 13, color: cs.onSurface)),
+              Text(
+                'Branch settings',
+                style: TextStyle(fontSize: 13, color: cs.onSurface),
+              ),
             ],
           ),
         ),

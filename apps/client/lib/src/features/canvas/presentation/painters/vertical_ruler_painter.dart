@@ -161,7 +161,8 @@ class VerticalRulerPainter extends CustomPainter {
     // Draw highlight rectangle
     final highlightPaint = Paint()
       ..color = selectionColor.withValues(
-          alpha: RulerConstants.selectionHighlightOpacity)
+        alpha: RulerConstants.selectionHighlightOpacity,
+      )
       ..style = PaintingStyle.fill;
 
     canvas.drawRect(

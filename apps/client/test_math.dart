@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
+
 class Matrix2D {
   final double a, b, c, d, e, f;
   const Matrix2D(this.a, this.b, this.c, this.d, this.e, this.f);
@@ -29,14 +31,15 @@ void main() {
 
   var m = Matrix2D.rotationAt(pi / 2, cx, cy);
 
-  print('Dart paint top-left (10, 10): ${m.transformPoint(x, y)}');
-  print(
-      'Dart paint bottom-right (110, 110): ${m.transformPoint(x + w, y + h)}',);
+  debugPrint('Dart paint top-left (10, 10): ${m.transformPoint(x, y)}');
+  debugPrint(
+    'Dart paint bottom-right (110, 110): ${m.transformPoint(x + w, y + h)}',
+  );
 
   // Move by 50, 50
   m = Matrix2D(m.a, m.b, m.c, m.d, m.e + 50, m.f + 50);
 
-  print('Dart after move top-left (10, 10): ${m.transformPoint(x, y)}');
+  debugPrint('Dart after move top-left (10, 10): ${m.transformPoint(x, y)}');
 
   // Rust matrix
   final mRust = Matrix2D(
@@ -48,6 +51,8 @@ void main() {
     m.b * x + m.d * y + m.f,
   );
 
-  print('Rust paint top-left (0, 0): ${mRust.transformPoint(0, 0)}');
-  print('Rust paint bottom-right (100, 100): ${mRust.transformPoint(w, h)}');
+  debugPrint('Rust paint top-left (0, 0): ${mRust.transformPoint(0, 0)}');
+  debugPrint(
+    'Rust paint bottom-right (100, 100): ${mRust.transformPoint(w, h)}',
+  );
 }

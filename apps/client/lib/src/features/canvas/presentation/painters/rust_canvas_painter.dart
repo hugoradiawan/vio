@@ -141,7 +141,8 @@ class RustCanvasPainter extends CustomPainter {
 
     if (!simplifyForInteraction) {
       _paintHoverOutlines(canvas, size);
-      _paintSelectionOutlines(canvas, size);
+      // Selection outlines are rendered by the SelectionBoxPainter overlay
+      // (which supports OBB rotation) — no need to duplicate them here.
       _paintDragRect(canvas);
     }
   }
@@ -1006,61 +1007,6 @@ class RustCanvasPainter extends CustomPainter {
       final shape = shapesById[id];
       if (shape == null || shape.hidden) continue;
       final r = Rect.fromLTWH(shape.x, shape.y, shape.width, shape.height);
-      canvas.drawRect(r, paint);
-    }
-
-    canvas.restore();
-  }
-
-  // ---------------------------------------------------------------
-  // Selection outlines
-  // ---------------------------------------------------------------
-
-  void _paintSelectionOutlines(Canvas canvas, Size size) {
-    if (selectedShapeIds.isEmpty) return;
-
-    final strokeWidth = SelectionHandleMetrics.toCanvasUnits(
-      screenPx: 1.5,
-      zoom: _zoom,
-    );
-
-    canvas.save();
-    canvas.transform(
-      Float64List.fromList([
-        viewMatrix.a,
-        viewMatrix.b,
-        0,
-        0,
-        viewMatrix.c,
-        viewMatrix.d,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        viewMatrix.e,
-        viewMatrix.f,
-        0,
-        1,
-      ]),
-    );
-
-    final paint = Paint()
-      ..color = selectionColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth;
-
-    for (final id in selectedShapeIds) {
-      final shape = shapesById[id];
-      if (shape == null || shape.hidden) continue;
-      final offset = dragOffset ?? Offset.zero;
-      final r = Rect.fromLTWH(
-        shape.x + offset.dx,
-        shape.y + offset.dy,
-        shape.width,
-        shape.height,
-      );
       canvas.drawRect(r, paint);
     }
 

@@ -22,6 +22,8 @@ class SelectionBoxPainter extends CustomPainter {
     this.rotationHandleOffset = SelectionHandleMetrics.rotationOffset,
     this.cornerRadiusHandleSize = SelectionHandleMetrics.cornerRadiusVisualSize,
     this.showCornerRadiusHandles = false,
+    this.selectionRotation = 0,
+    this.unrotatedBounds,
   });
 
   /// The shapes that are selected
@@ -54,6 +56,13 @@ class SelectionBoxPainter extends CustomPainter {
   /// Whether to show corner radius handles (only for single rectangle selection)
   final bool showCornerRadiusHandles;
 
+  /// Rotation of the selection box in degrees (0 = axis-aligned).
+  final double selectionRotation;
+
+  /// Pre-computed un-rotated selection bounds from [CanvasState].
+  /// When non-null and [selectionRotation] != 0, used instead of the AABB.
+  final Rect? unrotatedBounds;
+
   /// Computed handles for hit-testing (in screen coordinates)
   List<HandleInfo> get handles => _computeHandles();
 
@@ -85,8 +94,9 @@ class SelectionBoxPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (selectedShapes.isEmpty) return;
 
-    // Calculate combined bounding box
-    final bounds = _getCombinedBounds();
+    // Use un-rotated bounds when selection is rotated, else AABB.
+    final useOBB = selectionRotation.abs() > 0.01 && unrotatedBounds != null;
+    final bounds = useOBB ? unrotatedBounds! : _getCombinedBounds();
     if (bounds == null) return;
 
     // Apply view transformation
@@ -117,6 +127,16 @@ class SelectionBoxPainter extends CustomPainter {
       canvas.translate(dragOffset!.dx, dragOffset!.dy);
     }
 
+    // Rotate the selection box around its center when shapes are rotated.
+    if (selectionRotation.abs() > 0.01) {
+      final cx = bounds.center.dx;
+      final cy = bounds.center.dy;
+      final radians = selectionRotation * math.pi / 180.0;
+      canvas.translate(cx, cy);
+      canvas.rotate(radians);
+      canvas.translate(-cx, -cy);
+    }
+
     // Draw bounding box
     _drawBoundingBox(canvas, bounds);
 
@@ -127,7 +147,7 @@ class SelectionBoxPainter extends CustomPainter {
     if (showCornerRadiusHandles && selectedShapes.length == 1) {
       final shape = selectedShapes.first;
       if (shape is RectangleShape) {
-        _drawCornerRadiusHandles(canvas, shape);
+        _drawCornerRadiusHandles(canvas, shape, bounds);
       }
     }
 
@@ -405,8 +425,34 @@ class SelectionBoxPainter extends CustomPainter {
   }
 
   /// Draw corner radius handles inside the rectangle corners
-  void _drawCornerRadiusHandles(Canvas canvas, RectangleShape rect) {
-    final positions = _getCornerRadiusHandlePositions(rect);
+  void _drawCornerRadiusHandles(
+    Canvas canvas,
+    RectangleShape rect,
+    Rect selectionBounds,
+  ) {
+    // When the canvas is already rotated for the selection box, compute
+    // positions from the un-rotated selection bounds (same coordinate frame
+    // as the rotation pivot).  This prevents displacement when a rotated
+    // shape has been moved (local x/y stay unchanged but the selection
+    // bounds track the world position).
+    final isRotated = selectionRotation.abs() > 0.01;
+
+    final minInset =
+        _screenToCanvas(SelectionHandleMetrics.cornerRadiusMinInset);
+    double insetFor(double radius) => math.max(minInset, radius);
+
+    List<Offset> positions;
+    if (isRotated) {
+      final b = selectionBounds;
+      positions = [
+        Offset(b.left + insetFor(rect.r1), b.top + insetFor(rect.r1)),
+        Offset(b.right - insetFor(rect.r2), b.top + insetFor(rect.r2)),
+        Offset(b.right - insetFor(rect.r3), b.bottom - insetFor(rect.r3)),
+        Offset(b.left + insetFor(rect.r4), b.bottom - insetFor(rect.r4)),
+      ];
+    } else {
+      positions = _getCornerRadiusHandlePositions(rect);
+    }
     final radiusInCanvas = _screenToCanvas(cornerRadiusHandleSize) / 2;
 
     // Fill
@@ -426,8 +472,17 @@ class SelectionBoxPainter extends CustomPainter {
     }
   }
 
-  /// Get corner radius handle positions inside the rectangle
-  List<Offset> _getCornerRadiusHandlePositions(RectangleShape rect) {
+  /// Get corner radius handle positions inside the rectangle.
+  ///
+  /// When [applyTransform] is true (the default), positions are returned in
+  /// world coordinates (suitable for hit-testing or drawing without canvas
+  /// rotation).  When false, positions are in the shape's local coordinate
+  /// frame — used when the canvas already has the selection rotation applied
+  /// so that the handles don't get double-rotated.
+  List<Offset> _getCornerRadiusHandlePositions(
+    RectangleShape rect, {
+    bool applyTransform = true,
+  }) {
     final bounds = rect.bounds;
 
     // Inset from corner in local coordinates. Bigger radius => bigger inset
@@ -436,32 +491,18 @@ class SelectionBoxPainter extends CustomPainter {
         _screenToCanvas(SelectionHandleMetrics.cornerRadiusMinInset);
     double insetFor(double radius) => math.max(minInset, radius);
 
+    Offset pos(double x, double y) =>
+        applyTransform ? rect.transformPoint(Offset(x, y)) : Offset(x, y);
+
     return [
       // Top-left (r1)
-      rect.transformPoint(
-        Offset(bounds.left + insetFor(rect.r1), bounds.top + insetFor(rect.r1)),
-      ),
+      pos(bounds.left + insetFor(rect.r1), bounds.top + insetFor(rect.r1)),
       // Top-right (r2)
-      rect.transformPoint(
-        Offset(
-          bounds.right - insetFor(rect.r2),
-          bounds.top + insetFor(rect.r2),
-        ),
-      ),
+      pos(bounds.right - insetFor(rect.r2), bounds.top + insetFor(rect.r2)),
       // Bottom-right (r3)
-      rect.transformPoint(
-        Offset(
-          bounds.right - insetFor(rect.r3),
-          bounds.bottom - insetFor(rect.r3),
-        ),
-      ),
+      pos(bounds.right - insetFor(rect.r3), bounds.bottom - insetFor(rect.r3)),
       // Bottom-left (r4)
-      rect.transformPoint(
-        Offset(
-          bounds.left + insetFor(rect.r4),
-          bounds.bottom - insetFor(rect.r4),
-        ),
-      ),
+      pos(bounds.left + insetFor(rect.r4), bounds.bottom - insetFor(rect.r4)),
     ];
   }
 
@@ -495,6 +536,9 @@ class SelectionBoxPainter extends CustomPainter {
 
     if (activeCornerIndex != oldDelegate.activeCornerIndex) return true;
     if (hoveredCornerIndex != oldDelegate.hoveredCornerIndex) return true;
+
+    if (selectionRotation != oldDelegate.selectionRotation) return true;
+    if (unrotatedBounds != oldDelegate.unrotatedBounds) return true;
 
     return !identical(selectedShapes, oldDelegate.selectedShapes) ||
         viewMatrix != oldDelegate.viewMatrix ||

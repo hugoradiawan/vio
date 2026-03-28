@@ -234,7 +234,8 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
           );
         } else {
           // Start resize - store original shapes for relative position calculation
-          final bounds = state.selectionRect;
+          // Use un-rotated bounds so resize math works in axis-aligned space.
+          final bounds = state.unrotatedSelectionRect ?? state.selectionRect;
           final resizeOrigin = _getResizeOrigin(handle, bounds);
           emit(
             state.copyWith(
@@ -537,8 +538,26 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
         (h) => h.name == state.activeHandle,
         orElse: () => HandlePosition.bottomRight,
       );
+
+      // Un-rotate the pointer into the axis-aligned frame of the selection
+      // so existing resize math works unchanged for rotated shapes.
+      final rotDeg = _selectionRotationDegrees();
+      Offset resizePointer = canvasPoint;
+      if (rotDeg.abs() > 0.01) {
+        final center = state.originalShapeBounds!.center;
+        final radians = -rotDeg * math.pi / 180.0;
+        final cosA = math.cos(radians);
+        final sinA = math.sin(radians);
+        final dx = canvasPoint.dx - center.dx;
+        final dy = canvasPoint.dy - center.dy;
+        resizePointer = Offset(
+          center.dx + dx * cosA - dy * sinA,
+          center.dy + dx * sinA + dy * cosA,
+        );
+      }
+
       final newShapes = _calculateResize(
-        canvasPoint,
+        resizePointer,
         handle,
         state.resizeOrigin!,
         state.originalShapeBounds!,
@@ -907,7 +926,9 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
         final updatedShapeIds = <String>{};
 
         Shape movedBy(Shape shape, Offset delta) {
-          final hasRotation = shape.rotation != 0;
+          // Use the transform matrix (ground truth) to detect rotation,
+          // not the shape.rotation field which can drift out of sync.
+          final hasRotation = shape.transform.rotation.abs() > 0.001;
           if (hasRotation) {
             final newTransform = shape.transform.copyWith(
               e: shape.transform.e + delta.dx,
@@ -1205,7 +1226,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
   SelectionHitResult? _hitTestSelectionAffordance(Offset screenPoint) {
     if (state.selectedShapes.any((s) => s.blocked)) return null;
 
-    final bounds = state.selectionRect;
+    final bounds = state.unrotatedSelectionRect ?? state.selectionRect;
     if (bounds == null) return null;
 
     final isSingleTextSelection = state.selectedShapes.length == 1 &&
@@ -1217,6 +1238,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
       zoom: state.zoom,
       viewportOffset: state.viewportOffset,
       isSingleTextSelection: isSingleTextSelection,
+      selectionRotationDegrees: state.selectionRotation,
     );
   }
 
@@ -1286,13 +1308,14 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
   double _selectionRotationDegrees() {
     final selected = state.selectedShapes;
     if (selected.isEmpty) return 0;
-    if (selected.length == 1) {
-      return selected.first.rotation;
-    }
 
-    final first = selected.first.rotation;
+    double rotDeg(Shape s) => s.transform.rotation * 180.0 / math.pi;
+
+    if (selected.length == 1) return rotDeg(selected.first);
+
+    final first = rotDeg(selected.first);
     final allMatch =
-        selected.every((shape) => (shape.rotation - first).abs() < 0.01);
+        selected.every((shape) => (rotDeg(shape) - first).abs() < 0.5);
     return allMatch ? first : 0;
   }
 
@@ -1520,9 +1543,51 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
       if (originalShape == null || currentShape == null) continue;
       if (originalShape.blocked) continue;
 
-      // Calculate shape's relative position within original selection bounds
-      // using the ORIGINAL shape bounds (not current)
-      final originalShapeBounds = originalShape.bounds;
+      // For rotated selections, we need the shape bounds in the un-rotated
+      // selection frame (not the local shape frame) so that relative
+      // positioning within the combined selection rect is correct.
+      final rotDeg = _selectionRotationDegrees();
+      final Rect originalShapeBounds;
+      if (rotDeg.abs() > 0.01) {
+        final center = originalBounds.center;
+        final radians = -rotDeg * math.pi / 180.0;
+        final cosA = math.cos(radians);
+        final sinA = math.sin(radians);
+        Offset unrotate(Offset p) {
+          final dx = p.dx - center.dx;
+          final dy = p.dy - center.dy;
+          return Offset(
+            center.dx + dx * cosA - dy * sinA,
+            center.dy + dx * sinA + dy * cosA,
+          );
+        }
+
+        final localBounds = originalShape.bounds;
+        final corners = [
+          originalShape
+              .transformPoint(Offset(localBounds.left, localBounds.top)),
+          originalShape
+              .transformPoint(Offset(localBounds.right, localBounds.top)),
+          originalShape
+              .transformPoint(Offset(localBounds.right, localBounds.bottom)),
+          originalShape
+              .transformPoint(Offset(localBounds.left, localBounds.bottom)),
+        ];
+        var sMinX = double.infinity;
+        var sMinY = double.infinity;
+        var sMaxX = -double.infinity;
+        var sMaxY = -double.infinity;
+        for (final c in corners) {
+          final ur = unrotate(c);
+          sMinX = math.min(sMinX, ur.dx);
+          sMinY = math.min(sMinY, ur.dy);
+          sMaxX = math.max(sMaxX, ur.dx);
+          sMaxY = math.max(sMaxY, ur.dy);
+        }
+        originalShapeBounds = Rect.fromLTRB(sMinX, sMinY, sMaxX, sMaxY);
+      } else {
+        originalShapeBounds = originalShape.bounds;
+      }
       final relLeft =
           (originalShapeBounds.left - originalBounds.left) / originalWidth;
       final relTop =
@@ -1537,48 +1602,98 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
       final shapeNewX = newLeft + relLeft * newWidth;
       final shapeNewY = newTop + relTop * newHeight;
 
+      // For rotated selections, keep local x/y and rebuild the transform.
+      // The resized position is in the un-rotated selection frame — we need to
+      // re-rotate to get the correct world-space transform.
+      double finalX;
+      double finalY;
+      Matrix2D? finalTransform;
+      if (rotDeg.abs() > 0.01) {
+        // Keep the original local x/y — only scale dimensions.
+        finalX = originalShape.x;
+        finalY = originalShape.y;
+        final localCenterX = finalX + shapeNewWidth / 2;
+        final localCenterY = finalY + shapeNewHeight / 2;
+
+        // Where the center should be in the un-rotated selection frame:
+        final urCenterX = shapeNewX + shapeNewWidth / 2;
+        final urCenterY = shapeNewY + shapeNewHeight / 2;
+
+        // Re-rotate to get world center:
+        final selCenter = originalBounds.center;
+        final reRotRadians = rotDeg * math.pi / 180.0;
+        final cosR = math.cos(reRotRadians);
+        final sinR = math.sin(reRotRadians);
+        final dxUR = urCenterX - selCenter.dx;
+        final dyUR = urCenterY - selCenter.dy;
+        final worldCenterX = selCenter.dx + dxUR * cosR - dyUR * sinR;
+        final worldCenterY = selCenter.dy + dxUR * sinR + dyUR * cosR;
+
+        // Build transform: rotate around local center, then translate so
+        // local center maps to world center.
+        final shapeRotRadians = originalShape.transform.rotation;
+        final rotMatrix =
+            Matrix2D.rotationAt(shapeRotRadians, localCenterX, localCenterY);
+        // rotMatrix maps localCenter → localCenter (rotation in-place).
+        // We need localCenter → worldCenter, so add a translation.
+        final rotatedLC = rotMatrix.transformPoint(localCenterX, localCenterY);
+        finalTransform = rotMatrix.copyWith(
+          e: rotMatrix.e + (worldCenterX - rotatedLC.x),
+          f: rotMatrix.f + (worldCenterY - rotatedLC.y),
+        );
+      } else {
+        finalX = shapeNewX;
+        finalY = shapeNewY;
+      }
+
       // Apply to shape based on type (use originalShape as base for copyWith)
       if (originalShape is RectangleShape) {
         newShapes[shapeId] = originalShape.copyWith(
-          x: shapeNewX,
-          y: shapeNewY,
+          x: finalX,
+          y: finalY,
           rectWidth: shapeNewWidth,
           rectHeight: shapeNewHeight,
+          transform: finalTransform,
         );
       } else if (originalShape is EllipseShape) {
         newShapes[shapeId] = originalShape.copyWith(
-          x: shapeNewX,
-          y: shapeNewY,
+          x: finalX,
+          y: finalY,
           ellipseWidth: shapeNewWidth,
           ellipseHeight: shapeNewHeight,
+          transform: finalTransform,
         );
       } else if (originalShape is FrameShape) {
         newShapes[shapeId] = originalShape.copyWith(
-          x: shapeNewX,
-          y: shapeNewY,
+          x: finalX,
+          y: finalY,
           frameWidth: shapeNewWidth,
           frameHeight: shapeNewHeight,
+          transform: finalTransform,
         );
       } else if (originalShape is TextShape) {
         newShapes[shapeId] = originalShape.copyWith(
-          x: shapeNewX,
-          y: shapeNewY,
+          x: finalX,
+          y: finalY,
           textWidth: shapeNewWidth,
           textHeight: shapeNewHeight,
+          transform: finalTransform,
         );
       } else if (originalShape is ImageShape) {
         newShapes[shapeId] = originalShape.copyWith(
-          x: shapeNewX,
-          y: shapeNewY,
+          x: finalX,
+          y: finalY,
           imageWidth: shapeNewWidth,
           imageHeight: shapeNewHeight,
+          transform: finalTransform,
         );
       } else if (originalShape is SvgShape) {
         newShapes[shapeId] = originalShape.copyWith(
-          x: shapeNewX,
-          y: shapeNewY,
+          x: finalX,
+          y: finalY,
           svgWidth: shapeNewWidth,
           svgHeight: shapeNewHeight,
+          transform: finalTransform,
         );
       }
     }

@@ -185,6 +185,8 @@ class CanvasSurface extends StatelessWidget {
                           dragOffset: canvasState.dragOffset,
                           activeCornerIndex: canvasState.activeCornerIndex,
                           hoveredCornerIndex: canvasState.hoveredCornerIndex,
+                          selectionRotation: canvasState.selectionRotation,
+                          unrotatedBounds: canvasState.unrotatedSelectionRect,
                           showCornerRadiusHandles:
                               canvasState.selectedShapes.length == 1 &&
                                   canvasState.selectedShapes.first

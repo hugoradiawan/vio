@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import 'handle_types.dart';
@@ -66,12 +68,29 @@ SelectionHitResult? hitTestSelectionAffordance({
   required double zoom,
   required Offset viewportOffset,
   required bool isSingleTextSelection,
+  double selectionRotationDegrees = 0,
   SelectionHitTestConfig config = const SelectionHitTestConfig(),
 }) {
   Offset toScreen(Offset canvasPoint) {
     return Offset(
       canvasPoint.dx * zoom + viewportOffset.dx,
       canvasPoint.dy * zoom + viewportOffset.dy,
+    );
+  }
+
+  // When the selection is rotated, un-rotate the screen point around the
+  // screen-space selection center so all axis-aligned logic still works.
+  Offset effectiveScreenPoint = screenPoint;
+  if (selectionRotationDegrees.abs() > 0.01) {
+    final screenCenter = toScreen(selectionBounds.center);
+    final radians = -selectionRotationDegrees * math.pi / 180.0;
+    final cosA = math.cos(radians);
+    final sinA = math.sin(radians);
+    final dx = screenPoint.dx - screenCenter.dx;
+    final dy = screenPoint.dy - screenCenter.dy;
+    effectiveScreenPoint = Offset(
+      screenCenter.dx + dx * cosA - dy * sinA,
+      screenCenter.dy + dx * sinA + dy * cosA,
     );
   }
 
@@ -122,13 +141,14 @@ SelectionHitResult? hitTestSelectionAffordance({
     );
 
     if (position == HandlePosition.rotation) {
-      if ((screenPoint - center).distance <= config.rotationHitRadius) {
+      if ((effectiveScreenPoint - center).distance <=
+          config.rotationHitRadius) {
         return SelectionHitResult.handle(position);
       }
       continue;
     }
 
-    if (rect.contains(screenPoint)) {
+    if (rect.contains(effectiveScreenPoint)) {
       return SelectionHitResult.handle(position);
     }
   }
@@ -157,41 +177,41 @@ SelectionHitResult? hitTestSelectionAffordance({
     return (point - target).distance <= radius;
   }
 
-  if (near(screenPoint, topLeft, cornerSlop)) {
+  if (near(effectiveScreenPoint, topLeft, cornerSlop)) {
     return const SelectionHitResult.handle(HandlePosition.topLeft);
   }
 
-  if (near(screenPoint, topRight, cornerSlop)) {
+  if (near(effectiveScreenPoint, topRight, cornerSlop)) {
     return const SelectionHitResult.handle(HandlePosition.topRight);
   }
 
-  if (near(screenPoint, bottomLeft, cornerSlop)) {
+  if (near(effectiveScreenPoint, bottomLeft, cornerSlop)) {
     return const SelectionHitResult.handle(HandlePosition.bottomLeft);
   }
 
   final bottomRight =
       toScreen(Offset(selectionBounds.right, selectionBounds.bottom));
-  if (near(screenPoint, bottomRight, cornerSlop)) {
+  if (near(effectiveScreenPoint, bottomRight, cornerSlop)) {
     return const SelectionHitResult.handle(HandlePosition.bottomRight);
   }
 
-  if ((screenPoint.dy - topLeft.dy).abs() <= slop &&
-      inX(screenPoint.dx, minX, maxX)) {
+  if ((effectiveScreenPoint.dy - topLeft.dy).abs() <= slop &&
+      inX(effectiveScreenPoint.dx, minX, maxX)) {
     return const SelectionHitResult.edge(SelectionEdge.top);
   }
 
-  if ((screenPoint.dy - bottomLeft.dy).abs() <= slop &&
-      inX(screenPoint.dx, minX, maxX)) {
+  if ((effectiveScreenPoint.dy - bottomLeft.dy).abs() <= slop &&
+      inX(effectiveScreenPoint.dx, minX, maxX)) {
     return const SelectionHitResult.edge(SelectionEdge.bottom);
   }
 
-  if ((screenPoint.dx - topLeft.dx).abs() <= slop &&
-      inY(screenPoint.dy, minY, maxY)) {
+  if ((effectiveScreenPoint.dx - topLeft.dx).abs() <= slop &&
+      inY(effectiveScreenPoint.dy, minY, maxY)) {
     return const SelectionHitResult.edge(SelectionEdge.left);
   }
 
-  if ((screenPoint.dx - topRight.dx).abs() <= slop &&
-      inY(screenPoint.dy, minY, maxY)) {
+  if ((effectiveScreenPoint.dx - topRight.dx).abs() <= slop &&
+      inY(effectiveScreenPoint.dy, minY, maxY)) {
     return const SelectionHitResult.edge(SelectionEdge.right);
   }
 

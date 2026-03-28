@@ -380,6 +380,119 @@ class CanvasState extends Equatable {
     );
   }
 
+  /// The effective rotation (in degrees) for the current selection.
+  ///
+  /// Extracts the rotation angle from the shape's **transform matrix** (the
+  /// ground truth) rather than the [Shape.rotation] field, because the two
+  /// can drift out of sync after certain operations (move, load, etc.).
+  ///
+  /// For a single shape the transform rotation is returned.  For multi-select
+  /// where every shape shares the same rotation, that shared value is returned.
+  /// Otherwise returns 0 (axis-aligned selection box).
+  double get selectionRotation {
+    final selected = selectedShapes;
+    if (selected.isEmpty) return 0;
+
+    double rotDeg(Shape s) => s.transform.rotation * 180.0 / math.pi;
+
+    if (selected.length == 1) {
+      return rotDeg(selected.first);
+    }
+
+    final first = rotDeg(selected.first);
+    final allMatch = selected.every((s) => (rotDeg(s) - first).abs() < 0.5);
+    return allMatch ? first : 0;
+  }
+
+  /// Combined selection bounds in the un-rotated (local) coordinate frame.
+  ///
+  /// When the selection has a non-zero [selectionRotation], the shapes'
+  /// positions are "un-rotated" around the transformed center so that the
+  /// resulting [Rect] represents the selection box *before* rotation is
+  /// applied.  The painter / hit-test code can then apply the rotation to
+  /// this rect to draw / test the rotated selection box.
+  ///
+  /// Returns `null` when the selection has no rotation (caller should use
+  /// [selectionRect] instead).
+  ///
+  /// **Does NOT include [dragOffset]** — the painter applies it separately
+  /// via `canvas.translate`.
+  Rect? get unrotatedSelectionRect {
+    if (selectedShapeIds.isEmpty) return null;
+    final rot = selectionRotation;
+
+    // No rotation → caller should use the AABB [selectionRect] directly.
+    if (rot.abs() < 0.01) return null;
+
+    // 1. Compute world-space AABB center (without dragOffset) so we have a
+    //    stable rotation pivot.
+    double? aMinX, aMinY, aMaxX, aMaxY;
+
+    for (final shapeId in selectedShapeIds) {
+      final shape = shapes[shapeId];
+      if (shape == null) continue;
+
+      final bounds = shape.bounds;
+      final corners = [
+        shape.transformPoint(Offset(bounds.left, bounds.top)),
+        shape.transformPoint(Offset(bounds.right, bounds.top)),
+        shape.transformPoint(Offset(bounds.right, bounds.bottom)),
+        shape.transformPoint(Offset(bounds.left, bounds.bottom)),
+      ];
+
+      for (final corner in corners) {
+        aMinX = aMinX == null ? corner.dx : math.min(aMinX, corner.dx);
+        aMinY = aMinY == null ? corner.dy : math.min(aMinY, corner.dy);
+        aMaxX = aMaxX == null ? corner.dx : math.max(aMaxX, corner.dx);
+        aMaxY = aMaxY == null ? corner.dy : math.max(aMaxY, corner.dy);
+      }
+    }
+
+    if (aMinX == null || aMinY == null || aMaxX == null || aMaxY == null) {
+      return null;
+    }
+
+    final centerX = (aMinX + aMaxX) / 2;
+    final centerY = (aMinY + aMaxY) / 2;
+
+    // 2. Un-rotate all corners around that center.
+    final inverseRotation = Matrix2D.rotationAt(
+      -rot * math.pi / 180.0,
+      centerX,
+      centerY,
+    );
+
+    double? minX, minY, maxX, maxY;
+
+    for (final shapeId in selectedShapeIds) {
+      final shape = shapes[shapeId];
+      if (shape == null) continue;
+
+      final bounds = shape.bounds;
+      final corners = [
+        shape.transformPoint(Offset(bounds.left, bounds.top)),
+        shape.transformPoint(Offset(bounds.right, bounds.top)),
+        shape.transformPoint(Offset(bounds.right, bounds.bottom)),
+        shape.transformPoint(Offset(bounds.left, bounds.bottom)),
+      ];
+
+      for (final corner in corners) {
+        final unrotated = inverseRotation.transformPoint(corner.dx, corner.dy);
+        minX = minX == null ? unrotated.x : math.min(minX, unrotated.x);
+        minY = minY == null ? unrotated.y : math.min(minY, unrotated.y);
+        maxX = maxX == null ? unrotated.x : math.max(maxX, unrotated.x);
+        maxY = maxY == null ? unrotated.y : math.max(maxY, unrotated.y);
+      }
+    }
+
+    if (minX == null || minY == null || maxX == null || maxY == null) {
+      return null;
+    }
+
+    // No dragOffset — the painter handles it via canvas.translate().
+    return Rect.fromLTWH(minX, minY, maxX - minX, maxY - minY);
+  }
+
   /// Get the visible rectangle in canvas coordinates
   Rect get visibleRect {
     final topLeft = screenToCanvas(const Size(0, 0));

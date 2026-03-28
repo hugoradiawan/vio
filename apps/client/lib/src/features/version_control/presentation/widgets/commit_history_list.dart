@@ -476,7 +476,7 @@ class _CommitItem extends StatelessWidget {
                     color: Theme.of(context).colorScheme.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: Theme.of(context).colorScheme.outline,
+                      color: Theme.of(context).colorScheme.outline.withValues(alpha: .25),
                     ),
                   ),
                   child: Column(

@@ -136,6 +136,7 @@ class _VersionControlTabState extends State<VersionControlTab> {
                   expanded,
                 ),
                 trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       '${state.branches.length}',
@@ -145,14 +146,23 @@ class _VersionControlTabState extends State<VersionControlTab> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    IconButton(
-                      onPressed: () => _showCreateBranchDialog(context, state),
-                      icon: const Icon(Icons.add),
-                      iconSize: 18,
-                      padding: const EdgeInsets.all(4),
-                      constraints: const BoxConstraints(),
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      tooltip: 'Create branch',
+                    Tooltip(
+                      message: 'Create branch',
+                      child: InkWell(
+                        onTap: () => _showCreateBranchDialog(context, state),
+                        borderRadius: BorderRadius.circular(4),
+                        child: SizedBox(
+                          width: VioSpacing.iconSm,
+                          height: VioSpacing.iconSm,
+                          child: Icon(
+                            Icons.add,
+                            size: VioSpacing.iconSm,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -174,10 +184,8 @@ class _VersionControlTabState extends State<VersionControlTab> {
                 ),
                 trailing: state.openPullRequests.isNotEmpty
                     ? Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
+                        constraints: const BoxConstraints(minHeight: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(10),
@@ -199,8 +207,10 @@ class _VersionControlTabState extends State<VersionControlTab> {
               ),
 
               // History section (collapsible)
-              _CollapsibleExpandedSection(
+              VioPanel(
                 title: 'History',
+                collapsible: true,
+                padding: EdgeInsets.zero,
                 isExpanded: _isExpanded('history'),
                 onExpansionChanged: (expanded) => _setExpanded(
                   'history',
@@ -214,7 +224,10 @@ class _VersionControlTabState extends State<VersionControlTab> {
                         .add(const CommitsRefreshRequested());
                   },
                 ),
-                child: const CommitHistoryList(),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 400),
+                  child: const CommitHistoryList(),
+                ),
               ),
             ],
           ),
@@ -535,12 +548,13 @@ class _RefreshButton extends StatelessWidget {
       child: InkWell(
         onTap: isLoading ? null : onRefresh,
         borderRadius: BorderRadius.circular(4),
-        child: Padding(
-          padding: const EdgeInsets.all(2),
+        child: SizedBox(
+          width: VioSpacing.iconSm,
+          height: VioSpacing.iconSm,
           child: isLoading
               ? SizedBox(
-                  width: 14,
-                  height: 14,
+                  width: VioSpacing.iconSm,
+                  height: VioSpacing.iconSm,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
                     color: cs.onSurfaceVariant,
@@ -548,88 +562,10 @@ class _RefreshButton extends StatelessWidget {
                 )
               : Icon(
                   Icons.refresh,
-                  size: 14,
+                  size: VioSpacing.iconSm,
                   color: cs.onSurfaceVariant,
                 ),
         ),
-      ),
-    );
-  }
-}
-
-class _CollapsibleExpandedSection extends StatelessWidget {
-  const _CollapsibleExpandedSection({
-    required this.title,
-    required this.child,
-    required this.isExpanded,
-    required this.onExpansionChanged,
-    this.trailing,
-  });
-
-  final String title;
-  final Widget child;
-  final bool isExpanded;
-  final ValueChanged<bool> onExpansionChanged;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: cs.surface,
-        border: Border(bottom: BorderSide(color: cs.outline)),
-      ),
-      child: Column(
-        children: [
-          InkWell(
-            onTap: () => onExpansionChanged(!isExpanded),
-            child: Padding(
-              padding: const EdgeInsets.all(VioSpacing.panelPadding),
-              child: Row(
-                children: [
-                  TweenAnimationBuilder<double>(
-                    tween: Tween<double>(
-                      begin: 0.0,
-                      end: isExpanded ? 0.5 : 0.0,
-                    ),
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeInOut,
-                    builder: (context, turns, child) {
-                      return Transform.rotate(
-                        angle: turns * 3.1415926535897932,
-                        child: child,
-                      );
-                    },
-                    child: Icon(
-                      Icons.expand_more,
-                      size: VioSpacing.iconSm,
-                      color: cs.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(width: VioSpacing.xs),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: VioTypography.titleSmall.copyWith(
-                        color: cs.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                  if (trailing != null) trailing!,
-                ],
-              ),
-            ),
-          ),
-          if (isExpanded)
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 400),
-              child: Padding(
-                padding: const EdgeInsets.all(VioSpacing.panelPadding),
-                child: child,
-              ),
-            ),
-        ],
       ),
     );
   }

@@ -151,7 +151,7 @@ class _LabeledDropdown<T> extends StatelessWidget {
           decoration: BoxDecoration(
             color: cs.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-            border: Border.all(color: cs.outline),
+            border: Border.all(color: cs.outline.withValues(alpha: .25)),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<T>(
@@ -234,7 +234,7 @@ class _LabeledDropdownNullable<T> extends StatelessWidget {
           decoration: BoxDecoration(
             color: cs.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-            border: Border.all(color: cs.outline),
+            border: Border.all(color: cs.outline.withValues(alpha: .25)),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<T?>(

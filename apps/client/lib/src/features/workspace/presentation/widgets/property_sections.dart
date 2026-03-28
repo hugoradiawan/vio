@@ -513,10 +513,11 @@ class _StrokeItem extends StatelessWidget {
                   color: Theme.of(context).colorScheme.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
                   border: Border.all(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .outline
-                          .withValues(alpha: 0.25),),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .outline
+                        .withValues(alpha: 0.25),
+                  ),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<StrokeAlignment>(
@@ -680,7 +681,10 @@ class ShadowSection extends StatelessWidget {
                     color: Theme.of(context).colorScheme.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
                     border: Border.all(
-                      color: Theme.of(context).colorScheme.outline,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .outline
+                          .withValues(alpha: .25),
                     ),
                   ),
                   child: DropdownButtonHideUnderline(
@@ -1412,7 +1416,10 @@ class BlurSection extends StatelessWidget {
                     color: Theme.of(context).colorScheme.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
                     border: Border.all(
-                      color: Theme.of(context).colorScheme.outline,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .outline
+                          .withValues(alpha: .25),
                     ),
                   ),
                   child: DropdownButtonHideUnderline(

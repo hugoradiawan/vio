@@ -156,11 +156,6 @@ class _AssetsToolbar extends StatelessWidget {
     return Container(
       height: 36,
       padding: const EdgeInsets.symmetric(horizontal: VioSpacing.xs),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Theme.of(context).colorScheme.outline),
-        ),
-      ),
       child: Row(
         children: [
           // Search

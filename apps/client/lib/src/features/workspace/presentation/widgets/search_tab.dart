@@ -223,9 +223,6 @@ class _SearchTabState extends State<SearchTab>
         Container(
           height: 36,
           padding: const EdgeInsets.symmetric(horizontal: VioSpacing.xs),
-          decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: cs.outline)),
-          ),
           child: Row(
             children: [
               Expanded(
@@ -238,6 +235,12 @@ class _SearchTabState extends State<SearchTab>
                     hintStyle: VioTypography.body2
                         .copyWith(color: cs.onSurfaceVariant),
                     border: InputBorder.none,
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: BorderSide(
+                        color: cs.outline.withValues(alpha: 0.25),
+                      ),
+                    ),
                     prefixIcon: Icon(
                       Icons.search,
                       size: 16,

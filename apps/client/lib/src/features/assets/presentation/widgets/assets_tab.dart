@@ -115,6 +115,7 @@ class AssetsTab extends StatelessWidget {
     required IconData icon,
     required String message,
   }) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.all(VioSpacing.md),
       child: Center(
@@ -124,14 +125,15 @@ class AssetsTab extends StatelessWidget {
             Icon(
               icon,
               size: 24,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              color: cs.onSurface.withValues(alpha: 0.25),
             ),
             const SizedBox(height: VioSpacing.xs),
             Text(
               message,
               style: VioTypography.caption.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                color: cs.onSurfaceVariant.withValues(alpha: 0.25),
               ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -173,6 +175,15 @@ class _AssetsToolbar extends StatelessWidget {
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
                 border: InputBorder.none,
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: BorderSide(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .outline
+                        .withValues(alpha: 0.25),
+                  ),
+                ),
                 prefixIcon: Icon(
                   Icons.search,
                   size: 16,

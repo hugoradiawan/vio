@@ -179,13 +179,13 @@ class _EmptyState extends StatelessWidget {
             Icon(
               Icons.call_merge,
               size: 48,
-              color: cs.onSurfaceVariant,
+              color: cs.onSurfaceVariant.withValues(alpha: .25),
             ),
             const SizedBox(height: 12),
             Text(
               'No pull requests',
               style: TextStyle(
-                color: cs.onSurfaceVariant,
+                color: cs.onSurfaceVariant.withValues(alpha: .25),
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -194,7 +194,7 @@ class _EmptyState extends StatelessWidget {
             Text(
               'Create a pull request to merge changes',
               style: TextStyle(
-                color: cs.onSurfaceVariant,
+                color: cs.onSurfaceVariant.withValues(alpha: .25),
                 fontSize: 12,
               ),
               textAlign: TextAlign.center,
@@ -206,7 +206,7 @@ class _EmptyState extends StatelessWidget {
               label: const Text('New Pull Request'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: cs.primary,
-                foregroundColor: Colors.white,
+                foregroundColor: cs.onPrimary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),

@@ -43,6 +43,7 @@ class _ResizablePanelHandleState extends State<ResizablePanelHandle> {
   @override
   Widget build(BuildContext context) {
     final isActive = _isHovered || _isDragging;
+    final cs = Theme.of(context).colorScheme;
 
     return MouseRegion(
       cursor: SystemMouseCursors.resizeColumn,
@@ -65,9 +66,7 @@ class _ResizablePanelHandleState extends State<ResizablePanelHandle> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
             width: 1,
-            color: isActive
-                ? Theme.of(context).colorScheme.primary
-                : Theme.of(context).colorScheme.outline,
+            color: isActive ? cs.outline : cs.surface,
           ),
         ),
       ),

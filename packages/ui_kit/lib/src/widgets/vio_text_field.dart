@@ -222,11 +222,11 @@ class _VioNumericFieldState extends State<VioNumericField> {
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-            borderSide: BorderSide(color: cs.outline),
+            borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.25)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-            borderSide: BorderSide(color: cs.outline),
+            borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.25)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(VioSpacing.radiusSm),

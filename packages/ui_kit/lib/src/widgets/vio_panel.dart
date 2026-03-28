@@ -195,7 +195,9 @@ class _CollapsiblePanelState extends State<_CollapsiblePanel>
               child: Padding(
                 padding:
                     widget.padding ??
-                    const EdgeInsets.all(VioSpacing.panelPadding),
+                    const EdgeInsets.symmetric(
+                      horizontal: VioSpacing.panelPadding,
+                    ),
                 child: widget.child,
               ),
             ),

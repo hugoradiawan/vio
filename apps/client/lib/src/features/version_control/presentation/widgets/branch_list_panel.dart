@@ -82,6 +82,7 @@ class _BranchListPanelState extends State<BranchListPanel> {
           fontSize: 13,
         ),
         decoration: InputDecoration(
+          isDense: true,
           hintText: 'Search branches...',
           hintStyle: TextStyle(
             color: cs.onSurfaceVariant,
@@ -116,7 +117,7 @@ class _BranchListPanelState extends State<BranchListPanel> {
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(6),
-            borderSide: BorderSide(color: cs.outline),
+            borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.25)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(6),

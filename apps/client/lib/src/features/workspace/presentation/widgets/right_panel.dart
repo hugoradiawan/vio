@@ -880,7 +880,7 @@ Widget _buildHeader(BuildContext context, String title) {
     decoration: BoxDecoration(
       border: Border(
         bottom: BorderSide(
-          color: cs.outline,
+          color: cs.outline.withValues(alpha: 0.25),
         ),
       ),
     ),

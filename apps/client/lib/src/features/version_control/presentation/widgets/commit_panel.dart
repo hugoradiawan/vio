@@ -198,12 +198,7 @@ class _CommitPanelState extends State<CommitPanel> {
         final cs = Theme.of(context).colorScheme;
 
         return Container(
-          decoration: BoxDecoration(
-            color: cs.surface,
-            border: Border(
-              bottom: BorderSide(color: cs.outline),
-            ),
-          ),
+          decoration: BoxDecoration(color: cs.surface),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -260,7 +255,7 @@ class _CommitPanelState extends State<CommitPanel> {
                       color: cs.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: cs.outline,
+                        color: cs.outline.withValues(alpha: 0.25),
                       ),
                     ),
                     child: Builder(
@@ -311,11 +306,13 @@ class _CommitPanelState extends State<CommitPanel> {
                     contentPadding: const EdgeInsets.all(12),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: cs.outline),
+                      borderSide:
+                          BorderSide(color: cs.outline.withValues(alpha: 0.25)),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: cs.outline),
+                      borderSide:
+                          BorderSide(color: cs.outline.withValues(alpha: 0.25)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -342,6 +339,11 @@ class _CommitPanelState extends State<CommitPanel> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     elevation: 0,
+                    textStyle: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: cs.onPrimary,
+                    ),
                   ),
                   onPressed: canCommit ? () => _syncAndCommit(context) : null,
                   child: isCommitting || _isSyncing
@@ -356,12 +358,17 @@ class _CommitPanelState extends State<CommitPanel> {
                       : Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.check, size: 16),
+                            Icon(
+                              Icons.check,
+                              size: 16,
+                              color: canCommit ? cs.onPrimary : null,
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               'Commit${stagedChanges.isNotEmpty ? ' (${stagedChanges.length})' : ''}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w500,
+                                color: canCommit ? cs.onPrimary : null,
                               ),
                             ),
                           ],

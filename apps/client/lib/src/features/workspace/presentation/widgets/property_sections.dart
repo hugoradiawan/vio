@@ -122,7 +122,10 @@ class _FillItemState extends State<_FillItem> {
                       color: Theme.of(context).colorScheme.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
                       border: Border.all(
-                        color: Theme.of(context).colorScheme.outline,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .outline
+                            .withValues(alpha: 0.25),
                       ),
                     ),
                     child: Row(
@@ -437,7 +440,10 @@ class _StrokeItem extends StatelessWidget {
                     color: Theme.of(context).colorScheme.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
                     border: Border.all(
-                      color: Theme.of(context).colorScheme.outline,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .outline
+                          .withValues(alpha: 0.25),
                     ),
                   ),
                   child: Row(
@@ -506,8 +512,11 @@ class _StrokeItem extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(VioSpacing.radiusSm),
-                  border:
-                      Border.all(color: Theme.of(context).colorScheme.outline),
+                  border: Border.all(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .outline
+                          .withValues(alpha: 0.25),),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<StrokeAlignment>(

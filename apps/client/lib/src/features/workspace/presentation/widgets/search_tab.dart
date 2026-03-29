@@ -56,7 +56,6 @@ class _SearchTabState extends State<SearchTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final cs = Theme.of(context).colorScheme;
 
     final normalizedQuery = _query.toLowerCase();
     final canvasState = context.watch<CanvasBloc>().state;
@@ -223,42 +222,9 @@ class _SearchTabState extends State<SearchTab>
         Container(
           height: 36,
           padding: const EdgeInsets.symmetric(horizontal: VioSpacing.xs),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _controller,
-                  style: VioTypography.body2.copyWith(color: cs.onSurface),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    hintText: 'Search workspace…',
-                    hintStyle: VioTypography.body2
-                        .copyWith(color: cs.onSurfaceVariant),
-                    border: InputBorder.none,
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6),
-                      borderSide: BorderSide(
-                        color: cs.outline.withValues(alpha: 0.25),
-                      ),
-                    ),
-                    prefixIcon: Icon(
-                      Icons.search,
-                      size: 16,
-                      color: cs.onSurfaceVariant,
-                    ),
-                    prefixIconConstraints:
-                        const BoxConstraints(minWidth: 24, minHeight: 16),
-                  ),
-                ),
-              ),
-              if (_query.isNotEmpty)
-                VioIconButton(
-                  icon: Icons.close,
-                  size: 24,
-                  tooltip: 'Clear search',
-                  onPressed: _controller.clear,
-                ),
-            ],
+          child: VioSearchBar(
+            controller: _controller,
+            hintText: 'Search workspace…',
           ),
         ),
         Expanded(

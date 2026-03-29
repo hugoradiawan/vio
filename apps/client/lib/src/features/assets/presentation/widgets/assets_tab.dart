@@ -160,33 +160,9 @@ class _AssetsToolbar extends StatelessWidget {
         children: [
           // Search
           Expanded(
-            child: TextField(
-              style: VioTypography.body2
-                  .copyWith(color: Theme.of(context).colorScheme.onSurface),
-              decoration: InputDecoration(
-                isDense: true,
-                hintText: 'Search assets…',
-                hintStyle: VioTypography.body2.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                border: InputBorder.none,
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: BorderSide(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .outline
-                        .withValues(alpha: 0.25),
-                  ),
-                ),
-                prefixIcon: Icon(
-                  Icons.search,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                prefixIconConstraints:
-                    const BoxConstraints(minWidth: 24, minHeight: 16),
-              ),
+            child: VioSearchBar(
+              hintText: 'Search assets…',
+              showClearButton: false,
               onChanged: (value) {
                 context.read<AssetBloc>().add(AssetSearchChanged(query: value));
               },

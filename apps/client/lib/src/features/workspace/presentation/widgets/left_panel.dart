@@ -222,50 +222,22 @@ class _LayersTab extends StatelessWidget {
                   ] else ...[
                     const SizedBox(width: VioSpacing.xs),
                     Expanded(
-                      child: TextField(
+                      child: VioSearchBar(
+                        hintText: 'Search layers…',
                         autofocus: true,
-                        style: VioTypography.body2.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                        decoration: InputDecoration(
-                          isDense: true,
-                          hintText: 'Search layers…',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: BorderSide.none,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: BorderSide(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .outline
-                                  .withValues(alpha: 0.25),
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          ),
-                        ),
+                        alwaysShowClearButton: true,
+                        clearTooltip: 'Close search',
                         onChanged: (value) {
                           context
                               .read<WorkspaceBloc>()
                               .add(LayersSearchQueryChanged(value));
                         },
+                        onClear: () {
+                          context
+                              .read<WorkspaceBloc>()
+                              .add(const LayersSearchCleared());
+                        },
                       ),
-                    ),
-                    VioIconButton(
-                      icon: Icons.close,
-                      size: 28,
-                      tooltip: 'Close search',
-                      onPressed: () {
-                        context
-                            .read<WorkspaceBloc>()
-                            .add(const LayersSearchCleared());
-                      },
                     ),
                   ],
                 ],

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:vio_ui_kit/vio_ui_kit.dart' show VioIconButton;
+import 'package:vio_ui_kit/vio_ui_kit.dart';
 
 import '../../../../gen/vio/v1/branch.pb.dart' as branch_pb;
 import '../../bloc/version_control_bloc.dart';
@@ -68,83 +68,22 @@ class _BranchListPanelState extends State<BranchListPanel> {
   }
 
   Widget _buildSearchBar() {
-    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.all(8),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _searchController,
-              style: TextStyle(
-                color: cs.onSurface,
-                fontSize: 13,
-              ),
-              decoration: InputDecoration(
-                isDense: true,
-                hintText: 'Search branches...',
-                hintStyle: TextStyle(
-                  color: cs.onSurfaceVariant,
-                  fontSize: 13,
-                ),
-                prefixIcon: Icon(
-                  Icons.search,
-                  size: 16,
-                  color: cs.onSurfaceVariant,
-                ),
-                prefixIconConstraints:
-                    const BoxConstraints(minWidth: 24, minHeight: 16),
-                // suffixIcon: _searchQuery.isNotEmpty
-                //     ? IconButton(
-                //         onPressed: () {
-                //           _searchController.clear();
-                //           setState(() {
-                //             _searchQuery = '';
-                //           });
-                //         },
-                //         icon: const Icon(Icons.clear, size: 16),
-                //         color: cs.onSurfaceVariant,
-                //       )
-                //     : null,
-                filled: true,
-                fillColor: cs.surfaceContainerHigh,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.25)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: BorderSide(color: cs.primary),
-                ),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
-            ),
-          ),
-                        if (_searchQuery.isNotEmpty)
-                VioIconButton(
-                  icon: Icons.close,
-                  size: 24,
-                  tooltip: 'Clear search',
-                  onPressed: () {
-                    _searchController.clear();
-                    setState(() {
-                      _searchQuery = '';
-                    });
-                  },
-                ),
-        ],
+      child: VioSearchBar(
+        controller: _searchController,
+        hintText: 'Search branches...',
+        onChanged: (value) {
+          setState(() {
+            _searchQuery = value;
+          });
+        },
+        onClear: () {
+          _searchController.clear();
+          setState(() {
+            _searchQuery = '';
+          });
+        },
       ),
     );
   }

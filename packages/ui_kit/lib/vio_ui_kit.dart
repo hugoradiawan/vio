@@ -17,5 +17,6 @@ export 'src/widgets/vio_color_picker_dialog.dart';
 export 'src/widgets/vio_icon_button.dart';
 export 'src/widgets/vio_panel.dart';
 export 'src/widgets/vio_property_widgets.dart';
+export 'src/widgets/vio_search_bar.dart';
 export 'src/widgets/vio_text_field.dart';
 export 'src/widgets/vio_toolbar.dart';

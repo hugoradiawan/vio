@@ -11,6 +11,7 @@ import '../features/auth/presentation/register_page.dart';
 import '../features/canvas/bloc/canvas_bloc.dart';
 import '../features/settings/presentation/settings_page.dart';
 import '../features/version_control/bloc/version_control_bloc.dart';
+import '../features/workspace/bloc/search_bloc.dart';
 import '../features/workspace/bloc/workspace_bloc.dart';
 import '../features/workspace/presentation/workspace_page.dart';
 import 'service_locator.dart';
@@ -100,6 +101,13 @@ GoRouter createRouter(AuthBloc authBloc) {
                   assetService: ServiceLocator.instance.assetService,
                   canvasBloc: context.read<CanvasBloc>(),
                 )..add(AssetsLoadRequested(projectId: _demoProjectId)),
+              ),
+              BlocProvider(
+                create: (context) => SearchBloc(
+                  canvasBloc: context.read<CanvasBloc>(),
+                  assetBloc: context.read<AssetBloc>(),
+                  versionControlBloc: context.read<VersionControlBloc>(),
+                ),
               ),
             ],
             child: const _CanvasVersionControlBridge(

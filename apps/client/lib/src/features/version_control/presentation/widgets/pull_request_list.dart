@@ -313,7 +313,7 @@ class _PullRequestItem extends StatelessWidget {
           color: isSelected ? cs.primaryContainer : cs.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? cs.primary : cs.outline,
+            color: isSelected ? cs.primary : cs.outline.withValues(alpha: .25),
           ),
         ),
         child: Column(

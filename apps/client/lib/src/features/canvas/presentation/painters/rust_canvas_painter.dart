@@ -40,6 +40,7 @@ class RustCanvasPainter extends CustomPainter {
     this.hoveredShapeId,
     this.hoveredLayerId,
     this.editingTextShapeId,
+    this.labelColor = const Color(0xFF8B949E),
   }) : super(repaint: repaintNotifier);
 
   // ---------------------------------------------------------------
@@ -98,6 +99,9 @@ class RustCanvasPainter extends CustomPainter {
   /// Background color for the canvas area.
   final Color backgroundColor;
 
+  /// Color used for frame label text when not selected.
+  final Color labelColor;
+
   /// Read viewport state from the notifier — always current on each paint.
   Matrix2D get viewMatrix => viewportNotifier.viewMatrix;
   bool get simplifyForInteraction => interactionNotifier.value;
@@ -138,6 +142,7 @@ class RustCanvasPainter extends CustomPainter {
 
     // Drag overlay, hover/selection decorations remain in Dart.
     _paintDragOverlay(canvas, size);
+    _paintFrameLabels(canvas, size);
 
     if (!simplifyForInteraction) {
       _paintHoverOutlines(canvas, size);
@@ -860,6 +865,163 @@ class RustCanvasPainter extends CustomPainter {
     } catch (_) {
       return null;
     }
+  }
+
+  // ---------------------------------------------------------------
+  // Frame labels
+  // ---------------------------------------------------------------
+
+  Rect _visibleCanvasRect(Size size) {
+    final zoom = viewMatrix.a.abs();
+    final effectiveZoom = zoom <= 0 ? 1.0 : zoom;
+    final left = -viewMatrix.e / effectiveZoom;
+    final top = -viewMatrix.f / effectiveZoom;
+    return Rect.fromLTWH(
+      left,
+      top,
+      size.width / effectiveZoom,
+      size.height / effectiveZoom,
+    );
+  }
+
+  bool _isShapeVisible(Shape shape, Rect visibleCanvasRect) {
+    if (shape.hidden || shape.opacity <= 0) return false;
+
+    final bounds = shape.bounds;
+    final corners = [
+      shape.transformPoint(Offset(bounds.left, bounds.top)),
+      shape.transformPoint(Offset(bounds.right, bounds.top)),
+      shape.transformPoint(Offset(bounds.right, bounds.bottom)),
+      shape.transformPoint(Offset(bounds.left, bounds.bottom)),
+    ];
+
+    var minX = corners.first.dx;
+    var maxX = corners.first.dx;
+    var minY = corners.first.dy;
+    var maxY = corners.first.dy;
+
+    for (var i = 1; i < corners.length; i++) {
+      final corner = corners[i];
+      if (corner.dx < minX) minX = corner.dx;
+      if (corner.dx > maxX) maxX = corner.dx;
+      if (corner.dy < minY) minY = corner.dy;
+      if (corner.dy > maxY) maxY = corner.dy;
+    }
+
+    final transformedBounds = Rect.fromLTRB(minX, minY, maxX, maxY);
+    return transformedBounds.overlaps(visibleCanvasRect);
+  }
+
+  Set<String> _computeDragOverlayIdSet() {
+    if (dragOffset == null || selectedShapeIds.isEmpty) {
+      return const <String>{};
+    }
+
+    final selectedIdSet = selectedShapeIds.toSet();
+    final dragIds = <String>{...selectedIdSet};
+    final childrenByContainer = _buildChildrenMapCached();
+
+    void addDescendants(String id) {
+      final children = childrenByContainer[id];
+      if (children == null) return;
+      for (final child in children) {
+        if (dragIds.add(child.id)) addDescendants(child.id);
+      }
+    }
+
+    for (final id in selectedIdSet) {
+      final shape = shapesById[id];
+      if (shape is GroupShape || shape is FrameShape) addDescendants(id);
+    }
+
+    return dragIds;
+  }
+
+  void _paintFrameLabels(Canvas canvas, Size size) {
+    final visibleCanvasRect = _visibleCanvasRect(size).inflate(200);
+    final dragIds = _computeDragOverlayIdSet();
+
+    canvas.save();
+    canvas.transform(
+      Float64List.fromList([
+        viewMatrix.a,
+        viewMatrix.b,
+        0,
+        0,
+        viewMatrix.c,
+        viewMatrix.d,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        viewMatrix.e,
+        viewMatrix.f,
+        0,
+        1,
+      ]),
+    );
+
+    for (final shape in shapes) {
+      if (shape is! FrameShape) continue;
+      if (!_isShapeVisible(shape, visibleCanvasRect)) continue;
+
+      final offset = dragOffset != null && dragIds.contains(shape.id)
+          ? dragOffset!
+          : Offset.zero;
+      _drawFrameLabel(canvas, shape, offset: offset);
+    }
+
+    canvas.restore();
+  }
+
+  void _drawFrameLabel(
+    Canvas canvas,
+    FrameShape frame, {
+    Offset offset = Offset.zero,
+  }) {
+    final bounds = frame.bounds.shift(offset);
+    final isSelected = selectedShapeIds.contains(frame.id);
+
+    const labelHeight = HitTest.frameLabelHeight;
+    const labelPadding = 8.0;
+    final labelY = bounds.top - labelHeight - HitTest.frameLabelGap;
+
+    final textStyle = TextStyle(
+      color: isSelected ? selectionColor : labelColor,
+      fontSize: 12,
+      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+    );
+
+    final textSpan = TextSpan(
+      text: frame.name,
+      style: textStyle,
+    );
+
+    final textPainter = TextPainter(
+      text: textSpan,
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    if (isSelected) {
+      final bgRect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          bounds.left - 4,
+          labelY,
+          textPainter.width + labelPadding * 2,
+          labelHeight,
+        ),
+        const Radius.circular(4),
+      );
+      final bgPaint = Paint()..color = selectionColor.withValues(alpha: 0.15);
+      canvas.drawRRect(bgRect, bgPaint);
+    }
+
+    textPainter.paint(
+      canvas,
+      Offset(bounds.left, labelY + (labelHeight - textPainter.height) / 2),
+    );
   }
 
   // ---------------------------------------------------------------

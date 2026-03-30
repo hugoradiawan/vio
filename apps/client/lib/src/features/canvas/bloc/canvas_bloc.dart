@@ -43,6 +43,16 @@ class _PruneEmptyGroupsResult {
   final Set<String> deletedGroupIds;
 }
 
+class _ClickSelectionTarget {
+  const _ClickSelectionTarget({
+    required this.target,
+    required this.clearEnteredContainer,
+  });
+
+  final Shape target;
+  final bool clearEnteredContainer;
+}
+
 /// Maximum number of undo states to keep
 const _maxUndoHistory = 50;
 

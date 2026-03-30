@@ -5,6 +5,10 @@ import 'package:vio_core/vio_core.dart';
 class HitTest {
   HitTest._();
 
+  static const double frameLabelHeight = 20.0;
+  static const double frameLabelWidth = 150.0;
+  static const double frameLabelGap = 4.0;
+
   /// Test if a point hits a shape, accounting for transforms
   /// Returns true if the point is inside the shape
   static bool hitTestShape(Offset point, Shape shape) {
@@ -101,18 +105,23 @@ class HitTest {
   /// Hit test against a frame shape
   /// Frames are only selectable by clicking on their name label area
   static bool _hitTestFrame(Offset point, FrameShape shape) {
+    return hitTestFrameLabel(point, shape);
+  }
+
+  /// Get the clickable bounds for a frame's title label.
+  static Rect frameLabelBounds(FrameShape shape) {
     final bounds = shape.bounds;
-    // Frame name label is positioned above the frame, to the left
-    // Label area: x = bounds.left, y = bounds.top - labelHeight, width = ~150, height = labelHeight
-    const labelHeight = 20.0;
-    const labelWidth = 150.0;
-    final labelBounds = Rect.fromLTWH(
+    return Rect.fromLTWH(
       bounds.left,
-      bounds.top - labelHeight - 4, // 4px gap above frame
-      labelWidth,
-      labelHeight,
+      bounds.top - frameLabelHeight - frameLabelGap,
+      frameLabelWidth,
+      frameLabelHeight,
     );
-    return labelBounds.contains(point);
+  }
+
+  /// Whether [point] falls within a frame's title label hit area.
+  static bool hitTestFrameLabel(Offset point, FrameShape shape) {
+    return frameLabelBounds(shape).contains(point);
   }
 
   /// Simple bounds hit test for unsupported shape types
@@ -182,7 +191,16 @@ class HitTest {
     Shape hitShape,
     Map<String, Shape> shapesById, {
     String? enteredContainerId,
+    bool skipFrameAncestors = false,
   }) {
+    if (skipFrameAncestors) {
+      return _resolveContainerTargetSkippingFrames(
+        hitShape,
+        shapesById,
+        enteredContainerId: enteredContainerId,
+      );
+    }
+
     if (enteredContainerId == null) {
       // Walk up both parentId and frameId chains to find the outermost
       // container ancestor.
@@ -210,6 +228,71 @@ class HitTest {
       // caller can decide to exit.
       return hitShape;
     }
+  }
+
+  static Shape _resolveContainerTargetSkippingFrames(
+    Shape hitShape,
+    Map<String, Shape> shapesById, {
+    String? enteredContainerId,
+  }) {
+    if (enteredContainerId == null) {
+      return _resolveOutermostNonFrame(hitShape, shapesById);
+    }
+
+    return _resolveWithinEnteredContainerSkippingFrames(
+      hitShape,
+      enteredContainerId,
+      shapesById,
+    );
+  }
+
+  static Shape _resolveOutermostNonFrame(
+    Shape hitShape,
+    Map<String, Shape> shapesById,
+  ) {
+    var current = hitShape;
+    Shape? lastNonFrame = hitShape is FrameShape ? null : hitShape;
+
+    while (true) {
+      final pid = current.parentId ?? current.frameId;
+      if (pid == null) break;
+      final parent = shapesById[pid];
+      if (parent == null) break;
+      current = parent;
+      if (current is! FrameShape) {
+        lastNonFrame = current;
+      }
+    }
+
+    return lastNonFrame ?? hitShape;
+  }
+
+  static Shape _resolveWithinEnteredContainerSkippingFrames(
+    Shape hitShape,
+    String enteredContainerId,
+    Map<String, Shape> shapesById,
+  ) {
+    var current = hitShape;
+    Shape? lastNonFrame = hitShape is FrameShape ? null : hitShape;
+
+    while (true) {
+      final pid = current.parentId ?? current.frameId;
+      if (pid == enteredContainerId) {
+        return lastNonFrame ?? current;
+      }
+      if (pid == null) break;
+
+      final parent = shapesById[pid];
+      if (parent == null) break;
+
+      current = parent;
+      if (current is! FrameShape) {
+        lastNonFrame = current;
+      }
+    }
+
+    // hitShape is not inside enteredContainerId.
+    return hitShape;
   }
 
   /// Whether [shape] is a descendant (direct or transitive) of the shape with

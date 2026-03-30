@@ -538,9 +538,9 @@ class CanvasPainter extends CustomPainter {
     final isSelected = selectedShapeIds.contains(frame.id);
 
     // Position label above the frame
-    const labelHeight = 20.0;
+    const labelHeight = HitTest.frameLabelHeight;
     const labelPadding = 8.0;
-    final labelY = bounds.top - labelHeight - 4; // 4px gap
+    final labelY = bounds.top - labelHeight - HitTest.frameLabelGap;
 
     // Draw label text
     final textStyle = TextStyle(

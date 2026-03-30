@@ -106,25 +106,47 @@ mixin _CanvasRustMixin on Bloc<CanvasEvent, CanvasState> {
   // Hit testing — delegates to Rust or Dart based on feature flag
   // ---------------------------------------------------------------------------
 
+  /// Find all shapes at [canvasPoint], topmost-first.
+  ///
+  /// This preserves frame-title clickability in Rust mode by prepending
+  /// frame-title hits from Dart geometry before Rust body hits.
+  List<Shape> findShapesAtPoint(Offset canvasPoint, List<Shape> shapeList) {
+    if (!useRustHitTest || !_rustEngineLoaded) {
+      return HitTest.findShapesAtPoint(canvasPoint, shapeList);
+    }
+
+    final hits = <Shape>[];
+    final seen = <String>{};
+
+    // Frame title labels live outside frame body bounds; Rust body hit-test
+    // cannot see these regions.
+    for (var i = shapeList.length - 1; i >= 0; i--) {
+      final shape = shapeList[i];
+      if (shape is! FrameShape || shape.hidden || shape.blocked) continue;
+      if (!HitTest.hitTestFrameLabel(canvasPoint, shape)) continue;
+      if (seen.add(shape.id)) {
+        hits.add(shape);
+      }
+    }
+
+    final hitIds = _rustEngine.hitTestPoint(canvasPoint.dx, canvasPoint.dy);
+    for (final id in hitIds) {
+      final shape = state.shapes[id];
+      if (shape == null || shape.hidden || shape.blocked) continue;
+      if (seen.add(shape.id)) {
+        hits.add(shape);
+      }
+    }
+
+    return hits;
+  }
+
   /// Find the topmost shape at [canvasPoint].
   ///
   /// When [useRustHitTest] is `true`, queries the Rust R-tree spatial index.
   /// Otherwise falls back to the existing O(n) Dart scan.
   Shape? findTopShapeAtPoint(Offset canvasPoint, List<Shape> shapeList) {
-    if (!useRustHitTest || !_rustEngineLoaded) {
-      return HitTest.findTopShapeAtPoint(canvasPoint, shapeList);
-    }
-
-    final hitIds = _rustEngine.hitTestPoint(canvasPoint.dx, canvasPoint.dy);
-    if (hitIds.isEmpty) return null;
-
-    // hitIds are topmost-first. Find the first matching Shape that isn't
-    // hidden/blocked (Rust already filters hidden but not blocked).
-    for (final id in hitIds) {
-      final shape = state.shapes[id];
-      if (shape != null && !shape.blocked) return shape;
-    }
-    return null;
+    return findShapesAtPoint(canvasPoint, shapeList).firstOrNull;
   }
 
   /// Find all shapes intersecting [rect] (marquee selection).

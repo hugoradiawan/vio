@@ -321,6 +321,17 @@ mixin _CanvasViewController on State<CanvasView> {
     };
   }
 
+  Shape? _findTopFrameAwareHit(Offset canvasPoint, List<Shape> shapeList) {
+    final hits = HitTest.findShapesAtPoint(canvasPoint, shapeList);
+    for (final hit in hits) {
+      if (hit is FrameShape && !HitTest.hitTestFrameLabel(canvasPoint, hit)) {
+        continue;
+      }
+      return hit;
+    }
+    return null;
+  }
+
   void _handlePointerDown(
     BuildContext context,
     PointerDownEvent event,
@@ -366,10 +377,8 @@ mixin _CanvasViewController on State<CanvasView> {
       final canvasPoint = canvasState.screenToCanvas(
         Size(event.localPosition.dx, event.localPosition.dy),
       );
-      final hitShape = HitTest.findTopShapeAtPoint(
-        canvasPoint,
-        canvasState.shapeList,
-      );
+      final hitShape =
+          _findTopFrameAwareHit(canvasPoint, canvasState.shapeList);
 
       final effectiveSelectionIds = hitShape == null
           ? const <String>[]
@@ -419,10 +428,8 @@ mixin _CanvasViewController on State<CanvasView> {
       final canvasPoint = canvasState.screenToCanvas(
         Size(event.localPosition.dx, event.localPosition.dy),
       );
-      final hitShape = HitTest.findTopShapeAtPoint(
-        canvasPoint,
-        canvasState.shapeList,
-      );
+      final hitShape =
+          _findTopFrameAwareHit(canvasPoint, canvasState.shapeList);
 
       final nowMs = DateTime.now().millisecondsSinceEpoch;
       final withinTime = (nowMs - state._lastPrimaryClickMs) <=

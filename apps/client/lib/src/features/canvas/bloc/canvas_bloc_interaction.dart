@@ -24,6 +24,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
   void _pushUndoState(Map<String, Shape> shapes);
 
   // Hit test delegation (from _CanvasRustMixin)
+  List<Shape> findShapesAtPoint(Offset canvasPoint, List<Shape> shapeList);
   Shape? findTopShapeAtPoint(Offset canvasPoint, List<Shape> shapeList);
   List<Shape> findShapesInRect(Rect rect, List<Shape> shapeList);
 
@@ -51,6 +52,223 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
     return best;
   }
 
+  static const Duration _selectByClickCycleTimeout = Duration(
+    milliseconds: 450,
+  );
+  static const double _selectByClickCycleDistance = 4.0;
+
+  Offset? _lastSelectByClickPoint;
+  DateTime _lastSelectByClickAt = DateTime.fromMillisecondsSinceEpoch(0);
+  List<String> _lastSelectByClickTargetIds = const [];
+  int _lastSelectByClickIndex = 0;
+  CanvasPointerTool? _lastSelectByClickTool;
+  String? _lastSelectByClickContainerId;
+
+  bool _isFrameTitleHit(Offset canvasPoint, FrameShape frame) {
+    return HitTest.hitTestFrameLabel(canvasPoint, frame);
+  }
+
+  List<Shape> _prioritizeHitsForEnteredContainer(List<Shape> hits) {
+    final enteredId = state.enteredContainerId;
+    if (enteredId == null || hits.isEmpty) {
+      return hits;
+    }
+
+    final inside = <Shape>[];
+    final outside = <Shape>[];
+    for (final hit in hits) {
+      if (HitTest.isDescendantOf(hit, enteredId, state.shapes)) {
+        inside.add(hit);
+      } else {
+        outside.add(hit);
+      }
+    }
+
+    if (inside.isEmpty) {
+      return hits;
+    }
+
+    return [...inside, ...outside];
+  }
+
+  List<Shape> _collectSelectableChainForHit(
+    Shape hitShape,
+    Offset canvasPoint, {
+    String? stopAtContainerId,
+  }) {
+    if (hitShape is FrameShape && _isFrameTitleHit(canvasPoint, hitShape)) {
+      // Clicking the title should directly target this frame.
+      return [hitShape];
+    }
+
+    final chain = <Shape>[];
+    var current = hitShape;
+
+    while (true) {
+      if (current is! FrameShape) {
+        chain.add(current);
+      }
+
+      final pid = current.parentId ?? current.frameId;
+      if (pid == null || pid == stopAtContainerId) {
+        break;
+      }
+
+      final parent = state.shapes[pid];
+      if (parent == null) {
+        break;
+      }
+
+      current = parent;
+    }
+
+    return chain.reversed.toList();
+  }
+
+  List<_ClickSelectionTarget> _selectionTargetsForHit(
+    Shape hitShape,
+    Offset canvasPoint, {
+    required bool isDirectSelect,
+  }) {
+    if (hitShape is FrameShape && !_isFrameTitleHit(canvasPoint, hitShape)) {
+      return const [];
+    }
+
+    if (isDirectSelect) {
+      return [
+        _ClickSelectionTarget(
+          target: hitShape,
+          clearEnteredContainer: state.enteredContainerId != null,
+        ),
+      ];
+    }
+
+    final enteredId = state.enteredContainerId;
+    if (enteredId != null) {
+      final isDescendant = hitShape.id != enteredId &&
+          HitTest.isDescendantOf(hitShape, enteredId, state.shapes);
+
+      if (!isDescendant) {
+        final chain = _collectSelectableChainForHit(hitShape, canvasPoint);
+        return chain
+            .map(
+              (shape) => _ClickSelectionTarget(
+                target: shape,
+                clearEnteredContainer: true,
+              ),
+            )
+            .toList();
+      }
+
+      final chain = _collectSelectableChainForHit(
+        hitShape,
+        canvasPoint,
+        stopAtContainerId: enteredId,
+      );
+      return chain
+          .map(
+            (shape) => _ClickSelectionTarget(
+              target: shape,
+              clearEnteredContainer: false,
+            ),
+          )
+          .toList();
+    }
+
+    final chain = _collectSelectableChainForHit(hitShape, canvasPoint);
+    return chain
+        .map(
+          (shape) => _ClickSelectionTarget(
+            target: shape,
+            clearEnteredContainer: false,
+          ),
+        )
+        .toList();
+  }
+
+  List<_ClickSelectionTarget> _buildSelectByClickTargets(
+    List<Shape> hitCandidates,
+    Offset canvasPoint, {
+    required bool isDirectSelect,
+  }) {
+    final targets = <_ClickSelectionTarget>[];
+    final seen = <String>{};
+
+    for (final hit in _prioritizeHitsForEnteredContainer(hitCandidates)) {
+      final perHit = _selectionTargetsForHit(
+        hit,
+        canvasPoint,
+        isDirectSelect: isDirectSelect,
+      );
+
+      for (final target in perHit) {
+        if (seen.add(target.target.id)) {
+          targets.add(target);
+        }
+      }
+    }
+
+    return targets;
+  }
+
+  bool _sameTargetIds(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  int _selectByClickTargetIndex(
+    List<_ClickSelectionTarget> targets,
+    PointerDown event,
+    Offset canvasPoint,
+  ) {
+    if (targets.length <= 1 || event.shiftPressed) {
+      _lastSelectByClickPoint = canvasPoint;
+      _lastSelectByClickAt = DateTime.now();
+      _lastSelectByClickTargetIds = targets.map((t) => t.target.id).toList();
+      _lastSelectByClickIndex = 0;
+      _lastSelectByClickTool = event.tool;
+      _lastSelectByClickContainerId = state.enteredContainerId;
+      return 0;
+    }
+
+    final now = DateTime.now();
+    final targetIds = targets.map((t) => t.target.id).toList();
+    final withinTime =
+        now.difference(_lastSelectByClickAt) <= _selectByClickCycleTimeout;
+    final withinDistance = _lastSelectByClickPoint != null &&
+        (canvasPoint - _lastSelectByClickPoint!).distance <=
+            _selectByClickCycleDistance;
+    final canCycle = withinTime &&
+        withinDistance &&
+        _lastSelectByClickTool == event.tool &&
+        _lastSelectByClickContainerId == state.enteredContainerId &&
+        _sameTargetIds(targetIds, _lastSelectByClickTargetIds);
+
+    final nextIndex =
+        canCycle ? (_lastSelectByClickIndex + 1) % targets.length : 0;
+
+    _lastSelectByClickPoint = canvasPoint;
+    _lastSelectByClickAt = now;
+    _lastSelectByClickTargetIds = targetIds;
+    _lastSelectByClickIndex = nextIndex;
+    _lastSelectByClickTool = event.tool;
+    _lastSelectByClickContainerId = state.enteredContainerId;
+
+    return nextIndex;
+  }
+
+  void _resetSelectByClickCycle() {
+    _lastSelectByClickPoint = null;
+    _lastSelectByClickAt = DateTime.fromMillisecondsSinceEpoch(0);
+    _lastSelectByClickTargetIds = const [];
+    _lastSelectByClickIndex = 0;
+    _lastSelectByClickTool = null;
+    _lastSelectByClickContainerId = null;
+  }
+
   void _onPointerDown(
     PointerDown event,
     Emitter<CanvasState> emit,
@@ -60,6 +278,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
 
     // Text tool: click-to-create and start inline edit
     if (event.tool == CanvasPointerTool.drawText) {
+      _resetSelectByClickCycle();
       final newId = _uuid.v4();
 
       final containingFrame = _findContainingFrame(canvasPoint, state.shapes);
@@ -115,6 +334,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
     if (event.tool != CanvasPointerTool.select &&
         event.tool != CanvasPointerTool.directSelect &&
         state.interactionMode != InteractionMode.drawing) {
+      _resetSelectByClickCycle();
       final newId = _uuid.v4();
 
       final containingFrame = _findContainingFrame(canvasPoint, state.shapes);
@@ -200,6 +420,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
       // Check corner radius handles first (for single rectangle)
       final cornerRadiusHandle = _hitTestCornerRadiusHandle(screenPoint);
       if (cornerRadiusHandle != null) {
+        _resetSelectByClickCycle();
         emit(
           state.copyWith(
             interactionMode: InteractionMode.adjustingCornerRadius,
@@ -214,6 +435,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
       // Check resize/rotate handles and edge affordances
       final hit = _hitTestSelectionAffordance(screenPoint);
       if (hit != null) {
+        _resetSelectByClickCycle();
         final handle = hit.effectiveHandle;
         if (handle == HandlePosition.rotation) {
           // Start rotation - calculate initial angle from selection center
@@ -254,65 +476,26 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
       }
     }
 
-    // Hit test to find shape under pointer.
-    // When inside an entered container, prefer shapes that are descendants of
-    // that container so overlapping siblings don't cause an unwanted exit.
-    Shape? hitShape;
-    if (state.enteredContainerId != null) {
-      final allHits = HitTest.findShapesAtPoint(canvasPoint, state.shapeList);
-      hitShape = allHits.cast<Shape?>().firstWhere(
-                (s) => HitTest.isDescendantOf(
-                  s!,
-                  state.enteredContainerId!,
-                  state.shapes,
-                ),
-                orElse: () => null,
-              ) ??
-          allHits.firstOrNull;
-    } else {
-      hitShape = findTopShapeAtPoint(canvasPoint, state.shapeList);
-    }
+    final isDirectSelect = event.tool == CanvasPointerTool.directSelect;
+    final hitCandidates = findShapesAtPoint(canvasPoint, state.shapeList);
+    final selectionTargets = _buildSelectByClickTargets(
+      hitCandidates,
+      canvasPoint,
+      isDirectSelect: isDirectSelect,
+    );
 
-    if (hitShape != null) {
-      // Resolve the correct selection target based on group drill-down state.
-      // DirectSelect always picks the leaf; Select uses group-aware logic.
-      final bool isDirectSelect = event.tool == CanvasPointerTool.directSelect;
-
-      Shape selectionTarget;
-      bool shouldClearEnteredGroup = false;
-
-      if (isDirectSelect) {
-        selectionTarget = hitShape;
-        shouldClearEnteredGroup = state.enteredContainerId != null;
-      } else if (state.enteredContainerId != null) {
-        if (hitShape.id == state.enteredContainerId ||
-            !HitTest.isDescendantOf(
-              hitShape,
-              state.enteredContainerId!,
-              state.shapes,
-            )) {
-          // Clicked on the entered group's background or outside it.
-          // Exit the entered group and do normal (outermost-group) selection.
-          selectionTarget =
-              HitTest.resolveContainerTarget(hitShape, state.shapes);
-          shouldClearEnteredGroup = true;
-        } else {
-          // Clicked on a descendant — select the direct child of the entered
-          // group that contains this shape.
-          selectionTarget = HitTest.resolveContainerTarget(
-            hitShape,
-            state.shapes,
-            enteredContainerId: state.enteredContainerId,
-          );
-        }
-      } else {
-        // Not inside any group — select the outermost container ancestor.
-        selectionTarget =
-            HitTest.resolveContainerTarget(hitShape, state.shapes);
-      }
-
-      // Check if shift is held for multi-select
+    if (selectionTargets.isNotEmpty) {
       final addToSelection = event.shiftPressed;
+      final targetIndex = addToSelection
+          ? 0
+          : _selectByClickTargetIndex(selectionTargets, event, canvasPoint);
+      final chosenTarget = selectionTargets[targetIndex];
+      final selectionTarget = chosenTarget.target;
+      final shouldClearEnteredGroup = chosenTarget.clearEnteredContainer;
+
+      if (addToSelection) {
+        _resetSelectByClickCycle();
+      }
 
       if (addToSelection) {
         // Toggle selection
@@ -366,6 +549,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
         );
       }
     } else {
+      _resetSelectByClickCycle();
       // No shape hit - start marquee selection, exit any entered group
       _endSnapSession();
       emit(
@@ -404,7 +588,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
       // Find the topmost shape under the cursor that is a descendant of the
       // selected container. We can't use findTopShapeAtPoint because a sibling
       // shape may overlap the container's children at the click position.
-      final allHits = HitTest.findShapesAtPoint(canvasPoint, state.shapeList);
+      final allHits = findShapesAtPoint(canvasPoint, state.shapeList);
       final hitShape = allHits.cast<Shape?>().firstWhere(
             (s) =>
                 s!.id != selectedShape.id &&
@@ -708,33 +892,13 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
         hoveredCorner = _hitTestCornerRadiusHandle(screenPoint);
       }
 
-      // Resolve to the correct container level so the hover outline matches what
-      // a click would actually select. When inside an entered container, prefer
-      // descendants so overlapping siblings don't flicker the hover.
-      Shape? hoveredLeaf;
-      if (state.enteredContainerId != null) {
-        final allHits = HitTest.findShapesAtPoint(canvasPoint, state.shapeList);
-        hoveredLeaf = allHits.cast<Shape?>().firstWhere(
-                  (s) => HitTest.isDescendantOf(
-                    s!,
-                    state.enteredContainerId!,
-                    state.shapes,
-                  ),
-                  orElse: () => null,
-                ) ??
-            allHits.firstOrNull;
-      } else {
-        hoveredLeaf = findTopShapeAtPoint(canvasPoint, state.shapeList);
-      }
-      String? newHoveredId;
-      if (hoveredLeaf != null) {
-        final target = HitTest.resolveContainerTarget(
-          hoveredLeaf,
-          state.shapes,
-          enteredContainerId: state.enteredContainerId,
-        );
-        newHoveredId = target.id;
-      }
+      // Keep hover target aligned with click-selection semantics.
+      final hoverTargets = _buildSelectByClickTargets(
+        findShapesAtPoint(canvasPoint, state.shapeList),
+        canvasPoint,
+        isDirectSelect: false,
+      );
+      final newHoveredId = hoverTargets.firstOrNull?.target.id;
 
       final nextHoveredCornerIndex = hoveredCorner?.index;
       final hoveredSelectionHit = _hitTestSelectionAffordance(screenPoint);

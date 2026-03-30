@@ -282,27 +282,16 @@ class _SearchTabState extends State<SearchTab>
     return values.any((value) => (value ?? '').toLowerCase().contains(query));
   }
 
-  IconData _iconForShape(Shape shape) {
-    switch (shape.type) {
-      case ShapeType.rectangle:
-        return Icons.crop_square_outlined;
-      case ShapeType.ellipse:
-        return Icons.circle_outlined;
-      case ShapeType.frame:
-        return Icons.crop_free_outlined;
-      case ShapeType.text:
-        return Icons.text_fields_outlined;
-      case ShapeType.group:
-        return Icons.folder_outlined;
-      case ShapeType.path:
-        return Icons.draw_outlined;
-      case ShapeType.image:
-      case ShapeType.svg:
-        return Icons.image_outlined;
-      case ShapeType.bool:
-        return Icons.auto_fix_normal_outlined;
-    }
-  }
+  IconData _iconForShape(Shape shape) => switch (shape.type) {
+        ShapeType.rectangle => Icons.crop_square_outlined,
+        ShapeType.ellipse => Icons.circle_outlined,
+        ShapeType.frame => Icons.crop_free_outlined,
+        ShapeType.text => Icons.text_fields_outlined,
+        ShapeType.group => Icons.folder_outlined,
+        ShapeType.path => Icons.draw_outlined,
+        ShapeType.image || ShapeType.svg => Icons.image_outlined,
+        ShapeType.bool => Icons.auto_fix_normal_outlined
+      };
 
   String _truncate(String value, int maxLength) {
     final singleLine = value.replaceAll(RegExp(r'\s+'), ' ');
@@ -323,19 +312,17 @@ class _SearchMetaRow extends StatelessWidget {
   final int total;
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: VioSpacing.sm,
-        vertical: VioSpacing.xs,
-      ),
-      child: Text(
-        '$total result${total == 1 ? '' : 's'}',
-        style: VioTypography.caption
-            .copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: VioSpacing.sm,
+          vertical: VioSpacing.xs,
+        ),
+        child: Text(
+          '$total result${total == 1 ? '' : 's'}',
+          style: VioTypography.caption
+              .copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+        ),
+      );
 }
 
 class _SearchSection extends StatelessWidget {
@@ -512,14 +499,12 @@ class _NoResultsState extends StatelessWidget {
   const _NoResultsState();
 
   @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'No results found',
-        style: VioTypography.body2.copyWith(
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
+  Widget build(BuildContext context) => Center(
+        child: Text(
+          'No results found',
+          style: VioTypography.body2.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
-      ),
-    );
-  }
+      );
 }

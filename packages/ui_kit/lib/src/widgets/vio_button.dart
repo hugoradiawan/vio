@@ -56,83 +56,69 @@ class VioButton extends StatelessWidget {
     );
   }
 
-  double _getHeight() {
-    return switch (size) {
-      VioButtonSize.small => 28,
-      VioButtonSize.medium => 36,
-      VioButtonSize.large => 44,
-    };
-  }
+  double _getHeight() => switch (size) {
+    VioButtonSize.small => 28,
+    VioButtonSize.medium => 36,
+    VioButtonSize.large => 44,
+  };
 
-  EdgeInsets _getPadding() {
-    return switch (size) {
-      VioButtonSize.small => const EdgeInsets.symmetric(horizontal: 12),
-      VioButtonSize.medium => const EdgeInsets.symmetric(horizontal: 16),
-      VioButtonSize.large => const EdgeInsets.symmetric(horizontal: 20),
-    };
-  }
+  EdgeInsets _getPadding() => switch (size) {
+    VioButtonSize.small => const EdgeInsets.symmetric(horizontal: 12),
+    VioButtonSize.medium => const EdgeInsets.symmetric(horizontal: 16),
+    VioButtonSize.large => const EdgeInsets.symmetric(horizontal: 20),
+  };
 
-  double _getIconSize() {
-    return switch (size) {
-      VioButtonSize.small => 14,
-      VioButtonSize.medium => 16,
-      VioButtonSize.large => 18,
-    };
-  }
+  double _getIconSize() => switch (size) {
+    VioButtonSize.small => 14,
+    VioButtonSize.medium => 16,
+    VioButtonSize.large => 18,
+  };
 
-  TextStyle _getTextStyle() {
-    return switch (size) {
-      VioButtonSize.small => VioTypography.labelSmall,
-      VioButtonSize.medium => VioTypography.button,
-      VioButtonSize.large => VioTypography.labelLarge,
-    };
-  }
+  TextStyle _getTextStyle() => switch (size) {
+    VioButtonSize.small => VioTypography.labelSmall,
+    VioButtonSize.medium => VioTypography.button,
+    VioButtonSize.large => VioTypography.labelLarge,
+  };
 
-  Widget _buildButton(bool isDisabled, ColorScheme cs) {
-    return switch (variant) {
-      VioButtonVariant.primary => _buildPrimaryButton(isDisabled, cs),
-      VioButtonVariant.secondary => _buildSecondaryButton(isDisabled, cs),
-      VioButtonVariant.ghost => _buildGhostButton(isDisabled, cs),
-      VioButtonVariant.danger => _buildDangerButton(isDisabled, cs),
-    };
-  }
+  Widget _buildButton(bool isDisabled, ColorScheme cs) => switch (variant) {
+    VioButtonVariant.primary => _buildPrimaryButton(isDisabled, cs),
+    VioButtonVariant.secondary => _buildSecondaryButton(isDisabled, cs),
+    VioButtonVariant.ghost => _buildGhostButton(isDisabled, cs),
+    VioButtonVariant.danger => _buildDangerButton(isDisabled, cs),
+  };
 
-  Widget _buildPrimaryButton(bool isDisabled, ColorScheme cs) {
-    return ElevatedButton(
-      onPressed: isDisabled ? null : onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: cs.primary,
-        foregroundColor: cs.onPrimary,
-        disabledBackgroundColor: cs.primary.withValues(alpha: 0.5),
-        disabledForegroundColor: cs.onPrimary,
-        padding: _getPadding(),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(VioSpacing.radiusMd),
+  Widget _buildPrimaryButton(bool isDisabled, ColorScheme cs) => ElevatedButton(
+    onPressed: isDisabled ? null : onPressed,
+    style: ElevatedButton.styleFrom(
+      backgroundColor: cs.primary,
+      foregroundColor: cs.onPrimary,
+      disabledBackgroundColor: cs.primary.withValues(alpha: 0.5),
+      disabledForegroundColor: cs.onPrimary,
+      padding: _getPadding(),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(VioSpacing.radiusMd),
+      ),
+    ),
+    child: _buildContent(cs.onPrimary),
+  );
+
+  Widget _buildSecondaryButton(bool isDisabled, ColorScheme cs) =>
+      OutlinedButton(
+        onPressed: isDisabled ? null : onPressed,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: cs.onSurface,
+          side: BorderSide(color: isDisabled ? cs.outlineVariant : cs.outline),
+          padding: _getPadding(),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(VioSpacing.radiusMd),
+          ),
         ),
-      ),
-      child: _buildContent(cs.onPrimary),
-    );
-  }
-
-  Widget _buildSecondaryButton(bool isDisabled, ColorScheme cs) {
-    return OutlinedButton(
-      onPressed: isDisabled ? null : onPressed,
-      style: OutlinedButton.styleFrom(
-        foregroundColor: cs.onSurface,
-        side: BorderSide(color: isDisabled ? cs.outlineVariant : cs.outline),
-        padding: _getPadding(),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(VioSpacing.radiusMd),
+        child: _buildContent(
+          isDisabled ? cs.onSurface.withValues(alpha: 0.38) : cs.onSurface,
         ),
-      ),
-      child: _buildContent(
-        isDisabled ? cs.onSurface.withValues(alpha: 0.38) : cs.onSurface,
-      ),
-    );
-  }
+      );
 
-  Widget _buildGhostButton(bool isDisabled, ColorScheme cs) {
-    return TextButton(
+  Widget _buildGhostButton(bool isDisabled, ColorScheme cs) => TextButton(
       onPressed: isDisabled ? null : onPressed,
       style: TextButton.styleFrom(
         foregroundColor: cs.onSurfaceVariant,
@@ -145,10 +131,8 @@ class VioButton extends StatelessWidget {
         isDisabled ? cs.onSurface.withValues(alpha: 0.38) : cs.onSurfaceVariant,
       ),
     );
-  }
 
-  Widget _buildDangerButton(bool isDisabled, ColorScheme cs) {
-    return ElevatedButton(
+  Widget _buildDangerButton(bool isDisabled, ColorScheme cs) => ElevatedButton(
       onPressed: isDisabled ? null : onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: cs.error,
@@ -161,7 +145,6 @@ class VioButton extends StatelessWidget {
       ),
       child: _buildContent(cs.onError),
     );
-  }
 
   Widget _buildContent(Color color) {
     if (isLoading) {

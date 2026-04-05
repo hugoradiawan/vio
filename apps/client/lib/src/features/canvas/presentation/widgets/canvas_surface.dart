@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:vio_client/src/features/canvas/bloc/canvas_bloc.dart';
 import 'package:vio_client/src/features/canvas/presentation/painters/canvas_painter.dart';
@@ -18,28 +19,21 @@ import 'canvas_text_editor_overlay.dart';
 import 'rust_canvas_layer.dart';
 import 'tile_compositor_layer.dart';
 
-/// Feature flag: when `true`, the Rust engine generates draw commands and
-/// [RustCanvasPainter] executes them instead of the Dart-only [CanvasPainter].
-///
-/// Toggle via `--dart-define=VIO_USE_RUST_CANVAS=true`.
-///
-/// At runtime this is combined with [RustEngineService.rustAvailable] so that
-/// the canvas falls back to the Dart renderer when WASM fails to load.
-const _useRustCanvasFlag = bool.fromEnvironment('VIO_USE_RUST_CANVAS');
+/// Kill-switch: pass `--dart-define=VIO_DISABLE_RUST=true` to force the
+/// pure-Dart renderer on all platforms.
+const _disableRust = bool.fromEnvironment('VIO_DISABLE_RUST');
 
-/// Feature flag: when `true` (and `VIO_USE_RUST_CANVAS` is also `true`),
-/// static shapes are pre-rendered into cached 512×512 tiles by tiny-skia in
-/// Rust. Tiles are composited behind the live draw-command layer.
-///
-/// Toggle via `--dart-define=VIO_USE_RUST_TILES=true`.
-const _useRustTilesFlag = bool.fromEnvironment('VIO_USE_RUST_TILES');
-
-/// Whether to actually use Rust at runtime — requires both the compile-time
-/// flag AND successful WASM/FFI initialisation.
+/// Whether to actually use the Rust canvas renderer at runtime.
+/// Enabled by default; disabled when the kill-switch is set or when the
+/// Rust FFI/WASM bridge failed to initialise.
 bool get _useRustCanvas =>
-    _useRustCanvasFlag && RustEngineService.instance.rustAvailable;
+    !_disableRust && RustEngineService.instance.rustAvailable;
+
+/// Whether to use Rust tile rasterisation (512×512 cached tiles via tiny-skia).
+/// Enabled by default on desktop platforms. Disabled on web because pixel
+/// transfer overhead negates the caching benefit.
 bool get _useRustTiles =>
-    _useRustTilesFlag && RustEngineService.instance.rustAvailable;
+    !_disableRust && !kIsWeb && RustEngineService.instance.rustAvailable;
 
 class CanvasSurface extends StatelessWidget {
   const CanvasSurface({

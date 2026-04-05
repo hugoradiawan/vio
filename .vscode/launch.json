@@ -14,23 +14,6 @@
       ]
     },
     {
-      "name": "Vio Client (Web - Chrome) Rust",
-      "type": "dart",
-      "request": "launch",
-      "program": "lib/main.dart",
-      "cwd": "${workspaceFolder}/apps/client",
-      "deviceId": "chrome",
-      "flutterMode": "profile",
-      "toolArgs": [
-        "--dart-define-from-file=config/dev.json",
-        "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true",
-        "--dart-define=VIO_USE_RUST_BACKEND=true",
-        "--dart-define=VIO_USE_RUST_CANVAS=true",
-        "--dart-define=VIO_USE_RUST_TILES=true",
-        "--dart-define=VIO_USE_RUST_HIT_TEST=true",
-      ]
-    },
-    {
       "name": "Vio Client (Web - Edge)",
       "type": "dart",
       "request": "launch",
@@ -55,38 +38,6 @@
       ]
     },
     {
-      "name": "Vio Client (Windows Desktop) Rust",
-      "type": "dart",
-      "request": "launch",
-      "program": "lib/main.dart",
-      "cwd": "${workspaceFolder}/apps/client",
-      "deviceId": "windows",
-      "toolArgs": [
-        "--dart-define-from-file=config/dev.json",
-        "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true",
-        "--dart-define=VIO_USE_RUST_BACKEND=true",
-        "--dart-define=VIO_USE_RUST_TILES=true",
-        "--dart-define=VIO_USE_RUST_CANVAS=true",
-        "--dart-define=VIO_USE_RUST_HIT_TEST=true",
-      ]
-    },
-    {
-      "name": "Vio Client (macOS Desktop) rust",
-      "type": "dart",
-      "request": "launch",
-      "program": "lib/main.dart",
-      "cwd": "${workspaceFolder}/apps/client",
-      "deviceId": "macos",
-      "toolArgs": [
-        "--dart-define-from-file=config/dev.json",
-        "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true",
-        "--dart-define=VIO_USE_RUST_BACKEND=true",
-        "--dart-define=VIO_USE_RUST_TILES=true",
-        "--dart-define=VIO_USE_RUST_CANVAS=true",
-        "--dart-define=VIO_USE_RUST_HIT_TEST=true",
-      ]
-    },
-    {
       "name": "Vio Client (macOS Desktop)",
       "type": "dart",
       "request": "launch",
@@ -99,7 +50,7 @@
       ]
     },
     {
-      "name": "Vio Client (macOS Desktop) profile mode",
+      "name": "Vio Client (macOS Desktop) - Profile Mode",
       "type": "dart",
       "request": "launch",
       "program": "lib/main.dart",
@@ -108,11 +59,7 @@
       "flutterMode": "profile",
       "toolArgs": [
         "--dart-define-from-file=config/dev.json",
-        "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true",
-        "--dart-define=VIO_USE_RUST_BACKEND=true",
-        "--dart-define=VIO_USE_RUST_TILES=true",
-        "--dart-define=VIO_USE_RUST_CANVAS=true",
-        "--dart-define=VIO_USE_RUST_HIT_TEST=true",
+        "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true"
       ]
     },
     {
@@ -137,11 +84,20 @@
       "flutterMode": "profile",
       "toolArgs": [
         "--dart-define-from-file=config/dev.json",
+        "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true"
+      ]
+    },
+    {
+      "name": "Vio Client (Web - Chrome) - No Rust",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/apps/client",
+      "deviceId": "chrome",
+      "toolArgs": [
+        "--dart-define-from-file=config/dev.json",
         "--dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true",
-        "--dart-define=VIO_USE_RUST_BACKEND=true",
-        "--dart-define=VIO_USE_RUST_TILES=true",
-        "--dart-define=VIO_USE_RUST_CANVAS=true",
-        "--dart-define=VIO_USE_RUST_HIT_TEST=true",
+        "--dart-define=VIO_DISABLE_RUST=true"
       ]
     },
     {
@@ -180,7 +136,7 @@
       "name": "Capture Canvas Perf (macOS)",
       "type": "node-terminal",
       "request": "launch",
-      "command": "cd ${workspaceFolder}/apps/client && flutter run -d macos --dart-define-from-file=config/dev.json --dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true --dart-define=VIO_USE_RUST_BACKEND=true --dart-define=VIO_USE_RUST_TILES=true --dart-define=VIO_USE_RUST_CANVAS=true 2>&1 | tee canvas-run.log | grep --line-buffered 'CANVAS_PERF' | tee canvas-perf.log"
+      "command": "cd ${workspaceFolder}/apps/client && flutter run -d macos --dart-define-from-file=config/dev.json --dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true 2>&1 | tee canvas-run.log | grep --line-buffered 'CANVAS_PERF' | tee canvas-perf.log"
     }
   ],
   "compounds": [
@@ -192,9 +148,9 @@
       "preLaunchTask": "Start Backend Server"
     },
     {
-      "name": "Full Stack (Backend + Web Client + Rust)",
+      "name": "Full Stack (Backend + Web Client) - No Rust",
       "configurations": [
-        "Vio Client (Web - Chrome) Rust"
+        "Vio Client (Web - Chrome) - No Rust"
       ],
       "preLaunchTask": "Start Backend Server"
     }

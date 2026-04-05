@@ -14,11 +14,10 @@ mixin _CanvasRustMixin on Bloc<CanvasEvent, CanvasState> {
   // Configuration
   // ---------------------------------------------------------------------------
 
-  /// Whether to use Rust for hit testing. Toggle via `--dart-define`
-  /// `VIO_USE_RUST_HIT_TEST=true` or flip at runtime for A/B debugging.
-  bool useRustHitTest = const bool.fromEnvironment(
-    'VIO_USE_RUST_HIT_TEST',
-  );
+  /// Whether to use Rust for hit testing. Enabled by default; pass
+  /// `--dart-define=VIO_DISABLE_RUST=true` to disable, or flip at runtime
+  /// for A/B debugging.
+  bool useRustHitTest = !const bool.fromEnvironment('VIO_DISABLE_RUST');
 
   // ---------------------------------------------------------------------------
   // State tracking for diff-based sync

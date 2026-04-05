@@ -14,13 +14,12 @@ void main() async {
   // Initialize logger
   VioLogger.initialize();
 
-  // Initialize Rust engine (flutter_rust_bridge) only when a Rust feature is
-  // enabled.  On web the WASM module must have been compiled; when no Rust
-  // flag is set we skip loading entirely so the app still starts.
-  const useRust = bool.fromEnvironment('VIO_USE_RUST_CANVAS') ||
-      bool.fromEnvironment('VIO_USE_RUST_TILES') ||
-      bool.fromEnvironment('VIO_USE_RUST_BACKEND');
-  if (useRust) {
+  // Initialize Rust engine (flutter_rust_bridge) by default on all platforms.
+  // On web the WASM module must have been compiled; if init fails the app
+  // falls back to the pure-Dart renderer automatically.
+  // Pass `--dart-define=VIO_DISABLE_RUST=true` to skip Rust entirely.
+  const disableRust = bool.fromEnvironment('VIO_DISABLE_RUST');
+  if (!disableRust) {
     try {
       await RustLib.init();
       RustEngineService.instance.rustAvailable = true;
@@ -29,7 +28,7 @@ void main() async {
       VioLogger.error('Rust engine init failed – running without Rust', e, st);
     }
   } else {
-    VioLogger.info('Rust engine skipped (no VIO_USE_RUST_* flags set)');
+    VioLogger.info('Rust engine disabled via VIO_DISABLE_RUST');
   }
 
   // Build environment config from --dart-define-from-file values

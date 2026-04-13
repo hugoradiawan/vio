@@ -406,6 +406,8 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
                   event.initialHeight != null
               ? Size(event.initialWidth!, event.initialHeight!)
               : null,
+          drawingPresetId:
+              event.tool == CanvasPointerTool.drawFrame ? event.presetId : null,
           dragStart: canvasPoint,
           currentPointer: canvasPoint,
           clearDragOffset: true,
@@ -708,6 +710,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
           shapes: newShapes,
           currentPointer: canvasPoint,
           clearDrawingPresetSize: shouldDisarmPreset,
+          clearDrawingPresetId: shouldDisarmPreset,
         ),
       );
       return;
@@ -958,10 +961,12 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
         const clickThreshold = 3.0;
         final distance = (state.currentPointer! - state.dragStart!).distance;
         if (distance <= clickThreshold) {
+          final shouldEnableDeviceFrame = state.drawingPresetId == 'iphone-16';
           nextShapes = Map<String, Shape>.from(nextShapes)
             ..[shapeId] = createdShape.copyWith(
               frameWidth: state.drawingPresetSize!.width,
               frameHeight: state.drawingPresetSize!.height,
+              showDeviceFrame: shouldEnableDeviceFrame ? true : null,
             );
         }
       }
@@ -980,6 +985,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
           clearCurrentPointer: true,
           clearDrawingShapeId: true,
           clearDrawingPresetSize: true,
+          clearDrawingPresetId: true,
           clearSnap: true,
         ),
       );
@@ -1828,18 +1834,18 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
           transform: finalTransform,
         );
       } else if (originalShape is FrameShape) {
-        const refW = 402.0;
-        const refH = 874.0;
-        final sizeChanged =
-            (shapeNewWidth - refW).abs() > 0.5 ||
-            (shapeNewHeight - refH).abs() > 0.5;
         newShapes[shapeId] = originalShape.copyWith(
           x: finalX,
           y: finalY,
           frameWidth: shapeNewWidth,
           frameHeight: shapeNewHeight,
           transform: finalTransform,
-          showDeviceFrame: sizeChanged ? false : null,
+          showDeviceFrame: _isSupportedDeviceFrameSize(
+            shapeNewWidth,
+            shapeNewHeight,
+          )
+              ? null
+              : false,
         );
       } else if (originalShape is TextShape) {
         newShapes[shapeId] = originalShape.copyWith(

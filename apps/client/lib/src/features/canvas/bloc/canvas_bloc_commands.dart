@@ -1,5 +1,19 @@
 part of 'canvas_bloc.dart';
 
+const _deviceFrameIphone16ProSize = Size(402.0, 874.0);
+const _deviceFrameIphone16Size = Size(393.0, 852.0);
+const _deviceFrameSizeTolerance = 0.5;
+
+bool _isSupportedDeviceFrameSize(double width, double height) {
+  bool nearlyMatches(Size size) {
+    return (width - size.width).abs() <= _deviceFrameSizeTolerance &&
+        (height - size.height).abs() <= _deviceFrameSizeTolerance;
+  }
+
+  return nearlyMatches(_deviceFrameIphone16ProSize) ||
+      nearlyMatches(_deviceFrameIphone16Size);
+}
+
 mixin _CanvasCommandsMixin on Bloc<CanvasEvent, CanvasState> {
   List<Map<String, Shape>> get _undoStack;
   List<Map<String, Shape>> get _redoStack;
@@ -124,17 +138,14 @@ mixin _CanvasCommandsMixin on Bloc<CanvasEvent, CanvasState> {
     if (!state.shapes.containsKey(event.shape.id)) return;
     VioLogger.debug('Updating shape: ${event.shape.id}');
 
-    // If a device-framed FrameShape is resized away from the iPhone 16 Pro
-    // reference dimensions (402 × 874), automatically disable the overlay to
-    // avoid drawing it on a mismatched frame size.
+    // If a device-framed FrameShape is resized away from supported iPhone
+    // device-frame dimensions, automatically disable the overlay.
     Shape updatedShape = event.shape;
     if (updatedShape is FrameShape && updatedShape.showDeviceFrame) {
-      const refW = 402.0;
-      const refH = 874.0;
-      final sizeChanged =
-          (updatedShape.frameWidth - refW).abs() > 0.5 ||
-          (updatedShape.frameHeight - refH).abs() > 0.5;
-      if (sizeChanged) {
+      if (!_isSupportedDeviceFrameSize(
+        updatedShape.frameWidth,
+        updatedShape.frameHeight,
+      )) {
         updatedShape = updatedShape.copyWith(showDeviceFrame: false);
       }
     }

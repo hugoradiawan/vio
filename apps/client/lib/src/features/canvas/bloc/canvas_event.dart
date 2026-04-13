@@ -131,6 +131,7 @@ class PointerDown extends CanvasEvent {
     this.tool = CanvasPointerTool.select,
     this.initialWidth,
     this.initialHeight,
+    this.presetId,
   });
 
   /// X position in screen coordinates
@@ -153,6 +154,9 @@ class PointerDown extends CanvasEvent {
   final double? initialWidth;
   final double? initialHeight;
 
+  /// Optional frame preset id used for click-to-create behavior.
+  final String? presetId;
+
   @override
   List<Object?> get props => [
         x,
@@ -162,6 +166,7 @@ class PointerDown extends CanvasEvent {
         tool,
         initialWidth,
         initialHeight,
+        presetId,
       ];
 }
 

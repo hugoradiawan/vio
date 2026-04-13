@@ -482,6 +482,7 @@ mixin _CanvasViewController on State<CanvasView> {
             tool: tool,
             initialWidth: preset?.width,
             initialHeight: preset?.height,
+            presetId: preset?.id,
           ),
         );
   }

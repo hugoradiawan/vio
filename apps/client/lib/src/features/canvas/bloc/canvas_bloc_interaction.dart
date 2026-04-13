@@ -1828,12 +1828,18 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
           transform: finalTransform,
         );
       } else if (originalShape is FrameShape) {
+        const refW = 402.0;
+        const refH = 874.0;
+        final sizeChanged =
+            (shapeNewWidth - refW).abs() > 0.5 ||
+            (shapeNewHeight - refH).abs() > 0.5;
         newShapes[shapeId] = originalShape.copyWith(
           x: finalX,
           y: finalY,
           frameWidth: shapeNewWidth,
           frameHeight: shapeNewHeight,
           transform: finalTransform,
+          showDeviceFrame: sizeChanged ? false : null,
         );
       } else if (originalShape is TextShape) {
         newShapes[shapeId] = originalShape.copyWith(

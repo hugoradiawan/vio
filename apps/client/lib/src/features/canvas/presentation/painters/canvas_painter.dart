@@ -4,6 +4,7 @@ import 'package:vio_core/vio_core.dart';
 
 import '../../bloc/canvas_bloc.dart';
 import '../../models/selection_handle_metrics.dart';
+import 'device_frame_painter.dart';
 import 'shape_painter.dart';
 
 /// Main canvas painter for rendering shapes and selection
@@ -321,10 +322,23 @@ class CanvasPainter extends CustomPainter {
 
     canvas.restore();
 
+    // Device frame overlays are painted in their own transform block,
+    // after the main view-matrix restore, so no double-transform occurs.
+    _paintDeviceFrames(canvas);
+
     // Draw selection rectangle (in screen coordinates)
     if (dragRect != null) {
       _drawSelectionRect(canvas, size);
     }
+  }
+
+  void _paintDeviceFrames(Canvas canvas) {
+    DeviceFramePainter.paintDeviceFrames(
+      canvas,
+      shapes,
+      viewMatrix,
+      backgroundColor,
+    );
   }
 
   void _drawSelectionOutlines(Canvas canvas) {

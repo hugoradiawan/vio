@@ -124,9 +124,24 @@ mixin _CanvasCommandsMixin on Bloc<CanvasEvent, CanvasState> {
     if (!state.shapes.containsKey(event.shape.id)) return;
     VioLogger.debug('Updating shape: ${event.shape.id}');
 
+    // If a device-framed FrameShape is resized away from the iPhone 16 Pro
+    // reference dimensions (402 × 874), automatically disable the overlay to
+    // avoid drawing it on a mismatched frame size.
+    Shape updatedShape = event.shape;
+    if (updatedShape is FrameShape && updatedShape.showDeviceFrame) {
+      const refW = 402.0;
+      const refH = 874.0;
+      final sizeChanged =
+          (updatedShape.frameWidth - refW).abs() > 0.5 ||
+          (updatedShape.frameHeight - refH).abs() > 0.5;
+      if (sizeChanged) {
+        updatedShape = updatedShape.copyWith(showDeviceFrame: false);
+      }
+    }
+
     final newShapes = Map<String, Shape>.from(state.shapes);
-    newShapes[event.shape.id] = event.shape;
-    _notifyRepositoryShapeUpdated(event.shape);
+    newShapes[updatedShape.id] = updatedShape;
+    _notifyRepositoryShapeUpdated(updatedShape);
     emit(state.copyWith(shapes: newShapes));
     _pushUndoState(newShapes);
   }

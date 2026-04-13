@@ -100,6 +100,13 @@ class ProtoConverter {
           parentId: proto.hasParentId() ? proto.parentId : null,
           shadow: shadow,
           blur: blur,
+          clipContent: props['clipContent'] as bool? ?? true,
+          showContent: props['showContent'] as bool? ?? true,
+          children:
+              (props['children'] as List?)?.cast<String>() ?? const [],
+          showDeviceFrame: props['showDeviceFrame'] as bool? ?? false,
+          homeIndicatorColor:
+              (props['homeIndicatorColor'] as num?)?.toInt() ?? 0xFFFFFFFF,
         );
       case ShapeType.text:
         return TextShape(
@@ -317,6 +324,12 @@ class ProtoConverter {
     } else if (shape is SvgShape) {
       props['svgContent'] = shape.svgContent;
       if (shape.viewBox != null) props['viewBox'] = shape.viewBox;
+    } else if (shape is FrameShape) {
+      props['clipContent'] = shape.clipContent;
+      props['showContent'] = shape.showContent;
+      props['children'] = shape.children;
+      props['showDeviceFrame'] = shape.showDeviceFrame;
+      props['homeIndicatorColor'] = shape.homeIndicatorColor;
     }
 
     if (props.isEmpty) {

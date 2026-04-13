@@ -436,13 +436,20 @@ class EllipseProperties extends StatelessWidget {
 }
 
 /// Properties specific to frame shapes
-class FrameProperties extends StatelessWidget {
+class FrameProperties extends StatefulWidget {
   const FrameProperties({
     required this.shape,
     super.key,
   });
 
   final FrameShape shape;
+
+  @override
+  State<FrameProperties> createState() => _FramePropertiesState();
+}
+
+class _FramePropertiesState extends State<FrameProperties> {
+  FrameShape get shape => widget.shape;
 
   @override
   Widget build(BuildContext context) {
@@ -493,6 +500,19 @@ class FrameProperties extends StatelessWidget {
             onChanged: (value) => _updateShowContent(context, value),
           ),
           const SizedBox(height: VioSpacing.sm),
+          // Device frame toggle
+          _buildToggleRow(
+            context,
+            label: 'Show device frame',
+            value: shape.showDeviceFrame,
+            onChanged: (value) => _updateShowDeviceFrame(context, value),
+          ),
+          // Home indicator color (only when device frame is enabled)
+          if (shape.showDeviceFrame) ...[
+            const SizedBox(height: VioSpacing.sm),
+            _buildHomeIndicatorRow(context),
+          ],
+          const SizedBox(height: VioSpacing.sm),
           // Children count
           Text(
             '${shape.children.length} children',
@@ -503,6 +523,67 @@ class FrameProperties extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildHomeIndicatorRow(BuildContext context) {
+    final color = Color(shape.homeIndicatorColor);
+    final hexLabel = (shape.homeIndicatorColor & 0xFFFFFF)
+        .toRadixString(16)
+        .padLeft(6, '0')
+        .toUpperCase();
+
+    return Row(
+      children: [
+        const SizedBox(width: 26), // align with toggle labels
+        GestureDetector(
+          onTap: () => _pickHomeIndicatorColor(context),
+          child: Container(
+            width: 18,
+            height: 18,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(3),
+              border: Border.all(
+                color: Theme.of(context)
+                    .colorScheme
+                    .outline
+                    .withValues(alpha: 0.4),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: VioSpacing.sm),
+        GestureDetector(
+          onTap: () => _pickHomeIndicatorColor(context),
+          child: Text(
+            '#$hexLabel',
+            style: VioTypography.bodyMedium.copyWith(
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+        ),
+        const SizedBox(width: VioSpacing.xs),
+        Text(
+          'Home indicator',
+          style: VioTypography.caption.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _pickHomeIndicatorColor(BuildContext context) async {
+    final result = await VioColorPickerDialog.show(
+      context,
+      initialColor: shape.homeIndicatorColor,
+      showOpacity: false,
+    );
+    if (result != null && context.mounted) {
+      context
+          .read<CanvasBloc>()
+          .add(ShapeUpdated(shape.copyWith(homeIndicatorColor: result.color)));
+    }
   }
 
   String? _matchPresetIdForFrame(FrameShape frame) {
@@ -561,6 +642,11 @@ class FrameProperties extends StatelessWidget {
   void _updateShowContent(BuildContext context, bool value) {
     final bloc = context.read<CanvasBloc>();
     bloc.add(ShapeUpdated(shape.copyWith(showContent: value)));
+  }
+
+  void _updateShowDeviceFrame(BuildContext context, bool value) {
+    final bloc = context.read<CanvasBloc>();
+    bloc.add(ShapeUpdated(shape.copyWith(showDeviceFrame: value)));
   }
 }
 

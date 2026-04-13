@@ -31,6 +31,8 @@ class FrameShape extends Shape {
     this.children = const [],
     this.gridLayout,
     this.flexLayout,
+    this.showDeviceFrame = false,
+    this.homeIndicatorColor = 0xFFFFFFFF,
   }) : super(type: ShapeType.frame);
 
   /// X position
@@ -61,6 +63,12 @@ class FrameShape extends Shape {
 
   /// Flex layout configuration
   final FrameFlexLayout? flexLayout;
+
+  /// Whether to render a device frame overlay (iPhone 16 Pro style)
+  final bool showDeviceFrame;
+
+  /// ARGB color for the home indicator bar (only used when showDeviceFrame is true)
+  final int homeIndicatorColor;
 
   @override
   Rect get bounds => Rect.fromLTWH(x, y, frameWidth, frameHeight);
@@ -99,6 +107,8 @@ class FrameShape extends Shape {
     List<String>? children,
     FrameGridLayout? gridLayout,
     FrameFlexLayout? flexLayout,
+    bool? showDeviceFrame,
+    int? homeIndicatorColor,
   }) {
     final resolvedParentId =
         identical(parentId, kUnset) ? this.parentId : parentId as String?;
@@ -136,6 +146,8 @@ class FrameShape extends Shape {
       children: children ?? this.children,
       gridLayout: gridLayout ?? this.gridLayout,
       flexLayout: flexLayout ?? this.flexLayout,
+      showDeviceFrame: showDeviceFrame ?? this.showDeviceFrame,
+      homeIndicatorColor: homeIndicatorColor ?? this.homeIndicatorColor,
     );
   }
 
@@ -156,6 +168,8 @@ class FrameShape extends Shape {
         'children': children,
         if (gridLayout != null) 'gridLayout': gridLayout!.toJson(),
         if (flexLayout != null) 'flexLayout': flexLayout!.toJson(),
+        'showDeviceFrame': showDeviceFrame,
+        'homeIndicatorColor': homeIndicatorColor,
       };
 
   factory FrameShape.fromJson(Map<String, dynamic> json) => FrameShape(
@@ -212,6 +226,9 @@ class FrameShape extends Shape {
                 json['flexLayout'] as Map<String, dynamic>,
               )
             : null,
+        showDeviceFrame: json['showDeviceFrame'] as bool? ?? false,
+        homeIndicatorColor:
+            (json['homeIndicatorColor'] as num?)?.toInt() ?? 0xFFFFFFFF,
       );
 
   @override
@@ -226,6 +243,8 @@ class FrameShape extends Shape {
         children,
         gridLayout,
         flexLayout,
+        showDeviceFrame,
+        homeIndicatorColor,
       ];
 }
 

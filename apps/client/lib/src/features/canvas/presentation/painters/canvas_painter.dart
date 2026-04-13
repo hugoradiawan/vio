@@ -324,7 +324,12 @@ class CanvasPainter extends CustomPainter {
 
     // Device frame overlays are painted in their own transform block,
     // after the main view-matrix restore, so no double-transform occurs.
-    _paintDeviceFrames(canvas);
+    _paintDeviceFrames(
+      canvas,
+      dragOffset: isDraggingSelection ? dragOffset : null,
+      draggedShapeIds:
+          isDraggingSelection ? dragOverlayIdSet : const <String>{},
+    );
 
     // Draw selection rectangle (in screen coordinates)
     if (dragRect != null) {
@@ -332,12 +337,18 @@ class CanvasPainter extends CustomPainter {
     }
   }
 
-  void _paintDeviceFrames(Canvas canvas) {
+  void _paintDeviceFrames(
+    Canvas canvas, {
+    Offset? dragOffset,
+    Set<String> draggedShapeIds = const <String>{},
+  }) {
     DeviceFramePainter.paintDeviceFrames(
       canvas,
       shapes,
       viewMatrix,
       backgroundColor,
+      dragOffset: dragOffset,
+      draggedShapeIds: draggedShapeIds,
     );
   }
 

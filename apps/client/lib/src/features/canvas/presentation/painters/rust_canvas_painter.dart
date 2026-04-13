@@ -940,11 +940,14 @@ class RustCanvasPainter extends CustomPainter {
   }
 
   void _paintDeviceFrames(Canvas canvas) {
+    final dragIds = _computeDragOverlayIdSet();
     DeviceFramePainter.paintDeviceFrames(
       canvas,
       shapes,
       viewMatrix,
       backgroundColor,
+      dragOffset: dragOffset,
+      draggedShapeIds: dragIds,
     );
   }
 

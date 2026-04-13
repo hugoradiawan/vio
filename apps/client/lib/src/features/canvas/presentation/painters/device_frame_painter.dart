@@ -88,8 +88,10 @@ class DeviceFramePainter {
     Canvas canvas,
     List<Shape> shapes,
     Matrix2D viewMatrix,
-    Color backgroundColor,
-  ) {
+    Color backgroundColor, {
+    Offset? dragOffset,
+    Set<String> draggedShapeIds = const <String>{},
+  }) {
     // Collect frames that want a device overlay.
     final frames = shapes.whereType<FrameShape>().where(
           (f) => f.showDeviceFrame,
@@ -120,7 +122,16 @@ class DeviceFramePainter {
     );
 
     for (final frame in frames) {
-      _paintSingleFrame(canvas, frame, backgroundColor);
+      final effectiveOffset =
+          dragOffset != null && draggedShapeIds.contains(frame.id)
+              ? dragOffset
+              : Offset.zero;
+      _paintSingleFrame(
+        canvas,
+        frame,
+        backgroundColor,
+        offset: effectiveOffset,
+      );
     }
 
     canvas.restore();
@@ -131,11 +142,12 @@ class DeviceFramePainter {
   static void _paintSingleFrame(
     Canvas canvas,
     FrameShape frame,
-    Color backgroundColor,
-  ) {
+    Color backgroundColor, {
+    Offset offset = Offset.zero,
+  }) {
     final scale = frame.frameWidth / _refWidth;
-    final sx = frame.x;
-    final sy = frame.y;
+    final sx = frame.x + offset.dx;
+    final sy = frame.y + offset.dy;
     final fw = frame.frameWidth;
     final fh = frame.frameHeight;
     final darkMode = frame.deviceFrameDarkMode;

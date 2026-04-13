@@ -861,6 +861,12 @@ class VersionControlBloc
     } else if (shape is SvgShape) {
       properties['svgContent'] = shape.svgContent;
       if (shape.viewBox != null) properties['viewBox'] = shape.viewBox;
+    } else if (shape is FrameShape) {
+      properties['clipContent'] = shape.clipContent;
+      properties['showContent'] = shape.showContent;
+      properties['children'] = shape.children;
+      properties['showDeviceFrame'] = shape.showDeviceFrame;
+      properties['deviceFrameDarkMode'] = shape.deviceFrameDarkMode;
     }
 
     return {
@@ -1355,6 +1361,15 @@ class VersionControlBloc
     // Quick equality check using Equatable
     if (base == current) return false;
 
+    // Frame-specific settings are stored in shape properties and are not
+    // covered by the generic field checks below.
+    if (base is FrameShape && current is FrameShape) {
+      if (base.showDeviceFrame != current.showDeviceFrame ||
+          base.deviceFrameDarkMode != current.deviceFrameDarkMode) {
+        return true;
+      }
+    }
+
     // Compare key properties
     return base.x != current.x ||
         base.y != current.y ||
@@ -1388,6 +1403,14 @@ class VersionControlBloc
     if (base.name != current.name) changed.add('name');
     if (base.shadow != current.shadow) changed.add('shadow');
     if (base.blur != current.blur) changed.add('blur');
+    if (base is FrameShape && current is FrameShape) {
+      if (base.showDeviceFrame != current.showDeviceFrame) {
+        changed.add('device frame');
+      }
+      if (base.deviceFrameDarkMode != current.deviceFrameDarkMode) {
+        changed.add('device frame mode');
+      }
+    }
     return changed;
   }
 

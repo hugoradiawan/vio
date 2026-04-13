@@ -66,9 +66,14 @@ class DeviceFramePainter {
 
   static const Color _bezelColor = Color(0xFF3A3A3C);
   static const Color _islandColor = Colors.black;
-  static const Color _statusTextColor = Color(0xFF000000);
-  static const Color _batteryOutlineColor = Color(0xFF000000);
-  static const Color _batteryFillColor = Color(0xFF000000);
+
+  // Light-mode status bar / home indicator
+  static const Color _statusColorLight = Color(0xFF000000);
+  static const Color _homeColorLight = Color(0xFF000000);
+
+  // Dark-mode status bar / home indicator
+  static const Color _statusColorDark = Color(0xFFFFFFFF);
+  static const Color _homeColorDark = Color(0xFFFFFFFF);
 
   // ── Public entry point ───────────────────────────────────────────────────
 
@@ -133,6 +138,9 @@ class DeviceFramePainter {
     final sy = frame.y;
     final fw = frame.frameWidth;
     final fh = frame.frameHeight;
+    final darkMode = frame.deviceFrameDarkMode;
+    final statusColor = darkMode ? _statusColorDark : _statusColorLight;
+    final homeColor = darkMode ? _homeColorDark : _homeColorLight;
 
     // 1. Rounded corner masks — fill the four corner regions (outside the
     //    inner rounded rect but inside the rectangular frame) with the canvas
@@ -150,10 +158,10 @@ class DeviceFramePainter {
     _paintDynamicIsland(canvas, sx, sy, fw, scale);
 
     // 5. Status bar — clock (left), signal / wifi / battery (right).
-    _paintStatusBar(canvas, sx, sy, fw, scale);
+    _paintStatusBar(canvas, sx, sy, fw, scale, statusColor);
 
-    // 6. Home indicator — bottom-centered pill with user-chosen color.
-    _paintHomeIndicator(canvas, sx, sy, fw, fh, scale, frame.homeIndicatorColor);
+    // 6. Home indicator — bottom-centered pill.
+    _paintHomeIndicator(canvas, sx, sy, fw, fh, scale, homeColor);
   }
 
   // ── 1. Corner masks ──────────────────────────────────────────────────────
@@ -289,12 +297,13 @@ class DeviceFramePainter {
     double sy,
     double fw,
     double scale,
+    Color statusColor,
   ) {
     // Single vertical anchor: center of the icon row.
     final centerY = sy + _statusBarCenterY * scale;
 
     // -- Clock (left)
-    _paintClock(canvas, sx + _statusBarLeftX * scale, centerY, scale);
+    _paintClock(canvas, sx + _statusBarLeftX * scale, centerY, scale, statusColor);
 
     // Layout (at reference 402pt, bodyRightX = 382):
     //   battery  22pt body, right = bodyRightX (= 382)
@@ -303,9 +312,9 @@ class DeviceFramePainter {
     //   gap       5pt          wifi left visible ≈ 346 - 8.2 - 0.75 = 337
     //   signal   16.5pt wide   right ≈ 337 - 5 = 332  left = 315.5  → offset 66.5
     final bodyRightX = sx + _statusBarRightX * scale;
-    _paintBattery(canvas, bodyRightX, centerY, scale);
-    _paintWifi(canvas, bodyRightX - 36.0 * scale, centerY, scale);
-    _paintSignal(canvas, bodyRightX - 66.5 * scale, centerY, scale);
+    _paintBattery(canvas, bodyRightX, centerY, scale, statusColor);
+    _paintWifi(canvas, bodyRightX - 36.0 * scale, centerY, scale, statusColor);
+    _paintSignal(canvas, bodyRightX - 66.5 * scale, centerY, scale, statusColor);
   }
 
   static void _paintClock(
@@ -313,6 +322,7 @@ class DeviceFramePainter {
     double x,
     double centerY,
     double scale,
+    Color statusColor,
   ) {
     final now = DateTime.now();
     final hour = now.hour.toString().padLeft(2, '0');
@@ -324,7 +334,7 @@ class DeviceFramePainter {
       text: TextSpan(
         text: text,
         style: TextStyle(
-          color: _statusTextColor,
+          color: statusColor,
           fontSize: fontSize,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.3,
@@ -339,9 +349,10 @@ class DeviceFramePainter {
 
   static void _paintBattery(
     Canvas canvas,
-    double rightX,  // right edge of battery body
-    double centerY, // vertical center of icon row
+    double rightX,
+    double centerY,
     double scale,
+    Color statusColor,
   ) {
     final bw = 22.0 * scale;
     final bh = 12.0 * scale;
@@ -359,7 +370,7 @@ class DeviceFramePainter {
         Radius.circular(2.5 * scale),
       ),
       Paint()
-        ..color = _batteryOutlineColor
+        ..color = statusColor
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeW,
     );
@@ -375,7 +386,7 @@ class DeviceFramePainter {
         ),
         Radius.circular(1.0 * scale),
       ),
-      Paint()..color = _batteryOutlineColor,
+      Paint()..color = statusColor,
     );
 
     // Fill (80%)
@@ -390,15 +401,16 @@ class DeviceFramePainter {
         ),
         Radius.circular(1.5 * scale),
       ),
-      Paint()..color = _batteryFillColor,
+      Paint()..color = statusColor,
     );
   }
 
   static void _paintWifi(
     Canvas canvas,
     double centerX,
-    double centerY, // vertical center of icon row
+    double centerY,
     double scale,
+    Color statusColor,
   ) {
     // 3 arcs only (no dot). Arc bounding box vertically spans:
     //   top    = arcAnchorY - outerR  = anchorY - 9.5
@@ -407,7 +419,7 @@ class DeviceFramePainter {
     final arcAnchorY = centerY + 5.625 * scale;
 
     final paint = Paint()
-      ..color = _statusTextColor
+      ..color = statusColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5 * scale
       ..strokeCap = ui.StrokeCap.round;
@@ -438,7 +450,7 @@ class DeviceFramePainter {
       Offset(centerX, arcAnchorY),
       dotR,
       Paint()
-        ..color = _statusTextColor
+        ..color = statusColor
         ..style = PaintingStyle.fill,
     );
   }
@@ -446,11 +458,12 @@ class DeviceFramePainter {
   static void _paintSignal(
     Canvas canvas,
     double leftX,
-    double centerY, // vertical center of icon row
+    double centerY,
     double scale,
+    Color statusColor,
   ) {
     final paint = Paint()
-      ..color = _statusTextColor
+      ..color = statusColor
       ..style = PaintingStyle.fill;
 
     const barCount = 4;
@@ -483,7 +496,7 @@ class DeviceFramePainter {
     double fw,
     double fh,
     double scale,
-    int colorArgb,
+    Color homeColor,
   ) {
     final hw = _homeW * scale;
     final hh = _homeH * scale;
@@ -496,7 +509,7 @@ class DeviceFramePainter {
         Rect.fromLTWH(hx, hy, hw, hh),
         Radius.circular(hr),
       ),
-      Paint()..color = Color(colorArgb),
+      Paint()..color = homeColor,
     );
   }
 }

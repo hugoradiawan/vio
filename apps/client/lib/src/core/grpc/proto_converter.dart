@@ -105,8 +105,7 @@ class ProtoConverter {
           children:
               (props['children'] as List?)?.cast<String>() ?? const [],
           showDeviceFrame: props['showDeviceFrame'] as bool? ?? false,
-          homeIndicatorColor:
-              (props['homeIndicatorColor'] as num?)?.toInt() ?? 0xFFFFFFFF,
+          deviceFrameDarkMode: props['deviceFrameDarkMode'] as bool? ?? false,
         );
       case ShapeType.text:
         return TextShape(
@@ -329,7 +328,7 @@ class ProtoConverter {
       props['showContent'] = shape.showContent;
       props['children'] = shape.children;
       props['showDeviceFrame'] = shape.showDeviceFrame;
-      props['homeIndicatorColor'] = shape.homeIndicatorColor;
+      props['deviceFrameDarkMode'] = shape.deviceFrameDarkMode;
     }
 
     if (props.isEmpty) {

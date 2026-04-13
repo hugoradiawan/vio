@@ -32,7 +32,7 @@ class FrameShape extends Shape {
     this.gridLayout,
     this.flexLayout,
     this.showDeviceFrame = false,
-    this.homeIndicatorColor = 0xFFFFFFFF,
+    this.deviceFrameDarkMode = false,
   }) : super(type: ShapeType.frame);
 
   /// X position
@@ -67,8 +67,9 @@ class FrameShape extends Shape {
   /// Whether to render a device frame overlay (iPhone 16 Pro style)
   final bool showDeviceFrame;
 
-  /// ARGB color for the home indicator bar (only used when showDeviceFrame is true)
-  final int homeIndicatorColor;
+  /// When true, renders the device frame in dark mode (dark screen content,
+  /// dark home indicator, dark status bar icons). Defaults to light mode.
+  final bool deviceFrameDarkMode;
 
   @override
   Rect get bounds => Rect.fromLTWH(x, y, frameWidth, frameHeight);
@@ -108,7 +109,7 @@ class FrameShape extends Shape {
     FrameGridLayout? gridLayout,
     FrameFlexLayout? flexLayout,
     bool? showDeviceFrame,
-    int? homeIndicatorColor,
+    bool? deviceFrameDarkMode,
   }) {
     final resolvedParentId =
         identical(parentId, kUnset) ? this.parentId : parentId as String?;
@@ -147,7 +148,7 @@ class FrameShape extends Shape {
       gridLayout: gridLayout ?? this.gridLayout,
       flexLayout: flexLayout ?? this.flexLayout,
       showDeviceFrame: showDeviceFrame ?? this.showDeviceFrame,
-      homeIndicatorColor: homeIndicatorColor ?? this.homeIndicatorColor,
+      deviceFrameDarkMode: deviceFrameDarkMode ?? this.deviceFrameDarkMode,
     );
   }
 
@@ -169,7 +170,7 @@ class FrameShape extends Shape {
         if (gridLayout != null) 'gridLayout': gridLayout!.toJson(),
         if (flexLayout != null) 'flexLayout': flexLayout!.toJson(),
         'showDeviceFrame': showDeviceFrame,
-        'homeIndicatorColor': homeIndicatorColor,
+        'deviceFrameDarkMode': deviceFrameDarkMode,
       };
 
   factory FrameShape.fromJson(Map<String, dynamic> json) => FrameShape(
@@ -227,8 +228,7 @@ class FrameShape extends Shape {
               )
             : null,
         showDeviceFrame: json['showDeviceFrame'] as bool? ?? false,
-        homeIndicatorColor:
-            (json['homeIndicatorColor'] as num?)?.toInt() ?? 0xFFFFFFFF,
+        deviceFrameDarkMode: json['deviceFrameDarkMode'] as bool? ?? false,
       );
 
   @override
@@ -244,7 +244,7 @@ class FrameShape extends Shape {
         gridLayout,
         flexLayout,
         showDeviceFrame,
-        homeIndicatorColor,
+        deviceFrameDarkMode,
       ];
 }
 

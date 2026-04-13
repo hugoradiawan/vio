@@ -507,10 +507,17 @@ class _FramePropertiesState extends State<FrameProperties> {
             value: shape.showDeviceFrame,
             onChanged: (value) => _updateShowDeviceFrame(context, value),
           ),
-          // Home indicator color (only when device frame is enabled)
-          if (shape.showDeviceFrame) ...[
+          // Device frame dark mode (only when device frame is enabled)
+          if (shape.showDeviceFrame) ...[            
             const SizedBox(height: VioSpacing.sm),
-            _buildHomeIndicatorRow(context),
+            _buildToggleRow(
+              context,
+              label: 'Dark mode',
+              value: shape.deviceFrameDarkMode,
+              onChanged: (value) => context.read<CanvasBloc>().add(
+                    ShapeUpdated(shape.copyWith(deviceFrameDarkMode: value)),
+                  ),
+            ),
           ],
           const SizedBox(height: VioSpacing.sm),
           // Children count
@@ -523,67 +530,6 @@ class _FramePropertiesState extends State<FrameProperties> {
         ],
       ),
     );
-  }
-
-  Widget _buildHomeIndicatorRow(BuildContext context) {
-    final color = Color(shape.homeIndicatorColor);
-    final hexLabel = (shape.homeIndicatorColor & 0xFFFFFF)
-        .toRadixString(16)
-        .padLeft(6, '0')
-        .toUpperCase();
-
-    return Row(
-      children: [
-        const SizedBox(width: 26), // align with toggle labels
-        GestureDetector(
-          onTap: () => _pickHomeIndicatorColor(context),
-          child: Container(
-            width: 18,
-            height: 18,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(3),
-              border: Border.all(
-                color: Theme.of(context)
-                    .colorScheme
-                    .outline
-                    .withValues(alpha: 0.4),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: VioSpacing.sm),
-        GestureDetector(
-          onTap: () => _pickHomeIndicatorColor(context),
-          child: Text(
-            '#$hexLabel',
-            style: VioTypography.bodyMedium.copyWith(
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-        ),
-        const SizedBox(width: VioSpacing.xs),
-        Text(
-          'Home indicator',
-          style: VioTypography.caption.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _pickHomeIndicatorColor(BuildContext context) async {
-    final result = await VioColorPickerDialog.show(
-      context,
-      initialColor: shape.homeIndicatorColor,
-      showOpacity: false,
-    );
-    if (result != null && context.mounted) {
-      context
-          .read<CanvasBloc>()
-          .add(ShapeUpdated(shape.copyWith(homeIndicatorColor: result.color)));
-    }
   }
 
   String? _matchPresetIdForFrame(FrameShape frame) {

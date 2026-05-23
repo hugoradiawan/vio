@@ -210,6 +210,9 @@ async function cleanupProject(projectId: string): Promise<void> {
 	await db.delete(schema.shapes).where(eq(schema.shapes.projectId, projectId));
 	await db.delete(schema.frames).where(eq(schema.frames.projectId, projectId));
 	await db
+		.delete(schema.pullRequests)
+		.where(eq(schema.pullRequests.projectId, projectId));
+	await db
 		.delete(schema.projectAssets)
 		.where(eq(schema.projectAssets.projectId, projectId));
 	await db

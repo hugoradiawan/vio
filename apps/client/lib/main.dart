@@ -61,6 +61,7 @@ void main() async {
           state == AppLifecycleState.detached ||
           state == AppLifecycleState.hidden) {
         ServiceLocator.instance.canvasRepository.sync();
+        
       }
     },
   );

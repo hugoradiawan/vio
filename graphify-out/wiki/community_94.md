@@ -1,0 +1,31 @@
+# Community 94: wire__crate__api__simple__greet_impl()
+
+**Members:** 11
+
+## Nodes
+
+- **pde_ffi_dispatcher_sync_impl()** (`apps_client_rust_src_frb_generated_rs_pde_ffi_dispatcher_sync_impl`, Function, degree: 11)
+- **wire__crate__api__engine__CanvasEngine_create_impl()** (`apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_create_impl`, Function, degree: 2)
+- **wire__crate__api__engine__CanvasEngine_generate_draw_commands_impl()** (`apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_generate_draw_commands_impl`, Function, degree: 3)
+- **wire__crate__api__engine__CanvasEngine_hit_test_point_impl()** (`apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_hit_test_point_impl`, Function, degree: 3)
+- **wire__crate__api__engine__CanvasEngine_hit_test_rect_impl()** (`apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_hit_test_rect_impl`, Function, degree: 3)
+- **wire__crate__api__engine__CanvasEngine_paint_order_impl()** (`apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_paint_order_impl`, Function, degree: 3)
+- **wire__crate__api__engine__CanvasEngine_query_visible_impl()** (`apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_query_visible_impl`, Function, degree: 3)
+- **wire__crate__api__engine__CanvasEngine_shape_count_impl()** (`apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_shape_count_impl`, Function, degree: 3)
+- **wire__crate__api__engine__CanvasEngine_tile_cache_stats_impl()** (`apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_tile_cache_stats_impl`, Function, degree: 3)
+- **wire__crate__api__engine__CanvasEngine_tile_rasterized_count_impl()** (`apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_tile_rasterized_count_impl`, Function, degree: 3)
+- **wire__crate__api__simple__greet_impl()** (`apps_client_rust_src_frb_generated_rs_wire_crate_api_simple_greet_impl`, Function, degree: 3)
+
+## Relationships
+
+- apps_client_rust_src_frb_generated_rs_pde_ffi_dispatcher_sync_impl → apps_client_rust_src_frb_generated_rs_wire_crate_api_simple_greet_impl (calls)
+- apps_client_rust_src_frb_generated_rs_pde_ffi_dispatcher_sync_impl → apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_generate_draw_commands_impl (calls)
+- apps_client_rust_src_frb_generated_rs_pde_ffi_dispatcher_sync_impl → apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_tile_rasterized_count_impl (calls)
+- apps_client_rust_src_frb_generated_rs_pde_ffi_dispatcher_sync_impl → apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_hit_test_point_impl (calls)
+- apps_client_rust_src_frb_generated_rs_pde_ffi_dispatcher_sync_impl → apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_tile_cache_stats_impl (calls)
+- apps_client_rust_src_frb_generated_rs_pde_ffi_dispatcher_sync_impl → apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_shape_count_impl (calls)
+- apps_client_rust_src_frb_generated_rs_pde_ffi_dispatcher_sync_impl → apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_query_visible_impl (calls)
+- apps_client_rust_src_frb_generated_rs_pde_ffi_dispatcher_sync_impl → apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_paint_order_impl (calls)
+- apps_client_rust_src_frb_generated_rs_pde_ffi_dispatcher_sync_impl → apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_hit_test_rect_impl (calls)
+- apps_client_rust_src_frb_generated_rs_pde_ffi_dispatcher_sync_impl → apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_create_impl (calls)
+

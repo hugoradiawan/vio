@@ -1,0 +1,25 @@
+# Community 135: shape_painter.dart
+
+**Members:** 8
+
+## Nodes
+
+- **canvas_painter** (`apps_client_lib_src_features_canvas_presentation_painters_canvas_painter_dart`, File, degree: 7)
+- **../../bloc/canvas_bloc.dart** (`apps_client_lib_src_features_canvas_presentation_painters_canvas_painter_dart_import_bloc_canvas_bloc_dart`, Module, degree: 1)
+- **device_frame_painter.dart** (`apps_client_lib_src_features_canvas_presentation_painters_canvas_painter_dart_import_device_frame_painter_dart`, Module, degree: 1)
+- **../../models/selection_handle_metrics.dart** (`apps_client_lib_src_features_canvas_presentation_painters_canvas_painter_dart_import_models_selection_handle_metrics_dart`, Module, degree: 1)
+- **package:flutter/foundation.dart** (`apps_client_lib_src_features_canvas_presentation_painters_canvas_painter_dart_import_package_flutter_foundation_dart`, Module, degree: 1)
+- **package:flutter/material.dart** (`apps_client_lib_src_features_canvas_presentation_painters_canvas_painter_dart_import_package_flutter_material_dart`, Module, degree: 1)
+- **package:vio_core/vio_core.dart** (`apps_client_lib_src_features_canvas_presentation_painters_canvas_painter_dart_import_package_vio_core_vio_core_dart`, Module, degree: 1)
+- **shape_painter.dart** (`apps_client_lib_src_features_canvas_presentation_painters_canvas_painter_dart_import_shape_painter_dart`, Module, degree: 1)
+
+## Relationships
+
+- apps_client_lib_src_features_canvas_presentation_painters_canvas_painter_dart → apps_client_lib_src_features_canvas_presentation_painters_canvas_painter_dart_import_package_flutter_foundation_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_painters_canvas_painter_dart → apps_client_lib_src_features_canvas_presentation_painters_canvas_painter_dart_import_package_flutter_material_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_painters_canvas_painter_dart → apps_client_lib_src_features_canvas_presentation_painters_canvas_painter_dart_import_package_vio_core_vio_core_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_painters_canvas_painter_dart → apps_client_lib_src_features_canvas_presentation_painters_canvas_painter_dart_import_bloc_canvas_bloc_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_painters_canvas_painter_dart → apps_client_lib_src_features_canvas_presentation_painters_canvas_painter_dart_import_models_selection_handle_metrics_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_painters_canvas_painter_dart → apps_client_lib_src_features_canvas_presentation_painters_canvas_painter_dart_import_device_frame_painter_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_painters_canvas_painter_dart → apps_client_lib_src_features_canvas_presentation_painters_canvas_painter_dart_import_shape_painter_dart (imports)
+

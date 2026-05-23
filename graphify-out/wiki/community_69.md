@@ -1,0 +1,37 @@
+# Community 69: _WorkspacePageState()
+
+**Members:** 14
+
+## Nodes
+
+- **workspace_page** (`apps_client_lib_src_features_workspace_presentation_workspace_page_dart`, File, degree: 13)
+- **../bloc/workspace_bloc.dart** (`apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_bloc_workspace_bloc_dart`, Module, degree: 1)
+- **../../canvas/bloc/canvas_bloc.dart** (`apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_canvas_bloc_canvas_bloc_dart`, Module, degree: 1)
+- **../../canvas/presentation/canvas_view.dart** (`apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_canvas_presentation_canvas_view_dart`, Module, degree: 1)
+- **../../../core/platform_shortcuts.dart** (`apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_core_platform_shortcuts_dart`, Module, degree: 1)
+- **package:flutter_bloc/flutter_bloc.dart** (`apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_package_flutter_bloc_flutter_bloc_dart`, Module, degree: 1)
+- **package:flutter/material.dart** (`apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_package_flutter_material_dart`, Module, degree: 1)
+- **package:flutter/services.dart** (`apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_package_flutter_services_dart`, Module, degree: 1)
+- **package:go_router/go_router.dart** (`apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_package_go_router_go_router_dart`, Module, degree: 1)
+- **package:vio_ui_kit/vio_ui_kit.dart** (`apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_package_vio_ui_kit_vio_ui_kit_dart`, Module, degree: 1)
+- **widgets/left_panel.dart** (`apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_widgets_left_panel_dart`, Module, degree: 1)
+- **widgets/resizable_panel_handle.dart** (`apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_widgets_resizable_panel_handle_dart`, Module, degree: 1)
+- **widgets/right_panel.dart** (`apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_widgets_right_panel_dart`, Module, degree: 1)
+- **_WorkspacePageState()** (`apps_client_lib_src_features_workspace_presentation_workspace_page_dart_workspacepagestate`, Function, degree: 1)
+
+## Relationships
+
+- apps_client_lib_src_features_workspace_presentation_workspace_page_dart → apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_package_flutter_material_dart (imports)
+- apps_client_lib_src_features_workspace_presentation_workspace_page_dart → apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_package_flutter_services_dart (imports)
+- apps_client_lib_src_features_workspace_presentation_workspace_page_dart → apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_package_flutter_bloc_flutter_bloc_dart (imports)
+- apps_client_lib_src_features_workspace_presentation_workspace_page_dart → apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_package_go_router_go_router_dart (imports)
+- apps_client_lib_src_features_workspace_presentation_workspace_page_dart → apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_package_vio_ui_kit_vio_ui_kit_dart (imports)
+- apps_client_lib_src_features_workspace_presentation_workspace_page_dart → apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_core_platform_shortcuts_dart (imports)
+- apps_client_lib_src_features_workspace_presentation_workspace_page_dart → apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_canvas_bloc_canvas_bloc_dart (imports)
+- apps_client_lib_src_features_workspace_presentation_workspace_page_dart → apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_canvas_presentation_canvas_view_dart (imports)
+- apps_client_lib_src_features_workspace_presentation_workspace_page_dart → apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_bloc_workspace_bloc_dart (imports)
+- apps_client_lib_src_features_workspace_presentation_workspace_page_dart → apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_widgets_left_panel_dart (imports)
+- apps_client_lib_src_features_workspace_presentation_workspace_page_dart → apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_widgets_resizable_panel_handle_dart (imports)
+- apps_client_lib_src_features_workspace_presentation_workspace_page_dart → apps_client_lib_src_features_workspace_presentation_workspace_page_dart_import_widgets_right_panel_dart (imports)
+- apps_client_lib_src_features_workspace_presentation_workspace_page_dart → apps_client_lib_src_features_workspace_presentation_workspace_page_dart_workspacepagestate (defines)
+

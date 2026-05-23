@@ -1,0 +1,24 @@
+# shape
+
+- **ID:** `apps_client_lib_src_rust_scene_graph_shape_dart`
+- **Type:** File
+- **File:** `./apps/client/lib/src/rust/scene_graph/shape.dart`
+- **Community:** 64 (TextAlign)
+
+## Relationships
+
+- apps_client_lib_src_rust_scene_graph_shape_dart → apps_client_lib_src_rust_scene_graph_shape_dart_import_frb_generated_dart (imports, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_dart → apps_client_lib_src_rust_scene_graph_shape_dart_import_math_matrix2d_dart (imports, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_dart → apps_client_lib_src_rust_scene_graph_shape_dart_import_package_flutter_rust_bridge_flutter_rust_bridge_for_generated_dart (imports, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_dart → apps_client_lib_src_rust_scene_graph_shape_dart_import_package_freezed_annotation_freezed_annotation_dart (imports, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_dart → apps_client_lib_src_rust_scene_graph_shape_dart_import_shape_freezed_dart (imports, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_dart → apps_client_lib_src_rust_scene_graph_shape_dart_blurtype (defines, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_dart → apps_client_lib_src_rust_scene_graph_shape_dart_boolop (defines, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_dart → apps_client_lib_src_rust_scene_graph_shape_dart_gradienttype (defines, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_dart → apps_client_lib_src_rust_scene_graph_shape_dart_shadowstyle (defines, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_dart → apps_client_lib_src_rust_scene_graph_shape_dart_shapetype (defines, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_dart → apps_client_lib_src_rust_scene_graph_shape_dart_strokealignment (defines, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_dart → apps_client_lib_src_rust_scene_graph_shape_dart_strokecap (defines, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_dart → apps_client_lib_src_rust_scene_graph_shape_dart_strokejoin (defines, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_dart → apps_client_lib_src_rust_scene_graph_shape_dart_textalign (defines, Extracted)
+

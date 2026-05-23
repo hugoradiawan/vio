@@ -1,0 +1,33 @@
+# Community 80: _GraphicsSectionState()
+
+**Members:** 12
+
+## Nodes
+
+- **assets_tab** (`apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart`, File, degree: 11)
+- **_AddColorDialogState()** (`apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart_addcolordialogstate`, Function, degree: 1)
+- **_GraphicsSectionState()** (`apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart_graphicssectionstate`, Function, degree: 1)
+- **../../bloc/asset_bloc.dart** (`apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart_import_bloc_asset_bloc_dart`, Module, degree: 1)
+- **../../../canvas/bloc/canvas_bloc.dart** (`apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart_import_canvas_bloc_canvas_bloc_dart`, Module, degree: 1)
+- **dart:typed_data** (`apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart_import_dart_typed_data`, Module, degree: 1)
+- **package:desktop_drop/desktop_drop.dart** (`apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart_import_package_desktop_drop_desktop_drop_dart`, Module, degree: 1)
+- **package:file_picker/file_picker.dart** (`apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart_import_package_file_picker_file_picker_dart`, Module, degree: 1)
+- **package:flutter_bloc/flutter_bloc.dart** (`apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart_import_package_flutter_bloc_flutter_bloc_dart`, Module, degree: 1)
+- **package:flutter/material.dart** (`apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart_import_package_flutter_material_dart`, Module, degree: 1)
+- **package:vio_core/vio_core.dart** (`apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart_import_package_vio_core_vio_core_dart`, Module, degree: 1)
+- **package:vio_ui_kit/vio_ui_kit.dart** (`apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart_import_package_vio_ui_kit_vio_ui_kit_dart`, Module, degree: 1)
+
+## Relationships
+
+- apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart → apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart_import_dart_typed_data (imports)
+- apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart → apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart_import_package_desktop_drop_desktop_drop_dart (imports)
+- apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart → apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart_import_package_file_picker_file_picker_dart (imports)
+- apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart → apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart_import_package_flutter_material_dart (imports)
+- apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart → apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart_import_package_flutter_bloc_flutter_bloc_dart (imports)
+- apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart → apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart_import_package_vio_core_vio_core_dart (imports)
+- apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart → apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart_import_package_vio_ui_kit_vio_ui_kit_dart (imports)
+- apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart → apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart_import_canvas_bloc_canvas_bloc_dart (imports)
+- apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart → apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart_import_bloc_asset_bloc_dart (imports)
+- apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart → apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart_graphicssectionstate (defines)
+- apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart → apps_client_lib_src_features_assets_presentation_widgets_assets_tab_dart_addcolordialogstate (defines)
+

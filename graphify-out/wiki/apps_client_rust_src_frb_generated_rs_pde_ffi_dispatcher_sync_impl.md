@@ -1,0 +1,22 @@
+# pde_ffi_dispatcher_sync_impl()
+
+- **ID:** `apps_client_rust_src_frb_generated_rs_pde_ffi_dispatcher_sync_impl`
+- **Type:** Function
+- **File:** `./apps/client/rust/src/frb_generated.rs`
+- **Location:** L1815
+- **Community:** 94 (wire__crate__api__simple__greet_impl())
+
+## Relationships
+
+- apps_client_rust_src_frb_generated_rs → apps_client_rust_src_frb_generated_rs_pde_ffi_dispatcher_sync_impl (defines, Extracted)
+- apps_client_rust_src_frb_generated_rs_pde_ffi_dispatcher_sync_impl → apps_client_rust_src_frb_generated_rs_wire_crate_api_simple_greet_impl (calls, Inferred)
+- apps_client_rust_src_frb_generated_rs_pde_ffi_dispatcher_sync_impl → apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_generate_draw_commands_impl (calls, Inferred)
+- apps_client_rust_src_frb_generated_rs_pde_ffi_dispatcher_sync_impl → apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_tile_rasterized_count_impl (calls, Inferred)
+- apps_client_rust_src_frb_generated_rs_pde_ffi_dispatcher_sync_impl → apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_hit_test_point_impl (calls, Inferred)
+- apps_client_rust_src_frb_generated_rs_pde_ffi_dispatcher_sync_impl → apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_tile_cache_stats_impl (calls, Inferred)
+- apps_client_rust_src_frb_generated_rs_pde_ffi_dispatcher_sync_impl → apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_shape_count_impl (calls, Inferred)
+- apps_client_rust_src_frb_generated_rs_pde_ffi_dispatcher_sync_impl → apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_query_visible_impl (calls, Inferred)
+- apps_client_rust_src_frb_generated_rs_pde_ffi_dispatcher_sync_impl → apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_paint_order_impl (calls, Inferred)
+- apps_client_rust_src_frb_generated_rs_pde_ffi_dispatcher_sync_impl → apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_hit_test_rect_impl (calls, Inferred)
+- apps_client_rust_src_frb_generated_rs_pde_ffi_dispatcher_sync_impl → apps_client_rust_src_frb_generated_rs_wire_crate_api_engine_canvasengine_create_impl (calls, Inferred)
+

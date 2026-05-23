@@ -1,0 +1,25 @@
+# Community 144: _CanvasHierarchyMixin
+
+**Members:** 8
+
+## Nodes
+
+- **canvas_bloc_hierarchy** (`apps_client_lib_src_features_canvas_bloc_canvas_bloc_hierarchy_dart`, File, degree: 2)
+- **_CanvasHierarchyMixin** (`apps_client_lib_src_features_canvas_bloc_canvas_bloc_hierarchy_dart_canvashierarchymixin`, Class, degree: 6)
+- **._getTransformedBounds()** (`apps_client_lib_src_features_canvas_bloc_canvas_bloc_hierarchy_dart_canvashierarchymixin_gettransformedbounds`, Method, degree: 1)
+- **._notifyRepositoryShapeAdded()** (`apps_client_lib_src_features_canvas_bloc_canvas_bloc_hierarchy_dart_canvashierarchymixin_notifyrepositoryshapeadded`, Method, degree: 1)
+- **._notifyRepositoryShapeDeleted()** (`apps_client_lib_src_features_canvas_bloc_canvas_bloc_hierarchy_dart_canvashierarchymixin_notifyrepositoryshapedeleted`, Method, degree: 1)
+- **._notifyRepositoryShapeUpdated()** (`apps_client_lib_src_features_canvas_bloc_canvas_bloc_hierarchy_dart_canvashierarchymixin_notifyrepositoryshapeupdated`, Method, degree: 1)
+- **._pushUndoState()** (`apps_client_lib_src_features_canvas_bloc_canvas_bloc_hierarchy_dart_canvashierarchymixin_pushundostate`, Method, degree: 1)
+- **canvas_bloc.dart** (`apps_client_lib_src_features_canvas_bloc_canvas_bloc_hierarchy_dart_import_canvas_bloc_dart`, Module, degree: 1)
+
+## Relationships
+
+- apps_client_lib_src_features_canvas_bloc_canvas_bloc_hierarchy_dart → apps_client_lib_src_features_canvas_bloc_canvas_bloc_hierarchy_dart_import_canvas_bloc_dart (imports)
+- apps_client_lib_src_features_canvas_bloc_canvas_bloc_hierarchy_dart → apps_client_lib_src_features_canvas_bloc_canvas_bloc_hierarchy_dart_canvashierarchymixin (defines)
+- apps_client_lib_src_features_canvas_bloc_canvas_bloc_hierarchy_dart_canvashierarchymixin → apps_client_lib_src_features_canvas_bloc_canvas_bloc_hierarchy_dart_canvashierarchymixin_notifyrepositoryshapeadded (defines)
+- apps_client_lib_src_features_canvas_bloc_canvas_bloc_hierarchy_dart_canvashierarchymixin → apps_client_lib_src_features_canvas_bloc_canvas_bloc_hierarchy_dart_canvashierarchymixin_notifyrepositoryshapeupdated (defines)
+- apps_client_lib_src_features_canvas_bloc_canvas_bloc_hierarchy_dart_canvashierarchymixin → apps_client_lib_src_features_canvas_bloc_canvas_bloc_hierarchy_dart_canvashierarchymixin_notifyrepositoryshapedeleted (defines)
+- apps_client_lib_src_features_canvas_bloc_canvas_bloc_hierarchy_dart_canvashierarchymixin → apps_client_lib_src_features_canvas_bloc_canvas_bloc_hierarchy_dart_canvashierarchymixin_pushundostate (defines)
+- apps_client_lib_src_features_canvas_bloc_canvas_bloc_hierarchy_dart_canvashierarchymixin → apps_client_lib_src_features_canvas_bloc_canvas_bloc_hierarchy_dart_canvashierarchymixin_gettransformedbounds (defines)
+

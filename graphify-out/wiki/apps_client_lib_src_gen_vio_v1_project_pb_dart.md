@@ -1,0 +1,41 @@
+# project.pb
+
+- **ID:** `apps_client_lib_src_gen_vio_v1_project_pb_dart`
+- **Type:** File
+- **File:** `./apps/client/lib/src/gen/vio/v1/project.pb.dart`
+- **Community:** 24 (UpdateProjectResponse())
+
+## Relationships
+
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_import_dart_core (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_import_package_protobuf_protobuf_dart (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_import_branch_pb_dart (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_import_common_pb_dart (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_create (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_deepcopy (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_i (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_project (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_getsz (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_setstring (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_has (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_clearfield (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_getbf (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_setbool (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_getn (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_setfield (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_ensure (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_frame (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_setdouble (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_getiz (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_setsignedint32 (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_listprojectsrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_listprojectsresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_getlist (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_getprojectrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_getprojectresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_createprojectrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_createprojectresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_updateprojectrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_updateprojectresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_project_pb_dart → apps_client_lib_src_gen_vio_v1_project_pb_dart_deleteprojectrequest (defines, Extracted)
+

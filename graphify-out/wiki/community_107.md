@@ -1,0 +1,29 @@
+# Community 107: _TileCompositorLayerState()
+
+**Members:** 10
+
+## Nodes
+
+- **tile_compositor_layer** (`apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart`, File, degree: 9)
+- **../../bloc/canvas_bloc.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart_import_bloc_canvas_bloc_dart`, Module, degree: 1)
+- **../../../../core/services/rust_engine_service.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart_import_core_services_rust_engine_service_dart`, Module, degree: 1)
+- **dart:async** (`apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart_import_dart_async`, Module, degree: 1)
+- **dart:typed_data** (`apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart_import_dart_typed_data`, Module, degree: 1)
+- **dart:ui'** (`apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart_import_dart_ui`, Module, degree: 1)
+- **package:flutter/material.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart_import_package_flutter_material_dart`, Module, degree: 1)
+- **package:vio_core/vio_core.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart_import_package_vio_core_vio_core_dart`, Module, degree: 1)
+- **../../../../rust/api/engine.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart_import_rust_api_engine_dart`, Module, degree: 1)
+- **_TileCompositorLayerState()** (`apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart_tilecompositorlayerstate`, Function, degree: 1)
+
+## Relationships
+
+- apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart → apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart_import_dart_async (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart → apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart_import_dart_typed_data (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart → apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart_import_dart_ui (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart → apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart_import_package_flutter_material_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart → apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart_import_package_vio_core_vio_core_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart → apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart_import_core_services_rust_engine_service_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart → apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart_import_rust_api_engine_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart → apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart_import_bloc_canvas_bloc_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart → apps_client_lib_src_features_canvas_presentation_widgets_tile_compositor_layer_dart_tilecompositorlayerstate (defines)
+

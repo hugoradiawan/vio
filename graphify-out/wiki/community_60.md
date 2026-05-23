@@ -1,0 +1,39 @@
+# Community 60: _span()
+
+**Members:** 15
+
+## Nodes
+
+- **options** (`apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart`, File, degree: 14)
+- **builder.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_import_builder_dart`, Module, degree: 1)
+- **dart:io** (`apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_import_dart_io`, Module, degree: 1)
+- **environment.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_import_environment_dart`, Module, degree: 1)
+- **package:collection/collection.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_import_package_collection_collection_dart`, Module, degree: 1)
+- **package:ed25519_edwards/ed25519_edwards.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_import_package_ed25519_edwards_ed25519_edwards_dart`, Module, degree: 1)
+- **package:hex/hex.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_import_package_hex_hex_dart`, Module, degree: 1)
+- **package:logging/logging.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_import_package_logging_logging_dart`, Module, degree: 1)
+- **package:path/path.dart'** (`apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_import_package_path_path_dart`, Module, degree: 1)
+- **package:source_span/source_span.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_import_package_source_span_source_span_dart`, Module, degree: 1)
+- **package:yaml/yaml.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_import_package_yaml_yaml_dart`, Module, degree: 1)
+- **rustup.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_import_rustup_dart`, Module, degree: 1)
+- **_message()** (`apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_message`, Function, degree: 1)
+- **_span()** (`apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_span`, Function, degree: 1)
+- **Toolchain** (`apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_toolchain`, Enum, degree: 1)
+
+## Relationships
+
+- apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_import_dart_io (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_import_package_collection_collection_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_import_package_ed25519_edwards_ed25519_edwards_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_import_package_hex_hex_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_import_package_logging_logging_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_import_package_path_path_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_import_package_source_span_source_span_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_import_package_yaml_yaml_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_import_builder_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_import_environment_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_import_rustup_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_message (defines)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_span (defines)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_options_dart_toolchain (defines)
+

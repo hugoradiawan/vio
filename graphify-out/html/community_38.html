@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShapeStroke — Community 38</title>
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0f0f1a; color: #e0e0e0; font-family: 'Segoe UI', system-ui, sans-serif; display: flex; height: 100vh; overflow: hidden; }
+#sidebar { width: 320px; min-width: 320px; background: #1a1a2e; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; border-right: 1px solid #2a2a4a; }
+#sidebar h2 { font-size: 18px; color: #9C755F; margin-bottom: 4px; }
+#sidebar h3 { font-size: 14px; color: #9ca3af; margin-bottom: 8px; }
+.nav-link { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 6px 8px; border-radius: 4px; color: #e0e0e0; text-decoration: none; }
+.nav-link:hover { background: #2a2a4a; }
+.legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+#graph-container { flex: 1; position: relative; }
+#search { width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid #3a3a5a; background: #0f0f1a; color: #e0e0e0; font-size: 14px; }
+#search:focus { outline: none; border-color: #9C755F; }
+#info-panel { background: #0f0f1a; border-radius: 8px; padding: 12px; font-size: 13px; line-height: 1.6; min-height: 100px; }
+#info-panel .prop { color: #9ca3af; }
+#info-panel .val { color: #e0e0e0; }
+</style>
+</head>
+<body>
+<div id="sidebar">
+    <div>
+        <h2>ShapeStroke</h2>
+        <p style="font-size:12px;color:#666;">22 nodes · Community 38</p>
+    </div>
+    <input id="search" type="text" placeholder="Search nodes…" />
+    <div>
+        <h3>Node Info</h3>
+        <div id="info-panel"><i style="color:#666">Click a node to see details</i></div>
+    </div>
+    <div>
+        <h3>Navigation</h3>
+        <a href="index.html" class="nav-link" style="font-weight:bold;">← Overview</a><a href="community_112.html" class="nav-link"><span class="legend-dot" style="background:#E15759"></span>world_aabb_with_translation() (7 links)</a>
+    </div>
+</div>
+<div id="graph-container"></div>
+<script>
+(function() {
+    var nodesData = [{id:"apps_client_rust_src_scene_graph_shape_rs",label:"shape",title:"shape\nType: File\nFile: ./apps/client/rust/src/scene_graph/shape.rs\nDegree: 26",color:"#9C755F",size:28.4},{id:"apps_client_rust_src_scene_graph_shape_rs_import_crate_math_matrix2d_matrix2d",label:"crate::math::matrix2d::Matrix2D",title:"crate::math::matrix2d::Matrix2D\nType: Module\nFile: ./apps/client/rust/src/scene_graph/shape.rs\nDegree: 1",color:"#9C755F",size:12.0},{id:"apps_client_rust_src_scene_graph_shape_rs_shapetype",label:"ShapeType",title:"ShapeType\nType: Enum\nFile: ./apps/client/rust/src/scene_graph/shape.rs\nDegree: 1",color:"#9C755F",size:12.0},{id:"apps_client_rust_src_scene_graph_shape_rs_textalign",label:"TextAlign",title:"TextAlign\nType: Enum\nFile: ./apps/client/rust/src/scene_graph/shape.rs\nDegree: 1",color:"#9C755F",size:12.0},{id:"apps_client_rust_src_scene_graph_shape_rs_boolop",label:"BoolOp",title:"BoolOp\nType: Enum\nFile: ./apps/client/rust/src/scene_graph/shape.rs\nDegree: 1",color:"#9C755F",size:12.0},{id:"apps_client_rust_src_scene_graph_shape_rs_strokealignment",label:"StrokeAlignment",title:"StrokeAlignment\nType: Enum\nFile: ./apps/client/rust/src/scene_graph/shape.rs\nDegree: 1",color:"#9C755F",size:12.0},{id:"apps_client_rust_src_scene_graph_shape_rs_gradienttype",label:"GradientType",title:"GradientType\nType: Enum\nFile: ./apps/client/rust/src/scene_graph/shape.rs\nDegree: 1",color:"#9C755F",size:12.0},{id:"apps_client_rust_src_scene_graph_shape_rs_shadowstyle",label:"ShadowStyle",title:"ShadowStyle\nType: Enum\nFile: ./apps/client/rust/src/scene_graph/shape.rs\nDegree: 1",color:"#9C755F",size:12.0},{id:"apps_client_rust_src_scene_graph_shape_rs_blurtype",label:"BlurType",title:"BlurType\nType: Enum\nFile: ./apps/client/rust/src/scene_graph/shape.rs\nDegree: 1",color:"#9C755F",size:12.0},{id:"apps_client_rust_src_scene_graph_shape_rs_strokecap",label:"StrokeCap",title:"StrokeCap\nType: Enum\nFile: ./apps/client/rust/src/scene_graph/shape.rs\nDegree: 1",color:"#9C755F",size:12.0},{id:"apps_client_rust_src_scene_graph_shape_rs_strokejoin",label:"StrokeJoin",title:"StrokeJoin\nType: Enum\nFile: ./apps/client/rust/src/scene_graph/shape.rs\nDegree: 1",color:"#9C755F",size:12.0},{id:"apps_client_rust_src_scene_graph_shape_rs_gradientstop",label:"GradientStop",title:"GradientStop\nType: Struct\nFile: ./apps/client/rust/src/scene_graph/shape.rs\nDegree: 1",color:"#9C755F",size:12.0},{id:"apps_client_rust_src_scene_graph_shape_rs_shapegradient",label:"ShapeGradient",title:"ShapeGradient\nType: Struct\nFile: ./apps/client/rust/src/scene_graph/shape.rs\nDegree: 1",color:"#9C755F",size:12.0},{id:"apps_client_rust_src_scene_graph_shape_rs_shapefill",label:"ShapeFill",title:"ShapeFill\nType: Struct\nFile: ./apps/client/rust/src/scene_graph/shape.rs\nDegree: 1",color:"#9C755F",size:12.0},{id:"apps_client_rust_src_scene_graph_shape_rs_shapestroke",label:"ShapeStroke",title:"ShapeStroke\nType: Struct\nFile: ./apps/client/rust/src/scene_graph/shape.rs\nDegree: 1",color:"#9C755F",size:12.0},{id:"apps_client_rust_src_scene_graph_shape_rs_shapeshadow",label:"ShapeShadow",title:"ShapeShadow\nType: Struct\nFile: ./apps/client/rust/src/scene_graph/shape.rs\nDegree: 1",color:"#9C755F",size:12.0},{id:"apps_client_rust_src_scene_graph_shape_rs_shapeblur",label:"ShapeBlur",title:"ShapeBlur\nType: Struct\nFile: ./apps/client/rust/src/scene_graph/shape.rs\nDegree: 1",color:"#9C755F",size:12.0},{id:"apps_client_rust_src_scene_graph_shape_rs_shapegeometry",label:"ShapeGeometry",title:"ShapeGeometry\nType: Enum\nFile: ./apps/client/rust/src/scene_graph/shape.rs\nDegree: 2",color:"#9C755F",size:13.7},{id:"apps_client_rust_src_scene_graph_shape_rs_shapegeometry_dimensions",label:".dimensions()",title:".dimensions()\nType: Method\nFile: ./apps/client/rust/src/scene_graph/shape.rs\nDegree: 3",color:"#9C755F",size:14.9},{id:"apps_client_rust_src_scene_graph_shape_rs_import_super",label:"super::*",title:"super::*\nType: Module\nFile: ./apps/client/rust/src/scene_graph/shape.rs\nDegree: 1",color:"#9C755F",size:12.0},{id:"apps_client_rust_src_scene_graph_shape_rs_geometry_dimensions",label:"geometry_dimensions()",title:"geometry_dimensions()\nType: Function\nFile: ./apps/client/rust/src/scene_graph/shape.rs\nDegree: 2",color:"#9C755F",size:13.7},{id:"apps_client_rust_src_scene_graph_shape_rs_shape_type_equality",label:"shape_type_equality()",title:"shape_type_equality()\nType: Function\nFile: ./apps/client/rust/src/scene_graph/shape.rs\nDegree: 1",color:"#9C755F",size:12.0}];
+    var edgesData = [{from:"apps_client_rust_src_scene_graph_shape_rs",to:"apps_client_rust_src_scene_graph_shape_rs_import_crate_math_matrix2d_matrix2d",label:"imports",dashes:false,title:"imports: apps_client_rust_src_scene_graph_shape_rs → apps_client_rust_src_scene_graph_shape_rs_import_crate_math_matrix2d_matrix2d\nConfidence: Extracted"},{from:"apps_client_rust_src_scene_graph_shape_rs",to:"apps_client_rust_src_scene_graph_shape_rs_shapetype",label:"defines",dashes:false,title:"defines: apps_client_rust_src_scene_graph_shape_rs → apps_client_rust_src_scene_graph_shape_rs_shapetype\nConfidence: Extracted"},{from:"apps_client_rust_src_scene_graph_shape_rs",to:"apps_client_rust_src_scene_graph_shape_rs_textalign",label:"defines",dashes:false,title:"defines: apps_client_rust_src_scene_graph_shape_rs → apps_client_rust_src_scene_graph_shape_rs_textalign\nConfidence: Extracted"},{from:"apps_client_rust_src_scene_graph_shape_rs",to:"apps_client_rust_src_scene_graph_shape_rs_boolop",label:"defines",dashes:false,title:"defines: apps_client_rust_src_scene_graph_shape_rs → apps_client_rust_src_scene_graph_shape_rs_boolop\nConfidence: Extracted"},{from:"apps_client_rust_src_scene_graph_shape_rs",to:"apps_client_rust_src_scene_graph_shape_rs_strokealignment",label:"defines",dashes:false,title:"defines: apps_client_rust_src_scene_graph_shape_rs → apps_client_rust_src_scene_graph_shape_rs_strokealignment\nConfidence: Extracted"},{from:"apps_client_rust_src_scene_graph_shape_rs",to:"apps_client_rust_src_scene_graph_shape_rs_gradienttype",label:"defines",dashes:false,title:"defines: apps_client_rust_src_scene_graph_shape_rs → apps_client_rust_src_scene_graph_shape_rs_gradienttype\nConfidence: Extracted"},{from:"apps_client_rust_src_scene_graph_shape_rs",to:"apps_client_rust_src_scene_graph_shape_rs_shadowstyle",label:"defines",dashes:false,title:"defines: apps_client_rust_src_scene_graph_shape_rs → apps_client_rust_src_scene_graph_shape_rs_shadowstyle\nConfidence: Extracted"},{from:"apps_client_rust_src_scene_graph_shape_rs",to:"apps_client_rust_src_scene_graph_shape_rs_blurtype",label:"defines",dashes:false,title:"defines: apps_client_rust_src_scene_graph_shape_rs → apps_client_rust_src_scene_graph_shape_rs_blurtype\nConfidence: Extracted"},{from:"apps_client_rust_src_scene_graph_shape_rs",to:"apps_client_rust_src_scene_graph_shape_rs_strokecap",label:"defines",dashes:false,title:"defines: apps_client_rust_src_scene_graph_shape_rs → apps_client_rust_src_scene_graph_shape_rs_strokecap\nConfidence: Extracted"},{from:"apps_client_rust_src_scene_graph_shape_rs",to:"apps_client_rust_src_scene_graph_shape_rs_strokejoin",label:"defines",dashes:false,title:"defines: apps_client_rust_src_scene_graph_shape_rs → apps_client_rust_src_scene_graph_shape_rs_strokejoin\nConfidence: Extracted"},{from:"apps_client_rust_src_scene_graph_shape_rs",to:"apps_client_rust_src_scene_graph_shape_rs_gradientstop",label:"defines",dashes:false,title:"defines: apps_client_rust_src_scene_graph_shape_rs → apps_client_rust_src_scene_graph_shape_rs_gradientstop\nConfidence: Extracted"},{from:"apps_client_rust_src_scene_graph_shape_rs",to:"apps_client_rust_src_scene_graph_shape_rs_shapegradient",label:"defines",dashes:false,title:"defines: apps_client_rust_src_scene_graph_shape_rs → apps_client_rust_src_scene_graph_shape_rs_shapegradient\nConfidence: Extracted"},{from:"apps_client_rust_src_scene_graph_shape_rs",to:"apps_client_rust_src_scene_graph_shape_rs_shapefill",label:"defines",dashes:false,title:"defines: apps_client_rust_src_scene_graph_shape_rs → apps_client_rust_src_scene_graph_shape_rs_shapefill\nConfidence: Extracted"},{from:"apps_client_rust_src_scene_graph_shape_rs",to:"apps_client_rust_src_scene_graph_shape_rs_shapestroke",label:"defines",dashes:false,title:"defines: apps_client_rust_src_scene_graph_shape_rs → apps_client_rust_src_scene_graph_shape_rs_shapestroke\nConfidence: Extracted"},{from:"apps_client_rust_src_scene_graph_shape_rs",to:"apps_client_rust_src_scene_graph_shape_rs_shapeshadow",label:"defines",dashes:false,title:"defines: apps_client_rust_src_scene_graph_shape_rs → apps_client_rust_src_scene_graph_shape_rs_shapeshadow\nConfidence: Extracted"},{from:"apps_client_rust_src_scene_graph_shape_rs",to:"apps_client_rust_src_scene_graph_shape_rs_shapeblur",label:"defines",dashes:false,title:"defines: apps_client_rust_src_scene_graph_shape_rs → apps_client_rust_src_scene_graph_shape_rs_shapeblur\nConfidence: Extracted"},{from:"apps_client_rust_src_scene_graph_shape_rs",to:"apps_client_rust_src_scene_graph_shape_rs_shapegeometry",label:"defines",dashes:false,title:"defines: apps_client_rust_src_scene_graph_shape_rs → apps_client_rust_src_scene_graph_shape_rs_shapegeometry\nConfidence: Extracted"},{from:"apps_client_rust_src_scene_graph_shape_rs_shapegeometry",to:"apps_client_rust_src_scene_graph_shape_rs_shapegeometry_dimensions",label:"defines",dashes:false,title:"defines: apps_client_rust_src_scene_graph_shape_rs_shapegeometry → apps_client_rust_src_scene_graph_shape_rs_shapegeometry_dimensions\nConfidence: Extracted"},{from:"apps_client_rust_src_scene_graph_shape_rs",to:"apps_client_rust_src_scene_graph_shape_rs_import_super",label:"imports",dashes:false,title:"imports: apps_client_rust_src_scene_graph_shape_rs → apps_client_rust_src_scene_graph_shape_rs_import_super\nConfidence: Extracted"},{from:"apps_client_rust_src_scene_graph_shape_rs",to:"apps_client_rust_src_scene_graph_shape_rs_geometry_dimensions",label:"defines",dashes:false,title:"defines: apps_client_rust_src_scene_graph_shape_rs → apps_client_rust_src_scene_graph_shape_rs_geometry_dimensions\nConfidence: Extracted"},{from:"apps_client_rust_src_scene_graph_shape_rs",to:"apps_client_rust_src_scene_graph_shape_rs_shape_type_equality",label:"defines",dashes:false,title:"defines: apps_client_rust_src_scene_graph_shape_rs → apps_client_rust_src_scene_graph_shape_rs_shape_type_equality\nConfidence: Extracted"},{from:"apps_client_rust_src_scene_graph_shape_rs_geometry_dimensions",to:"apps_client_rust_src_scene_graph_shape_rs_shapegeometry_dimensions",label:"calls",dashes:true,title:"calls: apps_client_rust_src_scene_graph_shape_rs_geometry_dimensions → apps_client_rust_src_scene_graph_shape_rs_shapegeometry_dimensions\nConfidence: Inferred"}];
+    var container = document.getElementById('graph-container');
+    var nodes = new vis.DataSet(nodesData);
+    var edges = new vis.DataSet(edgesData);
+    var options = {
+        physics: {solver:'forceAtlas2Based',forceAtlas2Based:{gravitationalConstant:-50,centralGravity:0.01,springLength:120,springConstant:0.08,damping:0.4,avoidOverlap:0.5},stabilization:{iterations:200}},
+        nodes: { shape: 'dot', font: { color: '#e0e0e0', size: 12 }, borderWidth: 2 },
+        edges: { color: { color: '#4a4a6a', highlight: '#9C755F', hover: '#9C755F' }, font: { color: '#888', size: 10 }, arrows: { to: { enabled: false } }, smooth: { type: 'continuous' } },
+        interaction: { hover: true, tooltipDelay: 200, zoomView: true, dragView: true }
+    };
+    var network = new vis.Network(container, { nodes: nodes, edges: edges }, options);
+    network.on('stabilizationIterationsDone', function() { network.setOptions({ physics: { enabled: false } }); });
+    network.on('click', function(params) {
+        var panel = document.getElementById('info-panel');
+        if (params.nodes.length > 0) {
+            var node = nodes.get(params.nodes[0]);
+            if (node) {
+                panel.innerHTML = '<div><span class="prop">Label:</span> <span class="val">' + node.label + '</span></div><div><span class="prop">ID:</span> <span class="val">' + node.id + '</span></div>';
+                network.focus(params.nodes[0], { scale: 1.2, animation: true });
+            }
+        }
+    });
+    var searchEl = document.getElementById('search');
+    var sTimer = null;
+    searchEl.addEventListener('input', function() {
+        clearTimeout(sTimer);
+        sTimer = setTimeout(function() {
+            var term = searchEl.value.toLowerCase();
+            var updates = [];
+            nodes.forEach(function(n) {
+                var h = term && !n.label.toLowerCase().includes(term);
+                if (n.hidden !== h) { updates.push({ id: n.id, hidden: h }); }
+            });
+            if (updates.length > 0) { nodes.update(updates); }
+        }, 200);
+    });
+})();
+</script>
+</body>
+</html>

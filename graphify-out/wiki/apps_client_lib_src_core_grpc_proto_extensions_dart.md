@@ -1,0 +1,24 @@
+# proto_extensions
+
+- **ID:** `apps_client_lib_src_core_grpc_proto_extensions_dart`
+- **Type:** File
+- **File:** `./apps/client/lib/src/core/grpc/proto_extensions.dart`
+- **Community:** 102 (ResolutionChoiceDisplay)
+
+## Relationships
+
+- apps_client_lib_src_core_grpc_proto_extensions_dart → apps_client_lib_src_core_grpc_proto_extensions_dart_import_gen_vio_v1_branch_pb_dart (imports, Extracted)
+- apps_client_lib_src_core_grpc_proto_extensions_dart → apps_client_lib_src_core_grpc_proto_extensions_dart_import_gen_vio_v1_commit_pb_dart (imports, Extracted)
+- apps_client_lib_src_core_grpc_proto_extensions_dart → apps_client_lib_src_core_grpc_proto_extensions_dart_import_gen_vio_v1_common_pb_dart (imports, Extracted)
+- apps_client_lib_src_core_grpc_proto_extensions_dart → apps_client_lib_src_core_grpc_proto_extensions_dart_import_gen_vio_v1_common_pbenum_dart (imports, Extracted)
+- apps_client_lib_src_core_grpc_proto_extensions_dart → apps_client_lib_src_core_grpc_proto_extensions_dart_import_gen_vio_v1_pullrequest_pb_dart (imports, Extracted)
+- apps_client_lib_src_core_grpc_proto_extensions_dart → apps_client_lib_src_core_grpc_proto_extensions_dart_import_gen_vio_v1_pullrequest_pbenum_dart (imports, Extracted)
+- apps_client_lib_src_core_grpc_proto_extensions_dart → apps_client_lib_src_core_grpc_proto_extensions_dart_timestampext (defines, Extracted)
+- apps_client_lib_src_core_grpc_proto_extensions_dart → apps_client_lib_src_core_grpc_proto_extensions_dart_timestamptodatetime (defines, Extracted)
+- apps_client_lib_src_core_grpc_proto_extensions_dart → apps_client_lib_src_core_grpc_proto_extensions_dart_branchext (defines, Extracted)
+- apps_client_lib_src_core_grpc_proto_extensions_dart → apps_client_lib_src_core_grpc_proto_extensions_dart_commitext (defines, Extracted)
+- apps_client_lib_src_core_grpc_proto_extensions_dart → apps_client_lib_src_core_grpc_proto_extensions_dart_pullrequestext (defines, Extracted)
+- apps_client_lib_src_core_grpc_proto_extensions_dart → apps_client_lib_src_core_grpc_proto_extensions_dart_pullrequeststatusdisplay (defines, Extracted)
+- apps_client_lib_src_core_grpc_proto_extensions_dart → apps_client_lib_src_core_grpc_proto_extensions_dart_mergestrategydisplay (defines, Extracted)
+- apps_client_lib_src_core_grpc_proto_extensions_dart → apps_client_lib_src_core_grpc_proto_extensions_dart_resolutionchoicedisplay (defines, Extracted)
+

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rasterize_tile_with_zoom() — Community 208</title>
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0f0f1a; color: #e0e0e0; font-family: 'Segoe UI', system-ui, sans-serif; display: flex; height: 100vh; overflow: hidden; }
+#sidebar { width: 320px; min-width: 320px; background: #1a1a2e; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; border-right: 1px solid #2a2a4a; }
+#sidebar h2 { font-size: 18px; color: #9C755F; margin-bottom: 4px; }
+#sidebar h3 { font-size: 14px; color: #9ca3af; margin-bottom: 8px; }
+.nav-link { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 6px 8px; border-radius: 4px; color: #e0e0e0; text-decoration: none; }
+.nav-link:hover { background: #2a2a4a; }
+.legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+#graph-container { flex: 1; position: relative; }
+#search { width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid #3a3a5a; background: #0f0f1a; color: #e0e0e0; font-size: 14px; }
+#search:focus { outline: none; border-color: #9C755F; }
+#info-panel { background: #0f0f1a; border-radius: 8px; padding: 12px; font-size: 13px; line-height: 1.6; min-height: 100px; }
+#info-panel .prop { color: #9ca3af; }
+#info-panel .val { color: #e0e0e0; }
+</style>
+</head>
+<body>
+<div id="sidebar">
+    <div>
+        <h2>rasterize_tile_with_zoom()</h2>
+        <p style="font-size:12px;color:#666;">5 nodes · Community 208</p>
+    </div>
+    <input id="search" type="text" placeholder="Search nodes…" />
+    <div>
+        <h3>Node Info</h3>
+        <div id="info-panel"><i style="color:#666">Click a node to see details</i></div>
+    </div>
+    <div>
+        <h3>Navigation</h3>
+        <a href="index.html" class="nav-link" style="font-weight:bold;">← Overview</a><a href="community_39.html" class="nav-link"><span class="legend-dot" style="background:#BAB0AC"></span>set_paint_color() (5 links)</a><a href="community_183.html" class="nav-link"><span class="legend-dot" style="background:#76B7B2"></span>not_rasterizable_with_shadow() (5 links)</a><a href="community_225.html" class="nav-link"><span class="legend-dot" style="background:#EDC948"></span>rasterize_with_stroke() (4 links)</a>
+    </div>
+</div>
+<div id="graph-container"></div>
+<script>
+(function() {
+    var nodesData = [{id:"apps_client_rust_src_rasterizer_painter_rs_make_rect",label:"make_rect()",title:"make_rect()\nType: Function\nFile: ./apps/client/rust/src/rasterizer/painter.rs\nDegree: 10",color:"#9C755F",size:20.6},{id:"apps_client_rust_src_rasterizer_painter_rs_is_rasterizable_simple_rect",label:"is_rasterizable_simple_rect()",title:"is_rasterizable_simple_rect()\nType: Function\nFile: ./apps/client/rust/src/rasterizer/painter.rs\nDegree: 3",color:"#9C755F",size:14.9},{id:"apps_client_rust_src_rasterizer_painter_rs_not_rasterizable_inside_clipping_frame",label:"not_rasterizable_inside_clipping_frame()",title:"not_rasterizable_inside_clipping_frame()\nType: Function\nFile: ./apps/client/rust/src/rasterizer/painter.rs\nDegree: 3",color:"#9C755F",size:14.9},{id:"apps_client_rust_src_rasterizer_painter_rs_rasterize_tile_red_rect_has_red_pixels",label:"rasterize_tile_red_rect_has_red_pixels()",title:"rasterize_tile_red_rect_has_red_pixels()\nType: Function\nFile: ./apps/client/rust/src/rasterizer/painter.rs\nDegree: 3",color:"#9C755F",size:14.9},{id:"apps_client_rust_src_rasterizer_painter_rs_rasterize_tile_with_zoom",label:"rasterize_tile_with_zoom()",title:"rasterize_tile_with_zoom()\nType: Function\nFile: ./apps/client/rust/src/rasterizer/painter.rs\nDegree: 3",color:"#9C755F",size:14.9}];
+    var edgesData = [{from:"apps_client_rust_src_rasterizer_painter_rs_is_rasterizable_simple_rect",to:"apps_client_rust_src_rasterizer_painter_rs_make_rect",label:"calls",dashes:true,title:"calls: apps_client_rust_src_rasterizer_painter_rs_is_rasterizable_simple_rect → apps_client_rust_src_rasterizer_painter_rs_make_rect\nConfidence: Inferred"},{from:"apps_client_rust_src_rasterizer_painter_rs_not_rasterizable_inside_clipping_frame",to:"apps_client_rust_src_rasterizer_painter_rs_make_rect",label:"calls",dashes:true,title:"calls: apps_client_rust_src_rasterizer_painter_rs_not_rasterizable_inside_clipping_frame → apps_client_rust_src_rasterizer_painter_rs_make_rect\nConfidence: Inferred"},{from:"apps_client_rust_src_rasterizer_painter_rs_rasterize_tile_red_rect_has_red_pixels",to:"apps_client_rust_src_rasterizer_painter_rs_make_rect",label:"calls",dashes:true,title:"calls: apps_client_rust_src_rasterizer_painter_rs_rasterize_tile_red_rect_has_red_pixels → apps_client_rust_src_rasterizer_painter_rs_make_rect\nConfidence: Inferred"},{from:"apps_client_rust_src_rasterizer_painter_rs_rasterize_tile_with_zoom",to:"apps_client_rust_src_rasterizer_painter_rs_make_rect",label:"calls",dashes:true,title:"calls: apps_client_rust_src_rasterizer_painter_rs_rasterize_tile_with_zoom → apps_client_rust_src_rasterizer_painter_rs_make_rect\nConfidence: Inferred"}];
+    var container = document.getElementById('graph-container');
+    var nodes = new vis.DataSet(nodesData);
+    var edges = new vis.DataSet(edgesData);
+    var options = {
+        physics: {solver:'forceAtlas2Based',forceAtlas2Based:{gravitationalConstant:-50,centralGravity:0.01,springLength:120,springConstant:0.08,damping:0.4,avoidOverlap:0.5},stabilization:{iterations:200}},
+        nodes: { shape: 'dot', font: { color: '#e0e0e0', size: 12 }, borderWidth: 2 },
+        edges: { color: { color: '#4a4a6a', highlight: '#9C755F', hover: '#9C755F' }, font: { color: '#888', size: 10 }, arrows: { to: { enabled: false } }, smooth: { type: 'continuous' } },
+        interaction: { hover: true, tooltipDelay: 200, zoomView: true, dragView: true }
+    };
+    var network = new vis.Network(container, { nodes: nodes, edges: edges }, options);
+    network.on('stabilizationIterationsDone', function() { network.setOptions({ physics: { enabled: false } }); });
+    network.on('click', function(params) {
+        var panel = document.getElementById('info-panel');
+        if (params.nodes.length > 0) {
+            var node = nodes.get(params.nodes[0]);
+            if (node) {
+                panel.innerHTML = '<div><span class="prop">Label:</span> <span class="val">' + node.label + '</span></div><div><span class="prop">ID:</span> <span class="val">' + node.id + '</span></div>';
+                network.focus(params.nodes[0], { scale: 1.2, animation: true });
+            }
+        }
+    });
+    var searchEl = document.getElementById('search');
+    var sTimer = null;
+    searchEl.addEventListener('input', function() {
+        clearTimeout(sTimer);
+        sTimer = setTimeout(function() {
+            var term = searchEl.value.toLowerCase();
+            var updates = [];
+            nodes.forEach(function(n) {
+                var h = term && !n.label.toLowerCase().includes(term);
+                if (n.hidden !== h) { updates.push({ id: n.id, hidden: h }); }
+            });
+            if (updates.length > 0) { nodes.update(updates); }
+        }, 200);
+    });
+})();
+</script>
+</body>
+</html>

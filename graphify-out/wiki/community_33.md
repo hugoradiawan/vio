@@ -1,0 +1,57 @@
+# Community 33: src/utils/snap.dart
+
+**Members:** 24
+
+## Nodes
+
+- **vio_core** (`packages_core_lib_vio_core_dart`, File, degree: 23)
+- **src/extensions/num_extensions.dart** (`packages_core_lib_vio_core_dart_import_src_extensions_num_extensions_dart`, Module, degree: 1)
+- **src/extensions/offset_extensions.dart** (`packages_core_lib_vio_core_dart_import_src_extensions_offset_extensions_dart`, Module, degree: 1)
+- **src/extensions/rect_extensions.dart** (`packages_core_lib_vio_core_dart_import_src_extensions_rect_extensions_dart`, Module, degree: 1)
+- **src/math/math_utils.dart** (`packages_core_lib_vio_core_dart_import_src_math_math_utils_dart`, Module, degree: 1)
+- **src/math/matrix2d.dart** (`packages_core_lib_vio_core_dart_import_src_math_matrix2d_dart`, Module, degree: 1)
+- **src/models/bool_shape.dart** (`packages_core_lib_vio_core_dart_import_src_models_bool_shape_dart`, Module, degree: 1)
+- **src/models/ellipse_shape.dart** (`packages_core_lib_vio_core_dart_import_src_models_ellipse_shape_dart`, Module, degree: 1)
+- **src/models/frame_shape.dart** (`packages_core_lib_vio_core_dart_import_src_models_frame_shape_dart`, Module, degree: 1)
+- **src/models/group_shape.dart** (`packages_core_lib_vio_core_dart_import_src_models_group_shape_dart`, Module, degree: 1)
+- **src/models/image_shape.dart** (`packages_core_lib_vio_core_dart_import_src_models_image_shape_dart`, Module, degree: 1)
+- **src/models/path_shape.dart** (`packages_core_lib_vio_core_dart_import_src_models_path_shape_dart`, Module, degree: 1)
+- **src/models/project_asset.dart** (`packages_core_lib_vio_core_dart_import_src_models_project_asset_dart`, Module, degree: 1)
+- **src/models/rectangle_shape.dart** (`packages_core_lib_vio_core_dart_import_src_models_rectangle_shape_dart`, Module, degree: 1)
+- **src/models/result.dart** (`packages_core_lib_vio_core_dart_import_src_models_result_dart`, Module, degree: 1)
+- **src/models/shape.dart** (`packages_core_lib_vio_core_dart_import_src_models_shape_dart`, Module, degree: 1)
+- **src/models/shape_factory.dart** (`packages_core_lib_vio_core_dart_import_src_models_shape_factory_dart`, Module, degree: 1)
+- **src/models/svg_shape.dart** (`packages_core_lib_vio_core_dart_import_src_models_svg_shape_dart`, Module, degree: 1)
+- **src/models/text_shape.dart** (`packages_core_lib_vio_core_dart_import_src_models_text_shape_dart`, Module, degree: 1)
+- **src/models/uuid_value.dart** (`packages_core_lib_vio_core_dart_import_src_models_uuid_value_dart`, Module, degree: 1)
+- **src/utils/hit_test.dart** (`packages_core_lib_vio_core_dart_import_src_utils_hit_test_dart`, Module, degree: 1)
+- **src/utils/layer_tree.dart** (`packages_core_lib_vio_core_dart_import_src_utils_layer_tree_dart`, Module, degree: 1)
+- **src/utils/logger.dart** (`packages_core_lib_vio_core_dart_import_src_utils_logger_dart`, Module, degree: 1)
+- **src/utils/snap.dart** (`packages_core_lib_vio_core_dart_import_src_utils_snap_dart`, Module, degree: 1)
+
+## Relationships
+
+- packages_core_lib_vio_core_dart → packages_core_lib_vio_core_dart_import_src_extensions_num_extensions_dart (imports)
+- packages_core_lib_vio_core_dart → packages_core_lib_vio_core_dart_import_src_extensions_offset_extensions_dart (imports)
+- packages_core_lib_vio_core_dart → packages_core_lib_vio_core_dart_import_src_extensions_rect_extensions_dart (imports)
+- packages_core_lib_vio_core_dart → packages_core_lib_vio_core_dart_import_src_math_math_utils_dart (imports)
+- packages_core_lib_vio_core_dart → packages_core_lib_vio_core_dart_import_src_math_matrix2d_dart (imports)
+- packages_core_lib_vio_core_dart → packages_core_lib_vio_core_dart_import_src_models_bool_shape_dart (imports)
+- packages_core_lib_vio_core_dart → packages_core_lib_vio_core_dart_import_src_models_ellipse_shape_dart (imports)
+- packages_core_lib_vio_core_dart → packages_core_lib_vio_core_dart_import_src_models_frame_shape_dart (imports)
+- packages_core_lib_vio_core_dart → packages_core_lib_vio_core_dart_import_src_models_group_shape_dart (imports)
+- packages_core_lib_vio_core_dart → packages_core_lib_vio_core_dart_import_src_models_image_shape_dart (imports)
+- packages_core_lib_vio_core_dart → packages_core_lib_vio_core_dart_import_src_models_path_shape_dart (imports)
+- packages_core_lib_vio_core_dart → packages_core_lib_vio_core_dart_import_src_models_project_asset_dart (imports)
+- packages_core_lib_vio_core_dart → packages_core_lib_vio_core_dart_import_src_models_rectangle_shape_dart (imports)
+- packages_core_lib_vio_core_dart → packages_core_lib_vio_core_dart_import_src_models_result_dart (imports)
+- packages_core_lib_vio_core_dart → packages_core_lib_vio_core_dart_import_src_models_shape_dart (imports)
+- packages_core_lib_vio_core_dart → packages_core_lib_vio_core_dart_import_src_models_shape_factory_dart (imports)
+- packages_core_lib_vio_core_dart → packages_core_lib_vio_core_dart_import_src_models_svg_shape_dart (imports)
+- packages_core_lib_vio_core_dart → packages_core_lib_vio_core_dart_import_src_models_text_shape_dart (imports)
+- packages_core_lib_vio_core_dart → packages_core_lib_vio_core_dart_import_src_models_uuid_value_dart (imports)
+- packages_core_lib_vio_core_dart → packages_core_lib_vio_core_dart_import_src_utils_hit_test_dart (imports)
+- packages_core_lib_vio_core_dart → packages_core_lib_vio_core_dart_import_src_utils_layer_tree_dart (imports)
+- packages_core_lib_vio_core_dart → packages_core_lib_vio_core_dart_import_src_utils_logger_dart (imports)
+- packages_core_lib_vio_core_dart → packages_core_lib_vio_core_dart_import_src_utils_snap_dart (imports)
+

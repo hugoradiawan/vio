@@ -1,0 +1,27 @@
+# Community 126: util.dart
+
+**Members:** 9
+
+## Nodes
+
+- **android_environment** (`apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart`, File, degree: 8)
+- **dart:io** (`apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart_import_dart_io`, Module, degree: 1)
+- **dart:isolate** (`apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart_import_dart_isolate`, Module, degree: 1)
+- **dart:math'** (`apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart_import_dart_math`, Module, degree: 1)
+- **package:collection/collection.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart_import_package_collection_collection_dart`, Module, degree: 1)
+- **package:path/path.dart'** (`apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart_import_package_path_path_dart`, Module, degree: 1)
+- **package:version/version.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart_import_package_version_version_dart`, Module, degree: 1)
+- **target.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart_import_target_dart`, Module, degree: 1)
+- **util.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart_import_util_dart`, Module, degree: 1)
+
+## Relationships
+
+- apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart_import_dart_io (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart_import_dart_isolate (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart_import_dart_math (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart_import_package_collection_collection_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart_import_package_path_path_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart_import_package_version_version_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart_import_target_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_android_environment_dart_import_util_dart (imports)
+

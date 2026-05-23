@@ -1,0 +1,16 @@
+# selection_hit_test_test
+
+- **ID:** `apps_client_test_features_canvas_models_selection_hit_test_test_dart`
+- **Type:** File
+- **File:** `./apps/client/test/features/canvas/models/selection_hit_test_test.dart`
+- **Community:** 152 (main() (152))
+
+## Relationships
+
+- apps_client_test_features_canvas_models_selection_hit_test_test_dart → apps_client_test_features_canvas_models_selection_hit_test_test_dart_import_package_flutter_material_dart (imports, Extracted)
+- apps_client_test_features_canvas_models_selection_hit_test_test_dart → apps_client_test_features_canvas_models_selection_hit_test_test_dart_import_package_flutter_test_flutter_test_dart (imports, Extracted)
+- apps_client_test_features_canvas_models_selection_hit_test_test_dart → apps_client_test_features_canvas_models_selection_hit_test_test_dart_import_package_vio_client_src_features_canvas_models_handle_types_dart (imports, Extracted)
+- apps_client_test_features_canvas_models_selection_hit_test_test_dart → apps_client_test_features_canvas_models_selection_hit_test_test_dart_import_package_vio_client_src_features_canvas_models_selection_handle_metrics_dart (imports, Extracted)
+- apps_client_test_features_canvas_models_selection_hit_test_test_dart → apps_client_test_features_canvas_models_selection_hit_test_test_dart_import_package_vio_client_src_features_canvas_models_selection_hit_test_dart (imports, Extracted)
+- apps_client_test_features_canvas_models_selection_hit_test_test_dart → apps_client_test_features_canvas_models_selection_hit_test_test_dart_main (defines, Extracted)
+

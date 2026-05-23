@@ -1,0 +1,21 @@
+# Community 170: widgets/theme_section.dart
+
+**Members:** 6
+
+## Nodes
+
+- **settings_page** (`apps_client_lib_src_features_settings_presentation_settings_page_dart`, File, degree: 5)
+- **package:flutter_bloc/flutter_bloc.dart** (`apps_client_lib_src_features_settings_presentation_settings_page_dart_import_package_flutter_bloc_flutter_bloc_dart`, Module, degree: 1)
+- **package:flutter/material.dart** (`apps_client_lib_src_features_settings_presentation_settings_page_dart_import_package_flutter_material_dart`, Module, degree: 1)
+- **package:go_router/go_router.dart** (`apps_client_lib_src_features_settings_presentation_settings_page_dart_import_package_go_router_go_router_dart`, Module, degree: 1)
+- **package:vio_ui_kit/vio_ui_kit.dart** (`apps_client_lib_src_features_settings_presentation_settings_page_dart_import_package_vio_ui_kit_vio_ui_kit_dart`, Module, degree: 1)
+- **widgets/theme_section.dart** (`apps_client_lib_src_features_settings_presentation_settings_page_dart_import_widgets_theme_section_dart`, Module, degree: 1)
+
+## Relationships
+
+- apps_client_lib_src_features_settings_presentation_settings_page_dart → apps_client_lib_src_features_settings_presentation_settings_page_dart_import_package_flutter_material_dart (imports)
+- apps_client_lib_src_features_settings_presentation_settings_page_dart → apps_client_lib_src_features_settings_presentation_settings_page_dart_import_package_flutter_bloc_flutter_bloc_dart (imports)
+- apps_client_lib_src_features_settings_presentation_settings_page_dart → apps_client_lib_src_features_settings_presentation_settings_page_dart_import_package_go_router_go_router_dart (imports)
+- apps_client_lib_src_features_settings_presentation_settings_page_dart → apps_client_lib_src_features_settings_presentation_settings_page_dart_import_package_vio_ui_kit_vio_ui_kit_dart (imports)
+- apps_client_lib_src_features_settings_presentation_settings_page_dart → apps_client_lib_src_features_settings_presentation_settings_page_dart_import_widgets_theme_section_dart (imports)
+

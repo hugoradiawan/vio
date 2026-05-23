@@ -1,0 +1,19 @@
+# Community 226: MouseRegion()
+
+**Members:** 5
+
+## Nodes
+
+- **canvas_input_layer** (`apps_client_lib_src_features_canvas_presentation_widgets_canvas_input_layer_dart`, File, degree: 4)
+- **package:flutter/gestures.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_canvas_input_layer_dart_import_package_flutter_gestures_dart`, Module, degree: 1)
+- **package:flutter/material.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_canvas_input_layer_dart_import_package_flutter_material_dart`, Module, degree: 1)
+- **package:vio_core/vio_core.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_canvas_input_layer_dart_import_package_vio_core_vio_core_dart`, Module, degree: 1)
+- **MouseRegion()** (`apps_client_lib_src_features_canvas_presentation_widgets_canvas_input_layer_dart_mouseregion`, Function, degree: 1)
+
+## Relationships
+
+- apps_client_lib_src_features_canvas_presentation_widgets_canvas_input_layer_dart → apps_client_lib_src_features_canvas_presentation_widgets_canvas_input_layer_dart_import_package_flutter_gestures_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_canvas_input_layer_dart → apps_client_lib_src_features_canvas_presentation_widgets_canvas_input_layer_dart_import_package_flutter_material_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_canvas_input_layer_dart → apps_client_lib_src_features_canvas_presentation_widgets_canvas_input_layer_dart_import_package_vio_core_vio_core_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_canvas_input_layer_dart → apps_client_lib_src_features_canvas_presentation_widgets_canvas_input_layer_dart_mouseregion (defines)
+

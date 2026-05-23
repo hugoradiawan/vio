@@ -1,0 +1,17 @@
+# Community 246: package:vio_core/vio_core.dart (246)
+
+**Members:** 4
+
+## Nodes
+
+- **size_indicator_painter** (`apps_client_lib_src_features_canvas_presentation_painters_size_indicator_painter_dart`, File, degree: 3)
+- **dart:typed_data** (`apps_client_lib_src_features_canvas_presentation_painters_size_indicator_painter_dart_import_dart_typed_data`, Module, degree: 1)
+- **package:flutter/material.dart** (`apps_client_lib_src_features_canvas_presentation_painters_size_indicator_painter_dart_import_package_flutter_material_dart`, Module, degree: 1)
+- **package:vio_core/vio_core.dart** (`apps_client_lib_src_features_canvas_presentation_painters_size_indicator_painter_dart_import_package_vio_core_vio_core_dart`, Module, degree: 1)
+
+## Relationships
+
+- apps_client_lib_src_features_canvas_presentation_painters_size_indicator_painter_dart → apps_client_lib_src_features_canvas_presentation_painters_size_indicator_painter_dart_import_dart_typed_data (imports)
+- apps_client_lib_src_features_canvas_presentation_painters_size_indicator_painter_dart → apps_client_lib_src_features_canvas_presentation_painters_size_indicator_painter_dart_import_package_flutter_material_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_painters_size_indicator_painter_dart → apps_client_lib_src_features_canvas_presentation_painters_size_indicator_painter_dart_import_package_vio_core_vio_core_dart (imports)
+

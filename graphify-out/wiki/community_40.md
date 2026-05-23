@@ -1,0 +1,51 @@
+# Community 40: ServiceLocator()
+
+**Members:** 21
+
+## Nodes
+
+- **version_control_bloc** (`apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart`, File, degree: 20)
+- **../../../core/core.dart** (`apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_core_core_dart`, Module, degree: 1)
+- **dart:async** (`apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_dart_async`, Module, degree: 1)
+- **dart:convert** (`apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_dart_convert`, Module, degree: 1)
+- **../../../gen/vio/v1/branch.pb.dart'** (`apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_gen_vio_v1_branch_pb_dart`, Module, degree: 1)
+- **../../../gen/vio/v1/branch.pbgrpc.dart** (`apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_gen_vio_v1_branch_pbgrpc_dart`, Module, degree: 1)
+- **../../../gen/vio/v1/commit.pb.dart'** (`apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_gen_vio_v1_commit_pb_dart`, Module, degree: 1)
+- **../../../gen/vio/v1/commit.pbgrpc.dart** (`apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_gen_vio_v1_commit_pbgrpc_dart`, Module, degree: 1)
+- **../../../gen/vio/v1/common.pb.dart'** (`apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_gen_vio_v1_common_pb_dart`, Module, degree: 1)
+- **../../../gen/vio/v1/common.pbenum.dart'** (`apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_gen_vio_v1_common_pbenum_dart`, Module, degree: 1)
+- **../../../gen/vio/v1/pullrequest.pb.dart'** (`apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_gen_vio_v1_pullrequest_pb_dart`, Module, degree: 1)
+- **../../../gen/vio/v1/pullrequest.pbenum.dart'** (`apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_gen_vio_v1_pullrequest_pbenum_dart`, Module, degree: 1)
+- **../../../gen/vio/v1/pullrequest.pbgrpc.dart'** (`apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_gen_vio_v1_pullrequest_pbgrpc_dart`, Module, degree: 1)
+- **../models/models.dart** (`apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_models_models_dart`, Module, degree: 1)
+- **package:equatable/equatable.dart** (`apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_package_equatable_equatable_dart`, Module, degree: 1)
+- **package:flutter_bloc/flutter_bloc.dart** (`apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_package_flutter_bloc_flutter_bloc_dart`, Module, degree: 1)
+- **package:grpc/grpc.dart** (`apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_package_grpc_grpc_dart`, Module, degree: 1)
+- **package:vio_core/vio_core.dart** (`apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_package_vio_core_vio_core_dart`, Module, degree: 1)
+- **version_control_event.dart** (`apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_version_control_event_dart`, Module, degree: 1)
+- **version_control_state.dart** (`apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_version_control_state_dart`, Module, degree: 1)
+- **ServiceLocator()** (`apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_servicelocator`, Function, degree: 1)
+
+## Relationships
+
+- apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart → apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_dart_async (imports)
+- apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart → apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_dart_convert (imports)
+- apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart → apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_package_equatable_equatable_dart (imports)
+- apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart → apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_package_flutter_bloc_flutter_bloc_dart (imports)
+- apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart → apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_package_grpc_grpc_dart (imports)
+- apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart → apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_package_vio_core_vio_core_dart (imports)
+- apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart → apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_core_core_dart (imports)
+- apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart → apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_gen_vio_v1_branch_pb_dart (imports)
+- apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart → apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_gen_vio_v1_branch_pbgrpc_dart (imports)
+- apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart → apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_gen_vio_v1_commit_pb_dart (imports)
+- apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart → apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_gen_vio_v1_commit_pbgrpc_dart (imports)
+- apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart → apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_gen_vio_v1_common_pb_dart (imports)
+- apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart → apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_gen_vio_v1_common_pbenum_dart (imports)
+- apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart → apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_gen_vio_v1_pullrequest_pb_dart (imports)
+- apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart → apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_gen_vio_v1_pullrequest_pbenum_dart (imports)
+- apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart → apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_gen_vio_v1_pullrequest_pbgrpc_dart (imports)
+- apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart → apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_models_models_dart (imports)
+- apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart → apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_version_control_event_dart (imports)
+- apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart → apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_import_version_control_state_dart (imports)
+- apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart → apps_client_lib_src_features_version_control_bloc_version_control_bloc_dart_servicelocator (defines)
+

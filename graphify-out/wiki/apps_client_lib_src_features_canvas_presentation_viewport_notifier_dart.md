@@ -1,0 +1,16 @@
+# viewport_notifier
+
+- **ID:** `apps_client_lib_src_features_canvas_presentation_viewport_notifier_dart`
+- **Type:** File
+- **File:** `./apps/client/lib/src/features/canvas/presentation/viewport_notifier.dart`
+- **Community:** 156 (_zoom())
+
+## Relationships
+
+- apps_client_lib_src_features_canvas_presentation_viewport_notifier_dart → apps_client_lib_src_features_canvas_presentation_viewport_notifier_dart_import_package_flutter_widgets_dart (imports, Extracted)
+- apps_client_lib_src_features_canvas_presentation_viewport_notifier_dart → apps_client_lib_src_features_canvas_presentation_viewport_notifier_dart_import_package_vio_core_vio_core_dart (imports, Extracted)
+- apps_client_lib_src_features_canvas_presentation_viewport_notifier_dart → apps_client_lib_src_features_canvas_presentation_viewport_notifier_dart_zoom (defines, Extracted)
+- apps_client_lib_src_features_canvas_presentation_viewport_notifier_dart → apps_client_lib_src_features_canvas_presentation_viewport_notifier_dart_offset (defines, Extracted)
+- apps_client_lib_src_features_canvas_presentation_viewport_notifier_dart → apps_client_lib_src_features_canvas_presentation_viewport_notifier_dart_size (defines, Extracted)
+- apps_client_lib_src_features_canvas_presentation_viewport_notifier_dart → apps_client_lib_src_features_canvas_presentation_viewport_notifier_dart_viewmatrix (defines, Extracted)
+

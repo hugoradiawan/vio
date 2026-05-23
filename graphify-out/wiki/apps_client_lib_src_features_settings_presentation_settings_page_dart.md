@@ -1,0 +1,15 @@
+# settings_page
+
+- **ID:** `apps_client_lib_src_features_settings_presentation_settings_page_dart`
+- **Type:** File
+- **File:** `./apps/client/lib/src/features/settings/presentation/settings_page.dart`
+- **Community:** 170 (widgets/theme_section.dart)
+
+## Relationships
+
+- apps_client_lib_src_features_settings_presentation_settings_page_dart → apps_client_lib_src_features_settings_presentation_settings_page_dart_import_package_flutter_material_dart (imports, Extracted)
+- apps_client_lib_src_features_settings_presentation_settings_page_dart → apps_client_lib_src_features_settings_presentation_settings_page_dart_import_package_flutter_bloc_flutter_bloc_dart (imports, Extracted)
+- apps_client_lib_src_features_settings_presentation_settings_page_dart → apps_client_lib_src_features_settings_presentation_settings_page_dart_import_package_go_router_go_router_dart (imports, Extracted)
+- apps_client_lib_src_features_settings_presentation_settings_page_dart → apps_client_lib_src_features_settings_presentation_settings_page_dart_import_package_vio_ui_kit_vio_ui_kit_dart (imports, Extracted)
+- apps_client_lib_src_features_settings_presentation_settings_page_dart → apps_client_lib_src_features_settings_presentation_settings_page_dart_import_widgets_theme_section_dart (imports, Extracted)
+

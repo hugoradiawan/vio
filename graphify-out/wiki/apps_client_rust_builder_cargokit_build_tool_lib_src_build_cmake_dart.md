@@ -1,0 +1,17 @@
+# build_cmake
+
+- **ID:** `apps_client_rust_builder_cargokit_build_tool_lib_src_build_cmake_dart`
+- **Type:** File
+- **File:** `./apps/client/rust_builder/cargokit/build_tool/lib/src/build_cmake.dart`
+- **Community:** 143 (target.dart (143))
+
+## Relationships
+
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_cmake_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_cmake_dart_import_dart_io (imports, Extracted)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_cmake_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_cmake_dart_import_package_path_path_dart (imports, Extracted)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_cmake_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_cmake_dart_import_artifacts_provider_dart (imports, Extracted)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_cmake_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_cmake_dart_import_builder_dart (imports, Extracted)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_cmake_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_cmake_dart_import_environment_dart (imports, Extracted)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_cmake_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_cmake_dart_import_options_dart (imports, Extracted)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_cmake_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_cmake_dart_import_target_dart (imports, Extracted)
+

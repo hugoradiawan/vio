@@ -1,0 +1,29 @@
+# Community 105: _CommitPanelState()
+
+**Members:** 10
+
+## Nodes
+
+- **commit_panel** (`apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart`, File, degree: 9)
+- **_ChangeItemState()** (`apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart_changeitemstate`, Function, degree: 1)
+- **_CommitPanelState()** (`apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart_commitpanelstate`, Function, degree: 1)
+- **../../bloc/version_control_bloc.dart** (`apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart_import_bloc_version_control_bloc_dart`, Module, degree: 1)
+- **../../../canvas/bloc/canvas_bloc.dart** (`apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart_import_canvas_bloc_canvas_bloc_dart`, Module, degree: 1)
+- **../../../../core/core.dart** (`apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart_import_core_core_dart`, Module, degree: 1)
+- **../../models/models.dart** (`apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart_import_models_models_dart`, Module, degree: 1)
+- **package:flutter_bloc/flutter_bloc.dart** (`apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart_import_package_flutter_bloc_flutter_bloc_dart`, Module, degree: 1)
+- **package:flutter/material.dart** (`apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart_import_package_flutter_material_dart`, Module, degree: 1)
+- **package:vio_ui_kit/vio_ui_kit.dart** (`apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart_import_package_vio_ui_kit_vio_ui_kit_dart`, Module, degree: 1)
+
+## Relationships
+
+- apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart → apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart_import_package_flutter_material_dart (imports)
+- apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart → apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart_import_package_flutter_bloc_flutter_bloc_dart (imports)
+- apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart → apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart_import_package_vio_ui_kit_vio_ui_kit_dart (imports)
+- apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart → apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart_import_core_core_dart (imports)
+- apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart → apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart_import_canvas_bloc_canvas_bloc_dart (imports)
+- apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart → apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart_import_bloc_version_control_bloc_dart (imports)
+- apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart → apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart_import_models_models_dart (imports)
+- apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart → apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart_commitpanelstate (defines)
+- apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart → apps_client_lib_src_features_version_control_presentation_widgets_commit_panel_dart_changeitemstate (defines)
+

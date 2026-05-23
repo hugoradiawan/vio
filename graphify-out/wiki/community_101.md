@@ -1,0 +1,29 @@
+# Community 101: main() (101)
+
+**Members:** 10
+
+## Nodes
+
+- **search_bloc_test** (`apps_client_test_features_workspace_bloc_search_bloc_test_dart`, File, degree: 9)
+- **package:flutter_test/flutter_test.dart** (`apps_client_test_features_workspace_bloc_search_bloc_test_dart_import_package_flutter_test_flutter_test_dart`, Module, degree: 1)
+- **package:grpc/grpc.dart** (`apps_client_test_features_workspace_bloc_search_bloc_test_dart_import_package_grpc_grpc_dart`, Module, degree: 1)
+- **package:vio_client/src/features/assets/bloc/asset_bloc.dart** (`apps_client_test_features_workspace_bloc_search_bloc_test_dart_import_package_vio_client_src_features_assets_bloc_asset_bloc_dart`, Module, degree: 1)
+- **package:vio_client/src/features/canvas/bloc/canvas_bloc.dart** (`apps_client_test_features_workspace_bloc_search_bloc_test_dart_import_package_vio_client_src_features_canvas_bloc_canvas_bloc_dart`, Module, degree: 1)
+- **package:vio_client/src/features/version_control/bloc/version_control_bloc.dart** (`apps_client_test_features_workspace_bloc_search_bloc_test_dart_import_package_vio_client_src_features_version_control_bloc_version_control_bloc_dart`, Module, degree: 1)
+- **package:vio_client/src/features/workspace/bloc/search_bloc.dart** (`apps_client_test_features_workspace_bloc_search_bloc_test_dart_import_package_vio_client_src_features_workspace_bloc_search_bloc_dart`, Module, degree: 1)
+- **package:vio_client/src/gen/vio/v1/asset.pbgrpc.dart** (`apps_client_test_features_workspace_bloc_search_bloc_test_dart_import_package_vio_client_src_gen_vio_v1_asset_pbgrpc_dart`, Module, degree: 1)
+- **package:vio_core/vio_core.dart** (`apps_client_test_features_workspace_bloc_search_bloc_test_dart_import_package_vio_core_vio_core_dart`, Module, degree: 1)
+- **main()** (`apps_client_test_features_workspace_bloc_search_bloc_test_dart_main`, Function, degree: 1)
+
+## Relationships
+
+- apps_client_test_features_workspace_bloc_search_bloc_test_dart → apps_client_test_features_workspace_bloc_search_bloc_test_dart_import_package_flutter_test_flutter_test_dart (imports)
+- apps_client_test_features_workspace_bloc_search_bloc_test_dart → apps_client_test_features_workspace_bloc_search_bloc_test_dart_import_package_grpc_grpc_dart (imports)
+- apps_client_test_features_workspace_bloc_search_bloc_test_dart → apps_client_test_features_workspace_bloc_search_bloc_test_dart_import_package_vio_client_src_features_assets_bloc_asset_bloc_dart (imports)
+- apps_client_test_features_workspace_bloc_search_bloc_test_dart → apps_client_test_features_workspace_bloc_search_bloc_test_dart_import_package_vio_client_src_features_canvas_bloc_canvas_bloc_dart (imports)
+- apps_client_test_features_workspace_bloc_search_bloc_test_dart → apps_client_test_features_workspace_bloc_search_bloc_test_dart_import_package_vio_client_src_features_version_control_bloc_version_control_bloc_dart (imports)
+- apps_client_test_features_workspace_bloc_search_bloc_test_dart → apps_client_test_features_workspace_bloc_search_bloc_test_dart_import_package_vio_client_src_features_workspace_bloc_search_bloc_dart (imports)
+- apps_client_test_features_workspace_bloc_search_bloc_test_dart → apps_client_test_features_workspace_bloc_search_bloc_test_dart_import_package_vio_client_src_gen_vio_v1_asset_pbgrpc_dart (imports)
+- apps_client_test_features_workspace_bloc_search_bloc_test_dart → apps_client_test_features_workspace_bloc_search_bloc_test_dart_import_package_vio_core_vio_core_dart (imports)
+- apps_client_test_features_workspace_bloc_search_bloc_test_dart → apps_client_test_features_workspace_bloc_search_bloc_test_dart_main (defines)
+

@@ -1,0 +1,51 @@
+# Community 77: sync_add_update_remove()
+
+**Members:** 13
+
+## Nodes
+
+- **.create()** (`apps_client_rust_src_api_engine_rs_canvasengine_create`, Method, degree: 10)
+- **.hit_test_point()** (`apps_client_rust_src_api_engine_rs_canvasengine_hit_test_point`, Method, degree: 5)
+- **.shape_count()** (`apps_client_rust_src_api_engine_rs_canvasengine_shape_count`, Method, degree: 4)
+- **create_engine()** (`apps_client_rust_src_api_engine_rs_create_engine`, Function, degree: 3)
+- **hit_test_ellipse_precise()** (`apps_client_rust_src_api_engine_rs_hit_test_ellipse_precise`, Function, degree: 5)
+- **hit_test_point_miss()** (`apps_client_rust_src_api_engine_rs_hit_test_point_miss`, Function, degree: 5)
+- **hit_test_point_rect()** (`apps_client_rust_src_api_engine_rs_hit_test_point_rect`, Function, degree: 5)
+- **hit_test_rect_selection()** (`apps_client_rust_src_api_engine_rs_hit_test_rect_selection`, Function, degree: 5)
+- **load_all_shapes()** (`apps_client_rust_src_api_engine_rs_load_all_shapes`, Function, degree: 10)
+- **paint_order()** (`apps_client_rust_src_api_engine_rs_paint_order`, Function, degree: 4)
+- **query_visible_shapes()** (`apps_client_rust_src_api_engine_rs_query_visible_shapes`, Function, degree: 5)
+- **rect()** (`apps_client_rust_src_api_engine_rs_rect`, Function, degree: 8)
+- **sync_add_update_remove()** (`apps_client_rust_src_api_engine_rs_sync_add_update_remove`, Function, degree: 5)
+
+## Relationships
+
+- apps_client_rust_src_api_engine_rs_create_engine → apps_client_rust_src_api_engine_rs_canvasengine_create (calls)
+- apps_client_rust_src_api_engine_rs_create_engine → apps_client_rust_src_api_engine_rs_canvasengine_shape_count (calls)
+- apps_client_rust_src_api_engine_rs_load_all_shapes → apps_client_rust_src_api_engine_rs_rect (calls)
+- apps_client_rust_src_api_engine_rs_load_all_shapes → apps_client_rust_src_api_engine_rs_canvasengine_create (calls)
+- apps_client_rust_src_api_engine_rs_load_all_shapes → apps_client_rust_src_api_engine_rs_canvasengine_shape_count (calls)
+- apps_client_rust_src_api_engine_rs_sync_add_update_remove → apps_client_rust_src_api_engine_rs_rect (calls)
+- apps_client_rust_src_api_engine_rs_sync_add_update_remove → apps_client_rust_src_api_engine_rs_canvasengine_create (calls)
+- apps_client_rust_src_api_engine_rs_sync_add_update_remove → apps_client_rust_src_api_engine_rs_canvasengine_shape_count (calls)
+- apps_client_rust_src_api_engine_rs_query_visible_shapes → apps_client_rust_src_api_engine_rs_rect (calls)
+- apps_client_rust_src_api_engine_rs_query_visible_shapes → apps_client_rust_src_api_engine_rs_canvasengine_create (calls)
+- apps_client_rust_src_api_engine_rs_query_visible_shapes → apps_client_rust_src_api_engine_rs_load_all_shapes (calls)
+- apps_client_rust_src_api_engine_rs_hit_test_point_rect → apps_client_rust_src_api_engine_rs_rect (calls)
+- apps_client_rust_src_api_engine_rs_hit_test_point_rect → apps_client_rust_src_api_engine_rs_canvasengine_create (calls)
+- apps_client_rust_src_api_engine_rs_hit_test_point_rect → apps_client_rust_src_api_engine_rs_canvasengine_hit_test_point (calls)
+- apps_client_rust_src_api_engine_rs_hit_test_point_rect → apps_client_rust_src_api_engine_rs_load_all_shapes (calls)
+- apps_client_rust_src_api_engine_rs_hit_test_point_miss → apps_client_rust_src_api_engine_rs_rect (calls)
+- apps_client_rust_src_api_engine_rs_hit_test_point_miss → apps_client_rust_src_api_engine_rs_canvasengine_create (calls)
+- apps_client_rust_src_api_engine_rs_hit_test_point_miss → apps_client_rust_src_api_engine_rs_canvasengine_hit_test_point (calls)
+- apps_client_rust_src_api_engine_rs_hit_test_point_miss → apps_client_rust_src_api_engine_rs_load_all_shapes (calls)
+- apps_client_rust_src_api_engine_rs_hit_test_ellipse_precise → apps_client_rust_src_api_engine_rs_canvasengine_create (calls)
+- apps_client_rust_src_api_engine_rs_hit_test_ellipse_precise → apps_client_rust_src_api_engine_rs_canvasengine_hit_test_point (calls)
+- apps_client_rust_src_api_engine_rs_hit_test_ellipse_precise → apps_client_rust_src_api_engine_rs_load_all_shapes (calls)
+- apps_client_rust_src_api_engine_rs_hit_test_rect_selection → apps_client_rust_src_api_engine_rs_rect (calls)
+- apps_client_rust_src_api_engine_rs_hit_test_rect_selection → apps_client_rust_src_api_engine_rs_canvasengine_create (calls)
+- apps_client_rust_src_api_engine_rs_hit_test_rect_selection → apps_client_rust_src_api_engine_rs_load_all_shapes (calls)
+- apps_client_rust_src_api_engine_rs_paint_order → apps_client_rust_src_api_engine_rs_rect (calls)
+- apps_client_rust_src_api_engine_rs_paint_order → apps_client_rust_src_api_engine_rs_canvasengine_create (calls)
+- apps_client_rust_src_api_engine_rs_paint_order → apps_client_rust_src_api_engine_rs_load_all_shapes (calls)
+

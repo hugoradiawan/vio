@@ -1,0 +1,16 @@
+# vio_color_picker_dialog
+
+- **ID:** `packages_ui_kit_lib_src_widgets_vio_color_picker_dialog_dart`
+- **Type:** File
+- **File:** `./packages/ui_kit/lib/src/widgets/vio_color_picker_dialog.dart`
+- **Community:** 163 (_VioColorPickerDialogState())
+
+## Relationships
+
+- packages_ui_kit_lib_src_widgets_vio_color_picker_dialog_dart → packages_ui_kit_lib_src_widgets_vio_color_picker_dialog_dart_import_package_flutter_material_dart (imports, Extracted)
+- packages_ui_kit_lib_src_widgets_vio_color_picker_dialog_dart → packages_ui_kit_lib_src_widgets_vio_color_picker_dialog_dart_import_package_flutter_services_dart (imports, Extracted)
+- packages_ui_kit_lib_src_widgets_vio_color_picker_dialog_dart → packages_ui_kit_lib_src_widgets_vio_color_picker_dialog_dart_import_theme_vio_colors_dart (imports, Extracted)
+- packages_ui_kit_lib_src_widgets_vio_color_picker_dialog_dart → packages_ui_kit_lib_src_widgets_vio_color_picker_dialog_dart_import_theme_vio_spacing_dart (imports, Extracted)
+- packages_ui_kit_lib_src_widgets_vio_color_picker_dialog_dart → packages_ui_kit_lib_src_widgets_vio_color_picker_dialog_dart_import_theme_vio_typography_dart (imports, Extracted)
+- packages_ui_kit_lib_src_widgets_vio_color_picker_dialog_dart → packages_ui_kit_lib_src_widgets_vio_color_picker_dialog_dart_viocolorpickerdialogstate (defines, Extracted)
+

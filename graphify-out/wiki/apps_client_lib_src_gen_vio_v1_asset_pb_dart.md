@@ -1,0 +1,46 @@
+# asset.pb
+
+- **ID:** `apps_client_lib_src_gen_vio_v1_asset_pb_dart`
+- **Type:** File
+- **File:** `./apps/client/lib/src/gen/vio/v1/asset.pb.dart`
+- **Community:** 15 (UploadAssetResponse())
+
+## Relationships
+
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_import_dart_core (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_import_package_protobuf_protobuf_dart (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_import_common_pb_dart (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_create (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_deepcopy (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_i (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_asset (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_getsz (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_setstring (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_has (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_clearfield (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_getiz (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_setsignedint32 (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_getn (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_setbytes (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_setfield (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_ensure (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_projectcolor (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_setdouble (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_uploadassetrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_uploadassetresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_listassetsrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_listassetsresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_getlist (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_getassetrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_getassetresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_updateassetrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_updateassetresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_deleteassetrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_createcolorrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_createcolorresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_listcolorsrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_listcolorsresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_updatecolorrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_updatecolorresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_asset_pb_dart → apps_client_lib_src_gen_vio_v1_asset_pb_dart_deletecolorrequest (defines, Extracted)
+

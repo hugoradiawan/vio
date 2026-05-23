@@ -1,0 +1,17 @@
+# Community 260: package:vio_ui_kit/vio_ui_kit.dart (260)
+
+**Members:** 4
+
+## Nodes
+
+- **horizontal_ruler_painter** (`apps_client_lib_src_features_canvas_presentation_painters_horizontal_ruler_painter_dart`, File, degree: 3)
+- **package:flutter/material.dart** (`apps_client_lib_src_features_canvas_presentation_painters_horizontal_ruler_painter_dart_import_package_flutter_material_dart`, Module, degree: 1)
+- **package:vio_client/src/features/canvas/const/ruler.const.dart** (`apps_client_lib_src_features_canvas_presentation_painters_horizontal_ruler_painter_dart_import_package_vio_client_src_features_canvas_const_ruler_const_dart`, Module, degree: 1)
+- **package:vio_ui_kit/vio_ui_kit.dart** (`apps_client_lib_src_features_canvas_presentation_painters_horizontal_ruler_painter_dart_import_package_vio_ui_kit_vio_ui_kit_dart`, Module, degree: 1)
+
+## Relationships
+
+- apps_client_lib_src_features_canvas_presentation_painters_horizontal_ruler_painter_dart → apps_client_lib_src_features_canvas_presentation_painters_horizontal_ruler_painter_dart_import_package_flutter_material_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_painters_horizontal_ruler_painter_dart → apps_client_lib_src_features_canvas_presentation_painters_horizontal_ruler_painter_dart_import_package_vio_client_src_features_canvas_const_ruler_const_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_painters_horizontal_ruler_painter_dart → apps_client_lib_src_features_canvas_presentation_painters_horizontal_ruler_painter_dart_import_package_vio_ui_kit_vio_ui_kit_dart (imports)
+

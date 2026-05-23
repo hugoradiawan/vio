@@ -1,0 +1,23 @@
+# service_locator
+
+- **ID:** `apps_client_lib_src_core_service_locator_dart`
+- **Type:** File
+- **File:** `./apps/client/lib/src/core/service_locator.dart`
+- **Community:** 72 (services/rust_engine_service.dart (72))
+
+## Relationships
+
+- apps_client_lib_src_core_service_locator_dart → apps_client_lib_src_core_service_locator_dart_import_gen_vio_v1_asset_pbgrpc_dart (imports, Extracted)
+- apps_client_lib_src_core_service_locator_dart → apps_client_lib_src_core_service_locator_dart_import_gen_vio_v1_auth_pbgrpc_dart (imports, Extracted)
+- apps_client_lib_src_core_service_locator_dart → apps_client_lib_src_core_service_locator_dart_import_gen_vio_v1_branch_pbgrpc_dart (imports, Extracted)
+- apps_client_lib_src_core_service_locator_dart → apps_client_lib_src_core_service_locator_dart_import_gen_vio_v1_canvas_pbgrpc_dart (imports, Extracted)
+- apps_client_lib_src_core_service_locator_dart → apps_client_lib_src_core_service_locator_dart_import_gen_vio_v1_commit_pbgrpc_dart (imports, Extracted)
+- apps_client_lib_src_core_service_locator_dart → apps_client_lib_src_core_service_locator_dart_import_gen_vio_v1_project_pbgrpc_dart (imports, Extracted)
+- apps_client_lib_src_core_service_locator_dart → apps_client_lib_src_core_service_locator_dart_import_gen_vio_v1_pullrequest_pbgrpc_dart (imports, Extracted)
+- apps_client_lib_src_core_service_locator_dart → apps_client_lib_src_core_service_locator_dart_import_gen_vio_v1_shape_pbgrpc_dart (imports, Extracted)
+- apps_client_lib_src_core_service_locator_dart → apps_client_lib_src_core_service_locator_dart_import_config_app_config_dart (imports, Extracted)
+- apps_client_lib_src_core_service_locator_dart → apps_client_lib_src_core_service_locator_dart_import_grpc_grpc_dart (imports, Extracted)
+- apps_client_lib_src_core_service_locator_dart → apps_client_lib_src_core_service_locator_dart_import_repositories_repositories_dart (imports, Extracted)
+- apps_client_lib_src_core_service_locator_dart → apps_client_lib_src_core_service_locator_dart_import_services_preferences_service_dart (imports, Extracted)
+- apps_client_lib_src_core_service_locator_dart → apps_client_lib_src_core_service_locator_dart_import_services_rust_engine_service_dart (imports, Extracted)
+

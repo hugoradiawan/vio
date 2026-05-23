@@ -1,0 +1,27 @@
+# branch-switch.test
+
+- **ID:** `backend_src_tests_branch_switch_test_ts`
+- **Type:** File
+- **File:** `./backend/src/__tests__/branch-switch.test.ts`
+- **Community:** 46 (../services/commit/commitServiceImpl)
+
+## Relationships
+
+- backend_src_tests_branch_switch_test_ts → backend_src_tests_branch_switch_test_ts_import_bufbuild_protobuf_create (imports, Extracted)
+- backend_src_tests_branch_switch_test_ts → backend_src_tests_branch_switch_test_ts_import_connectrpc_connect_handlercontext (imports, Extracted)
+- backend_src_tests_branch_switch_test_ts → backend_src_tests_branch_switch_test_ts_import_bun_test_afterall (imports, Extracted)
+- backend_src_tests_branch_switch_test_ts → backend_src_tests_branch_switch_test_ts_import_bun_test_beforeall (imports, Extracted)
+- backend_src_tests_branch_switch_test_ts → backend_src_tests_branch_switch_test_ts_import_bun_test_describe (imports, Extracted)
+- backend_src_tests_branch_switch_test_ts → backend_src_tests_branch_switch_test_ts_import_bun_test_expect (imports, Extracted)
+- backend_src_tests_branch_switch_test_ts → backend_src_tests_branch_switch_test_ts_import_bun_test_it (imports, Extracted)
+- backend_src_tests_branch_switch_test_ts → backend_src_tests_branch_switch_test_ts_import_drizzle_orm_eq (imports, Extracted)
+- backend_src_tests_branch_switch_test_ts → backend_src_tests_branch_switch_test_ts_import_db_db (imports, Extracted)
+- backend_src_tests_branch_switch_test_ts → backend_src_tests_branch_switch_test_ts_import_db_schema (imports, Extracted)
+- backend_src_tests_branch_switch_test_ts → backend_src_tests_branch_switch_test_ts_import_gen_vio_v1_branch_pb_js_createbranchrequestschema (imports, Extracted)
+- backend_src_tests_branch_switch_test_ts → backend_src_tests_branch_switch_test_ts_import_gen_vio_v1_canvas_pb_js_getcanvasstaterequestschema (imports, Extracted)
+- backend_src_tests_branch_switch_test_ts → backend_src_tests_branch_switch_test_ts_import_gen_vio_v1_canvas_pb_js_restorefromsnapshotrequestschema (imports, Extracted)
+- backend_src_tests_branch_switch_test_ts → backend_src_tests_branch_switch_test_ts_import_gen_vio_v1_commit_pb_js_createcommitrequestschema (imports, Extracted)
+- backend_src_tests_branch_switch_test_ts → backend_src_tests_branch_switch_test_ts_import_services_branch_branchserviceimpl (imports, Extracted)
+- backend_src_tests_branch_switch_test_ts → backend_src_tests_branch_switch_test_ts_import_services_canvas_canvasserviceimpl (imports, Extracted)
+- backend_src_tests_branch_switch_test_ts → backend_src_tests_branch_switch_test_ts_import_services_commit_commitserviceimpl (imports, Extracted)
+

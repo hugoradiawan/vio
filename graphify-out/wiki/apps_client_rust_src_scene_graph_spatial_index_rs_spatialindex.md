@@ -1,0 +1,23 @@
+# SpatialIndex
+
+- **ID:** `apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex`
+- **Type:** Struct
+- **File:** `./apps/client/rust/src/scene_graph/spatial_index.rs`
+- **Location:** L27
+- **Community:** 22 (update_shape_position())
+
+## Relationships
+
+- apps_client_rust_src_scene_graph_spatial_index_rs → apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex → apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex_new (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex → apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex_build (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex → apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex_insert (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex → apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex_remove (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex → apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex_update (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex → apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex_query_visible (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex → apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex_query_point (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex → apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex_len (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex → apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex_is_empty (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex → apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex_shape_to_envelope (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex → apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex_default (defines, Extracted)
+

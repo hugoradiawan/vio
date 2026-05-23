@@ -1,0 +1,23 @@
+# Community 166: _GradientEditorState()
+
+**Members:** 7
+
+## Nodes
+
+- **gradient_editor** (`apps_client_lib_src_features_workspace_presentation_widgets_gradient_editor_dart`, File, degree: 6)
+- **FillType** (`apps_client_lib_src_features_workspace_presentation_widgets_gradient_editor_dart_filltype`, Enum, degree: 1)
+- **_GradientEditorState()** (`apps_client_lib_src_features_workspace_presentation_widgets_gradient_editor_dart_gradienteditorstate`, Function, degree: 1)
+- **dart:math'** (`apps_client_lib_src_features_workspace_presentation_widgets_gradient_editor_dart_import_dart_math`, Module, degree: 1)
+- **package:flutter/material.dart** (`apps_client_lib_src_features_workspace_presentation_widgets_gradient_editor_dart_import_package_flutter_material_dart`, Module, degree: 1)
+- **package:vio_core/vio_core.dart** (`apps_client_lib_src_features_workspace_presentation_widgets_gradient_editor_dart_import_package_vio_core_vio_core_dart`, Module, degree: 1)
+- **package:vio_ui_kit/vio_ui_kit.dart** (`apps_client_lib_src_features_workspace_presentation_widgets_gradient_editor_dart_import_package_vio_ui_kit_vio_ui_kit_dart`, Module, degree: 1)
+
+## Relationships
+
+- apps_client_lib_src_features_workspace_presentation_widgets_gradient_editor_dart → apps_client_lib_src_features_workspace_presentation_widgets_gradient_editor_dart_import_dart_math (imports)
+- apps_client_lib_src_features_workspace_presentation_widgets_gradient_editor_dart → apps_client_lib_src_features_workspace_presentation_widgets_gradient_editor_dart_import_package_flutter_material_dart (imports)
+- apps_client_lib_src_features_workspace_presentation_widgets_gradient_editor_dart → apps_client_lib_src_features_workspace_presentation_widgets_gradient_editor_dart_import_package_vio_core_vio_core_dart (imports)
+- apps_client_lib_src_features_workspace_presentation_widgets_gradient_editor_dart → apps_client_lib_src_features_workspace_presentation_widgets_gradient_editor_dart_import_package_vio_ui_kit_vio_ui_kit_dart (imports)
+- apps_client_lib_src_features_workspace_presentation_widgets_gradient_editor_dart → apps_client_lib_src_features_workspace_presentation_widgets_gradient_editor_dart_filltype (defines)
+- apps_client_lib_src_features_workspace_presentation_widgets_gradient_editor_dart → apps_client_lib_src_features_workspace_presentation_widgets_gradient_editor_dart_gradienteditorstate (defines)
+

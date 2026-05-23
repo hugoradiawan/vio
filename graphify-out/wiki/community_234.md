@@ -1,0 +1,19 @@
+# Community 234: _CommitDialogState()
+
+**Members:** 5
+
+## Nodes
+
+- **commit_dialog** (`apps_client_lib_src_features_version_control_presentation_widgets_commit_dialog_dart`, File, degree: 4)
+- **_CommitDialogState()** (`apps_client_lib_src_features_version_control_presentation_widgets_commit_dialog_dart_commitdialogstate`, Function, degree: 1)
+- **../../bloc/version_control_bloc.dart** (`apps_client_lib_src_features_version_control_presentation_widgets_commit_dialog_dart_import_bloc_version_control_bloc_dart`, Module, degree: 1)
+- **package:flutter_bloc/flutter_bloc.dart** (`apps_client_lib_src_features_version_control_presentation_widgets_commit_dialog_dart_import_package_flutter_bloc_flutter_bloc_dart`, Module, degree: 1)
+- **package:flutter/material.dart** (`apps_client_lib_src_features_version_control_presentation_widgets_commit_dialog_dart_import_package_flutter_material_dart`, Module, degree: 1)
+
+## Relationships
+
+- apps_client_lib_src_features_version_control_presentation_widgets_commit_dialog_dart → apps_client_lib_src_features_version_control_presentation_widgets_commit_dialog_dart_import_package_flutter_material_dart (imports)
+- apps_client_lib_src_features_version_control_presentation_widgets_commit_dialog_dart → apps_client_lib_src_features_version_control_presentation_widgets_commit_dialog_dart_import_package_flutter_bloc_flutter_bloc_dart (imports)
+- apps_client_lib_src_features_version_control_presentation_widgets_commit_dialog_dart → apps_client_lib_src_features_version_control_presentation_widgets_commit_dialog_dart_import_bloc_version_control_bloc_dart (imports)
+- apps_client_lib_src_features_version_control_presentation_widgets_commit_dialog_dart → apps_client_lib_src_features_version_control_presentation_widgets_commit_dialog_dart_commitdialogstate (defines)
+

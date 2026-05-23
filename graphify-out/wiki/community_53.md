@@ -1,0 +1,41 @@
+# Community 53: rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine()
+
+**Members:** 16
+
+## Nodes
+
+- **frb_generated** (`apps_client_rust_src_frb_generated_rs`, File, degree: 32)
+- **frbgen_vio_client_rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine()** (`apps_client_rust_src_frb_generated_rs_frbgen_vio_client_rust_arc_decrement_strong_count_rustopaque_flutter_rust_bridgefor_generatedrustautoopaqueinnercanvasengine`, Function, degree: 1)
+- **frbgen_vio_client_rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine()** (`apps_client_rust_src_frb_generated_rs_frbgen_vio_client_rust_arc_increment_strong_count_rustopaque_flutter_rust_bridgefor_generatedrustautoopaqueinnercanvasengine`, Function, degree: 1)
+- **crate::api::engine::*** (`apps_client_rust_src_frb_generated_rs_import_crate_api_engine`, Module, degree: 1)
+- **flutter_rust_bridge::for_generated::byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt}** (`apps_client_rust_src_frb_generated_rs_import_flutter_rust_bridge_for_generated_byteorder_nativeendian_readbytesext_writebytesext`, Module, degree: 1)
+- **flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable}** (`apps_client_rust_src_frb_generated_rs_import_flutter_rust_bridge_for_generated_transform_result_dco_lifetimeable_lockable`, Module, degree: 1)
+- **flutter_rust_bridge::for_generated::wasm_bindgen** (`apps_client_rust_src_frb_generated_rs_import_flutter_rust_bridge_for_generated_wasm_bindgen`, Module, degree: 1)
+- **flutter_rust_bridge::for_generated::wasm_bindgen::prelude::*** (`apps_client_rust_src_frb_generated_rs_import_flutter_rust_bridge_for_generated_wasm_bindgen_prelude`, Module, degree: 1)
+- **flutter_rust_bridge::{Handler, IntoIntoDart}** (`apps_client_rust_src_frb_generated_rs_import_flutter_rust_bridge_handler_intointodart`, Module, degree: 1)
+- **pub use io::*** (`apps_client_rust_src_frb_generated_rs_import_pub_use_io`, Module, degree: 1)
+- **pub use web::*** (`apps_client_rust_src_frb_generated_rs_import_pub_use_web`, Module, degree: 1)
+- **super::*** (`apps_client_rust_src_frb_generated_rs_import_super`, Module, degree: 1)
+- **rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine()** (`apps_client_rust_src_frb_generated_rs_rust_arc_decrement_strong_count_rustopaque_flutter_rust_bridgefor_generatedrustautoopaqueinnercanvasengine`, Function, degree: 1)
+- **rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCanvasEngine()** (`apps_client_rust_src_frb_generated_rs_rust_arc_increment_strong_count_rustopaque_flutter_rust_bridgefor_generatedrustautoopaqueinnercanvasengine`, Function, degree: 1)
+- **.sse_decode()** (`apps_client_rust_src_frb_generated_rs_sse_decode`, Method, degree: 1)
+- **.sse_encode()** (`apps_client_rust_src_frb_generated_rs_sse_encode`, Method, degree: 1)
+
+## Relationships
+
+- apps_client_rust_src_frb_generated_rs → apps_client_rust_src_frb_generated_rs_import_crate_api_engine (imports)
+- apps_client_rust_src_frb_generated_rs → apps_client_rust_src_frb_generated_rs_import_flutter_rust_bridge_for_generated_byteorder_nativeendian_readbytesext_writebytesext (imports)
+- apps_client_rust_src_frb_generated_rs → apps_client_rust_src_frb_generated_rs_import_flutter_rust_bridge_for_generated_transform_result_dco_lifetimeable_lockable (imports)
+- apps_client_rust_src_frb_generated_rs → apps_client_rust_src_frb_generated_rs_import_flutter_rust_bridge_handler_intointodart (imports)
+- apps_client_rust_src_frb_generated_rs → apps_client_rust_src_frb_generated_rs_sse_decode (defines)
+- apps_client_rust_src_frb_generated_rs → apps_client_rust_src_frb_generated_rs_sse_encode (defines)
+- apps_client_rust_src_frb_generated_rs → apps_client_rust_src_frb_generated_rs_import_super (imports)
+- apps_client_rust_src_frb_generated_rs → apps_client_rust_src_frb_generated_rs_frbgen_vio_client_rust_arc_increment_strong_count_rustopaque_flutter_rust_bridgefor_generatedrustautoopaqueinnercanvasengine (defines)
+- apps_client_rust_src_frb_generated_rs → apps_client_rust_src_frb_generated_rs_frbgen_vio_client_rust_arc_decrement_strong_count_rustopaque_flutter_rust_bridgefor_generatedrustautoopaqueinnercanvasengine (defines)
+- apps_client_rust_src_frb_generated_rs → apps_client_rust_src_frb_generated_rs_import_pub_use_io (imports)
+- apps_client_rust_src_frb_generated_rs → apps_client_rust_src_frb_generated_rs_import_flutter_rust_bridge_for_generated_wasm_bindgen (imports)
+- apps_client_rust_src_frb_generated_rs → apps_client_rust_src_frb_generated_rs_import_flutter_rust_bridge_for_generated_wasm_bindgen_prelude (imports)
+- apps_client_rust_src_frb_generated_rs → apps_client_rust_src_frb_generated_rs_rust_arc_increment_strong_count_rustopaque_flutter_rust_bridgefor_generatedrustautoopaqueinnercanvasengine (defines)
+- apps_client_rust_src_frb_generated_rs → apps_client_rust_src_frb_generated_rs_rust_arc_decrement_strong_count_rustopaque_flutter_rust_bridgefor_generatedrustautoopaqueinnercanvasengine (defines)
+- apps_client_rust_src_frb_generated_rs → apps_client_rust_src_frb_generated_rs_import_pub_use_web (imports)
+

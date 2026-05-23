@@ -1,0 +1,29 @@
+# Community 103: _RustCanvasLayerState()
+
+**Members:** 10
+
+## Nodes
+
+- **rust_canvas_layer** (`apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart`, File, degree: 9)
+- **../../bloc/canvas_bloc.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart_import_bloc_canvas_bloc_dart`, Module, degree: 1)
+- **../../../../core/services/rust_engine_service.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart_import_core_services_rust_engine_service_dart`, Module, degree: 1)
+- **package:flutter/material.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart_import_package_flutter_material_dart`, Module, degree: 1)
+- **package:vio_core/vio_core.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart_import_package_vio_core_vio_core_dart`, Module, degree: 1)
+- **package:vio_ui_kit/vio_ui_kit.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart_import_package_vio_ui_kit_vio_ui_kit_dart`, Module, degree: 1)
+- **../painters/rust_canvas_painter.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart_import_painters_rust_canvas_painter_dart`, Module, degree: 1)
+- **../../../../rust/render/commands.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart_import_rust_render_commands_dart`, Module, degree: 1)
+- **../viewport_notifier.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart_import_viewport_notifier_dart`, Module, degree: 1)
+- **_RustCanvasLayerState()** (`apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart_rustcanvaslayerstate`, Function, degree: 1)
+
+## Relationships
+
+- apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart → apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart_import_package_flutter_material_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart → apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart_import_package_vio_core_vio_core_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart → apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart_import_package_vio_ui_kit_vio_ui_kit_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart → apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart_import_core_services_rust_engine_service_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart → apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart_import_rust_render_commands_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart → apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart_import_bloc_canvas_bloc_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart → apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart_import_painters_rust_canvas_painter_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart → apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart_import_viewport_notifier_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart → apps_client_lib_src_features_canvas_presentation_widgets_rust_canvas_layer_dart_rustcanvaslayerstate (defines)
+

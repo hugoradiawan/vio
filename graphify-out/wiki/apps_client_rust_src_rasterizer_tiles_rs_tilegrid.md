@@ -1,0 +1,33 @@
+# TileGrid
+
+- **ID:** `apps_client_rust_src_rasterizer_tiles_rs_tilegrid`
+- **Type:** Struct
+- **File:** `./apps/client/rust/src/rasterizer/tiles.rs`
+- **Location:** L28
+- **Community:** 35 (update_shape_moves_tiles())
+
+## Relationships
+
+- apps_client_rust_src_rasterizer_tiles_rs → apps_client_rust_src_rasterizer_tiles_rs_tilegrid (defines, Extracted)
+- apps_client_rust_src_rasterizer_tiles_rs_tilegrid → apps_client_rust_src_rasterizer_tiles_rs_tilegrid_new (defines, Extracted)
+- apps_client_rust_src_rasterizer_tiles_rs_tilegrid → apps_client_rust_src_rasterizer_tiles_rs_tilegrid_tile_world_size (defines, Extracted)
+- apps_client_rust_src_rasterizer_tiles_rs_tilegrid → apps_client_rust_src_rasterizer_tiles_rs_tilegrid_zoom (defines, Extracted)
+- apps_client_rust_src_rasterizer_tiles_rs_tilegrid → apps_client_rust_src_rasterizer_tiles_rs_tilegrid_set_zoom (defines, Extracted)
+- apps_client_rust_src_rasterizer_tiles_rs_tilegrid → apps_client_rust_src_rasterizer_tiles_rs_tilegrid_clear (defines, Extracted)
+- apps_client_rust_src_rasterizer_tiles_rs_tilegrid → apps_client_rust_src_rasterizer_tiles_rs_tilegrid_tile_world_bounds (defines, Extracted)
+- apps_client_rust_src_rasterizer_tiles_rs_tilegrid → apps_client_rust_src_rasterizer_tiles_rs_tilegrid_keys_for_aabb (defines, Extracted)
+- apps_client_rust_src_rasterizer_tiles_rs_tilegrid → apps_client_rust_src_rasterizer_tiles_rs_tilegrid_register_shape (defines, Extracted)
+- apps_client_rust_src_rasterizer_tiles_rs_tilegrid → apps_client_rust_src_rasterizer_tiles_rs_tilegrid_unregister_shape (defines, Extracted)
+- apps_client_rust_src_rasterizer_tiles_rs_tilegrid → apps_client_rust_src_rasterizer_tiles_rs_tilegrid_mark_shape_dirty (defines, Extracted)
+- apps_client_rust_src_rasterizer_tiles_rs_tilegrid → apps_client_rust_src_rasterizer_tiles_rs_tilegrid_mark_all_dirty (defines, Extracted)
+- apps_client_rust_src_rasterizer_tiles_rs_tilegrid → apps_client_rust_src_rasterizer_tiles_rs_tilegrid_dirty_tiles_in_viewport (defines, Extracted)
+- apps_client_rust_src_rasterizer_tiles_rs_tilegrid → apps_client_rust_src_rasterizer_tiles_rs_tilegrid_visible_tiles (defines, Extracted)
+- apps_client_rust_src_rasterizer_tiles_rs_tilegrid → apps_client_rust_src_rasterizer_tiles_rs_tilegrid_shapes_for_tile (defines, Extracted)
+- apps_client_rust_src_rasterizer_tiles_rs_tilegrid → apps_client_rust_src_rasterizer_tiles_rs_tilegrid_store_tile (defines, Extracted)
+- apps_client_rust_src_rasterizer_tiles_rs_tilegrid → apps_client_rust_src_rasterizer_tiles_rs_tilegrid_get_tile_pixels (defines, Extracted)
+- apps_client_rust_src_rasterizer_tiles_rs_tilegrid → apps_client_rust_src_rasterizer_tiles_rs_tilegrid_get_tile_pixels_any (defines, Extracted)
+- apps_client_rust_src_rasterizer_tiles_rs_tilegrid → apps_client_rust_src_rasterizer_tiles_rs_tilegrid_cached_tile_count (defines, Extracted)
+- apps_client_rust_src_rasterizer_tiles_rs_tilegrid → apps_client_rust_src_rasterizer_tiles_rs_tilegrid_dirty_tile_count (defines, Extracted)
+- apps_client_rust_src_rasterizer_tiles_rs_tilegrid → apps_client_rust_src_rasterizer_tiles_rs_tilegrid_occupied_tile_count (defines, Extracted)
+- apps_client_rust_src_rasterizer_tiles_rs_tilegrid → apps_client_rust_src_rasterizer_tiles_rs_tilegrid_evict_distant_tiles (defines, Extracted)
+

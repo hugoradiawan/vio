@@ -1,0 +1,11 @@
+---
+id: backend_src_services_merge_ts_import_gen_vio_v1_commit_pb_js_diffresult
+type: Module
+source: ./backend/src/services/merge.ts
+community: 28
+community_label: toProtoTimestamp() (28)
+---
+
+## Connections
+
+- [[merge]] (imports)

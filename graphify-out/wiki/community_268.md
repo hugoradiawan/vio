@@ -1,0 +1,17 @@
+# Community 268: package:vio_ui_kit/vio_ui_kit.dart (268)
+
+**Members:** 4
+
+## Nodes
+
+- **canvas_status_widgets** (`apps_client_lib_src_features_canvas_presentation_widgets_canvas_status_widgets_dart`, File, degree: 3)
+- **package:flutter/material.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_canvas_status_widgets_dart_import_package_flutter_material_dart`, Module, degree: 1)
+- **package:vio_client/src/core/core.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_canvas_status_widgets_dart_import_package_vio_client_src_core_core_dart`, Module, degree: 1)
+- **package:vio_ui_kit/vio_ui_kit.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_canvas_status_widgets_dart_import_package_vio_ui_kit_vio_ui_kit_dart`, Module, degree: 1)
+
+## Relationships
+
+- apps_client_lib_src_features_canvas_presentation_widgets_canvas_status_widgets_dart → apps_client_lib_src_features_canvas_presentation_widgets_canvas_status_widgets_dart_import_package_flutter_material_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_canvas_status_widgets_dart → apps_client_lib_src_features_canvas_presentation_widgets_canvas_status_widgets_dart_import_package_vio_client_src_core_core_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_canvas_status_widgets_dart → apps_client_lib_src_features_canvas_presentation_widgets_canvas_status_widgets_dart_import_package_vio_ui_kit_vio_ui_kit_dart (imports)
+

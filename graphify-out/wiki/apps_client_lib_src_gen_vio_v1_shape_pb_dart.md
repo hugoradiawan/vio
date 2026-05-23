@@ -1,0 +1,43 @@
+# shape.pb
+
+- **ID:** `apps_client_lib_src_gen_vio_v1_shape_pb_dart`
+- **Type:** File
+- **File:** `./apps/client/lib/src/gen/vio/v1/shape.pb.dart`
+- **Community:** 17 (UpdateShapeResponse())
+
+## Relationships
+
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_import_dart_core (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_import_package_protobuf_protobuf_dart (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_import_common_pb_dart (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_import_shape_pbenum_dart (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_create (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_deepcopy (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_i (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_shape (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_getsz (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_setstring (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_has (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_clearfield (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_getn (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_setfield (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_setdouble (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_ensure (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_getlist (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_getbf (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_setbool (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_getiz (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_setsignedint32 (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_setbytes (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_listshapesrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_listshapesresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_getshaperequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_getshaperesponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_createshaperequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_createshaperesponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_updateshaperequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_updateshaperesponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_deleteshaperequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_batchmutaterequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_shape_pb_dart → apps_client_lib_src_gen_vio_v1_shape_pb_dart_batchmutateresponse (defines, Extracted)
+

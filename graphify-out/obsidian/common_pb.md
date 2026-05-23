@@ -1,0 +1,51 @@
+---
+id: apps_client_lib_src_gen_vio_v1_common_pb_dart
+type: File
+source: ./apps/client/lib/src/gen/vio/v1/common.pb.dart
+community: 12
+community_label: Transform()
+---
+
+## Connections
+
+- [[dart_core_]] (imports)
+- [[package_fixnum_fixnum_dart_]] (imports)
+- [[package_protobuf_protobuf_dart_]] (imports)
+- [[common_pbenum_dart]] (imports)
+- [[create__]] (defines)
+- [[deepCopy__]] (defines)
+- [[_i__]] (defines)
+- [[Transform__]] (defines)
+- [[__getN__]] (defines)
+- [[__setDouble__]] (defines)
+- [[__has__]] (defines)
+- [[__clearField__]] (defines)
+- [[Fill__]] (defines)
+- [[__getIZ__]] (defines)
+- [[__setUnsignedInt32__]] (defines)
+- [[__getBF__]] (defines)
+- [[__setBool__]] (defines)
+- [[__setField__]] (defines)
+- [[__ensure__]] (defines)
+- [[FillImage__]] (defines)
+- [[__getSZ__]] (defines)
+- [[__setString__]] (defines)
+- [[Gradient__]] (defines)
+- [[__getList__]] (defines)
+- [[GradientStop__]] (defines)
+- [[Stroke__]] (defines)
+- [[PageToken__]] (defines)
+- [[__setSignedInt32__]] (defines)
+- [[Timestamp__]] (defines)
+- [[__getI64__]] (defines)
+- [[__setInt64__]] (defines)
+- [[Empty__]] (defines)
+- [[ShapeConflict__]] (defines)
+- [[PropertyConflict__]] (defines)
+- [[ConflictResolution__]] (defines)
+- [[RectangleProperties__]] (defines)
+- [[TextProperties__]] (defines)
+- [[FrameProperties__]] (defines)
+- [[PathProperties__]] (defines)
+- [[ImageProperties__]] (defines)
+- [[BoolProperties__]] (defines)

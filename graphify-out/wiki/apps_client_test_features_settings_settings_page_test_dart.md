@@ -1,0 +1,18 @@
+# settings_page_test
+
+- **ID:** `apps_client_test_features_settings_settings_page_test_dart`
+- **Type:** File
+- **File:** `./apps/client/test/features/settings/settings_page_test.dart`
+- **Community:** 130 (_wrap())
+
+## Relationships
+
+- apps_client_test_features_settings_settings_page_test_dart → apps_client_test_features_settings_settings_page_test_dart_import_package_flutter_material_dart (imports, Extracted)
+- apps_client_test_features_settings_settings_page_test_dart → apps_client_test_features_settings_settings_page_test_dart_import_package_flutter_bloc_flutter_bloc_dart (imports, Extracted)
+- apps_client_test_features_settings_settings_page_test_dart → apps_client_test_features_settings_settings_page_test_dart_import_package_flutter_test_flutter_test_dart (imports, Extracted)
+- apps_client_test_features_settings_settings_page_test_dart → apps_client_test_features_settings_settings_page_test_dart_import_package_vio_client_src_features_settings_presentation_settings_page_dart (imports, Extracted)
+- apps_client_test_features_settings_settings_page_test_dart → apps_client_test_features_settings_settings_page_test_dart_import_package_vio_client_src_features_settings_presentation_widgets_theme_section_dart (imports, Extracted)
+- apps_client_test_features_settings_settings_page_test_dart → apps_client_test_features_settings_settings_page_test_dart_import_package_vio_ui_kit_vio_ui_kit_dart (imports, Extracted)
+- apps_client_test_features_settings_settings_page_test_dart → apps_client_test_features_settings_settings_page_test_dart_wrap (defines, Extracted)
+- apps_client_test_features_settings_settings_page_test_dart → apps_client_test_features_settings_settings_page_test_dart_main (defines, Extracted)
+

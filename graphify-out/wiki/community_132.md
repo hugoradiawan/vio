@@ -1,0 +1,27 @@
+# Community 132: _textPainterCache()
+
+**Members:** 9
+
+## Nodes
+
+- **shape_painter** (`apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart`, File, degree: 8)
+- **../../../../core/services/image_cache_service.dart** (`apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart_import_core_services_image_cache_service_dart`, Module, degree: 1)
+- **dart:typed_data** (`apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart_import_dart_typed_data`, Module, degree: 1)
+- **dart:ui'** (`apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart_import_dart_ui`, Module, degree: 1)
+- **package:flutter/material.dart** (`apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart_import_package_flutter_material_dart`, Module, degree: 1)
+- **package:google_fonts/google_fonts.dart** (`apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart_import_package_google_fonts_google_fonts_dart`, Module, degree: 1)
+- **package:vio_core/vio_core.dart** (`apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart_import_package_vio_core_vio_core_dart`, Module, degree: 1)
+- **Object()** (`apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart_object`, Function, degree: 1)
+- **_textPainterCache()** (`apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart_textpaintercache`, Function, degree: 1)
+
+## Relationships
+
+- apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart → apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart_import_dart_typed_data (imports)
+- apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart → apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart_import_dart_ui (imports)
+- apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart → apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart_import_package_flutter_material_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart → apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart_import_package_google_fonts_google_fonts_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart → apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart_import_package_vio_core_vio_core_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart → apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart_import_core_services_image_cache_service_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart → apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart_textpaintercache (defines)
+- apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart → apps_client_lib_src_features_canvas_presentation_painters_shape_painter_dart_object (defines)
+

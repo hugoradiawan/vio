@@ -1,0 +1,66 @@
+# Community 39: set_paint_color()
+
+**Members:** 21
+
+## Nodes
+
+- **painter** (`apps_client_rust_src_rasterizer_painter_rs`, File, degree: 36)
+- **argb_to_color()** (`apps_client_rust_src_rasterizer_painter_rs_argb_to_color`, Function, degree: 5)
+- **argb_to_color_opaque_red()** (`apps_client_rust_src_rasterizer_painter_rs_argb_to_color_opaque_red`, Function, degree: 2)
+- **argb_to_color_with_opacity()** (`apps_client_rust_src_rasterizer_painter_rs_argb_to_color_with_opacity`, Function, degree: 2)
+- **build_gradient_shader()** (`apps_client_rust_src_rasterizer_painter_rs_build_gradient_shader`, Function, degree: 3)
+- **build_rounded_rect_path()** (`apps_client_rust_src_rasterizer_painter_rs_build_rounded_rect_path`, Function, degree: 3)
+- **build_rounded_rect_path_works()** (`apps_client_rust_src_rasterizer_painter_rs_build_rounded_rect_path_works`, Function, degree: 2)
+- **build_shape_path()** (`apps_client_rust_src_rasterizer_painter_rs_build_shape_path`, Function, degree: 3)
+- **crate::math::aabb::Aabb** (`apps_client_rust_src_rasterizer_painter_rs_import_crate_math_aabb_aabb`, Module, degree: 1)
+- **crate::math::matrix2d::Matrix2D** (`apps_client_rust_src_rasterizer_painter_rs_import_crate_math_matrix2d_matrix2d`, Module, degree: 1)
+- **crate::rasterizer::tiles::TILE_SIZE** (`apps_client_rust_src_rasterizer_painter_rs_import_crate_rasterizer_tiles_tile_size`, Module, degree: 1)
+- **crate::scene_graph::shape::*** (`apps_client_rust_src_rasterizer_painter_rs_import_crate_scene_graph_shape`, Module, degree: 1)
+- **crate::scene_graph::tree::SceneTree** (`apps_client_rust_src_rasterizer_painter_rs_import_crate_scene_graph_tree_scenetree`, Module, degree: 1)
+- **super::*** (`apps_client_rust_src_rasterizer_painter_rs_import_super`, Module, degree: 1)
+- **tiny_skia::{
+    Color, FillRule, LineCap, LineJoin, LinearGradient, Paint, Path, PathBuilder, Pixmap, Point,
+    RadialGradient, Rect, Shader, SpreadMode, Stroke, Transform,
+}** (`apps_client_rust_src_rasterizer_painter_rs_import_tiny_skia_color_fillrule_linecap_linejoin_lineargradient_paint_path_pathbuilder_pixmap_point_radialgradient_rect_shader_spreadmode_stroke_transform`, Module, degree: 1)
+- **is_rasterizable_ellipse()** (`apps_client_rust_src_rasterizer_painter_rs_is_rasterizable_ellipse`, Function, degree: 3)
+- **make_ellipse()** (`apps_client_rust_src_rasterizer_painter_rs_make_ellipse`, Function, degree: 3)
+- **matrix2d_to_transform()** (`apps_client_rust_src_rasterizer_painter_rs_matrix2d_to_transform`, Function, degree: 2)
+- **paint_shape()** (`apps_client_rust_src_rasterizer_painter_rs_paint_shape`, Function, degree: 6)
+- **rasterize_ellipse()** (`apps_client_rust_src_rasterizer_painter_rs_rasterize_ellipse`, Function, degree: 3)
+- **set_paint_color()** (`apps_client_rust_src_rasterizer_painter_rs_set_paint_color`, Function, degree: 3)
+
+## Relationships
+
+- apps_client_rust_src_rasterizer_painter_rs → apps_client_rust_src_rasterizer_painter_rs_import_tiny_skia_color_fillrule_linecap_linejoin_lineargradient_paint_path_pathbuilder_pixmap_point_radialgradient_rect_shader_spreadmode_stroke_transform (imports)
+- apps_client_rust_src_rasterizer_painter_rs → apps_client_rust_src_rasterizer_painter_rs_import_crate_math_aabb_aabb (imports)
+- apps_client_rust_src_rasterizer_painter_rs → apps_client_rust_src_rasterizer_painter_rs_import_crate_math_matrix2d_matrix2d (imports)
+- apps_client_rust_src_rasterizer_painter_rs → apps_client_rust_src_rasterizer_painter_rs_import_crate_rasterizer_tiles_tile_size (imports)
+- apps_client_rust_src_rasterizer_painter_rs → apps_client_rust_src_rasterizer_painter_rs_import_crate_scene_graph_shape (imports)
+- apps_client_rust_src_rasterizer_painter_rs → apps_client_rust_src_rasterizer_painter_rs_import_crate_scene_graph_tree_scenetree (imports)
+- apps_client_rust_src_rasterizer_painter_rs → apps_client_rust_src_rasterizer_painter_rs_paint_shape (defines)
+- apps_client_rust_src_rasterizer_painter_rs → apps_client_rust_src_rasterizer_painter_rs_build_shape_path (defines)
+- apps_client_rust_src_rasterizer_painter_rs → apps_client_rust_src_rasterizer_painter_rs_build_rounded_rect_path (defines)
+- apps_client_rust_src_rasterizer_painter_rs → apps_client_rust_src_rasterizer_painter_rs_argb_to_color (defines)
+- apps_client_rust_src_rasterizer_painter_rs → apps_client_rust_src_rasterizer_painter_rs_set_paint_color (defines)
+- apps_client_rust_src_rasterizer_painter_rs → apps_client_rust_src_rasterizer_painter_rs_matrix2d_to_transform (defines)
+- apps_client_rust_src_rasterizer_painter_rs → apps_client_rust_src_rasterizer_painter_rs_build_gradient_shader (defines)
+- apps_client_rust_src_rasterizer_painter_rs → apps_client_rust_src_rasterizer_painter_rs_import_super (imports)
+- apps_client_rust_src_rasterizer_painter_rs → apps_client_rust_src_rasterizer_painter_rs_make_ellipse (defines)
+- apps_client_rust_src_rasterizer_painter_rs → apps_client_rust_src_rasterizer_painter_rs_is_rasterizable_ellipse (defines)
+- apps_client_rust_src_rasterizer_painter_rs → apps_client_rust_src_rasterizer_painter_rs_rasterize_ellipse (defines)
+- apps_client_rust_src_rasterizer_painter_rs → apps_client_rust_src_rasterizer_painter_rs_build_rounded_rect_path_works (defines)
+- apps_client_rust_src_rasterizer_painter_rs → apps_client_rust_src_rasterizer_painter_rs_argb_to_color_opaque_red (defines)
+- apps_client_rust_src_rasterizer_painter_rs → apps_client_rust_src_rasterizer_painter_rs_argb_to_color_with_opacity (defines)
+- apps_client_rust_src_rasterizer_painter_rs_paint_shape → apps_client_rust_src_rasterizer_painter_rs_build_gradient_shader (calls)
+- apps_client_rust_src_rasterizer_painter_rs_paint_shape → apps_client_rust_src_rasterizer_painter_rs_build_shape_path (calls)
+- apps_client_rust_src_rasterizer_painter_rs_paint_shape → apps_client_rust_src_rasterizer_painter_rs_set_paint_color (calls)
+- apps_client_rust_src_rasterizer_painter_rs_paint_shape → apps_client_rust_src_rasterizer_painter_rs_matrix2d_to_transform (calls)
+- apps_client_rust_src_rasterizer_painter_rs_build_shape_path → apps_client_rust_src_rasterizer_painter_rs_build_rounded_rect_path (calls)
+- apps_client_rust_src_rasterizer_painter_rs_set_paint_color → apps_client_rust_src_rasterizer_painter_rs_argb_to_color (calls)
+- apps_client_rust_src_rasterizer_painter_rs_build_gradient_shader → apps_client_rust_src_rasterizer_painter_rs_argb_to_color (calls)
+- apps_client_rust_src_rasterizer_painter_rs_is_rasterizable_ellipse → apps_client_rust_src_rasterizer_painter_rs_make_ellipse (calls)
+- apps_client_rust_src_rasterizer_painter_rs_rasterize_ellipse → apps_client_rust_src_rasterizer_painter_rs_make_ellipse (calls)
+- apps_client_rust_src_rasterizer_painter_rs_build_rounded_rect_path_works → apps_client_rust_src_rasterizer_painter_rs_build_rounded_rect_path (calls)
+- apps_client_rust_src_rasterizer_painter_rs_argb_to_color_opaque_red → apps_client_rust_src_rasterizer_painter_rs_argb_to_color (calls)
+- apps_client_rust_src_rasterizer_painter_rs_argb_to_color_with_opacity → apps_client_rust_src_rasterizer_painter_rs_argb_to_color (calls)
+

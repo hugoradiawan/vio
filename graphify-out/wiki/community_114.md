@@ -1,0 +1,29 @@
+# Community 114: target.dart (114)
+
+**Members:** 10
+
+## Nodes
+
+- **verify_binaries** (`apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart`, File, degree: 9)
+- **artifacts_provider.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart_import_artifacts_provider_dart`, Module, degree: 1)
+- **cargo.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart_import_cargo_dart`, Module, degree: 1)
+- **crate_hash.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart_import_crate_hash_dart`, Module, degree: 1)
+- **dart:io** (`apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart_import_dart_io`, Module, degree: 1)
+- **options.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart_import_options_dart`, Module, degree: 1)
+- **package:ed25519_edwards/ed25519_edwards.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart_import_package_ed25519_edwards_ed25519_edwards_dart`, Module, degree: 1)
+- **package:http/http.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart_import_package_http_http_dart`, Module, degree: 1)
+- **precompile_binaries.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart_import_precompile_binaries_dart`, Module, degree: 1)
+- **target.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart_import_target_dart`, Module, degree: 1)
+
+## Relationships
+
+- apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart_import_dart_io (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart_import_package_ed25519_edwards_ed25519_edwards_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart_import_package_http_http_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart_import_artifacts_provider_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart_import_cargo_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart_import_crate_hash_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart_import_options_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart_import_precompile_binaries_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_verify_binaries_dart_import_target_dart (imports)
+

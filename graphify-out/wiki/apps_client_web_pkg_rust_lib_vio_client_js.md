@@ -1,0 +1,44 @@
+# rust_lib_vio_client
+
+- **ID:** `apps_client_web_pkg_rust_lib_vio_client_js`
+- **Type:** File
+- **File:** `./apps/client/web/pkg/rust_lib_vio_client.js`
+- **Community:** 14 (WorkerPool)
+
+## Relationships
+
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_getobject (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_addheapobject (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_dropobject (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_takeobject (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_getuint8memory0 (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_getstringfromwasm0 (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_islikenone (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_getfloat64memory0 (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_getint32memory0 (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_passstringtowasm0 (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_debugstring (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_makemutclosure (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_wbg_adapter_30 (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_rust_arc_increment_strong_count_rustopaque_flutter_rust_bridgefor_generatedrustautoopaqueinnercanvasengine (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_frb_pde_ffi_dispatcher_sync (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_frb_dart_fn_deliver_output (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_frb_get_rust_content_hash (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_rust_arc_decrement_strong_count_rustopaque_flutter_rust_bridgefor_generatedrustautoopaqueinnercanvasengine (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_frb_pde_ffi_dispatcher_primary (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_frb_dart_opaque_drop_thread_box_persistent_handle (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_handleerror (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_frb_dart_opaque_dart2rust_encode (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_frb_dart_opaque_rust2dart_decode (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_wasm_start_callback (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_getuint32memory0 (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_passarrayjsvaluetowasm0 (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_receive_transfer_closure (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_workerpool (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_wbg_load (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_wbg_get_imports (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_wbg_init_memory (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_wbg_finalize_init (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_initsync (defines, Extracted)
+- apps_client_web_pkg_rust_lib_vio_client_js → apps_client_web_pkg_rust_lib_vio_client_js_wbg_init (defines, Extracted)
+

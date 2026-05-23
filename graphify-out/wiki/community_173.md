@@ -1,0 +1,27 @@
+# Community 173: _log()
+
+**Members:** 6
+
+## Nodes
+
+- **logging** (`apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart`, File, degree: 5)
+- **enableVerboseLogging()** (`apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart_enableverboselogging`, Function, degree: 5)
+- **dart:io** (`apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart_import_dart_io`, Module, degree: 1)
+- **package:logging/logging.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart_import_package_logging_logging_dart`, Module, degree: 1)
+- **initLogging()** (`apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart_initlogging`, Function, degree: 5)
+- **_log()** (`apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart_log`, Function, degree: 5)
+
+## Relationships
+
+- apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart_import_dart_io (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart_import_package_logging_logging_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart_log (defines)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart_initlogging (defines)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart_enableverboselogging (defines)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart_log → apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart_initlogging (uses)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart_log → apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart_enableverboselogging (uses)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart_initlogging → apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart_log (uses)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart_initlogging → apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart_enableverboselogging (uses)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart_enableverboselogging → apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart_log (uses)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart_enableverboselogging → apps_client_rust_builder_cargokit_build_tool_lib_src_logging_dart_initlogging (uses)
+

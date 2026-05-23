@@ -1,0 +1,17 @@
+# selection_hit_test
+
+- **ID:** `apps_client_lib_src_features_canvas_models_selection_hit_test_dart`
+- **Type:** File
+- **File:** `./apps/client/lib/src/features/canvas/models/selection_hit_test.dart`
+- **Community:** 142 (SelectionEdgeX)
+
+## Relationships
+
+- apps_client_lib_src_features_canvas_models_selection_hit_test_dart → apps_client_lib_src_features_canvas_models_selection_hit_test_dart_import_dart_math (imports, Extracted)
+- apps_client_lib_src_features_canvas_models_selection_hit_test_dart → apps_client_lib_src_features_canvas_models_selection_hit_test_dart_import_package_flutter_material_dart (imports, Extracted)
+- apps_client_lib_src_features_canvas_models_selection_hit_test_dart → apps_client_lib_src_features_canvas_models_selection_hit_test_dart_import_handle_types_dart (imports, Extracted)
+- apps_client_lib_src_features_canvas_models_selection_hit_test_dart → apps_client_lib_src_features_canvas_models_selection_hit_test_dart_import_selection_handle_metrics_dart (imports, Extracted)
+- apps_client_lib_src_features_canvas_models_selection_hit_test_dart → apps_client_lib_src_features_canvas_models_selection_hit_test_dart_selectionedge (defines, Extracted)
+- apps_client_lib_src_features_canvas_models_selection_hit_test_dart → apps_client_lib_src_features_canvas_models_selection_hit_test_dart_selectionedgex (defines, Extracted)
+- apps_client_lib_src_features_canvas_models_selection_hit_test_dart → apps_client_lib_src_features_canvas_models_selection_hit_test_dart_hittestselectionaffordance (defines, Extracted)
+

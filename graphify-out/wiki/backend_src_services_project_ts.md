@@ -1,0 +1,44 @@
+# project
+
+- **ID:** `backend_src_services_project_ts`
+- **Type:** File
+- **File:** `./backend/src/services/project.ts`
+- **Community:** 16 (updateProject() (16))
+
+## Relationships
+
+- backend_src_services_project_ts → backend_src_services_project_ts_import_bufbuild_protobuf_create (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_connectrpc_connect_serviceimpl (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_drizzle_orm_eq (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_db_db (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_db_schema (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_gen_vio_v1_branch_pb_js_branchschema (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_gen_vio_v1_branch_pb_js_branch (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_gen_vio_v1_common_pb_js_emptyschema (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_gen_vio_v1_common_pb_js_timestampschema (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_gen_vio_v1_common_pb_js_empty (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_gen_vio_v1_common_pb_js_timestamp (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_gen_vio_v1_project_pb_js_createprojectresponseschema (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_gen_vio_v1_project_pb_js_frameschema (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_gen_vio_v1_project_pb_js_getprojectresponseschema (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_gen_vio_v1_project_pb_js_listprojectsresponseschema (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_gen_vio_v1_project_pb_js_projectschema (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_gen_vio_v1_project_pb_js_projectservice (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_gen_vio_v1_project_pb_js_updateprojectresponseschema (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_gen_vio_v1_project_pb_js_createprojectresponse (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_gen_vio_v1_project_pb_js_frame (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_gen_vio_v1_project_pb_js_getprojectresponse (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_gen_vio_v1_project_pb_js_listprojectsresponse (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_gen_vio_v1_project_pb_js_project (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_gen_vio_v1_project_pb_js_updateprojectresponse (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_import_errors_js_notfound (imports, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_toprototimestamp (defines, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_toprotoproject (defines, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_toprotobranch (defines, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_toprotoframe (defines, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_listprojects (defines, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_getproject (defines, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_createproject (defines, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_updateproject (defines, Extracted)
+- backend_src_services_project_ts → backend_src_services_project_ts_deleteproject (defines, Extracted)
+

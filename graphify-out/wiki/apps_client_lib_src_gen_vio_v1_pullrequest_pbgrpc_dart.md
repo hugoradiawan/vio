@@ -1,0 +1,24 @@
+# pullrequest.pbgrpc
+
+- **ID:** `apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart`
+- **Type:** File
+- **File:** `./apps/client/lib/src/gen/vio/v1/pullrequest.pbgrpc.dart`
+- **Community:** 62 (updatePullRequest())
+
+## Relationships
+
+- apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart → apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart_import_dart_async (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart → apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart_import_dart_core (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart → apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart_import_package_grpc_service_api_dart (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart → apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart_import_package_protobuf_protobuf_dart (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart → apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart_import_pullrequest_pb_dart (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart → apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart_listpullrequests (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart → apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart_getpullrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart → apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart_createpullrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart → apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart_updatepullrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart → apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart_mergepullrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart → apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart_closepullrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart → apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart_reopenpullrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart → apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart_checkmergestatus (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart → apps_client_lib_src_gen_vio_v1_pullrequest_pbgrpc_dart_resolveconflicts (defines, Extracted)
+

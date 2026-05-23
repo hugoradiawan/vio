@@ -1,0 +1,27 @@
+# Community 128: main() (128)
+
+**Members:** 9
+
+## Nodes
+
+- **canvas_selection_rotation_test** (`apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart`, File, degree: 8)
+- **dart:math'** (`apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart_import_dart_math`, Module, degree: 1)
+- **package:flutter_test/flutter_test.dart** (`apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart_import_package_flutter_test_flutter_test_dart`, Module, degree: 1)
+- **package:grpc/grpc.dart** (`apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart_import_package_grpc_grpc_dart`, Module, degree: 1)
+- **package:vio_client/src/core/repositories/grpc_canvas_repository.dart** (`apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart_import_package_vio_client_src_core_repositories_grpc_canvas_repository_dart`, Module, degree: 1)
+- **package:vio_client/src/features/canvas/bloc/canvas_bloc.dart** (`apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart_import_package_vio_client_src_features_canvas_bloc_canvas_bloc_dart`, Module, degree: 1)
+- **package:vio_client/src/gen/vio/v1/canvas.pbgrpc.dart** (`apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart_import_package_vio_client_src_gen_vio_v1_canvas_pbgrpc_dart`, Module, degree: 1)
+- **package:vio_core/vio_core.dart** (`apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart_import_package_vio_core_vio_core_dart`, Module, degree: 1)
+- **main()** (`apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart_main`, Function, degree: 1)
+
+## Relationships
+
+- apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart → apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart_import_dart_math (imports)
+- apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart → apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart_import_package_flutter_test_flutter_test_dart (imports)
+- apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart → apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart_import_package_grpc_grpc_dart (imports)
+- apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart → apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart_import_package_vio_client_src_core_repositories_grpc_canvas_repository_dart (imports)
+- apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart → apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart_import_package_vio_client_src_features_canvas_bloc_canvas_bloc_dart (imports)
+- apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart → apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart_import_package_vio_client_src_gen_vio_v1_canvas_pbgrpc_dart (imports)
+- apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart → apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart_import_package_vio_core_vio_core_dart (imports)
+- apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart → apps_client_test_features_canvas_bloc_canvas_selection_rotation_test_dart_main (defines)
+

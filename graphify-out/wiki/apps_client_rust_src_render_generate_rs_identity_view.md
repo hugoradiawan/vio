@@ -1,0 +1,35 @@
+# identity_view()
+
+- **ID:** `apps_client_rust_src_render_generate_rs_identity_view`
+- **Type:** Function
+- **File:** `./apps/client/rust/src/render/generate.rs`
+- **Location:** L803
+- **Community:** 5 (zero_opacity_shape_skipped())
+
+## Relationships
+
+- apps_client_rust_src_render_generate_rs → apps_client_rust_src_render_generate_rs_identity_view (defines, Extracted)
+- apps_client_rust_src_render_generate_rs_empty_scene_generates_view_transform_only → apps_client_rust_src_render_generate_rs_identity_view (calls, Inferred)
+- apps_client_rust_src_render_generate_rs_single_rect_generates_transform_and_fill → apps_client_rust_src_render_generate_rs_identity_view (calls, Inferred)
+- apps_client_rust_src_render_generate_rs_rect_with_radii_emits_draw_rrect → apps_client_rust_src_render_generate_rs_identity_view (calls, Inferred)
+- apps_client_rust_src_render_generate_rs_ellipse_emits_draw_oval → apps_client_rust_src_render_generate_rs_identity_view (calls, Inferred)
+- apps_client_rust_src_render_generate_rs_text_emits_draw_text → apps_client_rust_src_render_generate_rs_identity_view (calls, Inferred)
+- apps_client_rust_src_render_generate_rs_image_emits_draw_image → apps_client_rust_src_render_generate_rs_identity_view (calls, Inferred)
+- apps_client_rust_src_render_generate_rs_hidden_shape_skipped → apps_client_rust_src_render_generate_rs_identity_view (calls, Inferred)
+- apps_client_rust_src_render_generate_rs_zero_opacity_shape_skipped → apps_client_rust_src_render_generate_rs_identity_view (calls, Inferred)
+- apps_client_rust_src_render_generate_rs_offscreen_shape_culled → apps_client_rust_src_render_generate_rs_identity_view (calls, Inferred)
+- apps_client_rust_src_render_generate_rs_opacity_generates_save_layer → apps_client_rust_src_render_generate_rs_identity_view (calls, Inferred)
+- apps_client_rust_src_render_generate_rs_simplify_skips_opacity_layer → apps_client_rust_src_render_generate_rs_identity_view (calls, Inferred)
+- apps_client_rust_src_render_generate_rs_gradient_fill_emits_gradient_command → apps_client_rust_src_render_generate_rs_identity_view (calls, Inferred)
+- apps_client_rust_src_render_generate_rs_simplify_keeps_gradient_rendering → apps_client_rust_src_render_generate_rs_identity_view (calls, Inferred)
+- apps_client_rust_src_render_generate_rs_simplify_preserves_stroke_alignment → apps_client_rust_src_render_generate_rs_identity_view (calls, Inferred)
+- apps_client_rust_src_render_generate_rs_drop_shadow_emitted → apps_client_rust_src_render_generate_rs_identity_view (calls, Inferred)
+- apps_client_rust_src_render_generate_rs_simplify_skips_shadow → apps_client_rust_src_render_generate_rs_identity_view (calls, Inferred)
+- apps_client_rust_src_render_generate_rs_stroke_emitted → apps_client_rust_src_render_generate_rs_identity_view (calls, Inferred)
+- apps_client_rust_src_render_generate_rs_clipping_frame_emits_clip_and_restore → apps_client_rust_src_render_generate_rs_identity_view (calls, Inferred)
+- apps_client_rust_src_render_generate_rs_multiple_shapes_in_sort_order → apps_client_rust_src_render_generate_rs_identity_view (calls, Inferred)
+- apps_client_rust_src_render_generate_rs_hidden_fill_skipped → apps_client_rust_src_render_generate_rs_identity_view (calls, Inferred)
+- apps_client_rust_src_render_generate_rs_hidden_stroke_skipped → apps_client_rust_src_render_generate_rs_identity_view (calls, Inferred)
+- apps_client_rust_src_render_generate_rs_frame_with_children_emits_commands_for_all → apps_client_rust_src_render_generate_rs_identity_view (calls, Inferred)
+- apps_client_rust_src_render_generate_rs_non_clipping_frame_with_children_emits_all → apps_client_rust_src_render_generate_rs_identity_view (calls, Inferred)
+

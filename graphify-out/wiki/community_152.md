@@ -1,0 +1,23 @@
+# Community 152: main() (152)
+
+**Members:** 7
+
+## Nodes
+
+- **selection_hit_test_test** (`apps_client_test_features_canvas_models_selection_hit_test_test_dart`, File, degree: 6)
+- **package:flutter/material.dart** (`apps_client_test_features_canvas_models_selection_hit_test_test_dart_import_package_flutter_material_dart`, Module, degree: 1)
+- **package:flutter_test/flutter_test.dart** (`apps_client_test_features_canvas_models_selection_hit_test_test_dart_import_package_flutter_test_flutter_test_dart`, Module, degree: 1)
+- **package:vio_client/src/features/canvas/models/handle_types.dart** (`apps_client_test_features_canvas_models_selection_hit_test_test_dart_import_package_vio_client_src_features_canvas_models_handle_types_dart`, Module, degree: 1)
+- **package:vio_client/src/features/canvas/models/selection_handle_metrics.dart** (`apps_client_test_features_canvas_models_selection_hit_test_test_dart_import_package_vio_client_src_features_canvas_models_selection_handle_metrics_dart`, Module, degree: 1)
+- **package:vio_client/src/features/canvas/models/selection_hit_test.dart** (`apps_client_test_features_canvas_models_selection_hit_test_test_dart_import_package_vio_client_src_features_canvas_models_selection_hit_test_dart`, Module, degree: 1)
+- **main()** (`apps_client_test_features_canvas_models_selection_hit_test_test_dart_main`, Function, degree: 1)
+
+## Relationships
+
+- apps_client_test_features_canvas_models_selection_hit_test_test_dart → apps_client_test_features_canvas_models_selection_hit_test_test_dart_import_package_flutter_material_dart (imports)
+- apps_client_test_features_canvas_models_selection_hit_test_test_dart → apps_client_test_features_canvas_models_selection_hit_test_test_dart_import_package_flutter_test_flutter_test_dart (imports)
+- apps_client_test_features_canvas_models_selection_hit_test_test_dart → apps_client_test_features_canvas_models_selection_hit_test_test_dart_import_package_vio_client_src_features_canvas_models_handle_types_dart (imports)
+- apps_client_test_features_canvas_models_selection_hit_test_test_dart → apps_client_test_features_canvas_models_selection_hit_test_test_dart_import_package_vio_client_src_features_canvas_models_selection_handle_metrics_dart (imports)
+- apps_client_test_features_canvas_models_selection_hit_test_test_dart → apps_client_test_features_canvas_models_selection_hit_test_test_dart_import_package_vio_client_src_features_canvas_models_selection_hit_test_dart (imports)
+- apps_client_test_features_canvas_models_selection_hit_test_test_dart → apps_client_test_features_canvas_models_selection_hit_test_test_dart_main (defines)
+

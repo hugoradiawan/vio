@@ -1,0 +1,43 @@
+# commit.pb
+
+- **ID:** `apps_client_lib_src_gen_vio_v1_commit_pb_dart`
+- **Type:** File
+- **File:** `./apps/client/lib/src/gen/vio/v1/commit.pb.dart`
+- **Community:** 18 (Snapshot())
+
+## Relationships
+
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_import_dart_core (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_import_package_protobuf_protobuf_dart (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_import_common_pb_dart (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_create (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_deepcopy (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_i (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_commit (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_getsz (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_setstring (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_has (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_clearfield (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_getn (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_setfield (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_ensure (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_snapshot (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_setbytes (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_listcommitsrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_listcommitsresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_getlist (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_getcommitrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_getcommitresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_createcommitrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_createcommitresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_getdiffrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_getdiffresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_commitsummary (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_diffresult (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_checkoutcommitrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_checkoutcommitresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_revertcommitrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_revertcommitresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_cherrypickrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_commit_pb_dart → apps_client_lib_src_gen_vio_v1_commit_pb_dart_cherrypickresponse (defines, Extracted)
+

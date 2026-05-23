@@ -1,0 +1,11 @@
+---
+id: apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_package_args_command_runner_dart
+type: Module
+source: ./apps/client/rust_builder/cargokit/build_tool/lib/src/build_tool.dart
+community: 43
+community_label: runMain() (43)
+---
+
+## Connections
+
+- [[build_tool]] (imports)

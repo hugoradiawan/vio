@@ -1,0 +1,18 @@
+# GeneratedPluginRegistrant
+
+- **ID:** `apps_client_macos_flutter_generatedpluginregistrant_swift`
+- **Type:** File
+- **File:** `./apps/client/macos/Flutter/GeneratedPluginRegistrant.swift`
+- **Community:** 127 (RegisterGeneratedPlugins (127))
+
+## Relationships
+
+- apps_client_macos_flutter_generatedpluginregistrant_swift → apps_client_macos_flutter_generatedpluginregistrant_swift_registergeneratedplugins (defines, Extracted)
+- apps_client_macos_flutter_generatedpluginregistrant_swift → apps_client_macos_flutter_generatedpluginregistrant_swift_import_fluttermacos (imports, Extracted)
+- apps_client_macos_flutter_generatedpluginregistrant_swift → apps_client_macos_flutter_generatedpluginregistrant_swift_import_foundation (imports, Extracted)
+- apps_client_macos_flutter_generatedpluginregistrant_swift → apps_client_macos_flutter_generatedpluginregistrant_swift_import_desktop_drop (imports, Extracted)
+- apps_client_macos_flutter_generatedpluginregistrant_swift → apps_client_macos_flutter_generatedpluginregistrant_swift_import_file_picker (imports, Extracted)
+- apps_client_macos_flutter_generatedpluginregistrant_swift → apps_client_macos_flutter_generatedpluginregistrant_swift_import_flutter_secure_storage_darwin (imports, Extracted)
+- apps_client_macos_flutter_generatedpluginregistrant_swift → apps_client_macos_flutter_generatedpluginregistrant_swift_import_path_provider_foundation (imports, Extracted)
+- apps_client_macos_flutter_generatedpluginregistrant_swift → apps_client_macos_flutter_generatedpluginregistrant_swift_import_shared_preferences_foundation (imports, Extracted)
+

@@ -1,0 +1,17 @@
+# _CanvasTextMixin
+
+- **ID:** `apps_client_lib_src_features_canvas_bloc_canvas_bloc_text_dart_canvastextmixin`
+- **Type:** Class
+- **File:** `./apps/client/lib/src/features/canvas/bloc/canvas_bloc_text.dart`
+- **Location:** L3
+- **Community:** 141 (_CanvasTextMixin)
+
+## Relationships
+
+- apps_client_lib_src_features_canvas_bloc_canvas_bloc_text_dart → apps_client_lib_src_features_canvas_bloc_canvas_bloc_text_dart_canvastextmixin (defines, Extracted)
+- apps_client_lib_src_features_canvas_bloc_canvas_bloc_text_dart_canvastextmixin → apps_client_lib_src_features_canvas_bloc_canvas_bloc_text_dart_canvastextmixin_expandancestorsforshapes (defines, Extracted)
+- apps_client_lib_src_features_canvas_bloc_canvas_bloc_text_dart_canvastextmixin → apps_client_lib_src_features_canvas_bloc_canvas_bloc_text_dart_canvastextmixin_notifyrepositoryshapeadded (defines, Extracted)
+- apps_client_lib_src_features_canvas_bloc_canvas_bloc_text_dart_canvastextmixin → apps_client_lib_src_features_canvas_bloc_canvas_bloc_text_dart_canvastextmixin_notifyrepositoryshapeupdated (defines, Extracted)
+- apps_client_lib_src_features_canvas_bloc_canvas_bloc_text_dart_canvastextmixin → apps_client_lib_src_features_canvas_bloc_canvas_bloc_text_dart_canvastextmixin_notifyrepositoryshapedeleted (defines, Extracted)
+- apps_client_lib_src_features_canvas_bloc_canvas_bloc_text_dart_canvastextmixin → apps_client_lib_src_features_canvas_bloc_canvas_bloc_text_dart_canvastextmixin_pushundostate (defines, Extracted)
+

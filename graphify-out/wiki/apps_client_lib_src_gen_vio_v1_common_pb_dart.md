@@ -1,0 +1,51 @@
+# common.pb
+
+- **ID:** `apps_client_lib_src_gen_vio_v1_common_pb_dart`
+- **Type:** File
+- **File:** `./apps/client/lib/src/gen/vio/v1/common.pb.dart`
+- **Community:** 12 (Transform())
+
+## Relationships
+
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_import_dart_core (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_import_package_fixnum_fixnum_dart (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_import_package_protobuf_protobuf_dart (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_import_common_pbenum_dart (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_create (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_deepcopy (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_i (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_transform (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_getn (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_setdouble (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_has (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_clearfield (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_fill (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_getiz (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_setunsignedint32 (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_getbf (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_setbool (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_setfield (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_ensure (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_fillimage (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_getsz (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_setstring (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_gradient (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_getlist (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_gradientstop (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_stroke (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_pagetoken (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_setsignedint32 (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_timestamp (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_geti64 (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_setint64 (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_empty (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_shapeconflict (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_propertyconflict (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_conflictresolution (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_rectangleproperties (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_textproperties (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_frameproperties (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_pathproperties (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_imageproperties (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_common_pb_dart → apps_client_lib_src_gen_vio_v1_common_pb_dart_boolproperties (defines, Extracted)
+

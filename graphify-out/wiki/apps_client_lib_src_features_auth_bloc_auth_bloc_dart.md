@@ -1,0 +1,20 @@
+# auth_bloc
+
+- **ID:** `apps_client_lib_src_features_auth_bloc_auth_bloc_dart`
+- **Type:** File
+- **File:** `./apps/client/lib/src/features/auth/bloc/auth_bloc.dart`
+- **Community:** 93 (package:grpc/grpc.dart)
+
+## Relationships
+
+- apps_client_lib_src_features_auth_bloc_auth_bloc_dart → apps_client_lib_src_features_auth_bloc_auth_bloc_dart_import_dart_async (imports, Extracted)
+- apps_client_lib_src_features_auth_bloc_auth_bloc_dart → apps_client_lib_src_features_auth_bloc_auth_bloc_dart_import_package_equatable_equatable_dart (imports, Extracted)
+- apps_client_lib_src_features_auth_bloc_auth_bloc_dart → apps_client_lib_src_features_auth_bloc_auth_bloc_dart_import_package_flutter_foundation_dart (imports, Extracted)
+- apps_client_lib_src_features_auth_bloc_auth_bloc_dart → apps_client_lib_src_features_auth_bloc_auth_bloc_dart_import_package_flutter_bloc_flutter_bloc_dart (imports, Extracted)
+- apps_client_lib_src_features_auth_bloc_auth_bloc_dart → apps_client_lib_src_features_auth_bloc_auth_bloc_dart_import_package_grpc_grpc_dart (imports, Extracted)
+- apps_client_lib_src_features_auth_bloc_auth_bloc_dart → apps_client_lib_src_features_auth_bloc_auth_bloc_dart_import_core_auth_token_storage_dart (imports, Extracted)
+- apps_client_lib_src_features_auth_bloc_auth_bloc_dart → apps_client_lib_src_features_auth_bloc_auth_bloc_dart_import_core_grpc_grpc_client_dart (imports, Extracted)
+- apps_client_lib_src_features_auth_bloc_auth_bloc_dart → apps_client_lib_src_features_auth_bloc_auth_bloc_dart_import_gen_vio_v1_auth_pbgrpc_dart (imports, Extracted)
+- apps_client_lib_src_features_auth_bloc_auth_bloc_dart → apps_client_lib_src_features_auth_bloc_auth_bloc_dart_import_auth_event_dart (imports, Extracted)
+- apps_client_lib_src_features_auth_bloc_auth_bloc_dart → apps_client_lib_src_features_auth_bloc_auth_bloc_dart_import_auth_state_dart (imports, Extracted)
+

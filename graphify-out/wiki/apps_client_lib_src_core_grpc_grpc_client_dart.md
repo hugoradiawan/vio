@@ -1,0 +1,25 @@
+# grpc_client
+
+- **ID:** `apps_client_lib_src_core_grpc_grpc_client_dart`
+- **Type:** File
+- **File:** `./apps/client/lib/src/core/grpc/grpc_client.dart`
+- **Community:** 56 (_effectiveConfig())
+
+## Relationships
+
+- apps_client_lib_src_core_grpc_grpc_client_dart → apps_client_lib_src_core_grpc_grpc_client_dart_import_package_flutter_foundation_dart (imports, Extracted)
+- apps_client_lib_src_core_grpc_grpc_client_dart → apps_client_lib_src_core_grpc_grpc_client_dart_import_package_grpc_grpc_connection_interface_dart (imports, Extracted)
+- apps_client_lib_src_core_grpc_grpc_client_dart → apps_client_lib_src_core_grpc_grpc_client_dart_import_package_grpc_service_api_dart (imports, Extracted)
+- apps_client_lib_src_core_grpc_grpc_client_dart → apps_client_lib_src_core_grpc_grpc_client_dart_import_gen_vio_v1_asset_pbgrpc_dart (imports, Extracted)
+- apps_client_lib_src_core_grpc_grpc_client_dart → apps_client_lib_src_core_grpc_grpc_client_dart_import_gen_vio_v1_auth_pbgrpc_dart (imports, Extracted)
+- apps_client_lib_src_core_grpc_grpc_client_dart → apps_client_lib_src_core_grpc_grpc_client_dart_import_gen_vio_v1_branch_pbgrpc_dart (imports, Extracted)
+- apps_client_lib_src_core_grpc_grpc_client_dart → apps_client_lib_src_core_grpc_grpc_client_dart_import_gen_vio_v1_canvas_pbgrpc_dart (imports, Extracted)
+- apps_client_lib_src_core_grpc_grpc_client_dart → apps_client_lib_src_core_grpc_grpc_client_dart_import_gen_vio_v1_commit_pbgrpc_dart (imports, Extracted)
+- apps_client_lib_src_core_grpc_grpc_client_dart → apps_client_lib_src_core_grpc_grpc_client_dart_import_gen_vio_v1_project_pbgrpc_dart (imports, Extracted)
+- apps_client_lib_src_core_grpc_grpc_client_dart → apps_client_lib_src_core_grpc_grpc_client_dart_import_gen_vio_v1_pullrequest_pbgrpc_dart (imports, Extracted)
+- apps_client_lib_src_core_grpc_grpc_client_dart → apps_client_lib_src_core_grpc_grpc_client_dart_import_gen_vio_v1_shape_pbgrpc_dart (imports, Extracted)
+- apps_client_lib_src_core_grpc_grpc_client_dart → apps_client_lib_src_core_grpc_grpc_client_dart_import_auth_token_storage_dart (imports, Extracted)
+- apps_client_lib_src_core_grpc_grpc_client_dart → apps_client_lib_src_core_grpc_grpc_client_dart_import_config_app_config_dart (imports, Extracted)
+- apps_client_lib_src_core_grpc_grpc_client_dart → apps_client_lib_src_core_grpc_grpc_client_dart_import_grpc_channel_dart (imports, Extracted)
+- apps_client_lib_src_core_grpc_grpc_client_dart → apps_client_lib_src_core_grpc_grpc_client_dart_effectiveconfig (defines, Extracted)
+

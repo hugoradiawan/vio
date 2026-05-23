@@ -1,0 +1,18 @@
+# build_pod
+
+- **ID:** `apps_client_rust_builder_cargokit_build_tool_lib_src_build_pod_dart`
+- **Type:** File
+- **File:** `./apps/client/rust_builder/cargokit/build_tool/lib/src/build_pod.dart`
+- **Community:** 133 (util.dart (133))
+
+## Relationships
+
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_pod_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_pod_dart_import_dart_io (imports, Extracted)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_pod_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_pod_dart_import_package_path_path_dart (imports, Extracted)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_pod_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_pod_dart_import_artifacts_provider_dart (imports, Extracted)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_pod_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_pod_dart_import_builder_dart (imports, Extracted)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_pod_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_pod_dart_import_environment_dart (imports, Extracted)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_pod_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_pod_dart_import_options_dart (imports, Extracted)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_pod_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_pod_dart_import_target_dart (imports, Extracted)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_pod_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_pod_dart_import_util_dart (imports, Extracted)
+

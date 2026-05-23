@@ -1,0 +1,17 @@
+# crate_hash
+
+- **ID:** `apps_client_rust_builder_cargokit_build_tool_lib_src_crate_hash_dart`
+- **Type:** File
+- **File:** `./apps/client/rust_builder/cargokit/build_tool/lib/src/crate_hash.dart`
+- **Community:** 148 (package:path/path.dart')
+
+## Relationships
+
+- apps_client_rust_builder_cargokit_build_tool_lib_src_crate_hash_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_crate_hash_dart_import_dart_convert (imports, Extracted)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_crate_hash_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_crate_hash_dart_import_dart_io (imports, Extracted)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_crate_hash_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_crate_hash_dart_import_dart_typed_data (imports, Extracted)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_crate_hash_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_crate_hash_dart_import_package_collection_collection_dart (imports, Extracted)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_crate_hash_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_crate_hash_dart_import_package_convert_convert_dart (imports, Extracted)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_crate_hash_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_crate_hash_dart_import_package_crypto_crypto_dart (imports, Extracted)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_crate_hash_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_crate_hash_dart_import_package_path_path_dart (imports, Extracted)
+

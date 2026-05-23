@@ -1,0 +1,26 @@
+# shape.freezed
+
+- **ID:** `apps_client_lib_src_rust_scene_graph_shape_freezed_dart`
+- **Type:** File
+- **File:** `./apps/client/lib/src/rust/scene_graph/shape.freezed.dart`
+- **Community:** 45 (value() (45))
+
+## Relationships
+
+- apps_client_lib_src_rust_scene_graph_shape_freezed_dart → apps_client_lib_src_rust_scene_graph_shape_freezed_dart_import_shape_dart (imports, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_freezed_dart → apps_client_lib_src_rust_scene_graph_shape_freezed_dart_identity (defines, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_freezed_dart → apps_client_lib_src_rust_scene_graph_shape_freezed_dart_value (defines, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_freezed_dart → apps_client_lib_src_rust_scene_graph_shape_freezed_dart_shapegeometry (defines, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_freezed_dart → apps_client_lib_src_rust_scene_graph_shape_freezed_dart_call (defines, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_freezed_dart → apps_client_lib_src_rust_scene_graph_shape_freezed_dart_shapegeometrypatterns (defines, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_freezed_dart → apps_client_lib_src_rust_scene_graph_shape_freezed_dart_shapegeometry_rectanglecopywithimpl (defines, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_freezed_dart → apps_client_lib_src_rust_scene_graph_shape_freezed_dart_object (defines, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_freezed_dart → apps_client_lib_src_rust_scene_graph_shape_freezed_dart_shapegeometry_ellipsecopywithimpl (defines, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_freezed_dart → apps_client_lib_src_rust_scene_graph_shape_freezed_dart_shapegeometry_textcopywithimpl (defines, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_freezed_dart → apps_client_lib_src_rust_scene_graph_shape_freezed_dart_shapegeometry_framecopywithimpl (defines, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_freezed_dart → apps_client_lib_src_rust_scene_graph_shape_freezed_dart_shapegeometry_groupcopywithimpl (defines, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_freezed_dart → apps_client_lib_src_rust_scene_graph_shape_freezed_dart_shapegeometry_pathcopywithimpl (defines, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_freezed_dart → apps_client_lib_src_rust_scene_graph_shape_freezed_dart_shapegeometry_imagecopywithimpl (defines, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_freezed_dart → apps_client_lib_src_rust_scene_graph_shape_freezed_dart_shapegeometry_svgcopywithimpl (defines, Extracted)
+- apps_client_lib_src_rust_scene_graph_shape_freezed_dart → apps_client_lib_src_rust_scene_graph_shape_freezed_dart_shapegeometry_boolcopywithimpl (defines, Extracted)
+

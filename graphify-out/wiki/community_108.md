@@ -1,0 +1,29 @@
+# Community 108: _LayerItemState()
+
+**Members:** 10
+
+## Nodes
+
+- **layer_item** (`apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart`, File, degree: 9)
+- **../../bloc/canvas_bloc.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart_import_bloc_canvas_bloc_dart`, Module, degree: 1)
+- **../../../../core/platform_shortcuts.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart_import_core_platform_shortcuts_dart`, Module, degree: 1)
+- **package:flutter_bloc/flutter_bloc.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart_import_package_flutter_bloc_flutter_bloc_dart`, Module, degree: 1)
+- **package:flutter/material.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart_import_package_flutter_material_dart`, Module, degree: 1)
+- **package:flutter/services.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart_import_package_flutter_services_dart`, Module, degree: 1)
+- **package:vio_core/vio_core.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart_import_package_vio_core_vio_core_dart`, Module, degree: 1)
+- **package:vio_ui_kit/vio_ui_kit.dart** (`apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart_import_package_vio_ui_kit_vio_ui_kit_dart`, Module, degree: 1)
+- **_LayerContextAction** (`apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart_layercontextaction`, Enum, degree: 1)
+- **_LayerItemState()** (`apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart_layeritemstate`, Function, degree: 1)
+
+## Relationships
+
+- apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart → apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart_import_package_flutter_material_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart → apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart_import_package_flutter_services_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart → apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart_import_package_flutter_bloc_flutter_bloc_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart → apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart_import_package_vio_core_vio_core_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart → apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart_import_package_vio_ui_kit_vio_ui_kit_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart → apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart_import_core_platform_shortcuts_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart → apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart_import_bloc_canvas_bloc_dart (imports)
+- apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart → apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart_layercontextaction (defines)
+- apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart → apps_client_lib_src_features_canvas_presentation_widgets_layer_item_dart_layeritemstate (defines)
+

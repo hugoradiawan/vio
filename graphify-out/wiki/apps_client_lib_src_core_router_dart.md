@@ -1,0 +1,26 @@
+# router
+
+- **ID:** `apps_client_lib_src_core_router_dart`
+- **Type:** File
+- **File:** `./apps/client/lib/src/core/router.dart`
+- **Community:** 49 (createRouter())
+
+## Relationships
+
+- apps_client_lib_src_core_router_dart → apps_client_lib_src_core_router_dart_import_dart_async (imports, Extracted)
+- apps_client_lib_src_core_router_dart → apps_client_lib_src_core_router_dart_import_package_flutter_material_dart (imports, Extracted)
+- apps_client_lib_src_core_router_dart → apps_client_lib_src_core_router_dart_import_package_flutter_bloc_flutter_bloc_dart (imports, Extracted)
+- apps_client_lib_src_core_router_dart → apps_client_lib_src_core_router_dart_import_package_go_router_go_router_dart (imports, Extracted)
+- apps_client_lib_src_core_router_dart → apps_client_lib_src_core_router_dart_import_features_assets_bloc_asset_bloc_dart (imports, Extracted)
+- apps_client_lib_src_core_router_dart → apps_client_lib_src_core_router_dart_import_features_auth_bloc_auth_bloc_dart (imports, Extracted)
+- apps_client_lib_src_core_router_dart → apps_client_lib_src_core_router_dart_import_features_auth_presentation_login_page_dart (imports, Extracted)
+- apps_client_lib_src_core_router_dart → apps_client_lib_src_core_router_dart_import_features_auth_presentation_register_page_dart (imports, Extracted)
+- apps_client_lib_src_core_router_dart → apps_client_lib_src_core_router_dart_import_features_canvas_bloc_canvas_bloc_dart (imports, Extracted)
+- apps_client_lib_src_core_router_dart → apps_client_lib_src_core_router_dart_import_features_settings_presentation_settings_page_dart (imports, Extracted)
+- apps_client_lib_src_core_router_dart → apps_client_lib_src_core_router_dart_import_features_version_control_bloc_version_control_bloc_dart (imports, Extracted)
+- apps_client_lib_src_core_router_dart → apps_client_lib_src_core_router_dart_import_features_workspace_bloc_search_bloc_dart (imports, Extracted)
+- apps_client_lib_src_core_router_dart → apps_client_lib_src_core_router_dart_import_features_workspace_bloc_workspace_bloc_dart (imports, Extracted)
+- apps_client_lib_src_core_router_dart → apps_client_lib_src_core_router_dart_import_features_workspace_presentation_workspace_page_dart (imports, Extracted)
+- apps_client_lib_src_core_router_dart → apps_client_lib_src_core_router_dart_import_service_locator_dart (imports, Extracted)
+- apps_client_lib_src_core_router_dart → apps_client_lib_src_core_router_dart_createrouter (defines, Extracted)
+

@@ -1,0 +1,43 @@
+# branch.pb
+
+- **ID:** `apps_client_lib_src_gen_vio_v1_branch_pb_dart`
+- **Type:** File
+- **File:** `./apps/client/lib/src/gen/vio/v1/branch.pb.dart`
+- **Community:** 19 (UpdateBranchResponse())
+
+## Relationships
+
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_import_dart_core (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_import_package_protobuf_protobuf_dart (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_import_commit_pb_dart (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_import_common_pb_dart (imports, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_create (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_deepcopy (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_i (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_branch (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_getsz (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_setstring (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_has (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_clearfield (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_getbf (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_setbool (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_getn (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_setfield (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_ensure (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_listbranchesrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_listbranchesresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_getlist (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_getbranchrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_getbranchresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_createbranchrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_createbranchresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_updatebranchrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_updatebranchresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_deletebranchrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_mergebranchesrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_mergebranchesresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_comparebranchesrequest (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_comparebranchesresponse (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_getiz (defines, Extracted)
+- apps_client_lib_src_gen_vio_v1_branch_pb_dart → apps_client_lib_src_gen_vio_v1_branch_pb_dart_setsignedint32 (defines, Extracted)
+

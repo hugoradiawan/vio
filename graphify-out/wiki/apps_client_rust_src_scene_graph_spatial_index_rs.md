@@ -1,0 +1,29 @@
+# spatial_index
+
+- **ID:** `apps_client_rust_src_scene_graph_spatial_index_rs`
+- **Type:** File
+- **File:** `./apps/client/rust/src/scene_graph/spatial_index.rs`
+- **Community:** 22 (update_shape_position())
+
+## Relationships
+
+- apps_client_rust_src_scene_graph_spatial_index_rs → apps_client_rust_src_scene_graph_spatial_index_rs_import_rstar_rtree_rtreeobject_aabb (imports, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs → apps_client_rust_src_scene_graph_spatial_index_rs_import_crate_scene_graph_shape_rendershape (imports, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs → apps_client_rust_src_scene_graph_spatial_index_rs_shapeenvelope (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs → apps_client_rust_src_scene_graph_spatial_index_rs_spatialindex (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs → apps_client_rust_src_scene_graph_spatial_index_rs_import_super (imports, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs → apps_client_rust_src_scene_graph_spatial_index_rs_import_crate_math_matrix2d_matrix2d (imports, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs → apps_client_rust_src_scene_graph_spatial_index_rs_import_crate_scene_graph_shape (imports, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs → apps_client_rust_src_scene_graph_spatial_index_rs_make_shape_at (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs → apps_client_rust_src_scene_graph_spatial_index_rs_build_from_shapes (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs → apps_client_rust_src_scene_graph_spatial_index_rs_query_visible_finds_overlapping (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs → apps_client_rust_src_scene_graph_spatial_index_rs_query_visible_empty_viewport (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs → apps_client_rust_src_scene_graph_spatial_index_rs_query_point_finds_containing (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs → apps_client_rust_src_scene_graph_spatial_index_rs_insert_and_query (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs → apps_client_rust_src_scene_graph_spatial_index_rs_remove_shape (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs → apps_client_rust_src_scene_graph_spatial_index_rs_remove_nonexistent_returns_false (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs → apps_client_rust_src_scene_graph_spatial_index_rs_update_shape_position (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs → apps_client_rust_src_scene_graph_spatial_index_rs_hidden_shapes_not_indexed (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs → apps_client_rust_src_scene_graph_spatial_index_rs_empty_index (defines, Extracted)
+- apps_client_rust_src_scene_graph_spatial_index_rs → apps_client_rust_src_scene_graph_spatial_index_rs_large_number_of_shapes (defines, Extracted)
+

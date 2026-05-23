@@ -1,0 +1,47 @@
+# Community 43: runMain() (43)
+
+**Members:** 19
+
+## Nodes
+
+- **build_tool** (`apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart`, File, degree: 18)
+- **android_environment.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_android_environment_dart`, Module, degree: 1)
+- **build_cmake.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_build_cmake_dart`, Module, degree: 1)
+- **build_gradle.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_build_gradle_dart`, Module, degree: 1)
+- **build_pod.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_build_pod_dart`, Module, degree: 1)
+- **dart:io** (`apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_dart_io`, Module, degree: 1)
+- **logging.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_logging_dart`, Module, degree: 1)
+- **options.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_options_dart`, Module, degree: 1)
+- **package:args/command_runner.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_package_args_command_runner_dart`, Module, degree: 1)
+- **package:ed25519_edwards/ed25519_edwards.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_package_ed25519_edwards_ed25519_edwards_dart`, Module, degree: 1)
+- **package:github/github.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_package_github_github_dart`, Module, degree: 1)
+- **package:hex/hex.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_package_hex_hex_dart`, Module, degree: 1)
+- **package:logging/logging.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_package_logging_logging_dart`, Module, degree: 1)
+- **precompile_binaries.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_precompile_binaries_dart`, Module, degree: 1)
+- **target.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_target_dart`, Module, degree: 1)
+- **util.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_util_dart`, Module, degree: 1)
+- **verify_binaries.dart** (`apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_verify_binaries_dart`, Module, degree: 1)
+- **runBuildCommand()** (`apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_runbuildcommand`, Function, degree: 1)
+- **runMain()** (`apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_runmain`, Function, degree: 1)
+
+## Relationships
+
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_dart_io (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_package_args_command_runner_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_package_ed25519_edwards_ed25519_edwards_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_package_github_github_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_package_hex_hex_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_package_logging_logging_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_android_environment_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_build_cmake_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_build_gradle_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_build_pod_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_logging_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_options_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_precompile_binaries_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_target_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_util_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_import_verify_binaries_dart (imports)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_runbuildcommand (defines)
+- apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart → apps_client_rust_builder_cargokit_build_tool_lib_src_build_tool_dart_runmain (defines)
+

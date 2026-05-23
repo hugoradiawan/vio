@@ -1,0 +1,52 @@
+# Community 61: visible_when_overlapping()
+
+**Members:** 15
+
+## Nodes
+
+- **culling** (`apps_client_rust_src_render_culling_rs`, File, degree: 14)
+- **fully_visible_when_inside()** (`apps_client_rust_src_render_culling_rs_fully_visible_when_inside`, Function, degree: 3)
+- **crate::math::aabb::Aabb** (`apps_client_rust_src_render_culling_rs_import_crate_math_aabb_aabb`, Module, degree: 1)
+- **crate::math::matrix2d::Matrix2D** (`apps_client_rust_src_render_culling_rs_import_crate_math_matrix2d_matrix2d`, Module, degree: 1)
+- **crate::scene_graph::shape::*** (`apps_client_rust_src_render_culling_rs_import_crate_scene_graph_shape`, Module, degree: 1)
+- **crate::scene_graph::shape::RenderShape** (`apps_client_rust_src_render_culling_rs_import_crate_scene_graph_shape_rendershape`, Module, degree: 1)
+- **super::*** (`apps_client_rust_src_render_culling_rs_import_super`, Module, degree: 1)
+- **is_shape_fully_visible()** (`apps_client_rust_src_render_culling_rs_is_shape_fully_visible`, Function, degree: 3)
+- **is_shape_visible()** (`apps_client_rust_src_render_culling_rs_is_shape_visible`, Function, degree: 6)
+- **make_shape_at()** (`apps_client_rust_src_render_culling_rs_make_shape_at`, Function, degree: 7)
+- **not_visible_when_hidden()** (`apps_client_rust_src_render_culling_rs_not_visible_when_hidden`, Function, degree: 3)
+- **not_visible_when_outside()** (`apps_client_rust_src_render_culling_rs_not_visible_when_outside`, Function, degree: 3)
+- **partially_visible_is_visible()** (`apps_client_rust_src_render_culling_rs_partially_visible_is_visible`, Function, degree: 4)
+- **rotated_shape_uses_aabb()** (`apps_client_rust_src_render_culling_rs_rotated_shape_uses_aabb`, Function, degree: 3)
+- **visible_when_overlapping()** (`apps_client_rust_src_render_culling_rs_visible_when_overlapping`, Function, degree: 3)
+
+## Relationships
+
+- apps_client_rust_src_render_culling_rs → apps_client_rust_src_render_culling_rs_import_crate_math_aabb_aabb (imports)
+- apps_client_rust_src_render_culling_rs → apps_client_rust_src_render_culling_rs_import_crate_scene_graph_shape_rendershape (imports)
+- apps_client_rust_src_render_culling_rs → apps_client_rust_src_render_culling_rs_is_shape_visible (defines)
+- apps_client_rust_src_render_culling_rs → apps_client_rust_src_render_culling_rs_is_shape_fully_visible (defines)
+- apps_client_rust_src_render_culling_rs → apps_client_rust_src_render_culling_rs_import_super (imports)
+- apps_client_rust_src_render_culling_rs → apps_client_rust_src_render_culling_rs_import_crate_math_matrix2d_matrix2d (imports)
+- apps_client_rust_src_render_culling_rs → apps_client_rust_src_render_culling_rs_import_crate_scene_graph_shape (imports)
+- apps_client_rust_src_render_culling_rs → apps_client_rust_src_render_culling_rs_make_shape_at (defines)
+- apps_client_rust_src_render_culling_rs → apps_client_rust_src_render_culling_rs_visible_when_overlapping (defines)
+- apps_client_rust_src_render_culling_rs → apps_client_rust_src_render_culling_rs_not_visible_when_outside (defines)
+- apps_client_rust_src_render_culling_rs → apps_client_rust_src_render_culling_rs_not_visible_when_hidden (defines)
+- apps_client_rust_src_render_culling_rs → apps_client_rust_src_render_culling_rs_partially_visible_is_visible (defines)
+- apps_client_rust_src_render_culling_rs → apps_client_rust_src_render_culling_rs_fully_visible_when_inside (defines)
+- apps_client_rust_src_render_culling_rs → apps_client_rust_src_render_culling_rs_rotated_shape_uses_aabb (defines)
+- apps_client_rust_src_render_culling_rs_visible_when_overlapping → apps_client_rust_src_render_culling_rs_make_shape_at (calls)
+- apps_client_rust_src_render_culling_rs_visible_when_overlapping → apps_client_rust_src_render_culling_rs_is_shape_visible (calls)
+- apps_client_rust_src_render_culling_rs_not_visible_when_outside → apps_client_rust_src_render_culling_rs_make_shape_at (calls)
+- apps_client_rust_src_render_culling_rs_not_visible_when_outside → apps_client_rust_src_render_culling_rs_is_shape_visible (calls)
+- apps_client_rust_src_render_culling_rs_not_visible_when_hidden → apps_client_rust_src_render_culling_rs_make_shape_at (calls)
+- apps_client_rust_src_render_culling_rs_not_visible_when_hidden → apps_client_rust_src_render_culling_rs_is_shape_visible (calls)
+- apps_client_rust_src_render_culling_rs_partially_visible_is_visible → apps_client_rust_src_render_culling_rs_make_shape_at (calls)
+- apps_client_rust_src_render_culling_rs_partially_visible_is_visible → apps_client_rust_src_render_culling_rs_is_shape_visible (calls)
+- apps_client_rust_src_render_culling_rs_partially_visible_is_visible → apps_client_rust_src_render_culling_rs_is_shape_fully_visible (calls)
+- apps_client_rust_src_render_culling_rs_fully_visible_when_inside → apps_client_rust_src_render_culling_rs_make_shape_at (calls)
+- apps_client_rust_src_render_culling_rs_fully_visible_when_inside → apps_client_rust_src_render_culling_rs_is_shape_fully_visible (calls)
+- apps_client_rust_src_render_culling_rs_rotated_shape_uses_aabb → apps_client_rust_src_render_culling_rs_make_shape_at (calls)
+- apps_client_rust_src_render_culling_rs_rotated_shape_uses_aabb → apps_client_rust_src_render_culling_rs_is_shape_visible (calls)
+

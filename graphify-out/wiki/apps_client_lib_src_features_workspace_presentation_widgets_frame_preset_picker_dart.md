@@ -1,0 +1,15 @@
+# frame_preset_picker
+
+- **ID:** `apps_client_lib_src_features_workspace_presentation_widgets_frame_preset_picker_dart`
+- **Type:** File
+- **File:** `./apps/client/lib/src/features/workspace/presentation/widgets/frame_preset_picker.dart`
+- **Community:** 175 (_FramePresetPickerState())
+
+## Relationships
+
+- apps_client_lib_src_features_workspace_presentation_widgets_frame_preset_picker_dart → apps_client_lib_src_features_workspace_presentation_widgets_frame_preset_picker_dart_import_package_flutter_material_dart (imports, Extracted)
+- apps_client_lib_src_features_workspace_presentation_widgets_frame_preset_picker_dart → apps_client_lib_src_features_workspace_presentation_widgets_frame_preset_picker_dart_import_package_vio_ui_kit_vio_ui_kit_dart (imports, Extracted)
+- apps_client_lib_src_features_workspace_presentation_widgets_frame_preset_picker_dart → apps_client_lib_src_features_workspace_presentation_widgets_frame_preset_picker_dart_import_canvas_models_frame_presets_dart (imports, Extracted)
+- apps_client_lib_src_features_workspace_presentation_widgets_frame_preset_picker_dart → apps_client_lib_src_features_workspace_presentation_widgets_frame_preset_picker_dart_framepresetpickerstate (defines, Extracted)
+- apps_client_lib_src_features_workspace_presentation_widgets_frame_preset_picker_dart → apps_client_lib_src_features_workspace_presentation_widgets_frame_preset_picker_dart_framepresetcategories (defines, Extracted)
+

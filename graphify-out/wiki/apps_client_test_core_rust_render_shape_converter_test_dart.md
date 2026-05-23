@@ -1,0 +1,16 @@
+# render_shape_converter_test
+
+- **ID:** `apps_client_test_core_rust_render_shape_converter_test_dart`
+- **Type:** File
+- **File:** `./apps/client/test/core/rust/render_shape_converter_test.dart`
+- **Community:** 160 (main() (160))
+
+## Relationships
+
+- apps_client_test_core_rust_render_shape_converter_test_dart → apps_client_test_core_rust_render_shape_converter_test_dart_import_dart_ui (imports, Extracted)
+- apps_client_test_core_rust_render_shape_converter_test_dart → apps_client_test_core_rust_render_shape_converter_test_dart_import_package_flutter_test_flutter_test_dart (imports, Extracted)
+- apps_client_test_core_rust_render_shape_converter_test_dart → apps_client_test_core_rust_render_shape_converter_test_dart_import_package_vio_client_src_core_rust_render_shape_converter_dart (imports, Extracted)
+- apps_client_test_core_rust_render_shape_converter_test_dart → apps_client_test_core_rust_render_shape_converter_test_dart_import_package_vio_client_src_rust_scene_graph_shape_dart (imports, Extracted)
+- apps_client_test_core_rust_render_shape_converter_test_dart → apps_client_test_core_rust_render_shape_converter_test_dart_import_package_vio_core_vio_core_dart (imports, Extracted)
+- apps_client_test_core_rust_render_shape_converter_test_dart → apps_client_test_core_rust_render_shape_converter_test_dart_main (defines, Extracted)
+

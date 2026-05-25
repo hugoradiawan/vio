@@ -257,6 +257,16 @@ class RustCanvasPainter extends CustomPainter {
         case DrawCommand_ClipOval(:final rect):
           canvas.clipRect(_toRect(rect)); // close enough for ovals
 
+        case DrawCommand_ClipObb(:final corners):
+          canvas.clipPath(
+            Path()
+              ..moveTo(corners[0], corners[1])
+              ..lineTo(corners[2], corners[3])
+              ..lineTo(corners[4], corners[5])
+              ..lineTo(corners[6], corners[7])
+              ..close(),
+          );
+
         case DrawCommand_DrawRect(:final rect, :final color):
           canvas.drawRect(_toRect(rect), Paint()..color = _toColor(color));
 
@@ -995,12 +1005,15 @@ class RustCanvasPainter extends CustomPainter {
     FrameShape frame, {
     Offset offset = Offset.zero,
   }) {
-    final bounds = frame.bounds.shift(offset);
     final isSelected = selectedShapeIds.contains(frame.id);
 
     const labelHeight = HitTest.frameLabelHeight;
     const labelPadding = 8.0;
-    final labelY = bounds.top - labelHeight - HitTest.frameLabelGap;
+
+    // World-space position of the frame's top-left corner (with optional drag offset).
+    final m = frame.transform;
+    final wx = m.a * frame.x + m.c * frame.y + m.e + offset.dx;
+    final wy = m.b * frame.x + m.d * frame.y + m.f + offset.dy;
 
     final textStyle = TextStyle(
       color: isSelected ? selectionColor : labelColor,
@@ -1008,34 +1021,47 @@ class RustCanvasPainter extends CustomPainter {
       fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
     );
 
-    final textSpan = TextSpan(
-      text: frame.name,
-      style: textStyle,
-    );
-
     final textPainter = TextPainter(
-      text: textSpan,
+      text: TextSpan(text: frame.name, style: textStyle),
       textDirection: TextDirection.ltr,
     )..layout();
+
+    // Push frame's rotation matrix so the label rotates with the frame.
+    // Origin = world top-left of frame; label drawn at (0, -(labelHeight+gap)).
+    canvas.save();
+    canvas.transform(
+      Float64List.fromList([
+        m.a, m.b, 0, 0,
+        m.c, m.d, 0, 0,
+        0,   0,   1, 0,
+        wx,  wy,  0, 1,
+      ]),
+    );
+
+    const localLabelY = -(labelHeight + HitTest.frameLabelGap);
 
     if (isSelected) {
       final bgRect = RRect.fromRectAndRadius(
         Rect.fromLTWH(
-          bounds.left - 4,
-          labelY,
+          -4,
+          localLabelY,
           textPainter.width + labelPadding * 2,
           labelHeight,
         ),
         const Radius.circular(4),
       );
-      final bgPaint = Paint()..color = selectionColor.withValues(alpha: 0.15);
-      canvas.drawRRect(bgRect, bgPaint);
+      canvas.drawRRect(
+        bgRect,
+        Paint()..color = selectionColor.withValues(alpha: 0.15),
+      );
     }
 
     textPainter.paint(
       canvas,
-      Offset(bounds.left, labelY + (labelHeight - textPainter.height) / 2),
+      Offset(0, localLabelY + (labelHeight - textPainter.height) / 2),
     );
+
+    canvas.restore();
   }
 
   // ---------------------------------------------------------------
@@ -1092,31 +1118,21 @@ class RustCanvasPainter extends CustomPainter {
       canvas.save();
       canvas.translate(dragOffset!.dx, dragOffset!.dy);
 
-      // Apply frame clipping
+      // Apply frame clipping using OBB path so rotated frames clip correctly.
       final frameId = shape.frameId;
       final frame = frameId == null ? null : shapesById[frameId];
       if (frame is FrameShape && frame.clipContent) {
-        // If frame is also dragging, translate the clip with it
         if (dragIds.contains(frameId)) {
-          canvas.clipRect(
-            Rect.fromLTWH(
-              frame.x,
-              frame.y,
-              frame.frameWidth,
-              frame.frameHeight,
-            ),
-          );
+          // Frame also dragging: canvas already has translate(dragOffset) applied,
+          // so clip with world-space OBB (no extra offset) — the existing translate
+          // shifts the clip to the dragged position.
+          canvas.clipPath(_frameObbPath(frame));
         } else {
+          // Stationary frame: restore/save to remove the drag translate, then
+          // clip to frame OBB at rest position, then re-apply drag translate.
           canvas.restore();
           canvas.save();
-          canvas.clipRect(
-            Rect.fromLTWH(
-              frame.x,
-              frame.y,
-              frame.frameWidth,
-              frame.frameHeight,
-            ),
-          );
+          canvas.clipPath(_frameObbPath(frame));
           canvas.translate(dragOffset!.dx, dragOffset!.dy);
         }
       }
@@ -1182,8 +1198,7 @@ class RustCanvasPainter extends CustomPainter {
     for (final id in hoverIds) {
       final shape = shapesById[id];
       if (shape == null || shape.hidden) continue;
-      final r = Rect.fromLTWH(shape.x, shape.y, shape.width, shape.height);
-      canvas.drawRect(r, paint);
+      canvas.drawPath(_shapeObbPath(shape), paint);
     }
 
     canvas.restore();
@@ -1274,6 +1289,36 @@ class RustCanvasPainter extends CustomPainter {
         dragRect != oldDelegate.dragRect ||
         dragOffset != oldDelegate.dragOffset ||
         backgroundColor != oldDelegate.backgroundColor;
+  }
+
+  /// Oriented bounding-box path for [shape] in world space.
+  /// Uses shape.transform × translate(x, y) applied to each local corner,
+  /// which matches the Rust renderer's world-transform convention.
+  static Path _shapeObbPath(Shape shape) {
+    final c0 = shape.transformPoint(Offset(shape.x, shape.y));
+    final c1 = shape.transformPoint(Offset(shape.x + shape.width, shape.y));
+    final c2 = shape.transformPoint(Offset(shape.x + shape.width, shape.y + shape.height));
+    final c3 = shape.transformPoint(Offset(shape.x, shape.y + shape.height));
+    return Path()
+      ..moveTo(c0.dx, c0.dy)
+      ..lineTo(c1.dx, c1.dy)
+      ..lineTo(c2.dx, c2.dy)
+      ..lineTo(c3.dx, c3.dy)
+      ..close();
+  }
+
+  /// OBB clip path for a [FrameShape] in world space, optionally shifted by [offset].
+  static Path _frameObbPath(FrameShape frame) {
+    final c0 = frame.transformPoint(Offset(frame.x, frame.y));
+    final c1 = frame.transformPoint(Offset(frame.x + frame.frameWidth, frame.y));
+    final c2 = frame.transformPoint(Offset(frame.x + frame.frameWidth, frame.y + frame.frameHeight));
+    final c3 = frame.transformPoint(Offset(frame.x, frame.y + frame.frameHeight));
+    return Path()
+      ..moveTo(c0.dx, c0.dy)
+      ..lineTo(c1.dx, c1.dy)
+      ..lineTo(c2.dx, c2.dy)
+      ..lineTo(c3.dx, c3.dy)
+      ..close();
   }
 }
 

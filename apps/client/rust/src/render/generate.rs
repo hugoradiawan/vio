@@ -121,13 +121,18 @@ fn emit_shape_tree(
 
     if shape.clips_content() {
         let (w, h) = shape.geometry.dimensions();
-        // Compute the world-space AABB of the frame by transforming its
-        // local rect [0,0,w,h] through the full affine matrix. This
-        // correctly handles translation, scale, and rotation (via AABB).
-        let (bx, by, bw, bh) = shape.transform.transform_rect(0.0, 0.0, w, h);
+        // emit_shape_commands already popped the frame's PushTransform, so the
+        // canvas is back in world space here.  Clip to the exact OBB by
+        // transforming the four local corners to world space and using a polygon
+        // clip (ClipObb).  This is exact for any rotation, unlike a world-AABB
+        // clip which is over-generous for rotated frames.
+        let (c0x, c0y) = shape.transform.transform_point(0.0, 0.0);
+        let (c1x, c1y) = shape.transform.transform_point(w,   0.0);
+        let (c2x, c2y) = shape.transform.transform_point(w,   h);
+        let (c3x, c3y) = shape.transform.transform_point(0.0, h);
         cmds.push(DrawCommand::Save);
-        cmds.push(DrawCommand::ClipRect {
-            rect: [bx, by, bw, bh],
+        cmds.push(DrawCommand::ClipObb {
+            corners: [c0x, c0y, c1x, c1y, c2x, c2y, c3x, c3y],
         });
 
         for child_id in children {
@@ -1064,11 +1069,11 @@ mod tests {
         let tree = SceneTree::from_shapes(vec![frame, child]);
         let cmds = generate_draw_commands(&tree, &large_viewport(), &identity_view(), false);
 
-        let has_clip = cmds.iter().any(|c| matches!(c, DrawCommand::ClipRect { .. }));
+        let has_clip = cmds.iter().any(|c| matches!(c, DrawCommand::ClipObb { .. }));
         let save_count = cmds.iter().filter(|c| matches!(c, DrawCommand::Save)).count();
         let restore_count = cmds.iter().filter(|c| matches!(c, DrawCommand::Restore)).count();
 
-        assert!(has_clip, "Expected ClipRect for clipping frame");
+        assert!(has_clip, "Expected ClipObb for clipping frame");
         assert!(save_count > 0, "Expected Save before clip");
         assert_eq!(save_count, restore_count, "Save/Restore should be balanced");
     }
@@ -1178,17 +1183,17 @@ mod tests {
         // We expect:
         // - At least 1 DrawRect for the child_rect
         // - At least 1 DrawOval for the child_ellipse
-        // - ClipRect for the frame
+        // - ClipObb for the frame
         let draw_rect_count = cmds.iter().filter(|c| matches!(c, DrawCommand::DrawRect { .. })).count();
         let draw_oval_count = cmds.iter().filter(|c| matches!(c, DrawCommand::DrawOval { .. })).count();
-        let clip_count = cmds.iter().filter(|c| matches!(c, DrawCommand::ClipRect { .. })).count();
+        let clip_count = cmds.iter().filter(|c| matches!(c, DrawCommand::ClipObb { .. })).count();
 
         assert!(draw_rect_count >= 1,
             "Expected at least 1 DrawRect for child_rect, got {draw_rect_count}. Total cmds: {}", cmds.len());
         assert!(draw_oval_count >= 1,
             "Expected at least 1 DrawOval for child_ellipse, got {draw_oval_count}. Total cmds: {}", cmds.len());
         assert!(clip_count >= 1,
-            "Expected at least 1 ClipRect for the frame, got {clip_count}");
+            "Expected at least 1 ClipObb for the frame, got {clip_count}");
     }
 
     /// Test: a NON-clipping frame with child shapes.

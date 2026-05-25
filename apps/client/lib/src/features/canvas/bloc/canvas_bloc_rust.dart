@@ -118,11 +118,20 @@ mixin _CanvasRustMixin on Bloc<CanvasEvent, CanvasState> {
     final seen = <String>{};
 
     // Frame title labels live outside frame body bounds; Rust body hit-test
-    // cannot see these regions.
+    // cannot see these regions. De-rotate the canvas point into the frame's
+    // local space first so rotated frames work. Compute inverse directly from
+    // the current transform rather than using the cached transformInverse field,
+    // which can be stale after a rotation copyWith.
     for (var i = shapeList.length - 1; i >= 0; i--) {
       final shape = shapeList[i];
       if (shape is! FrameShape || shape.hidden || shape.blocked) continue;
-      if (!HitTest.hitTestFrameLabel(canvasPoint, shape)) continue;
+      final tInv = shape.transform.inverse;
+      if (tInv == null) continue;
+      final lx =
+          tInv.a * canvasPoint.dx + tInv.c * canvasPoint.dy + tInv.e;
+      final ly =
+          tInv.b * canvasPoint.dx + tInv.d * canvasPoint.dy + tInv.f;
+      if (!HitTest.hitTestFrameLabel(Offset(lx, ly), shape)) continue;
       if (seen.add(shape.id)) {
         hits.add(shape);
       }

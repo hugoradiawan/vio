@@ -48,6 +48,9 @@ pub enum DrawCommand {
     },
     /// Clip to an oval.
     ClipOval { rect: [f64; 4] },
+    /// Clip to an oriented bounding box defined by four world-space corners.
+    /// corners = [x0,y0, x1,y1, x2,y2, x3,y3] in winding order.
+    ClipObb { corners: [f64; 8] },
     /// Draw a filled rectangle.
     DrawRect {
         rect: [f64; 4],

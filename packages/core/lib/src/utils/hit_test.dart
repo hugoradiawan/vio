@@ -14,8 +14,15 @@ class HitTest {
   static bool hitTestShape(Offset point, Shape shape) {
     if (shape.hidden || shape.blocked) return false;
 
-    // Transform the point into the shape's local coordinate system
-    final localPoint = shape.inverseTransformPoint(point);
+    // Compute inverse directly from the current transform — avoids using the
+    // cached transformInverse field, which can be stale after a copyWith that
+    // updates transform without also updating transformInverse.
+    final tInv = shape.transform.inverse;
+    if (tInv == null) return false;
+    final localPoint = Offset(
+      tInv.a * point.dx + tInv.c * point.dy + tInv.e,
+      tInv.b * point.dx + tInv.d * point.dy + tInv.f,
+    );
 
     // Perform hit test based on shape type
     return switch (shape.type) {

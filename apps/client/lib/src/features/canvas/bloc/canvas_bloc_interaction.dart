@@ -65,7 +65,11 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
   String? _lastSelectByClickContainerId;
 
   bool _isFrameTitleHit(Offset canvasPoint, FrameShape frame) {
-    return HitTest.hitTestFrameLabel(canvasPoint, frame);
+    final tInv = frame.transform.inverse;
+    if (tInv == null) return false;
+    final lx = tInv.a * canvasPoint.dx + tInv.c * canvasPoint.dy + tInv.e;
+    final ly = tInv.b * canvasPoint.dx + tInv.d * canvasPoint.dy + tInv.f;
+    return HitTest.hitTestFrameLabel(Offset(lx, ly), frame);
   }
 
   List<Shape> _prioritizeHitsForEnteredContainer(List<Shape> hits) {
@@ -814,6 +818,17 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
           transform: newTransform,
           rotation: newRotation,
         );
+
+        // Propagate rotation to all descendants so frame/group children follow.
+        if (originalShape is FrameShape || originalShape is GroupShape) {
+          _applyRotationToDescendants(
+            newShapes: newShapes,
+            containerId: shapeId,
+            rotationMatrix: rotationMatrix,
+            deltaAngle: deltaAngle,
+            originalShapes: originalShapes,
+          );
+        }
       }
 
       emit(
@@ -1834,6 +1849,7 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
           transform: finalTransform,
         );
       } else if (originalShape is FrameShape) {
+        final tNew = finalTransform ?? originalShape.transform;
         newShapes[shapeId] = originalShape.copyWith(
           x: finalX,
           y: finalY,
@@ -1847,6 +1863,27 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
               ? null
               : false,
         );
+        // Move frame descendants to follow the frame's top-left translation.
+        if (originalShapes != null) {
+          final tOrig = originalShape.transform;
+          final oldWtlX =
+              tOrig.a * originalShape.x + tOrig.c * originalShape.y + tOrig.e;
+          final oldWtlY =
+              tOrig.b * originalShape.x + tOrig.d * originalShape.y + tOrig.f;
+          final newWtlX = tNew.a * finalX + tNew.c * finalY + tNew.e;
+          final newWtlY = tNew.b * finalX + tNew.d * finalY + tNew.f;
+          final dtx = newWtlX - oldWtlX;
+          final dty = newWtlY - oldWtlY;
+          if (dtx.abs() > 0.001 || dty.abs() > 0.001) {
+            _applyTranslationDeltaToDescendants(
+              newShapes: newShapes,
+              containerId: shapeId,
+              dx: dtx,
+              dy: dty,
+              originalShapes: originalShapes,
+            );
+          }
+        }
       } else if (originalShape is TextShape) {
         newShapes[shapeId] = originalShape.copyWith(
           x: finalX,
@@ -1924,5 +1961,66 @@ mixin _CanvasInteractionMixin on Bloc<CanvasEvent, CanvasState> {
     // Clamp to reasonable values (max is half the smaller dimension)
     final maxRadius = math.min(bounds.width, bounds.height) / 2;
     return radius.clamp(0.0, maxRadius);
+  }
+
+  /// Recursively applies [rotationMatrix] to all descendants of [containerId].
+  ///
+  /// Uses premultiply (`rotationMatrix * child.transform`) so the frame
+  /// rotation is stacked on top of each child's existing world transform.
+  /// This mirrors what the Rust renderer expects:
+  ///   world_transform = (rotationMatrix × child.transform) × translate(x, y)
+  void _applyRotationToDescendants({
+    required Map<String, Shape> newShapes,
+    required String containerId,
+    required Matrix2D rotationMatrix,
+    required double deltaAngle,
+    required Map<String, Shape> originalShapes,
+  }) {
+    for (final child in originalShapes.values) {
+      if ((child.parentId ?? child.frameId) != containerId) continue;
+
+      final newChildTransform = rotationMatrix * child.transform;
+      final newChildRotation = (child.rotation + deltaAngle) % 360;
+
+      newShapes[child.id] = child.copyWith(
+        transform: newChildTransform,
+        rotation: newChildRotation,
+      );
+
+      if (child is GroupShape || child is FrameShape) {
+        _applyRotationToDescendants(
+          newShapes: newShapes,
+          containerId: child.id,
+          rotationMatrix: rotationMatrix,
+          deltaAngle: deltaAngle,
+          originalShapes: originalShapes,
+        );
+      }
+    }
+  }
+
+  void _applyTranslationDeltaToDescendants({
+    required Map<String, Shape> newShapes,
+    required String containerId,
+    required double dx,
+    required double dy,
+    required Map<String, Shape> originalShapes,
+  }) {
+    for (final child in originalShapes.values) {
+      if ((child.parentId ?? child.frameId) != containerId) continue;
+      final t = child.transform;
+      newShapes[child.id] = child.copyWith(
+        transform: t.copyWith(e: t.e + dx, f: t.f + dy),
+      );
+      if (child is GroupShape || child is FrameShape) {
+        _applyTranslationDeltaToDescendants(
+          newShapes: newShapes,
+          containerId: child.id,
+          dx: dx,
+          dy: dy,
+          originalShapes: originalShapes,
+        );
+      }
+    }
   }
 }

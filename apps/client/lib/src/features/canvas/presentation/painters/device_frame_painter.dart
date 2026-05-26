@@ -146,13 +146,30 @@ class DeviceFramePainter {
     Offset offset = Offset.zero,
   }) {
     final scale = frame.frameWidth / _refWidth;
-    final sx = frame.x + offset.dx;
-    final sy = frame.y + offset.dy;
     final fw = frame.frameWidth;
     final fh = frame.frameHeight;
     final darkMode = frame.deviceFrameDarkMode;
     final statusColor = darkMode ? _statusColorDark : _statusColorLight;
     final homeColor = darkMode ? _homeColorDark : _homeColorLight;
+
+    // Apply the frame's rotation/transform so the overlay rotates with the
+    // frame shape. Pattern mirrors _drawFrameLabel in RustCanvasPainter.
+    final m = frame.transform;
+    final wx = m.a * frame.x + m.c * frame.y + m.e + offset.dx;
+    final wy = m.b * frame.x + m.d * frame.y + m.f + offset.dy;
+    canvas.save();
+    canvas.transform(
+      Float64List.fromList([
+        m.a, m.b, 0, 0,
+        m.c, m.d, 0, 0,
+        0,   0,   1, 0,
+        wx,  wy,  0, 1,
+      ]),
+    );
+
+    // All sub-methods draw in local frame space (origin = frame top-left).
+    const sx = 0.0;
+    const sy = 0.0;
 
     // 1. Rounded corner masks — fill the four corner regions (outside the
     //    inner rounded rect but inside the rectangular frame) with the canvas
@@ -174,6 +191,8 @@ class DeviceFramePainter {
 
     // 6. Home indicator — bottom-centered pill.
     _paintHomeIndicator(canvas, sx, sy, fw, fh, scale, homeColor);
+
+    canvas.restore();
   }
 
   // ── 1. Corner masks ──────────────────────────────────────────────────────

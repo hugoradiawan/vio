@@ -513,6 +513,28 @@ export const canvasServiceImpl: ServiceImpl<typeof CanvasService> = {
 				? BigInt(new Date(branch.updatedAt).getTime())
 				: BigInt(Date.now());
 
+			const canReadWorkingCopy =
+				!!branch.headCommitId ||
+				branch.isDefault ||
+				project.defaultBranchId === branch.id ||
+				new Date(branch.updatedAt).getTime() >
+					new Date(branch.createdAt).getTime();
+
+			// The working copy is project-scoped, not branch-scoped. For a freshly
+			// created non-default branch with no commits, reading it would leak the
+			// currently restored branch's shapes into an empty branch.
+			if (!canReadWorkingCopy) {
+				const state = create(CanvasStateSchema, {
+					shapes: [],
+					version,
+					lastModified: branch.updatedAt
+						? new Date(branch.updatedAt).toISOString()
+						: new Date().toISOString(),
+				});
+
+				return create(GetCanvasStateResponseSchema, { state });
+			}
+
 			// First, try loading from the shapes table (working copy)
 			// This preserves uncommitted changes that were synced before the last restart
 			const workingCopyShapes = await db

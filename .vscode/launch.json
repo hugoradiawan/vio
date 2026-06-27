@@ -174,13 +174,13 @@
       "name": "Capture Canvas Perf (Web - Chrome)",
       "type": "node-terminal",
       "request": "launch",
-      "command": "cd ${workspaceFolder}/apps/client && flutter run -d chrome --dart-define-from-file=config/dev.json --dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true 2>&1 | tee canvas-run.log | grep --line-buffered 'CANVAS_PERF' | tee canvas-perf.log"
+      "command": "cd ${workspaceFolder}/apps/client && fvm flutter run -d chrome --dart-define-from-file=config/dev.json --dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true 2>&1 | tee canvas-run.log | grep --line-buffered 'CANVAS_PERF' | tee canvas-perf.log"
     },
     {
       "name": "Capture Canvas Perf (macOS)",
       "type": "node-terminal",
       "request": "launch",
-      "command": "cd ${workspaceFolder}/apps/client && flutter run -d macos --dart-define-from-file=config/dev.json --dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true --dart-define=VIO_USE_RUST_BACKEND=true --dart-define=VIO_USE_RUST_TILES=true --dart-define=VIO_USE_RUST_CANVAS=true 2>&1 | tee canvas-run.log | grep --line-buffered 'CANVAS_PERF' | tee canvas-perf.log"
+      "command": "cd ${workspaceFolder}/apps/client && fvm flutter run -d macos --dart-define-from-file=config/dev.json --dart-define=VIO_CANVAS_PERF_DIAGNOSTICS=true --dart-define=VIO_USE_RUST_BACKEND=true --dart-define=VIO_USE_RUST_TILES=true --dart-define=VIO_USE_RUST_CANVAS=true 2>&1 | tee canvas-run.log | grep --line-buffered 'CANVAS_PERF' | tee canvas-perf.log"
     }
   ],
   "compounds": [

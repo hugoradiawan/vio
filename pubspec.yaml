@@ -42,13 +42,13 @@ melos:
 
     # Testing
     test:
-      run: melos exec -- "flutter test"
+      run: melos exec -- "fvm flutter test"
       packageFilters:
         dirExists: test
       description: Run tests in all packages
 
     test:coverage:
-      run: melos exec -- "flutter test --coverage"
+      run: melos exec -- "fvm flutter test --coverage"
       packageFilters:
         dirExists: test
       description: Run tests with coverage
@@ -73,7 +73,7 @@ melos:
 
     # Clean
     clean:
-      run: melos exec -- "flutter clean"
+      run: melos exec -- "fvm flutter clean"
       description: Clean all packages
 
     clean:deep:

@@ -10,6 +10,7 @@ const pathSep = process.platform === "win32" ? ";" : ":";
 const extraPaths = [
   path.join(rootDir, "backend", "node_modules", ".bin"),
   path.join(homeDir, ".pub-cache", "bin"),
+  path.join(homeDir, "AppData", "Local", "Pub", "Cache", "bin"),
 ];
 
 const env = {

@@ -7,7 +7,7 @@ linter:
     - unawaited_futures
     # Relaxed for gradual adoption:
     # - avoid_positional_boolean_parameters
-    # - cascade_invocations  
+    # - cascade_invocations
     # - parameter_assignments
     # - sort_constructors_first
     # - sort_unnamed_constructors_first
@@ -18,7 +18,6 @@ linter:
     - avoid_print
     - avoid_redundant_argument_values
     - avoid_relative_lib_imports
-    - avoid_returning_null_for_future
     - avoid_slow_async_io
     - avoid_type_to_string
     - avoid_types_as_parameter_names

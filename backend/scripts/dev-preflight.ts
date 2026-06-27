@@ -82,12 +82,12 @@ const ensurePostgresWithPodmanRunFallback = () => {
 };
 
 const runDbPush = (quiet = true) => {
-  if (run(["bun", "run", "db:push"], quiet)) {
+  if (run(["bun", "run", "db:push", "--force"], quiet)) {
     return true;
   }
 
   // Fallback for environments where local bin shims are not on PATH yet.
-  return run(["bunx", "drizzle-kit", "push"], quiet);
+  return run(["bunx", "drizzle-kit", "push", "--force"], quiet);
 };
 
 const ensureBackendDependencies = () => {
@@ -108,21 +108,49 @@ const ensureBackendDependencies = () => {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const ensurePodmanConnection = () => {
+  if (run(["podman", "ps"], true)) {
+    return true;
+  }
+
+  console.log(
+    "[preflight] Podman connection unavailable. Attempting podman machine start...",
+  );
+  if (!run(["podman", "machine", "start"], true)) {
+    console.log(
+      "[preflight] podman machine start returned non-zero; re-checking connection...",
+    );
+  }
+
+  if (run(["podman", "ps"], true)) {
+    return true;
+  }
+
+  console.log(
+    "[preflight] Still unreachable; performing full stop/start cycle (stale connection)...",
+  );
+  run(["podman", "machine", "stop"], true);
+
+  if (!run(["podman", "machine", "start"], true)) {
+    console.error(
+      "[preflight] ERROR: podman machine start failed after stop/start cycle.",
+    );
+    return false;
+  }
+
+  return run(["podman", "ps"], true);
+};
+
 console.log("[preflight] Checking Podman availability...");
 if (!run(["podman", "--version"], true)) {
   console.error("[preflight] ERROR: podman is not installed or not in PATH.");
   process.exit(1);
 }
 
-if (!run(["podman", "ps"], true)) {
-  console.log("[preflight] Podman connection unavailable. Attempting podman machine start...");
-  if (!run(["podman", "machine", "start"], true)) {
-    console.log("[preflight] podman machine start returned non-zero; re-checking connection...");
-  }
-}
-
-if (!run(["podman", "ps"], true)) {
-  console.error("[preflight] ERROR: unable to connect to Podman after restart attempt.");
+if (!ensurePodmanConnection()) {
+  console.error(
+    "[preflight] ERROR: unable to connect to Podman after stop/start cycle.",
+  );
   process.exit(1);
 }
 
